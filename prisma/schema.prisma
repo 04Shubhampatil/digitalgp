@@ -1,0 +1,587 @@
+// DigitalGP — database schema
+// Conventions: cuid ids, createdAt/updatedAt everywhere, tenant-owned rows carry tenantId.
+// Shared (district/taluka/block-level) content has tenantId = null and an explicit ownerUnitId
+// plus explicit targets — it is never exposed to tenants implicitly.
+// See docs/architecture/backend-foundation-plan.md for the rationale.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+/// Levels of the administrative hierarchy. BLOCK (Panchayat Samiti) is a distinct, optional level.
+enum AdminUnitLevel {
+  STATE
+  DISTRICT
+  TALUKA
+  BLOCK
+  GRAM_PANCHAYAT
+}
+
+enum Locale {
+  EN
+  MR
+  HI
+}
+
+enum TenantStatus {
+  DRAFT
+  PUBLISHED
+  SUSPENDED
+}
+
+/// Assignable roles. Citizen/visitor is the unauthenticated public and has no row.
+enum Role {
+  SUPER_ADMIN
+  TALUKA_ADMIN
+  BLOCK_ADMIN
+  GP_ADMIN
+  DATA_ENTRY_OPERATOR
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+/// Draft -> Submitted -> Under review -> Approved -> Published; Rejected returns to editing.
+enum ContentStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  PUBLISHED
+  REJECTED
+  ARCHIVED
+}
+
+enum AnnouncementPriority {
+  NORMAL
+  IMPORTANT
+  URGENT
+  EMERGENCY
+}
+
+enum MediaKind {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+enum ProjectStage {
+  UPCOMING
+  ONGOING
+  COMPLETED
+}
+
+enum SchemeLevel {
+  CENTRAL
+  STATE
+  DISTRICT
+  GRAM_PANCHAYAT
+}
+
+enum GrievanceStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+}
+
+// ---------------------------------------------------------------------------
+// Geography & tenants
+// ---------------------------------------------------------------------------
+
+/// One row per administrative unit at any level, forming a tree.
+/// `path` is a materialized path of ancestor ids ending with this id, e.g. "/st1/dt1/tk1/gp1/".
+/// Scope checks are a prefix match on `path`, so Block can exist or not per taluka.
+model AdminUnit {
+  id       String         @id @default(cuid())
+  level    AdminUnitLevel
+  code     String?        @unique
+  nameEn   String
+  nameMr   String
+  slug     String
+  parentId String?
+  parent   AdminUnit?     @relation("UnitTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children AdminUnit[]    @relation("UnitTree")
+  path     String         @unique
+
+  tenant              Tenant?
+  roleAssignments     RoleAssignment[]
+  ownedAnnouncements  Announcement[]       @relation("AnnouncementOwner")
+  announcementTargets AnnouncementTarget[]
+  ownedSchemes        Scheme[]             @relation("SchemeOwner")
+  schemeTargets       SchemeTarget[]
+  ownedMedia          Media[]              @relation("MediaOwner")
+  auditLogs           AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([parentId, slug])
+  @@index([level])
+}
+
+/// One Gram Panchayat website.
+model Tenant {
+  id            String       @id @default(cuid())
+  unitId        String       @unique
+  unit          AdminUnit    @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  slug          String       @unique
+  customDomain  String?      @unique
+  nameEn        String
+  nameMr        String
+  status        TenantStatus @default(DRAFT)
+  defaultLocale Locale       @default(MR)
+  /// Branding, contact details, social links, SEO defaults. Validated by tenantSettingsSchema.
+  settings      Json         @default("{}")
+  publishedAt   DateTime?
+
+  pages         Page[]
+  sections      Section[]
+  revisions     SectionRevision[]
+  announcements Announcement[]
+  schemes       Scheme[]
+  projects      Project[]
+  media         Media[]
+  grievances    Grievance[]
+  auditLogs     AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}
+
+// ---------------------------------------------------------------------------
+// Users, roles, sessions
+// ---------------------------------------------------------------------------
+
+model User {
+  id                String     @id @default(cuid())
+  email             String     @unique
+  passwordHash      String
+  name              String
+  phone             String?
+  locale            Locale     @default(MR)
+  status            UserStatus @default(ACTIVE)
+  mustResetPassword Boolean    @default(false)
+  lastLoginAt       DateTime?
+  createdById       String?
+  createdBy         User?      @relation("UserCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdUsers      User[]     @relation("UserCreatedBy")
+
+  roleAssignments  RoleAssignment[]  @relation("AssignmentUser")
+  grantedRoles     RoleAssignment[]  @relation("AssignmentGrantedBy")
+  sessions         Session[]
+  passwordResets   PasswordResetToken[]
+  auditLogs        AuditLog[]
+  uploadedMedia    Media[]
+  grievanceEvents  GrievanceEvent[]
+  assignedGrievances Grievance[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}
+
+/// "User has Role over the subtree rooted at unit". Revoked assignments are kept for audit.
+model RoleAssignment {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation("AssignmentUser", fields: [userId], references: [id], onDelete: Cascade)
+  role        Role
+  unitId      String
+  unit        AdminUnit @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  grantedById String?
+  grantedBy   User?     @relation("AssignmentGrantedBy", fields: [grantedById], references: [id], onDelete: SetNull)
+  revokedAt   DateTime?
+  modules     ModulePermission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, role, unitId])
+  @@index([unitId])
+  @@index([userId, revokedAt])
+}
+
+/// Module-level grants for Data Entry Operators (e.g. "announcements", "projects").
+model ModulePermission {
+  id               String         @id @default(cuid())
+  roleAssignmentId String
+  roleAssignment   RoleAssignment @relation(fields: [roleAssignmentId], references: [id], onDelete: Cascade)
+  moduleKey        String
+  canWrite         Boolean        @default(true)
+
+  createdAt DateTime @default(now())
+
+  @@unique([roleAssignmentId, moduleKey])
+}
+
+/// Server-side session. `id` is the SHA-256 hash of the random token held in the cookie.
+model Session {
+  id         String   @id
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+/// Single-use password reset token. `id` is the SHA-256 hash of the emailed token.
+model PasswordResetToken {
+  id        String    @id
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+/// Fixed-window counters for rate limiting sensitive endpoints (login, reset).
+model RateLimitBucket {
+  key         String   @id
+  count       Int      @default(0)
+  windowStart DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Page content (JSON sections with draft/published revisions)
+// ---------------------------------------------------------------------------
+
+model Page {
+  id        String  @id @default(cuid())
+  tenantId  String
+  tenant    Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  /// Key from the page registry (src/config/pages.ts), e.g. "home", "about".
+  pageKey   String
+  isEnabled Boolean @default(true)
+  seoTitleEn       String?
+  seoTitleMr       String?
+  seoDescriptionEn String?
+  seoDescriptionMr String?
+  shareImageId     String?
+  shareImage       Media?  @relation(fields: [shareImageId], references: [id], onDelete: SetNull)
+  sections  Section[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, pageKey])
+}
+
+model Section {
+  id         String  @id @default(cuid())
+  tenantId   String
+  tenant     Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  pageId     String
+  page       Page    @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  /// Key from the section registry; selects the zod schema for `SectionRevision.data`.
+  sectionKey String
+  sortOrder  Int     @default(0)
+  isVisible  Boolean @default(true)
+  draftId     String? @unique
+  draft       SectionRevision? @relation("SectionDraft", fields: [draftId], references: [id], onDelete: SetNull)
+  publishedId String? @unique
+  published   SectionRevision? @relation("SectionPublished", fields: [publishedId], references: [id], onDelete: SetNull)
+  revisions   SectionRevision[] @relation("SectionRevisions")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([pageId, sectionKey])
+  @@index([tenantId])
+}
+
+/// Immutable content snapshot. Validated against the section's zod schema on write.
+model SectionRevision {
+  id        String        @id @default(cuid())
+  tenantId  String
+  tenant    Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sectionId String
+  section   Section       @relation("SectionRevisions", fields: [sectionId], references: [id], onDelete: Cascade)
+  version   Int
+  status    ContentStatus @default(DRAFT)
+  data      Json
+  draftOf     Section?    @relation("SectionDraft")
+  publishedOf Section?    @relation("SectionPublished")
+
+  createdById   String
+  submittedAt   DateTime?
+  reviewedById  String?
+  reviewedAt    DateTime?
+  reviewNote    String?
+  publishedById String?
+  publishedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([sectionId, version])
+  @@index([tenantId, status])
+}
+
+// ---------------------------------------------------------------------------
+// Announcements (first vertical slice)
+// ---------------------------------------------------------------------------
+
+/// tenantId set => GP-owned, shown only on that website.
+/// tenantId null => shared, owned by `ownerUnit` and shown only on explicitly targeted scopes.
+model Announcement {
+  id          String               @id @default(cuid())
+  tenantId    String?
+  tenant      Tenant?              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  ownerUnitId String
+  ownerUnit   AdminUnit            @relation("AnnouncementOwner", fields: [ownerUnitId], references: [id], onDelete: Restrict)
+  category    String
+  priority    AnnouncementPriority @default(NORMAL)
+  titleEn     String?
+  titleMr     String?
+  bodyEn      String?
+  bodyMr      String?
+  attachmentId String?
+  attachment  Media?               @relation(fields: [attachmentId], references: [id], onDelete: SetNull)
+  /// Page keys on which the announcement is displayed, e.g. ["home","announcements"].
+  displayPages String[]
+  status      ContentStatus        @default(DRAFT)
+  /// null = publish immediately on approval; future date = scheduled.
+  publishAt   DateTime?
+  expiresAt   DateTime?
+  targets     AnnouncementTarget[]
+
+  createdById   String
+  submittedAt   DateTime?
+  reviewedById  String?
+  reviewedAt    DateTime?
+  reviewNote    String?
+  publishedById String?
+  publishedAt   DateTime?
+  deletedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@index([ownerUnitId, status])
+  @@index([status, publishAt])
+}
+
+/// Explicit publishing target: the subtree rooted at `unit`.
+model AnnouncementTarget {
+  announcementId String
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  unitId         String
+  unit           AdminUnit    @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@id([announcementId, unitId])
+  @@index([unitId])
+}
+
+// ---------------------------------------------------------------------------
+// Schemes, projects
+// ---------------------------------------------------------------------------
+
+/// Government scheme. Shared (tenantId null, targeted) or GP-specific (tenantId set).
+model Scheme {
+  id            String        @id @default(cuid())
+  tenantId      String?
+  tenant        Tenant?       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  ownerUnitId   String
+  ownerUnit     AdminUnit     @relation("SchemeOwner", fields: [ownerUnitId], references: [id], onDelete: Restrict)
+  level         SchemeLevel
+  nameEn        String?
+  nameMr        String?
+  descriptionEn String?
+  descriptionMr String?
+  eligibilityEn String?
+  eligibilityMr String?
+  processEn     String?
+  processMr     String?
+  externalUrl   String?
+  /// Aggregate statistics only — no individual beneficiary PII is stored here.
+  beneficiaryCount Int?
+  amountDisbursed  Decimal?  @db.Decimal(14, 2)
+  status        ContentStatus @default(DRAFT)
+  targets       SchemeTarget[]
+
+  createdById   String
+  submittedAt   DateTime?
+  reviewedById  String?
+  reviewedAt    DateTime?
+  reviewNote    String?
+  publishedById String?
+  publishedAt   DateTime?
+  deletedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@index([ownerUnitId, status])
+}
+
+model SchemeTarget {
+  schemeId String
+  scheme   Scheme    @relation(fields: [schemeId], references: [id], onDelete: Cascade)
+  unitId   String
+  unit     AdminUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@id([schemeId, unitId])
+  @@index([unitId])
+}
+
+/// Development project — always tenant-owned.
+model Project {
+  id               String        @id @default(cuid())
+  tenantId         String
+  tenant           Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  stage            ProjectStage
+  nameEn           String?
+  nameMr           String?
+  descriptionEn    String?
+  descriptionMr    String?
+  wardNo           String?
+  year             Int?
+  budget           Decimal?      @db.Decimal(14, 2)
+  familiesBenefited Int?
+  outcomeEn        String?
+  outcomeMr        String?
+  coverImageId     String?
+  coverImage       Media?        @relation(fields: [coverImageId], references: [id], onDelete: SetNull)
+  status           ContentStatus @default(DRAFT)
+
+  createdById   String
+  submittedAt   DateTime?
+  reviewedById  String?
+  reviewedAt    DateTime?
+  reviewNote    String?
+  publishedById String?
+  publishedAt   DateTime?
+  deletedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@index([tenantId, stage])
+}
+
+// ---------------------------------------------------------------------------
+// Media metadata
+// ---------------------------------------------------------------------------
+
+/// File metadata only. Bytes live in storage under `storageKey` (VPS disk now, object storage later).
+model Media {
+  id           String    @id @default(cuid())
+  tenantId     String?
+  tenant       Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  ownerUnitId  String
+  ownerUnit    AdminUnit @relation("MediaOwner", fields: [ownerUnitId], references: [id], onDelete: Restrict)
+  kind         MediaKind
+  storageKey   String    @unique
+  originalName String
+  mimeType     String
+  sizeBytes    Int
+  width        Int?
+  height       Int?
+  altEn        String?
+  altMr        String?
+  uploadedById String
+  uploadedBy   User      @relation(fields: [uploadedById], references: [id], onDelete: Restrict)
+  deletedAt    DateTime?
+
+  pageShareImages      Page[]
+  announcementAttachments Announcement[]
+  projectCovers        Project[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, kind])
+}
+
+// ---------------------------------------------------------------------------
+// Grievances
+// ---------------------------------------------------------------------------
+
+model Grievance {
+  id             String          @id @default(cuid())
+  tenantId       String
+  tenant         Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  trackingCode   String          @unique
+  category       String
+  citizenName    String
+  citizenPhone   String?
+  citizenEmail   String?
+  description    String
+  status         GrievanceStatus @default(OPEN)
+  assignedToId   String?
+  assignedTo     User?           @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
+  resolutionNote String?
+  resolvedAt     DateTime?
+  events         GrievanceEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, status])
+}
+
+model GrievanceEvent {
+  id          String          @id @default(cuid())
+  grievanceId String
+  grievance   Grievance       @relation(fields: [grievanceId], references: [id], onDelete: Cascade)
+  actorId     String?
+  actor       User?           @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  fromStatus  GrievanceStatus?
+  toStatus    GrievanceStatus
+  note        String?
+  createdAt   DateTime        @default(now())
+
+  @@index([grievanceId])
+}
+
+// ---------------------------------------------------------------------------
+// Audit log (append-only)
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id         String     @id @default(cuid())
+  actorId    String?
+  actor      User?      @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  actorRole  Role?
+  tenantId   String?
+  tenant     Tenant?    @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  unitId     String?
+  unit       AdminUnit? @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  action     String
+  entityType String
+  entityId   String?
+  before     Json?
+  after      Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime   @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([entityType, entityId])
+}
