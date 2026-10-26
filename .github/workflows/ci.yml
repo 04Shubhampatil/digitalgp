@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: admin
+          POSTGRES_DB: digitalgp_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U admin -d digitalgp_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://admin:admin@localhost:5432/digitalgp_test?schema=public
+      TEST_DATABASE_URL: postgresql://admin:admin@localhost:5432/digitalgp_test?schema=public
+      APP_ORIGIN: http://localhost:3000
+      APP_BASE_HOST: localhost
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
