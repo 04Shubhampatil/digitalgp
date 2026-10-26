@@ -334,6 +334,54 @@ export interface PublicGrievanceStatusDto {
   updatedAt: string;
 }
 
+export interface SectionRevisionDto {
+  id: string;
+  version: number;
+  status: ContentStatus;
+  /** Section data validated by the registry schema (src/config/sections.ts); null when omitted. */
+  data: Record<string, unknown> | null;
+  createdById: string;
+  submittedAt: string | null;
+  reviewedById: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+  publishedById: string | null;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** One registered section of a page; `draft`/`published` are null until content exists. */
+export interface PageSectionDto {
+  sectionKey: string;
+  sortOrder: number;
+  isVisible: boolean;
+  draft: SectionRevisionDto | null;
+  published: SectionRevisionDto | null;
+}
+
+export interface PageDto {
+  id: string;
+  tenantId: string;
+  pageKey: string;
+  isEnabled: boolean;
+  seoTitleEn: string | null;
+  seoTitleMr: string | null;
+  seoDescriptionEn: string | null;
+  seoDescriptionMr: string | null;
+  shareImageId: string | null;
+  sections: PageSectionDto[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Public page: published + visible sections only, ordered by `sortOrder`. */
+export interface PublicPageDto {
+  pageKey: string;
+  seo: { titleEn: string | null; titleMr: string | null; descriptionEn: string | null; descriptionMr: string | null; shareImageId: string | null };
+  sections: { sectionKey: string; sortOrder: number; data: Record<string, unknown>; publishedAt: string | null }[];
+}
+
 export interface AuditLogDto {
   id: string;
   actorId: string | null;
