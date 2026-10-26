@@ -192,6 +192,36 @@ Create body:
 }
 ```
 
+## Projects (admin)
+
+Development projects are always owned by one website (`tenantId`). Operators need module `projects`.
+
+| Method | Path                    | Capability | Body / query | Response |
+|--------|-------------------------|------------|--------------|----------|
+| GET    | `/projects`             | in scope   | `?tenantId&status&stage&year&q&limit&cursor` | paginated `ProjectDto` |
+| POST   | `/projects`             | `content:edit` (+ module `projects`) | see below | `201 ProjectDto` (status `DRAFT`) |
+| GET    | `/projects/:id`         | in scope   | –            | `ProjectDto` |
+| PATCH  | `/projects/:id`         | `content:edit` | any create field except `tenantId`; only `DRAFT`/`REJECTED` editable | `ProjectDto` |
+| DELETE | `/projects/:id`         | `content:edit` | –          | `204`; `409` while `PUBLISHED` |
+| POST   | `/projects/:id/:action` | see workflow | `{ note? }` | `ProjectDto`; audit `project.<action>` |
+
+Create body:
+
+```jsonc
+{
+  "tenantId": "<tenantId>",
+  "stage": "UPCOMING" | "ONGOING" | "COMPLETED",
+  "nameEn": "…", "nameMr": "…",                 // at least one
+  "descriptionEn": "…", "descriptionMr": "…",
+  "wardNo": "3" | null,
+  "year": 2026 | null,
+  "budget": 250000 | null,                      // number, ≤ 2 decimals; returned as "250000.00"
+  "familiesBenefited": 40 | null,
+  "outcomeEn": "…", "outcomeMr": "…",
+  "coverImageId": "<mediaId>" | null            // must be an IMAGE of the same website (or shared from an ancestor); 400 otherwise
+}
+```
+
 ## Audit logs
 
 `GET /audit-logs?tenantId&unitId&actorId&action&entityType&from&to&limit&cursor` → paginated `AuditLogDto`.
@@ -204,6 +234,7 @@ Roles with `audit:read` see events inside their scope; everyone sees their own a
 | GET    | `/public/:tenantSlug`                  | –     | `PublicTenantDto`; `404` if not published |
 | GET    | `/public/:tenantSlug/announcements`    | `?page=<pageKey>&priority&category&limit&cursor` | paginated `PublicAnnouncementDto` — own published items + shared items targeted at the GP or any ancestor; honours `publishAt`/`expiresAt` |
 | GET    | `/public/:tenantSlug/schemes`          | `?level&limit&cursor` | paginated `PublicSchemeDto` — own published + shared targeted schemes |
+| GET    | `/public/:tenantSlug/projects`         | `?stage&year&limit&cursor` | paginated `PublicProjectDto` |
 
 Tenant resolution for server-rendered pages: `resolvePublicTenant(host, pathname)` in
 [`src/lib/tenant.ts`](../src/lib/tenant.ts) supports `<slug>.<APP_BASE_HOST>`, a custom domain, or
@@ -211,5 +242,5 @@ Tenant resolution for server-rendered pages: `resolvePublicTenant(host, pathname
 
 ## Not yet implemented (planned)
 
-Projects, media upload, grievances, page sections (`/content/...`) — schema exists in
+Media upload, grievances, page sections (`/content/...`) — schema exists in
 `prisma/schema.prisma`; endpoints follow the same conventions and workflow.

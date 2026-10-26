@@ -49,6 +49,7 @@ export type ContentStatus = "DRAFT" | "SUBMITTED" | "UNDER_REVIEW" | "APPROVED" 
 export type AnnouncementPriority = "NORMAL" | "IMPORTANT" | "URGENT" | "EMERGENCY";
 export type ModuleKey = "announcements" | "schemes" | "projects" | "pages" | "media" | "grievances";
 export type SchemeLevel = "CENTRAL" | "STATE" | "DISTRICT" | "GRAM_PANCHAYAT";
+export type ProjectStage = "UPCOMING" | "ONGOING" | "COMPLETED";
 
 // ---------------------------------------------------------------------------
 // DTOs
@@ -215,6 +216,52 @@ export interface PublicSchemeDto {
   amountDisbursed: string | null;
   publishedAt: string | null;
   isShared: boolean;
+}
+
+export interface ProjectDto {
+  id: string;
+  tenantId: string;
+  stage: ProjectStage;
+  nameEn: string | null;
+  nameMr: string | null;
+  descriptionEn: string | null;
+  descriptionMr: string | null;
+  wardNo: string | null;
+  year: number | null;
+  /** Decimal serialised as a string with two decimals. */
+  budget: string | null;
+  familiesBenefited: number | null;
+  outcomeEn: string | null;
+  outcomeMr: string | null;
+  coverImageId: string | null;
+  status: ContentStatus;
+  createdById: string;
+  submittedAt: string | null;
+  reviewedById: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+  publishedById: string | null;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Public projection — no reviewer/author ids. */
+export interface PublicProjectDto {
+  id: string;
+  stage: ProjectStage;
+  nameEn: string | null;
+  nameMr: string | null;
+  descriptionEn: string | null;
+  descriptionMr: string | null;
+  wardNo: string | null;
+  year: number | null;
+  budget: string | null;
+  familiesBenefited: number | null;
+  outcomeEn: string | null;
+  outcomeMr: string | null;
+  coverImageId: string | null;
+  publishedAt: string | null;
 }
 
 export interface AuditLogDto {
