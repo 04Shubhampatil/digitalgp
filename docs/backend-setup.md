@@ -50,6 +50,7 @@ Check `http://localhost:3000/api/health`.
 | `SESSION_COOKIE_NAME`      | Optional, default `dgp_session` |
 | `SEED_SUPER_ADMIN_EMAIL` / `SEED_SUPER_ADMIN_PASSWORD` | Seed only |
 | `TEST_DATABASE_URL`        | Optional; tests default to `<DATABASE_URL database>_test` |
+| `UPLOADS_DIR`              | Optional, default `uploads` — media files on disk (git-ignored); back it up with the database |
 
 Never commit `.env`. `.env.example` documents every variable.
 

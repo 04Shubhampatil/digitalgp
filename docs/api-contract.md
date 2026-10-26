@@ -160,6 +160,126 @@ REJECTED --submit--> SUBMITTED        (or edit → DRAFT)
 
 Every transition writes an audit event `announcement.<action>`.
 
+## Schemes (admin)
+
+Same shape and workflow as announcements. A scheme is either GP-owned (`tenantId`) or shared
+(`ownerUnitId` + `targetUnitIds`, `content:share`). Operators need module `schemes`.
+
+| Method | Path                  | Capability | Body / query | Response |
+|--------|-----------------------|------------|--------------|----------|
+| GET    | `/schemes`            | in scope   | `?tenantId&ownerUnitId&status&level&q&limit&cursor` | paginated `SchemeDto` |
+| POST   | `/schemes`            | `content:edit` (+ module `schemes`) or `content:share` | see below | `201 SchemeDto` (status `DRAFT`) |
+| GET    | `/schemes/:id`        | in scope   | –            | `SchemeDto` |
+| PATCH  | `/schemes/:id`        | as create  | any create field; `targetUnitIds` only for shared items; only `DRAFT`/`REJECTED` editable | `SchemeDto` |
+| DELETE | `/schemes/:id`        | as create  | –            | `204`; `409` while `PUBLISHED` |
+| POST   | `/schemes/:id/:action`| see workflow | `{ note? }` | `SchemeDto`; audit `scheme.<action>` |
+
+Create body:
+
+```jsonc
+{
+  "level": "CENTRAL" | "STATE" | "DISTRICT" | "GRAM_PANCHAYAT",
+  "nameEn": "…", "nameMr": "…",                 // at least one
+  "descriptionEn": "…", "descriptionMr": "…",
+  "eligibilityEn": "…", "eligibilityMr": "…",
+  "processEn": "…", "processMr": "…",
+  "externalUrl": "https://…" | null,
+  "beneficiaryCount": 120 | null,              // aggregate only — no beneficiary PII
+  "amountDisbursed": 150000.5 | null,          // number, ≤ 2 decimals; returned as "150000.50"
+  // exactly one of:
+  "tenantId": "<tenantId>",
+  "ownerUnitId": "<unitId>", "targetUnitIds": ["<unitId>"]
+}
+```
+
+## Projects (admin)
+
+Development projects are always owned by one website (`tenantId`). Operators need module `projects`.
+
+| Method | Path                    | Capability | Body / query | Response |
+|--------|-------------------------|------------|--------------|----------|
+| GET    | `/projects`             | in scope   | `?tenantId&status&stage&year&q&limit&cursor` | paginated `ProjectDto` |
+| POST   | `/projects`             | `content:edit` (+ module `projects`) | see below | `201 ProjectDto` (status `DRAFT`) |
+| GET    | `/projects/:id`         | in scope   | –            | `ProjectDto` |
+| PATCH  | `/projects/:id`         | `content:edit` | any create field except `tenantId`; only `DRAFT`/`REJECTED` editable | `ProjectDto` |
+| DELETE | `/projects/:id`         | `content:edit` | –          | `204`; `409` while `PUBLISHED` |
+| POST   | `/projects/:id/:action` | see workflow | `{ note? }` | `ProjectDto`; audit `project.<action>` |
+
+Create body:
+
+```jsonc
+{
+  "tenantId": "<tenantId>",
+  "stage": "UPCOMING" | "ONGOING" | "COMPLETED",
+  "nameEn": "…", "nameMr": "…",                 // at least one
+  "descriptionEn": "…", "descriptionMr": "…",
+  "wardNo": "3" | null,
+  "year": 2026 | null,
+  "budget": 250000 | null,                      // number, ≤ 2 decimals; returned as "250000.00"
+  "familiesBenefited": 40 | null,
+  "outcomeEn": "…", "outcomeMr": "…",
+  "coverImageId": "<mediaId>" | null            // must be an IMAGE of the same website (or shared from an ancestor); 400 otherwise
+}
+```
+
+## Media
+
+File metadata is stored in Postgres; bytes live behind the storage adapter in
+[`src/lib/storage.ts`](../src/lib/storage.ts) (local disk under `UPLOADS_DIR`, default `./uploads`,
+key `<tenantId>/<id>.<ext>` or `shared/<ownerUnitId>/<id>.<ext>`). Limits: **10 MB**; types are detected
+from the file signature (the declared `Content-Type` is ignored): `image/jpeg`, `image/png`, `image/webp`,
+`image/gif` → `IMAGE`; `video/mp4`, `video/webm` → `VIDEO`; `application/pdf` → `DOCUMENT`.
+
+| Method | Path               | Capability | Body / query | Response |
+|--------|--------------------|------------|--------------|----------|
+| GET    | `/media`           | in scope   | `?tenantId&ownerUnitId&kind&q&limit&cursor` | paginated `MediaDto` |
+| POST   | `/media`           | `media:manage` (+ module `media`) for `tenantId`; `content:share` for `ownerUnitId` | `multipart/form-data`: `file`, `tenantId` **or** `ownerUnitId` (non-GP unit), `altEn?`, `altMr?` | `201 MediaDto`; `400 BAD_REQUEST` on size/type violations |
+| GET    | `/media/:id`       | in scope   | –            | `MediaDto` |
+| GET    | `/media/:id/file`  | in scope   | –            | file bytes (`Content-Type`, inline, `private, no-store`) |
+| PATCH  | `/media/:id`       | as upload  | `{ altEn?, altMr? }` | `MediaDto` |
+| DELETE | `/media/:id`       | as upload  | –            | `204` — soft-deletes the row and removes the file; references (`attachmentId`, `coverImageId`, `shareImageId`) become `null` |
+
+Audit events: `media.upload`, `media.update`, `media.delete`.
+
+## Grievances
+
+Citizens file grievances on the public website and track them with a code; staff handle them in the
+admin. Reads: roles with `grievance:manage` (GP admin and above) or operators granted module
+`grievances` (read-only). Writes: `grievance:manage` only.
+
+| Method | Path                               | Capability | Body / query | Response |
+|--------|------------------------------------|------------|--------------|----------|
+| GET    | `/grievances`                      | read (see above) | `?tenantId&status&category&assignedToId&q&limit&cursor` | paginated `GrievanceDto` |
+| GET    | `/grievances/:id`                  | read       | –            | `GrievanceDto` (with `events`) |
+| POST   | `/grievances/:id/assign`           | `grievance:manage` | `{ assignedToId: userId \| null }` — must be an active user whose assignment covers the website (`400` otherwise) | `GrievanceDto` |
+| POST   | `/grievances/:id/status`           | `grievance:manage` | `{ status: "IN_PROGRESS" \| "RESOLVED" \| "REJECTED", note? }` — `note` required when closing and is shown to the citizen | `GrievanceDto`; `409 INVALID_TRANSITION` |
+
+Status moves: `OPEN → IN_PROGRESS | RESOLVED | REJECTED`, `IN_PROGRESS → RESOLVED | REJECTED`,
+`RESOLVED | REJECTED → IN_PROGRESS` (reopen). Each move adds a `GrievanceEvent` and an audit row
+`grievance.status.<status>`; assignment writes `grievance.assign`. Audit payloads never contain citizen
+contact details.
+
+## Page content (sections)
+
+Each website has one `Page` row per key in `src/config/pages.ts`. A page is made of **sections**
+registered in [`src/config/sections.ts`](../src/config/sections.ts) (`home`: `hero`, `quick-stats`,
+`welcome`, `leaders`, `quick-links`; `about`: `overview`, `history`, `geography`, `members`, `office`;
+more pages follow). Section data is JSON validated by the section's zod schema (unknown keys rejected;
+any `*ImageId` / `*PhotoId` / `*MediaId` must reference media of the website or shared by an ancestor
+unit). Each section keeps a **draft** revision and a **published** revision; the public site serves only
+the published one, so a new draft never changes the live page until it is published.
+
+| Method | Path | Capability | Body | Response |
+|--------|------|------------|------|----------|
+| GET    | `/content/:tenantId/pages`                 | in scope | – | `PageDto[]` |
+| GET    | `/content/:tenantId/pages/:pageKey`        | in scope | – | `PageDto` — every registered section, with `draft` / `published` (`null` until content exists) |
+| PATCH  | `/content/:tenantId/pages/:pageKey`        | `tenant:update` | `{ isEnabled?, seoTitleEn?, seoTitleMr?, seoDescriptionEn?, seoDescriptionMr?, shareImageId? }` | `PageDto`; audit `page.update` |
+| PUT    | `/content/:tenantId/pages/:pageKey/sections/:sectionKey/draft` | `content:edit` (+ module `pages`) | `{ data, isVisible?, sortOrder? }` | `PageSectionDto` — creates version `n+1` or updates the current `DRAFT`/`REJECTED` draft in place; `409` while the draft is submitted/approved; `400 VALIDATION_ERROR` on schema failure; audit `section.save` |
+| DELETE | `…/sections/:sectionKey/draft`              | `content:edit` (+ module `pages`) | – | `PageSectionDto` — discards a `DRAFT`/`REJECTED` draft; audit `section.discard` |
+| POST   | `…/sections/:sectionKey/:action`            | see workflow | `{ note? }` | `PageSectionDto` — `submit`, `start_review`, `approve`, `reject` (note required), `publish` (draft becomes published, previous published is `ARCHIVED`), `unpublish` (published goes offline and becomes the draft again; refused with `409` while another draft exists); audit `section.<action>` |
+
+`archive` is not available for sections — use `unpublish` and discard the draft.
+
 ## Audit logs
 
 `GET /audit-logs?tenantId&unitId&actorId&action&entityType&from&to&limit&cursor` → paginated `AuditLogDto`.
@@ -171,12 +291,18 @@ Roles with `audit:read` see events inside their scope; everyone sees their own a
 |--------|----------------------------------------|-------|----------|
 | GET    | `/public/:tenantSlug`                  | –     | `PublicTenantDto`; `404` if not published |
 | GET    | `/public/:tenantSlug/announcements`    | `?page=<pageKey>&priority&category&limit&cursor` | paginated `PublicAnnouncementDto` — own published items + shared items targeted at the GP or any ancestor; honours `publishAt`/`expiresAt` |
+| GET    | `/public/:tenantSlug/schemes`          | `?level&limit&cursor` | paginated `PublicSchemeDto` — own published + shared targeted schemes |
+| GET    | `/public/:tenantSlug/projects`         | `?stage&year&limit&cursor` | paginated `PublicProjectDto` |
+| GET    | `/public/:tenantSlug/media/:mediaId`   | –     | file bytes (`public, max-age=3600`, `nosniff`) — only the website's own media or shared media of an ancestor unit; `404` otherwise |
+| GET    | `/public/:tenantSlug/pages/:pageKey`   | –     | `PublicPageDto` — SEO fields + visible, published sections ordered by `sortOrder`; `404` when the page is disabled or the website unpublished |
+| POST   | `/public/:tenantSlug/grievances`       | body `{ category, citizenName, citizenPhone?, citizenEmail?, description (10–5000) }` | `201 PublicGrievanceReceiptDto` `{ trackingCode: "GRV-XXXXXXXX", status, createdAt }`; `429` after 5 submissions / hour per IP; audit `grievance.submit` |
+| GET    | `/public/:tenantSlug/grievances/:trackingCode` | – | `PublicGrievanceStatusDto` — status + timeline + resolution note (when closed); never citizen details; `404` on another website |
 
 Tenant resolution for server-rendered pages: `resolvePublicTenant(host, pathname)` in
 [`src/lib/tenant.ts`](../src/lib/tenant.ts) supports `<slug>.<APP_BASE_HOST>`, a custom domain, or
 `/<slug>/…` as the first path segment.
 
-## Not yet implemented (planned)
+## Section registry
 
-Schemes, projects, media upload, grievances, page sections (`/content/...`) — schema exists in
-`prisma/schema.prisma`; endpoints follow the same conventions and workflow.
+Pages other than `home` and `about` currently have no registered sections (`sections: []`); add
+definitions in `src/config/sections.ts` to enable them — no migration needed.
