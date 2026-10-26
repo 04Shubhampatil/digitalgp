@@ -1,131 +1,140 @@
 # Frontend implementation plan (Stage 3)
 
-Status: **proposal — not started**. Depends on `docs/requirements/frontend-inspection-summary.md`.
-Owner: frontend. Backend touch-points are called out explicitly so the API contracts can be
-agreed before integration (Stage 4).
+Status: **proposal — not started**. Revised after `feat/backend-foundation` (#1) merged.
+Inputs: `docs/requirements/frontend-inspection-summary.md` (Figma + circular inventory),
+`docs/api-contract.md` + `src/types/api.ts` (backend contract), `src/lib/permissions.ts` (roles),
+`src/config/pages.ts` (page registry), `prisma/schema.prisma` (content model).
+Owner: frontend. Backend-owned files (`prisma/`, `src/lib/`, `src/features/`, `src/app/api/`, `tests/`)
+are not touched; shared files (`src/types/api.ts`, `src/config/`, `package.json`) change only by agreement.
 
-## 1. Bootstrap (frontend branch, coordinated `package.json`)
+## 0. What the backend already fixes (frontend must follow, not re-decide)
 
-| Item | Decision (proposed) | Why |
+| Topic | Backend decision | Frontend consequence |
 |---|---|---|
-| Next.js | latest stable App Router (`next@15`), React 19, TypeScript strict | spec requires App Router; nothing installed yet |
-| Styling | Tailwind CSS v4 with design tokens in `src/styles/globals.css` (`@theme`) | spec; tokens from Figma §4.4.3 |
-| Fonts | `next/font/google`: Noto Sans Devanagari (body, mr+en), Inter (auth), Sora + Manrope (brand) | Figma |
-| i18n | `next-intl` with `src/i18n/messages/{mr,en}.json`; locale in cookie, not URL (tenant already owns the first path segment) | circular rule 3 |
-| Forms | `react-hook-form` + `zod` (shared schemas in `src/types` so backend validators can be reused) | consistent client/server validation |
-| Data | Server Components fetch via typed service layer `src/lib/api/*`; client mutations via Route Handlers; `@tanstack/react-query` **not** added until needed | keep deps minimal |
-| Charts | `recharts` (pie/donut/bar on Finance, Schemes, Dashboard) | small, SSR-safe |
-| Icons | `lucide-react` | Figma uses simple line icons |
-| Tables | hand-rolled `DataTable` on top of `@tanstack/react-table` | sortable/paginated admin tables |
-| Drag reorder | `@dnd-kit/sortable` (only in CMS editors) | row drag handles in every editor table |
-| Maps | Google Maps embed iframe (no API key needed) first; Leaflet later if GIS layer is confirmed | circular "GIS-style map" |
-| Testing | Vitest + Testing Library (unit), Playwright (e2e: login, role nav, tenant routing) | spec |
-| Lint | ESLint (`next/core-web-vitals`) + Prettier | spec |
+| Roles | `SUPER_ADMIN`, `TALUKA_ADMIN`, `BLOCK_ADMIN`, `GP_ADMIN`, `DATA_ENTRY_OPERATOR` (`Role` in `types/api.ts`); user holds one or more assignments `{ role, unitId, modules[] }` | nav/visibility derives from `CurrentUserDto.capabilities` + assignments, **not** from a single role; Figma's 3-role matrix is a design gap (summary §4.4.2) |
+| Capabilities | `hierarchy:*`, `tenant:*`, `user:*`, `content:read/edit/submit/review/publish/share`, `media:manage`, `grievance:manage`, `audit:read(-own)`, `roles:manage` (`src/lib/permissions.ts`) | UI hides controls by capability; server re-checks everything |
+| Content workflow | `DRAFT → SUBMITTED → UNDER_REVIEW → APPROVED → PUBLISHED → ARCHIVED`, `REJECTED` (note required); actions `submit / start_review / approve / reject / publish / unpublish / archive` (`src/features/content/workflow.ts`); only `DRAFT`/`REJECTED` editable | status pills + action buttons per status; editors lock when not editable; DEO sees *Submit for review*, GP Admin+ sees *Approve / Reject / Publish* |
+| Tenant status | `DRAFT \| PUBLISHED \| SUSPENDED` (`TenantStatus`) | Figma's "Not Created" = GP unit with `tenantId: null` in `AdminUnitDto` |
+| Tenant addressing | `resolvePublicTenant(host, path)` supports `<slug>.<APP_BASE_HOST>`, custom domain, or `/<slug>` first segment | public routes live under `(public)/[tenant]`; `middleware.ts` rewrites host-based requests to `/<slug>/…` using the same rules as `extractTenantKey` (re-implemented without Prisma, middleware is edge) |
+| Hierarchy | `STATE > DISTRICT > TALUKA > BLOCK (optional) > GRAM_PANCHAYAT`, materialised `path` | District/Taluka/GP scope selectors in the topbar are `GET /hierarchy/units?parentId&level` cascades |
+| Pages | `PAGE_KEYS` (15 + optional `progress`) in `src/config/pages.ts`; `Page` row per (tenant, pageKey) with SEO fields; `Section` rows per `sectionKey` with `draft` / `published` `SectionRevision` (JSON validated by a per-key zod schema) | **every editor block = one `sectionKey`**; the frontend section registry extends `pages.ts` with UI metadata (label i18n, nav group, section list) and the public page renders `published` revisions only |
+| Locales | `Locale = "EN" \| "MR" \| "HI"`; content fields are `*En` / `*Mr` pairs | UI chrome via i18n dictionaries (mr/en, hi later); content picks the field for the active locale with fallback to the other |
+| API shape | `{ data }`, lists `{ data, page: { nextCursor, limit } }`, errors `{ error: { code, message, details } }`; cookie session `dgp_session`; same-origin fetch passes CSRF | one `apiFetch` helper that unwraps envelopes, maps `VALIDATION_ERROR.details[]` onto form fields and `UNAUTHENTICATED` to `/login`; tables use **cursor** pagination (no page numbers — Figma's "1 2 3" pager becomes *Load more / Next*) |
+| Toolchain | Next 16.4.3, React 19.3, TypeScript 5.9 strict, zod 4, Vitest 5 (node env, DB-backed integration), ESLint 9 flat config, `@/*` alias, `serverExternalPackages` for Prisma/argon2 | add only what the UI needs (below); keep `vitest.config.ts` shared — frontend unit tests go in `src/**/*.test.ts(x)` with `// @vitest-environment jsdom` |
 
-Config files to add: `package.json`, `tsconfig.json`, `next.config.ts`, `postcss.config.mjs`,
-`eslint.config.mjs`, `vitest.config.ts`, `playwright.config.ts`, `.env.example`, `middleware.ts`.
-**Prisma / DB / auth internals are backend-owned and will not be touched.**
+## 1. Dependencies to add (frontend PR, coordinated in `package.json`)
 
-## 2. Routing
+| Package | Purpose | Note |
+|---|---|---|
+| `tailwindcss@4`, `@tailwindcss/postcss` | styling; tokens in `src/styles/globals.css` `@theme` from summary §4.4.4 | spec requires Tailwind |
+| `next-intl` | UI strings `src/i18n/messages/{mr,en}.json`; locale from cookie, default `mr` on public, `en` in admin | circular rule 3 |
+| `react-hook-form`, `@hookform/resolvers` | forms; **reuse the backend zod schemas** from `src/features/*/validators.ts` where they are pure (no DB) — otherwise mirror them in `src/lib/forms/schemas.ts` | zod 4 already present |
+| `lucide-react` | icons | |
+| `@tanstack/react-table` | sortable admin tables with cursor paging | |
+| `@dnd-kit/core`, `@dnd-kit/sortable` | row reorder in section editors (`sortOrder`) | |
+| `recharts` | Finance / Schemes / Progress charts | SSR-safe |
+| `@testing-library/react`, `@testing-library/jest-dom`, `jsdom` | component tests | dev |
+| `@playwright/test` | e2e (login per role, nav visibility, tenant routing, published-only) | dev; CI job added later with backend |
+| `next/font` (built-in) | Noto Sans Devanagari, Inter, Sora, Manrope | no package |
+
+Not added: react-query (Server Components + Route Handlers suffice for v1), Leaflet (Google Maps embed first).
+
+## 2. Routing (`src/app`)
 
 ```
-src/app
-├─ layout.tsx                      html/body, fonts, intl provider
-├─ (public)/[tenant]/layout.tsx     resolves tenant → GovtStrip + Navbar + Footer (published data only)
-│   ├─ page.tsx                    1 Home
-│   ├─ about | projects | schemes | announcements | infrastructure | finance | services
-│   │  culture | employment | education | grievance | environment | gallery | contact
-│   ├─ search/page.tsx             keyword search (rule 8)
-│   └─ sitemap/page.tsx            content index (rule 7)
-├─ (auth)/login | forgot-password | reset-password
-├─ (admin)/admin/layout.tsx        session guard (server) → role-aware Sidebar + Topbar
-│   ├─ dashboard/page.tsx          switches on role: SuperAdminDashboard | BlockAdminDashboard | GpCmsDashboard
-│   ├─ hierarchy/                  07 District & Taluka management (+ Add Taluka / Add GP modals)
-│   ├─ websites/                   03 GP Website management (list) ; [websiteId]/ = GP CMS dashboard
-│   │   └─ [websiteId]/pages/[pageKey]/page.tsx   per-page editor (15 keys from page registry)
-│   ├─ block-admins/               08 list, 09 create, 10 assign access, 11 profile
-│   ├─ roles/                      18 Roles & Permissions matrix
-│   ├─ announcements/              22 Public announcements (+ Publish modal, success modal)
-│   ├─ audit-logs/                 17
-│   ├─ media/                      media library (used by editors' image pickers)
-│   └─ profile/
-└─ api/                            backend-owned
+app/
+├─ layout.tsx                         fonts, <html lang>, NextIntl provider           (replaces backend placeholder)
+├─ middleware.ts                      host → /<slug> rewrite; admin session cookie presence check
+├─ (public)/[tenant]/layout.tsx       GET /public/:slug → 404 if not PUBLISHED; GovtStrip + Navbar + Footer
+│   ├─ page.tsx                       home            ─┐
+│   ├─ about … contact/page.tsx       14 pages         ├ each renders published sections for its pageKey
+│   ├─ progress/page.tsx              optional 16th   ─┘  (hidden unless Page.isEnabled)
+│   ├─ announcements/page.tsx         + GET /public/:slug/announcements?page=announcements
+│   ├─ search/page.tsx                client-side over published sections until a search API exists
+│   └─ sitemap/page.tsx               from page registry + enabled pages
+├─ (auth)/login | forgot-password | reset-password?token=
+└─ (admin)/admin/layout.tsx           GET /auth/me (server) → redirect /login; AdminShell(assignments, capabilities)
+    ├─ dashboard/                      picks SuperAdmin | Taluka/Block | GpCms view by highest role
+    ├─ hierarchy/                      units tree (hierarchy:read/manage) + Add Taluka / Add GP modals
+    ├─ websites/                       GET /tenants (+ GP units without tenant = "Not Created")
+    │   └─ [tenantId]/                 GP CMS dashboard (setup progress from section statuses)
+    │       └─ pages/[pageKey]/        section editors (draft revisions) + workflow bar
+    ├─ users/                          replaces Figma "Block Admins": list/create/assign for every creatable role, incl. DEO module grants
+    ├─ roles/                          read-only capability matrix (ROLE_CAPABILITIES is fixed in code; "Save" hidden until roles:manage is editable)
+    ├─ announcements/                  GP-owned + shared, workflow actions, targets picker
+    ├─ media/                          library (needs media API)
+    ├─ audit-logs/                     GET /audit-logs with filters
+    └─ profile/                        change-password
 ```
 
-- **Tenant resolution**: `middleware.ts` rewrites `<slug>.<root-domain>/*` → `/<slug>/*` so both
-  subdomain (live sites) and path (`domain.com/gp-name`) work; pages only ever see `[tenant]`.
-  Unknown slug → `notFound()`. Needs backend endpoint `GET /api/v1/tenants/:slug` (public,
-  published only).
-- `src/config/pages.ts` — single registry `{ key, path, navGroup, sidebarGroup, i18nKey, editorSections[] }`
-  for the 15 pages; drives public nav, admin sidebar, CMS Page Overview table and editor routing.
-- `src/config/roles.ts` — `SUPER_ADMIN | BLOCK_ADMIN | GP_ADMIN | DATA_ENTRY_OPERATOR` + nav
-  visibility map. (Figma only draws Super/Block/Normal — see inspection doc §4.4.2 for the gap.)
+`src/config/pages.ts` stays backend-shared; the frontend adds `src/config/page-sections.ts`:
+`{ pageKey, navGroup, sidebarGroup, i18nKey, sections: [{ sectionKey, editor, public }] }` — the
+section keys must match the backend's per-key zod schemas once `/content` endpoints land (agree the
+list first; proposal in §5).
 
 ## 3. Component library (`src/components`)
 
-**ui/** Button (primary/secondary/ghost/danger), Input, Textarea, Select (native + searchable),
-Checkbox, Toggle, Badge/StatusPill (variants: published, draft, notCreated, scheduled, important,
-emergency, urgent, allowed, notAllowed, viewOnly, ownActivity), Card, MetricCard, ProgressBar,
-Tabs, Modal/Dialog, ConfirmDialog, Toast, Pagination, Skeleton, EmptyState, ErrorState,
-DataTable, DropdownMenu (•••), Avatar, FileDropzone, DatePicker, LanguageSwitcher.
+**ui/** Button, Input, Textarea, Select (+ async cascade), Checkbox, Toggle, StatusPill (variants =
+`ContentStatus` ∪ `TenantStatus` ∪ `AnnouncementPriority` ∪ allowed/notAllowed/viewOnly/ownActivity),
+Card, MetricCard, ProgressBar, Tabs, Dialog, ConfirmDialog, Toast, CursorPager, Skeleton, EmptyState,
+ErrorState, DataTable, DropdownMenu, Avatar, FileDropzone, DatePicker, LanguageSwitcher.
 
-**layout/** AdminSidebar (3 variants = Admin/Block/GP CMS navbars from Figma), AdminTopbar
-(District/Taluka/GP scope selects, search, lang, user menu), PublicGovtStrip, PublicNavbar
-(grouped dropdowns), PublicFooter, AuthSplitLayout.
+**layout/** AdminSidebar (groups filtered by capability; Figma's 3 navbar variants collapse into one
+data-driven sidebar), AdminTopbar (scope cascade District → Taluka → GP, search, lang, user menu),
+PublicGovtStrip, PublicNavbar (grouped dropdowns from `page-sections.ts`), PublicFooter, AuthSplitLayout.
 
-**admin/** CmsPageOverviewTable, WebsiteSetupProgress, WebsiteDetailsCard, QuickActions,
-ActivityFeed, StatusBars, editor blocks: `SectionCard` (title + "Show this section" toggle),
-`BannerEditor`, `SortableRowTable`, `CtaListEditor`, `ImageSlotPicker`, `StatCardsEditor`,
-`WeatherEditor`, `SarpanchMessageEditor`, `CategoryManager`, `NoticeManager`.
+**admin/** WorkflowBar (status + allowed actions from `TRANSITIONS` mirrored client-side), SectionCard
+(title + `isVisible` toggle + revision status), SortableRowTable, BannerEditor, CtaListEditor,
+ImageSlotPicker (media API), StatCardsEditor, WeatherEditor, SarpanchMessageEditor, CategoryManager,
+NoticeManager, CmsPageOverviewTable, SetupProgress, QuickActions, ActivityFeed (audit logs), ScopeTargetPicker
+(for shared announcements: all / taluka / selected GPs), ModuleGrantEditor (DEO modules × canWrite).
 
-**public/** Hero, StatsStrip, ServiceIconGrid, NewsList, LeaderCards, OfficerCards,
-ProjectCard (+ BeforeAfterSlider), SchemeCard, DonutChart/BarChart wrappers, WardMap,
-BudgetPieChart, GalleryGrid, VideoGrid, ComplaintForm, TrackComplaint, FeedbackForm,
-ContactCard, MapEmbed, WeatherWidget, ThoughtOfTheDay, ProgressMeter, Calendar.
+**public/** Hero, StatsStrip, ServiceIconGrid, NewsList, LeaderCards, OfficerCards, ProjectCard +
+BeforeAfterSlider, SchemeCard, DonutChart/BarChart, WardMap, BudgetPieChart, GalleryGrid, VideoGrid,
+ComplaintForm, TrackComplaint, FeedbackForm, ContactCard, MapEmbed, WeatherWidget, ThoughtOfTheDay,
+ProgressMeter, EventCalendar, AnnouncementList (`isShared` badge).
 
-**forms/** Field wrappers with label/hint/error, zod resolvers, `useConfirmLeave`.
+**lib/api/** `apiFetch` (envelope + error mapping), typed clients per feature (`auth`, `hierarchy`,
+`tenants`, `users`, `announcements`, `audit`, `public`) importing DTOs from `@/types/api`;
+`MockAdapter` behind `NEXT_PUBLIC_API_MODE=mock` for endpoints that do not exist yet.
 
-## 4. Build order (each step = one reviewable PR)
+## 4. Build order (one reviewable PR each)
 
-1. Bootstrap + tokens + fonts + i18n skeleton + lint/test config; `/` renders. *(blocks everything)*
-2. `ui/` primitives + Storybook-less playground route `/dev/ui` (dev only) + unit tests for StatusPill/DataTable.
-3. Auth screens (login with role select, forgot, reset) wired to a typed `authService` with mock adapter.
-4. Admin shell: sidebar variants, topbar, role-based nav, session guard stub, logout modal.
-5. Super Admin: dashboard, GP website management, district/taluka management + modals, block admins (list/create/assign/profile), roles matrix, audit logs, announcements (+ publish/success modals).
-6. Block Admin: dashboard, assigned websites.
-7. GP CMS dashboard + page-overview table.
-8. Editor framework (`SectionCard`, `SortableRowTable`, banner editor) + **Home** editor end-to-end.
-9. Remaining 14 editors from the registry (mostly configuration of the same blocks).
-10. Public shell (govt strip, navbar, footer, tenant resolution, language switch) + **Home**.
-11. Remaining 14 public pages + search + sitemap.
-12. Playwright: login per role, nav visibility, tenant routing, publish-only visibility; a11y pass.
+1. Tailwind + tokens + fonts + next-intl + `apiFetch` + jsdom test setup; replace placeholder `layout.tsx`. *(blocks everything)*
+2. `ui/` primitives + `/dev/ui` playground (dev-only) + unit tests (StatusPill, DataTable, CursorPager).
+3. Auth: login (`POST /auth/login`; the Figma "Login as" dropdown becomes informational since the role comes from the session), forgot/reset, change-password, `mustResetPassword` redirect.
+4. Admin shell: `/auth/me` guard, capability-driven sidebar, scope cascade topbar, logout dialog.
+5. Super/Taluka/Block admin screens on **real APIs**: dashboard (counts from `/hierarchy/units`, `/tenants`, `/users`), hierarchy + modals, websites list + create, users (all roles, DEO module grants), roles matrix (read-only), audit logs, announcements (+ workflow actions, targets, success modal).
+6. GP CMS dashboard + CMS Page Overview (section status aggregation) — **needs `/content` endpoints**; mocked until then.
+7. Editor framework (SectionCard, SortableRowTable, BannerEditor, WorkflowBar) + Home editor; agree section keys/schemas with backend as they land.
+8. Remaining 14 editors from `page-sections.ts`.
+9. Public shell (`/public/:slug`, govt strip, navbar, footer, locale switch) + Home from published sections.
+10. Remaining public pages, announcements feed, grievance form (needs grievance API), search, sitemap.
+11. Playwright: login per seeded role (`npm run db:seed` users), nav visibility, tenant routing, published-only; a11y pass.
 
-## 5. Backend contracts needed (Stage 4 — to agree with backend dev)
+## 5. Backend dependencies still open (Stage 4 — agree with backend)
 
-All under `/api/v1`, JSON, `{ data, error, meta }` envelope, cursor/offset pagination `?page&pageSize`.
+Implemented and usable now: auth, hierarchy, tenants, users/assignments/modules, announcements (+ workflow), audit, public tenant + announcements feed.
 
-| Area | Endpoints (proposed) | Used by |
+| Need | Proposed shape (to confirm) | Blocks |
 |---|---|---|
-| Auth | `POST auth/login {email,password,role}` → session cookie; `POST auth/logout`; `POST auth/forgot-password`; `POST auth/reset-password`; `GET auth/me` → `{ user, role, scope:{districtIds,talukaIds,gpIds}, permissions[] }` | auth, admin guard, nav |
-| Tenants | `GET tenants/:slug` (public) → `{ id, slug, name_mr, name_en, district, taluka, contact, logo, socialLinks, publishedPages[] }` | public layout |
-| Content (public) | `GET tenants/:slug/pages/:pageKey` → published JSON for that page (shape per `editorSections`) ; `GET tenants/:slug/search?q=` ; `GET tenants/:slug/announcements` | public pages |
-| Hierarchy | `GET/POST districts`, `GET/POST talukas`, `GET/POST gram-panchayats` + stats | 07, modals |
-| Websites | `GET websites?district&taluka&status&q`, `POST websites` (create GP website), `GET websites/:id` (setup progress, page statuses), `GET/PUT websites/:id/pages/:pageKey` (draft), `POST …/publish`, `POST …/preview-token` | 03, GP CMS, editors |
-| Accounts | `GET/POST block-admins`, `PUT block-admins/:id/access`, `GET/POST gp-admins`, `GET/POST operators` (module permissions) | 08–11, DEO mgmt |
-| Roles | `GET roles/permissions`, `PUT roles/permissions` | 18 |
-| Announcements | `GET announcements?scope`, `POST announcements` `{ title, category, priority, scope:{all|taluka|gpIds[]}, pages[], publishAt }`, `PUT …/:id`, `DELETE` | 22 |
-| Media | `POST media` (multipart) → `{ id, url, width, height }`, `GET media?websiteId` | editors |
-| Grievances | `POST tenants/:slug/grievances` (public), `GET tenants/:slug/grievances/:ticket` (track), admin list/update | 12 |
-| Audit | `GET audit-logs?actor&action&from&to` | 17 |
-| Shared data | `GET shared/dignitaries?district&taluka` (ministers, ZP/PS officers) | public About/Home |
+| Page sections | `GET /tenants/:id/pages` → `[{ pageKey, isEnabled, seo…, sections: [{ sectionKey, sortOrder, isVisible, draft?: {status, data, version}, published?: {…} }] }]`; `PUT /tenants/:id/pages/:pageKey/sections/:sectionKey` (draft data) ; `PATCH …/sections` (order/visibility); `POST …/sections/:sectionKey/:action` (workflow); `PATCH /tenants/:id/pages/:pageKey` (SEO, isEnabled); public: `GET /public/:slug/pages/:pageKey` → published data only | steps 6–10 |
+| Section key list + zod schemas | frontend proposes keys per page from Figma (summary §4.4.1 / §4.4.3); backend owns the schemas in `src/features/content/validators` | step 7 |
+| Media | `POST /media` multipart → `MediaDto { id, url, kind, width, height, altEn, altMr }`; `GET /media?tenantId&kind&cursor`; `DELETE /media/:id`; a public URL scheme for `storageKey` | image pickers, gallery |
+| Schemes / Projects | CRUD + workflow per `Scheme` / `Project` models; public list endpoints | schemes, projects pages |
+| Grievances | public `POST /public/:slug/grievances` → `{ trackingCode }`, `GET /public/:slug/grievances/:trackingCode`; admin list/assign/resolve | grievance page |
+| Dashboard stats | counts by status for scope (tenants, users, announcements, pending reviews) — or frontend aggregates list endpoints until then | dashboards |
+| Search | `GET /public/:slug/search?q=` over published sections + announcements | search page |
+| Shared "Our Leaders" / dignitaries | district/taluka-level section data targeted like shared announcements (open decision #10) | About/Home |
+| Preview of draft site | signed preview token or session-gated `?preview=1` render of draft revisions | "Preview Website" button |
 
-Open backend questions: content-status enum (draft/submitted/approved/published/rejected?),
-approval workflow endpoints (not in Figma), DEO module-permission shape, preview of unpublished
-content (signed URL vs session), image storage URL base.
+Open decisions carried from `docs/requirements/requirements.md` §9 that affect UI: separate GP Admin login
+(now a backend role — UI shows it), who creates GP websites (`tenant:create` = Super + Taluka admin),
+Hindi (locale exists; UI dictionaries mr/en first), 16th page (`progress` key exists; off by default).
 
 ## 6. Mocking strategy
 
-`src/lib/api/client.ts` picks `MockAdapter` when `NEXT_PUBLIC_API_MODE=mock` (default in dev
-until endpoints exist); fixtures in `tests/fixtures/*.json` mirror the contract shapes above and
-are the same data the Figma frames show (Savardari / Pune / Shirur). Switching to the real
-backend = env change, no UI edits.
+`src/lib/api/client.ts` selects `MockAdapter` per feature when `NEXT_PUBLIC_API_MODE=mock`; fixtures
+in `tests/fixtures/frontend/*.json` mirror the DTOs in `src/types/api.ts` and the seed data
+(Maharashtra › Pune › Haveli/Mulshi › `ganeshwadi`, `padegaon`, `vasantpuri`). Implemented endpoints
+are hit for real against `npm run dev` + `docker compose up` + `db:seed`; only the §5 gaps are mocked.

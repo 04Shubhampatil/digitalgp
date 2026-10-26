@@ -214,8 +214,11 @@ Every row-table supports drag handle ⋮⋮, add, edit, delete, visibility toggl
 > Taluka (Block) Admin, GP Admin, Data Entry Operator**. There is no GP-Admin or DEO login,
 > no "create DEO account" screen and no approval queue in Figma — the only workflow states are
 > Not Created → Draft → Published at website level and Not Started → In Progress → (Completed)
-> per CMS page. The frontend will model 4 roles in `src/config/roles.ts` and reuse the
-> Block-Admin shell for GP Admin / DEO until designs exist; **backend + design owner must confirm.**
+> per CMS page. **Resolved on the backend side** (`feat/backend-foundation`): `src/types/api.ts`
+> defines 5 roles (`SUPER_ADMIN`, `TALUKA_ADMIN`, `BLOCK_ADMIN`, `GP_ADMIN`, `DATA_ENTRY_OPERATOR`),
+> capability-based permissions and the full review workflow. The admin UI follows the API and
+> reuses the Block-Admin shell for GP Admin / DEO; **the design owner still needs to add those
+> screens (DEO module grants, review queue, reject-with-note).**
 
 #### 4.4.3 User Dashboard section — public website pages (`375:11288`)
 
