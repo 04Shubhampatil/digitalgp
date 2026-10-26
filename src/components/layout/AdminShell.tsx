@@ -22,15 +22,15 @@ export async function AdminShell({ user, children }: { user: CurrentUserDto; chi
     {
       label: t("management"),
       items: [
-        { href: "/admin/hierarchy", label: t("hierarchy"), show: hasCapability(user, "hierarchy:read") },
-        { href: "/admin/websites", label: t("websites"), show: hasCapability(user, "tenant:read") },
-        { href: "/admin/users", label: t("users"), show: hasCapability(user, "user:read") },
+        { href: "/admin/hierarchy", label: t("hierarchy.title"), show: hasCapability(user, "hierarchy:read") },
+        { href: "/admin/websites", label: t("websites.title"), show: hasCapability(user, "tenant:read") },
+        { href: "/admin/users", label: t("users.title"), show: hasCapability(user, "user:read") },
       ],
     },
     {
       label: t("contentManagement"),
       items: [
-        { href: "/admin/announcements", label: t("announcements"), show: hasCapability(user, "content:read") },
+        { href: "/admin/announcements", label: t("announcements.title"), show: hasCapability(user, "content:read") },
         { href: "/admin/schemes", label: t("schemes"), show: hasCapability(user, "content:read") },
         { href: "/admin/projects", label: t("projects"), show: hasCapability(user, "content:read") },
         { href: "/admin/media", label: t("media"), show: hasCapability(user, "media:manage") },
