@@ -40,3 +40,5 @@ Thumbs.db
 
 # uploads stored on VPS during early phase
 uploads/
+# Prisma generated client
+src/generated/

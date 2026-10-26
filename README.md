@@ -5,103 +5,77 @@ Multi-tenant SaaS platform for Gram Panchayat public websites and administration
 Stack: Next.js (App Router) · TypeScript · Tailwind CSS · PostgreSQL · Prisma · Vitest + Playwright.
 Deployment: Hostinger Linux VPS · Nginx · PM2 · GitHub Actions.
 
-> Status: **folder structure only** — no application code yet. Every empty directory holds a `.gitkeep`
-> so the layout is tracked in git. Remove the `.gitkeep` when the first real file lands in that folder.
+> Status: **backend foundation implemented** (auth, authorization, hierarchy, tenants, users, announcements, audit).
+> Frontend pages/components are not started; empty folders hold a `.gitkeep`.
 
 ## Folder structure
 
 ```
 digitalgp/
-├── .github/workflows/        GitHub Actions (lint, test, build, deploy to VPS)
-├── deploy/                   Server configuration committed with the code
-│   ├── nginx/                Reverse proxy + HTTPS + per-tenant host rules
-│   ├── pm2/                  PM2 ecosystem config
-│   └── github-actions/       Deploy helper scripts used by the workflows
+├── .github/workflows/        CI: lint, typecheck, tests (Postgres service), build
+├── deploy/                   nginx/, pm2/, github-actions/ server configuration
 ├── docs/
-│   ├── requirements/         Client requirements, government circular notes
-│   ├── architecture/         System architecture, multi-tenant model, caching
-│   ├── api/                  Route Handler contracts (request/response shapes)
-│   └── decisions/            ADRs — one file per decision (e.g. subdomain vs path tenancy)
+│   ├── requirements/         Requirements summary + open decisions
+│   ├── architecture/         backend-foundation-plan.md (accepted design)
+│   ├── api-contract.md       Endpoint contract for the frontend
+│   ├── backend-setup.md      Local setup, scripts, tests, migrations
+│   └── decisions/            ADRs
 ├── prisma/
-│   ├── migrations/           Prisma migrations (never edit applied migrations)
-│   └── seed/                 Seed data: Pune district, talukas, GPs, super admin
-├── public/
-│   ├── images/  icons/  fonts/
-├── scripts/                  One-off dev/ops scripts (backup, restore, import GP list)
+│   ├── schema.prisma         Database schema
+│   ├── migrations/           Prisma migrations (never edit applied ones)
+│   └── seed.ts               Idempotent development seed
+├── public/                   images/, icons/, fonts/
+├── scripts/                  One-off dev/ops scripts
 ├── src/
-│   ├── app/                  Next.js App Router — routes only, thin pages
-│   │   ├── (public)/[tenant]/   Public GP website — 15 pages, search, sitemap
-│   │   ├── (auth)/              login, forgot-password, reset-password
-│   │   ├── (admin)/admin/       Super Admin / Taluka (Block) Admin / GP Admin dashboards
-│   │   │   └── websites/[websiteId]/pages/[pageKey]/   Per-page editors
-│   │   └── api/
-│   │       ├── v1/              Versioned Route Handlers
-│   │       └── health/          Liveness endpoint for Nginx / monitoring
-│   ├── components/           React components (UI only, no data access)
-│   │   ├── ui/                  Primitives (Button, Input, Card…)
-│   │   ├── layout/              Header, footer, language switch, nav
-│   │   ├── public/              Sections used by public website pages
-│   │   ├── admin/               Dashboard, tables, editors
-│   │   └── forms/               Form components + client-side validation UI
-│   ├── hooks/                Client hooks
-│   ├── styles/               Tailwind entry + global CSS, government theme tokens
-│   ├── i18n/messages/        en.json / mr.json translation dictionaries
-│   ├── config/               Site config, routes map, page registry (the 15 pages), roles
-│   ├── lib/                  Framework-agnostic utilities (dates, slugs, formatting)
-│   ├── types/                Shared types & API contracts (both developers coordinate)
-│   ├── server/               Cross-cutting backend infrastructure
-│   │   ├── db/                  Prisma client singleton
-│   │   ├── auth/                Sessions, password hashing, login/reset flows
-│   │   ├── tenant/              Resolve tenant from host/path; tenant-scope guards
-│   │   ├── permissions/         RBAC: role → permission checks (server-side only)
-│   │   ├── audit/               Audit-log writer
-│   │   ├── cache/               Next.js cache tags / revalidation; Redis later
-│   │   ├── storage/             File storage adapter (VPS disk now, object storage later)
-│   │   └── email/               Transactional mail (password reset)
-│   └── modules/              Feature modules — business logic, no React
-│       └── <feature>/
-│           ├── services/        Business rules; the only entry point for routes/actions
-│           ├── repositories/    Prisma queries, always tenant-scoped
-│           └── validators/      Zod schemas for all external input
+│   ├── app/                  Next.js App Router
+│   │   ├── api/health/          Liveness probe
+│   │   ├── api/v1/…             Route Handlers (thin: parse → service → DTO)
+│   │   └── layout.tsx           Placeholder root layout — frontend owns everything under app/ except api/
+│   ├── components/, hooks/, styles/, i18n/   Frontend (owned by the frontend developer)
+│   ├── config/               modules.ts (operator module keys), pages.ts (page registry)
+│   ├── lib/                  Backend cross-cutting: db, env, errors, validation, http, auth, permissions, tenant, audit, rate-limit, mailer
+│   ├── features/<feature>/   validators.ts (zod) · service.ts (rules + authorization) · mappers.ts (DTOs)
+│   ├── generated/prisma/     Generated Prisma client (git-ignored)
+│   └── types/api.ts          Shared API DTOs — coordinated by both developers
 └── tests/
-    ├── unit/                 Vitest — services, validators, permission rules
-    ├── integration/          Vitest — repositories against a test database
-    ├── e2e/                  Playwright — public site + admin flows
-    └── fixtures/             Shared test data
+    ├── unit/                 Permission matrix, workflow
+    ├── integration/          Auth, tenant isolation, users, announcements, route handlers
+    └── helpers/              Factories (hierarchy, tenants, actors, requests)
 ```
 
-### Feature modules (`src/modules/`)
+### Features (`src/features/`)
 
-| Module          | Covers                                                                 |
-|-----------------|------------------------------------------------------------------------|
-| `tenants`       | Gram Panchayat tenant records, domain/subdomain mapping                |
-| `hierarchy`     | District → Taluka → Gram Panchayat tree                                |
-| `accounts`      | Super / Taluka / GP admin accounts, assignment of websites              |
-| `websites`      | Website lifecycle (Not Created → Draft → Published), page status        |
-| `content`       | Section/card content for the 15 pages, draft vs published separation   |
-| `announcements` | Multi-target announcements, priority, scheduling, display pages        |
-| `media`         | Media library (images, videos, documents)                              |
-| `schemes`       | Government schemes & beneficiary statistics                            |
-| `projects`      | Key projects & initiatives                                             |
-| `grievances`    | Citizen complaints, feedback, status tracking                          |
-| `search`        | Keyword search over published content                                  |
+| Feature         | Status      | Covers |
+|-----------------|-------------|--------|
+| `auth`          | implemented | login/logout, sessions, password reset/change, rate limiting |
+| `hierarchy`     | implemented | District → Taluka → Block → Gram Panchayat tree |
+| `tenants`       | implemented | Website lifecycle (DRAFT/PUBLISHED/SUSPENDED), settings, public profile |
+| `users`         | implemented | Scoped admin/operator accounts, role assignments, module grants |
+| `announcements` | implemented | First vertical slice: GP-owned + shared, full workflow, public feed |
+| `audit`         | implemented | Scoped audit log listing |
+| `content`       | partial     | Workflow transition table (shared); page sections pending |
+| `schemes`, `projects`, `media`, `grievances` | schema only | Endpoints pending |
 
 ## Layering rules
 
-1. `app/` routes and server actions call **module services** only — never Prisma directly.
-2. Services enforce **tenant scope and permissions** via `server/tenant` and `server/permissions` before touching repositories.
-3. Repositories are the only place Prisma is used, and every query is tenant-scoped.
-4. All external input is validated with the module's `validators/` on the server.
-5. Public routes read **published** content only; draft/private data never reaches public responses.
-6. Components never import from `server/` or `modules/`.
+1. `app/api` routes call **feature services** only — never Prisma directly.
+2. Services receive an `AuthContext` and resolve the target tenant/unit **server-side** before any read or write
+   (`getTenantForActor`, `getUnitForActor`); scope failures are 404, capability failures are 403.
+3. Operators are additionally checked against their module grants.
+4. All external input is validated with zod in the feature's `validators.ts`.
+5. Public endpoints read **published** content only; `passwordHash` and session secrets never leave the DB layer.
+6. Important state changes write an `AuditLog` row in the same transaction.
+7. Components never import from `lib/` server modules or `features/`.
 
 ## Ownership
 
-| Area                                                       | Owner    |
-|------------------------------------------------------------|----------|
-| `components/`, `hooks/`, `styles/`, `i18n/`, page layouts  | Frontend |
-| `prisma/`, `server/`, `modules/`, `app/api/`               | Backend  |
-| `types/`, `config/`, `lib/`, dependencies, `.github/`      | Both (coordinate changes) |
+| Area                                                              | Owner    |
+|-------------------------------------------------------------------|----------|
+| `components/`, `hooks/`, `styles/`, `i18n/`, `app/**` (except `app/api`) | Frontend |
+| `prisma/`, `lib/`, `features/`, `app/api/`, `tests/`              | Backend  |
+| `types/api.ts`, `config/`, `package.json`, `.github/`             | Both (coordinate changes) |
+
+See [docs/backend-setup.md](docs/backend-setup.md) to run it and [docs/api-contract.md](docs/api-contract.md) for the API.
 
 ## Open decisions (see `docs/decisions/`)
 
