@@ -51,6 +51,7 @@ export type ModuleKey = "announcements" | "schemes" | "projects" | "pages" | "me
 export type SchemeLevel = "CENTRAL" | "STATE" | "DISTRICT" | "GRAM_PANCHAYAT";
 export type ProjectStage = "UPCOMING" | "ONGOING" | "COMPLETED";
 export type MediaKind = "IMAGE" | "VIDEO" | "DOCUMENT";
+export type GrievanceStatus = "OPEN" | "IN_PROGRESS" | "RESOLVED" | "REJECTED";
 
 // ---------------------------------------------------------------------------
 // DTOs
@@ -279,6 +280,56 @@ export interface MediaDto {
   altEn: string | null;
   altMr: string | null;
   uploadedById: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GrievanceEventDto {
+  id: string;
+  actorId: string | null;
+  actorName: string | null;
+  fromStatus: GrievanceStatus | null;
+  toStatus: GrievanceStatus;
+  note: string | null;
+  createdAt: string;
+}
+
+/** Admin view — includes citizen contact details; never returned publicly. */
+export interface GrievanceDto {
+  id: string;
+  tenantId: string;
+  trackingCode: string;
+  category: string;
+  citizenName: string;
+  citizenPhone: string | null;
+  citizenEmail: string | null;
+  description: string;
+  status: GrievanceStatus;
+  assignedToId: string | null;
+  assignedToName: string | null;
+  resolutionNote: string | null;
+  resolvedAt: string | null;
+  events: GrievanceEventDto[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Returned once after a public submission. */
+export interface PublicGrievanceReceiptDto {
+  trackingCode: string;
+  status: GrievanceStatus;
+  createdAt: string;
+}
+
+/** Public status lookup — no citizen details, no staff identities, no internal notes. */
+export interface PublicGrievanceStatusDto {
+  trackingCode: string;
+  category: string;
+  status: GrievanceStatus;
+  /** Shown only when RESOLVED/REJECTED. */
+  resolutionNote: string | null;
+  resolvedAt: string | null;
+  timeline: { status: GrievanceStatus; at: string }[];
   createdAt: string;
   updatedAt: string;
 }

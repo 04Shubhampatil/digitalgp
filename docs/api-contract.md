@@ -241,6 +241,24 @@ from the file signature (the declared `Content-Type` is ignored): `image/jpeg`, 
 
 Audit events: `media.upload`, `media.update`, `media.delete`.
 
+## Grievances
+
+Citizens file grievances on the public website and track them with a code; staff handle them in the
+admin. Reads: roles with `grievance:manage` (GP admin and above) or operators granted module
+`grievances` (read-only). Writes: `grievance:manage` only.
+
+| Method | Path                               | Capability | Body / query | Response |
+|--------|------------------------------------|------------|--------------|----------|
+| GET    | `/grievances`                      | read (see above) | `?tenantId&status&category&assignedToId&q&limit&cursor` | paginated `GrievanceDto` |
+| GET    | `/grievances/:id`                  | read       | –            | `GrievanceDto` (with `events`) |
+| POST   | `/grievances/:id/assign`           | `grievance:manage` | `{ assignedToId: userId \| null }` — must be an active user whose assignment covers the website (`400` otherwise) | `GrievanceDto` |
+| POST   | `/grievances/:id/status`           | `grievance:manage` | `{ status: "IN_PROGRESS" \| "RESOLVED" \| "REJECTED", note? }` — `note` required when closing and is shown to the citizen | `GrievanceDto`; `409 INVALID_TRANSITION` |
+
+Status moves: `OPEN → IN_PROGRESS | RESOLVED | REJECTED`, `IN_PROGRESS → RESOLVED | REJECTED`,
+`RESOLVED | REJECTED → IN_PROGRESS` (reopen). Each move adds a `GrievanceEvent` and an audit row
+`grievance.status.<status>`; assignment writes `grievance.assign`. Audit payloads never contain citizen
+contact details.
+
 ## Audit logs
 
 `GET /audit-logs?tenantId&unitId&actorId&action&entityType&from&to&limit&cursor` → paginated `AuditLogDto`.
@@ -255,6 +273,8 @@ Roles with `audit:read` see events inside their scope; everyone sees their own a
 | GET    | `/public/:tenantSlug/schemes`          | `?level&limit&cursor` | paginated `PublicSchemeDto` — own published + shared targeted schemes |
 | GET    | `/public/:tenantSlug/projects`         | `?stage&year&limit&cursor` | paginated `PublicProjectDto` |
 | GET    | `/public/:tenantSlug/media/:mediaId`   | –     | file bytes (`public, max-age=3600`, `nosniff`) — only the website's own media or shared media of an ancestor unit; `404` otherwise |
+| POST   | `/public/:tenantSlug/grievances`       | body `{ category, citizenName, citizenPhone?, citizenEmail?, description (10–5000) }` | `201 PublicGrievanceReceiptDto` `{ trackingCode: "GRV-XXXXXXXX", status, createdAt }`; `429` after 5 submissions / hour per IP; audit `grievance.submit` |
+| GET    | `/public/:tenantSlug/grievances/:trackingCode` | – | `PublicGrievanceStatusDto` — status + timeline + resolution note (when closed); never citizen details; `404` on another website |
 
 Tenant resolution for server-rendered pages: `resolvePublicTenant(host, pathname)` in
 [`src/lib/tenant.ts`](../src/lib/tenant.ts) supports `<slug>.<APP_BASE_HOST>`, a custom domain, or
@@ -262,5 +282,5 @@ Tenant resolution for server-rendered pages: `resolvePublicTenant(host, pathname
 
 ## Not yet implemented (planned)
 
-Grievances, page sections (`/content/...`) — schema exists in
+Page sections (`/content/...`) — schema exists in
 `prisma/schema.prisma`; endpoints follow the same conventions and workflow.
