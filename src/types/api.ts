@@ -48,6 +48,7 @@ export type UserStatus = "ACTIVE" | "SUSPENDED";
 export type ContentStatus = "DRAFT" | "SUBMITTED" | "UNDER_REVIEW" | "APPROVED" | "PUBLISHED" | "REJECTED" | "ARCHIVED";
 export type AnnouncementPriority = "NORMAL" | "IMPORTANT" | "URGENT" | "EMERGENCY";
 export type ModuleKey = "announcements" | "schemes" | "projects" | "pages" | "media" | "grievances";
+export type SchemeLevel = "CENTRAL" | "STATE" | "DISTRICT" | "GRAM_PANCHAYAT";
 
 // ---------------------------------------------------------------------------
 // DTOs
@@ -163,6 +164,56 @@ export interface PublicAnnouncementDto {
   publishedAt: string | null;
   expiresAt: string | null;
   /** True when the announcement was published by a higher-level authority. */
+  isShared: boolean;
+}
+
+export interface SchemeDto {
+  id: string;
+  tenantId: string | null;
+  ownerUnitId: string;
+  level: SchemeLevel;
+  nameEn: string | null;
+  nameMr: string | null;
+  descriptionEn: string | null;
+  descriptionMr: string | null;
+  eligibilityEn: string | null;
+  eligibilityMr: string | null;
+  processEn: string | null;
+  processMr: string | null;
+  externalUrl: string | null;
+  /** Aggregate statistics only — no beneficiary PII. */
+  beneficiaryCount: number | null;
+  /** Decimal serialised as a string with two decimals, e.g. "150000.50". */
+  amountDisbursed: string | null;
+  status: ContentStatus;
+  targets: { unitId: string; level: AdminUnitLevel; nameEn: string; nameMr: string }[];
+  createdById: string;
+  submittedAt: string | null;
+  reviewedById: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+  publishedById: string | null;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Public projection — no reviewer/author ids. */
+export interface PublicSchemeDto {
+  id: string;
+  level: SchemeLevel;
+  nameEn: string | null;
+  nameMr: string | null;
+  descriptionEn: string | null;
+  descriptionMr: string | null;
+  eligibilityEn: string | null;
+  eligibilityMr: string | null;
+  processEn: string | null;
+  processMr: string | null;
+  externalUrl: string | null;
+  beneficiaryCount: number | null;
+  amountDisbursed: string | null;
+  publishedAt: string | null;
   isShared: boolean;
 }
 

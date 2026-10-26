@@ -160,6 +160,38 @@ REJECTED --submit--> SUBMITTED        (or edit → DRAFT)
 
 Every transition writes an audit event `announcement.<action>`.
 
+## Schemes (admin)
+
+Same shape and workflow as announcements. A scheme is either GP-owned (`tenantId`) or shared
+(`ownerUnitId` + `targetUnitIds`, `content:share`). Operators need module `schemes`.
+
+| Method | Path                  | Capability | Body / query | Response |
+|--------|-----------------------|------------|--------------|----------|
+| GET    | `/schemes`            | in scope   | `?tenantId&ownerUnitId&status&level&q&limit&cursor` | paginated `SchemeDto` |
+| POST   | `/schemes`            | `content:edit` (+ module `schemes`) or `content:share` | see below | `201 SchemeDto` (status `DRAFT`) |
+| GET    | `/schemes/:id`        | in scope   | –            | `SchemeDto` |
+| PATCH  | `/schemes/:id`        | as create  | any create field; `targetUnitIds` only for shared items; only `DRAFT`/`REJECTED` editable | `SchemeDto` |
+| DELETE | `/schemes/:id`        | as create  | –            | `204`; `409` while `PUBLISHED` |
+| POST   | `/schemes/:id/:action`| see workflow | `{ note? }` | `SchemeDto`; audit `scheme.<action>` |
+
+Create body:
+
+```jsonc
+{
+  "level": "CENTRAL" | "STATE" | "DISTRICT" | "GRAM_PANCHAYAT",
+  "nameEn": "…", "nameMr": "…",                 // at least one
+  "descriptionEn": "…", "descriptionMr": "…",
+  "eligibilityEn": "…", "eligibilityMr": "…",
+  "processEn": "…", "processMr": "…",
+  "externalUrl": "https://…" | null,
+  "beneficiaryCount": 120 | null,              // aggregate only — no beneficiary PII
+  "amountDisbursed": 150000.5 | null,          // number, ≤ 2 decimals; returned as "150000.50"
+  // exactly one of:
+  "tenantId": "<tenantId>",
+  "ownerUnitId": "<unitId>", "targetUnitIds": ["<unitId>"]
+}
+```
+
 ## Audit logs
 
 `GET /audit-logs?tenantId&unitId&actorId&action&entityType&from&to&limit&cursor` → paginated `AuditLogDto`.
@@ -171,6 +203,7 @@ Roles with `audit:read` see events inside their scope; everyone sees their own a
 |--------|----------------------------------------|-------|----------|
 | GET    | `/public/:tenantSlug`                  | –     | `PublicTenantDto`; `404` if not published |
 | GET    | `/public/:tenantSlug/announcements`    | `?page=<pageKey>&priority&category&limit&cursor` | paginated `PublicAnnouncementDto` — own published items + shared items targeted at the GP or any ancestor; honours `publishAt`/`expiresAt` |
+| GET    | `/public/:tenantSlug/schemes`          | `?level&limit&cursor` | paginated `PublicSchemeDto` — own published + shared targeted schemes |
 
 Tenant resolution for server-rendered pages: `resolvePublicTenant(host, pathname)` in
 [`src/lib/tenant.ts`](../src/lib/tenant.ts) supports `<slug>.<APP_BASE_HOST>`, a custom domain, or
@@ -178,5 +211,5 @@ Tenant resolution for server-rendered pages: `resolvePublicTenant(host, pathname
 
 ## Not yet implemented (planned)
 
-Schemes, projects, media upload, grievances, page sections (`/content/...`) — schema exists in
+Projects, media upload, grievances, page sections (`/content/...`) — schema exists in
 `prisma/schema.prisma`; endpoints follow the same conventions and workflow.
