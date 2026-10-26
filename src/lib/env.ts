@@ -9,6 +9,8 @@ const envSchema = z.object({
   APP_ORIGIN: z.string().url().default("http://localhost:3000"),
   /** Cookie name for the admin session. */
   SESSION_COOKIE_NAME: z.string().min(1).default("dgp_session"),
+  /** Directory for uploaded media on the VPS disk (git-ignored). */
+  UPLOADS_DIR: z.string().min(1).default("uploads"),
 });
 
 export type Env = z.infer<typeof envSchema>;

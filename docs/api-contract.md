@@ -222,6 +222,25 @@ Create body:
 }
 ```
 
+## Media
+
+File metadata is stored in Postgres; bytes live behind the storage adapter in
+[`src/lib/storage.ts`](../src/lib/storage.ts) (local disk under `UPLOADS_DIR`, default `./uploads`,
+key `<tenantId>/<id>.<ext>` or `shared/<ownerUnitId>/<id>.<ext>`). Limits: **10 MB**; types are detected
+from the file signature (the declared `Content-Type` is ignored): `image/jpeg`, `image/png`, `image/webp`,
+`image/gif` → `IMAGE`; `video/mp4`, `video/webm` → `VIDEO`; `application/pdf` → `DOCUMENT`.
+
+| Method | Path               | Capability | Body / query | Response |
+|--------|--------------------|------------|--------------|----------|
+| GET    | `/media`           | in scope   | `?tenantId&ownerUnitId&kind&q&limit&cursor` | paginated `MediaDto` |
+| POST   | `/media`           | `media:manage` (+ module `media`) for `tenantId`; `content:share` for `ownerUnitId` | `multipart/form-data`: `file`, `tenantId` **or** `ownerUnitId` (non-GP unit), `altEn?`, `altMr?` | `201 MediaDto`; `400 BAD_REQUEST` on size/type violations |
+| GET    | `/media/:id`       | in scope   | –            | `MediaDto` |
+| GET    | `/media/:id/file`  | in scope   | –            | file bytes (`Content-Type`, inline, `private, no-store`) |
+| PATCH  | `/media/:id`       | as upload  | `{ altEn?, altMr? }` | `MediaDto` |
+| DELETE | `/media/:id`       | as upload  | –            | `204` — soft-deletes the row and removes the file; references (`attachmentId`, `coverImageId`, `shareImageId`) become `null` |
+
+Audit events: `media.upload`, `media.update`, `media.delete`.
+
 ## Audit logs
 
 `GET /audit-logs?tenantId&unitId&actorId&action&entityType&from&to&limit&cursor` → paginated `AuditLogDto`.
@@ -235,6 +254,7 @@ Roles with `audit:read` see events inside their scope; everyone sees their own a
 | GET    | `/public/:tenantSlug/announcements`    | `?page=<pageKey>&priority&category&limit&cursor` | paginated `PublicAnnouncementDto` — own published items + shared items targeted at the GP or any ancestor; honours `publishAt`/`expiresAt` |
 | GET    | `/public/:tenantSlug/schemes`          | `?level&limit&cursor` | paginated `PublicSchemeDto` — own published + shared targeted schemes |
 | GET    | `/public/:tenantSlug/projects`         | `?stage&year&limit&cursor` | paginated `PublicProjectDto` |
+| GET    | `/public/:tenantSlug/media/:mediaId`   | –     | file bytes (`public, max-age=3600`, `nosniff`) — only the website's own media or shared media of an ancestor unit; `404` otherwise |
 
 Tenant resolution for server-rendered pages: `resolvePublicTenant(host, pathname)` in
 [`src/lib/tenant.ts`](../src/lib/tenant.ts) supports `<slug>.<APP_BASE_HOST>`, a custom domain, or
@@ -242,5 +262,5 @@ Tenant resolution for server-rendered pages: `resolvePublicTenant(host, pathname
 
 ## Not yet implemented (planned)
 
-Media upload, grievances, page sections (`/content/...`) — schema exists in
+Grievances, page sections (`/content/...`) — schema exists in
 `prisma/schema.prisma`; endpoints follow the same conventions and workflow.

@@ -50,6 +50,7 @@ export type AnnouncementPriority = "NORMAL" | "IMPORTANT" | "URGENT" | "EMERGENC
 export type ModuleKey = "announcements" | "schemes" | "projects" | "pages" | "media" | "grievances";
 export type SchemeLevel = "CENTRAL" | "STATE" | "DISTRICT" | "GRAM_PANCHAYAT";
 export type ProjectStage = "UPCOMING" | "ONGOING" | "COMPLETED";
+export type MediaKind = "IMAGE" | "VIDEO" | "DOCUMENT";
 
 // ---------------------------------------------------------------------------
 // DTOs
@@ -262,6 +263,24 @@ export interface PublicProjectDto {
   outcomeMr: string | null;
   coverImageId: string | null;
   publishedAt: string | null;
+}
+
+/** File metadata. Bytes: `GET /media/:id/file` (admin) or `GET /public/:tenantSlug/media/:id` (public). */
+export interface MediaDto {
+  id: string;
+  tenantId: string | null;
+  ownerUnitId: string;
+  kind: MediaKind;
+  originalName: string;
+  mimeType: string;
+  sizeBytes: number;
+  width: number | null;
+  height: number | null;
+  altEn: string | null;
+  altMr: string | null;
+  uploadedById: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface AuditLogDto {
