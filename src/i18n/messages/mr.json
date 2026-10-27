@@ -302,6 +302,12 @@
       "pages": "पान सामग्री",
       "media": "मीडिया",
       "grievances": "तक्रारी"
+    },
+    "grievanceStatus": {
+      "OPEN": "खुली",
+      "IN_PROGRESS": "प्रगतीत",
+      "RESOLVED": "निकाली",
+      "REJECTED": "नाकारली"
     }
   },
   "public": {
@@ -337,7 +343,72 @@
     "noContent": "या पानावर अद्याप प्रकाशित सामग्री नाही.",
     "siteNotFound": "हे ग्रामपंचायत संकेतस्थळ उपलब्ध नाही.",
     "designedBy": "डिजिटल ग्रामपंचायत उपक्रमांतर्गत विकसित",
-    "menu": "मेनू"
+    "menu": "मेनू",
+    "noAnnouncements": "अद्याप सूचना प्रकाशित झालेल्या नाहीत.",
+    "downloadAttachment": "संलग्न फाईल डाउनलोड करा",
+    "noSchemes": "अद्याप योजना प्रकाशित झालेल्या नाहीत.",
+    "schemeLevel": {
+      "CENTRAL": "केंद्र शासन",
+      "STATE": "राज्य शासन",
+      "DISTRICT": "जिल्हा स्तर",
+      "GRAM_PANCHAYAT": "ग्रामपंचायत"
+    },
+    "sharedScheme": "सामायिक",
+    "beneficiaries": "लाभार्थी",
+    "amountDisbursed": "वितरित रक्कम",
+    "eligibility": "पात्रता",
+    "howToApply": "अर्ज कसा करावा",
+    "applyOnline": "ऑनलाइन अर्ज करा",
+    "noProjects": "अद्याप प्रकल्प प्रकाशित झालेले नाहीत.",
+    "projectStage": {
+      "ONGOING": "सुरू असलेले प्रकल्प",
+      "COMPLETED": "पूर्ण झालेले प्रकल्प",
+      "UPCOMING": "आगामी प्रकल्प"
+    },
+    "ward": "वॉर्ड",
+    "budget": "अर्थसंकल्प",
+    "familiesBenefited": "लाभ झालेली कुटुंबे",
+    "outcome": "परिणाम",
+    "address": "पत्ता",
+    "phone": "फोन",
+    "email": "ईमेल",
+    "grievanceHint": "तक्रार किंवा सूचना आहे? ऑनलाइन नोंदवा आणि आपल्या कोडने स्थिती तपासा.",
+    "more": "अधिक",
+    "searchTitle": "शोध",
+    "searchPlaceholder": "या संकेतस्थळावर शोधा…",
+    "searchResults": "“{query}” साठी {count} निकाल",
+    "searchKinds": {
+      "page": "पान"
+    },
+    "grievanceForm": {
+      "registerTitle": "तक्रार नोंदवा",
+      "trackTitle": "तक्रारीची स्थिती तपासा",
+      "name": "पूर्ण नाव",
+      "category": "तक्रारीचा प्रकार",
+      "phone": "मोबाईल क्रमांक",
+      "email": "ईमेल",
+      "description": "समस्येचे वर्णन",
+      "descriptionHint": "किमान 10 अक्षरे. पासवर्ड किंवा बँक तपशील लिहू नका.",
+      "submit": "तक्रार सादर करा",
+      "submitted": "आपली तक्रार नोंदवली गेली आहे.",
+      "keepCode": "हा ट्रॅकिंग कोड जपून ठेवा — स्थिती तपासण्यासाठी तो लागेल.",
+      "rateLimited": "या नेटवर्कवरून खूप तक्रारी आल्या. कृपया एका तासाने पुन्हा प्रयत्न करा.",
+      "trackingCode": "ट्रॅकिंग कोड",
+      "track": "तपासा",
+      "invalidCode": "GRV-XXXXXXXX असा कोड प्रविष्ट करा",
+      "notFound": "या कोडची तक्रार या संकेतस्थळावर आढळली नाही.",
+      "categories": {
+        "water": "पाणीपुरवठा",
+        "roads": "रस्ते",
+        "sanitation": "स्वच्छता व कचरा",
+        "electricity": "पथदिवे / वीज",
+        "health": "आरोग्य",
+        "education": "शिक्षण",
+        "certificates": "प्रमाणपत्रे",
+        "tax": "कर व भरणा",
+        "other": "इतर"
+      }
+    }
   },
   "editor": {
     "subtitle": "{name} साठी सामग्री संपादित करत आहात. प्रत्येक विभागाचा स्वतंत्र मसुदा असतो; तयार झाल्यावर प्रकाशित करा.",

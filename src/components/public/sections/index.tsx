@@ -1,5 +1,6 @@
 import type { PublicPageDto } from "@/types/api";
 import type { UiLocale } from "@/i18n/config";
+import { GeographySection, HistorySection, MembersSection, OfficeSection } from "./AboutSections";
 import { HeroSection } from "./HeroSection";
 import { LeadersSection } from "./LeadersSection";
 import { QuickLinksSection } from "./QuickLinksSection";

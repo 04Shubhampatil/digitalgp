@@ -302,6 +302,12 @@
       "pages": "Page content",
       "media": "Media",
       "grievances": "Grievances"
+    },
+    "grievanceStatus": {
+      "OPEN": "Open",
+      "IN_PROGRESS": "In progress",
+      "RESOLVED": "Resolved",
+      "REJECTED": "Rejected"
     }
   },
   "public": {
@@ -337,7 +343,72 @@
     "noContent": "This page has no published content yet.",
     "siteNotFound": "This Gram Panchayat website is not available.",
     "designedBy": "Designed & hosted under the Digital Gram Panchayat initiative",
-    "menu": "Menu"
+    "menu": "Menu",
+    "noAnnouncements": "No announcements have been published yet.",
+    "downloadAttachment": "Download attachment",
+    "noSchemes": "No schemes have been published yet.",
+    "schemeLevel": {
+      "CENTRAL": "Central Government",
+      "STATE": "State Government",
+      "DISTRICT": "District level",
+      "GRAM_PANCHAYAT": "Gram Panchayat"
+    },
+    "sharedScheme": "Shared",
+    "beneficiaries": "Beneficiaries",
+    "amountDisbursed": "Amount disbursed",
+    "eligibility": "Eligibility",
+    "howToApply": "How to apply",
+    "applyOnline": "Apply online",
+    "noProjects": "No projects have been published yet.",
+    "projectStage": {
+      "ONGOING": "Ongoing projects",
+      "COMPLETED": "Completed projects",
+      "UPCOMING": "Upcoming projects"
+    },
+    "ward": "Ward",
+    "budget": "Budget",
+    "familiesBenefited": "Families benefited",
+    "outcome": "Outcome",
+    "address": "Address",
+    "phone": "Phone",
+    "email": "Email",
+    "grievanceHint": "Have a complaint or suggestion? Register it online and track it with your code.",
+    "more": "More",
+    "searchTitle": "Search",
+    "searchPlaceholder": "Search this website…",
+    "searchResults": "{count} results for “{query}”",
+    "searchKinds": {
+      "page": "Page"
+    },
+    "grievanceForm": {
+      "registerTitle": "Register your complaint",
+      "trackTitle": "Track your complaint",
+      "name": "Full name",
+      "category": "Complaint category",
+      "phone": "Mobile number",
+      "email": "Email",
+      "description": "Describe the issue",
+      "descriptionHint": "At least 10 characters. Do not include passwords or bank details.",
+      "submit": "Submit complaint",
+      "submitted": "Your complaint has been registered.",
+      "keepCode": "Save this tracking code — you will need it to check the status.",
+      "rateLimited": "Too many submissions from this network. Please try again in an hour.",
+      "trackingCode": "Tracking code",
+      "track": "Track",
+      "invalidCode": "Enter a code like GRV-XXXXXXXX",
+      "notFound": "No complaint found with this code on this website.",
+      "categories": {
+        "water": "Water supply",
+        "roads": "Roads & streets",
+        "sanitation": "Sanitation & waste",
+        "electricity": "Street lights / electricity",
+        "health": "Health",
+        "education": "Education",
+        "certificates": "Certificates",
+        "tax": "Tax & payments",
+        "other": "Other"
+      }
+    }
   },
   "editor": {
     "subtitle": "Editing content for {name}. Each section has its own draft; publish when it is ready.",
