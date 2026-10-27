@@ -253,7 +253,6 @@
       "BLOCK": "Block",
       "GRAM_PANCHAYAT": "Gram Panchayat"
     },
-    "comingSoon": "This screen is being built. The backend API for it is ready.",
     "picker": {
       "scope": "Scope",
       "choose": "Choose…",
@@ -379,6 +378,27 @@
       "capability": "Capability",
       "allowed": "Allowed",
       "notAllowed": "Not allowed"
+    },
+    "dashboardUi": {
+      "title": {
+        "SUPER_ADMIN": "Super Admin Dashboard",
+        "TALUKA_ADMIN": "Taluka Admin Dashboard",
+        "BLOCK_ADMIN": "Block Admin Dashboard",
+        "GP_ADMIN": "Gram Panchayat Dashboard",
+        "DATA_ENTRY_OPERATOR": "Operator Dashboard"
+      },
+      "pendingReview": "Pending review",
+      "openGrievances": "Open grievances",
+      "websiteOverview": "Website overview",
+      "websiteOverviewHint": "Status of the Gram Panchayat websites in your scope",
+      "quickActions": "Quick actions",
+      "quickCreate": "Generate a website from the 15-page template",
+      "quickUser": "Add an admin or operator account",
+      "quickHierarchy": "Review districts, talukas and Gram Panchayats",
+      "quickAnnounce": "Publish to one or many websites",
+      "quickGrievances": "Open citizen complaints",
+      "recentWebsites": "Recently updated websites",
+      "recentActivity": "Recent activity"
     }
   },
   "public": {

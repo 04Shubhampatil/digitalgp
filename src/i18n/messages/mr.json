@@ -253,7 +253,6 @@
       "BLOCK": "ब्लॉक",
       "GRAM_PANCHAYAT": "ग्रामपंचायत"
     },
-    "comingSoon": "ही स्क्रीन तयार होत आहे. यासाठीचा बॅकएंड API तयार आहे.",
     "picker": {
       "scope": "कार्यक्षेत्र",
       "choose": "निवडा…",
@@ -379,6 +378,27 @@
       "capability": "क्षमता",
       "allowed": "परवानगी",
       "notAllowed": "परवानगी नाही"
+    },
+    "dashboardUi": {
+      "title": {
+        "SUPER_ADMIN": "सुपर ॲडमिन डॅशबोर्ड",
+        "TALUKA_ADMIN": "तालुका ॲडमिन डॅशबोर्ड",
+        "BLOCK_ADMIN": "ब्लॉक ॲडमिन डॅशबोर्ड",
+        "GP_ADMIN": "ग्रामपंचायत डॅशबोर्ड",
+        "DATA_ENTRY_OPERATOR": "ऑपरेटर डॅशबोर्ड"
+      },
+      "pendingReview": "पुनरावलोकन प्रलंबित",
+      "openGrievances": "खुल्या तक्रारी",
+      "websiteOverview": "संकेतस्थळ आढावा",
+      "websiteOverviewHint": "आपल्या कार्यक्षेत्रातील ग्रामपंचायत संकेतस्थळांची स्थिती",
+      "quickActions": "द्रुत कृती",
+      "quickCreate": "15 पानांच्या साच्यातून संकेतस्थळ तयार करा",
+      "quickUser": "प्रशासक किंवा ऑपरेटर खाते जोडा",
+      "quickHierarchy": "जिल्हे, तालुके व ग्रामपंचायती पहा",
+      "quickAnnounce": "एक किंवा अनेक संकेतस्थळांवर प्रकाशित करा",
+      "quickGrievances": "खुल्या नागरिक तक्रारी",
+      "recentWebsites": "नुकतीच अद्ययावत संकेतस्थळे",
+      "recentActivity": "अलीकडील घडामोडी"
     }
   },
   "public": {
