@@ -8,6 +8,7 @@ import { CursorPager } from "@/components/admin/CursorPager";
 import { DataTable, type Column } from "@/components/admin/DataTable";
 import { FilterBar } from "@/components/admin/FilterBar";
 import { AddUnitDialog } from "@/components/admin/hierarchy/AddUnitDialog";
+import { EditUnitDialog } from "@/components/admin/hierarchy/EditUnitDialog";
 import { Card, CardHeader, MetricCard, PageHeader } from "@/components/ui/Card";
 import { StatusPill } from "@/components/ui/StatusPill";
 import type { UiLocale } from "@/i18n/config";
@@ -109,7 +110,14 @@ export default async function HierarchyPage({ searchParams }: { searchParams: Se
       <PageHeader
         title={t("hierarchy.title")}
         description={t("hierarchy.subtitle")}
-        actions={canManage && parent && childLevel ? <AddUnitDialog parent={parent} /> : null}
+        actions={
+          canManage && parent ? (
+            <div className="flex items-center gap-2">
+              <EditUnitDialog unit={parent} />
+              {childLevel ? <AddUnitDialog parent={parent} /> : null}
+            </div>
+          ) : null
+        }
       />
 
       <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-1 text-sm text-muted">

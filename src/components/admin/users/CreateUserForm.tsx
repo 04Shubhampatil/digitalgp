@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
-import type { AdminUnitLevel, AssignmentDto, ModuleKey, Role } from "@/types/api";
+import type { AssignmentDto, ModuleKey, Role } from "@/types/api";
 import { MODULE_KEYS } from "@/config/modules";
 import { UnitPicker } from "@/components/admin/UnitPicker";
 import { Button } from "@/components/ui/Button";
@@ -16,17 +16,9 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { users } from "@/lib/api/admin";
+import { ROLE_LEVEL, ROLES } from "@/lib/roles";
 import { isApiError } from "@/lib/api/client";
 
-/** Mirrors ROLE_LEVELS in src/lib/permissions.ts — the level a role is assigned at. */
-const ROLE_LEVEL: Record<Role, AdminUnitLevel> = {
-  SUPER_ADMIN: "DISTRICT",
-  TALUKA_ADMIN: "TALUKA",
-  BLOCK_ADMIN: "BLOCK",
-  GP_ADMIN: "GRAM_PANCHAYAT",
-  DATA_ENTRY_OPERATOR: "GRAM_PANCHAYAT",
-};
-const ROLES = Object.keys(ROLE_LEVEL) as Role[];
 
 const schema = z.object({
   name: z.string().trim().min(1).max(200),
