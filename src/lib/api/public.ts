@@ -1,4 +1,12 @@
-import type { PublicAnnouncementDto, PublicPageDto, PublicTenantDto } from "@/types/api";
+import type {
+  PublicAnnouncementDto,
+  PublicGrievanceReceiptDto,
+  PublicGrievanceStatusDto,
+  PublicPageDto,
+  PublicProjectDto,
+  PublicSchemeDto,
+  PublicTenantDto,
+} from "@/types/api";
 import { API_BASE, apiFetch, apiFetchPage, type QueryValue } from "./client";
 
 /**
@@ -26,4 +34,28 @@ export function listPublicAnnouncements(slug: string, query: Record<string, Quer
 /** URL for an image/document that belongs to the website (served by the backend). */
 export function publicMediaUrl(slug: string, mediaId: string): string {
   return `${API_BASE}/public/${encodeURIComponent(slug)}/media/${encodeURIComponent(mediaId)}`;
+}
+
+export function listPublicSchemes(slug: string, query: Record<string, QueryValue> = {}) {
+  return apiFetchPage<PublicSchemeDto>(`/public/${encodeURIComponent(slug)}/schemes`, { query });
+}
+
+export function listPublicProjects(slug: string, query: Record<string, QueryValue> = {}) {
+  return apiFetchPage<PublicProjectDto>(`/public/${encodeURIComponent(slug)}/projects`, { query });
+}
+
+export interface SubmitGrievanceInput {
+  category: string;
+  citizenName: string;
+  citizenPhone?: string | null;
+  citizenEmail?: string | null;
+  description: string;
+}
+
+export function submitGrievance(slug: string, body: SubmitGrievanceInput) {
+  return apiFetch<PublicGrievanceReceiptDto>(`/public/${encodeURIComponent(slug)}/grievances`, { method: "POST", body });
+}
+
+export function trackGrievance(slug: string, trackingCode: string) {
+  return apiFetch<PublicGrievanceStatusDto>(`/public/${encodeURIComponent(slug)}/grievances/${encodeURIComponent(trackingCode.trim().toUpperCase())}`);
 }

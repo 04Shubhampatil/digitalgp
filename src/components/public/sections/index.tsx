@@ -1,5 +1,6 @@
 import type { PublicPageDto } from "@/types/api";
 import type { UiLocale } from "@/i18n/config";
+import { GeographySection, HistorySection, MembersSection, OfficeSection } from "./AboutSections";
 import { HeroSection } from "./HeroSection";
 import { LeadersSection } from "./LeadersSection";
 import { QuickLinksSection } from "./QuickLinksSection";
@@ -26,6 +27,10 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
   "quick-links": QuickLinksSection,
   // about page
   overview: WelcomeSection,
+  history: HistorySection,
+  geography: GeographySection,
+  members: MembersSection,
+  office: OfficeSection,
 };
 
 export function renderSections(page: PublicPageDto, slug: string, locale: UiLocale): React.ReactNode[] {
