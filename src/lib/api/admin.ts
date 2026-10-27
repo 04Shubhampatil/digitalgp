@@ -2,10 +2,17 @@ import type {
   AdminUnitDto,
   AdminUnitLevel,
   AnnouncementDto,
+  AuditLogDto,
   ContentStatus,
+  GrievanceDto,
+  GrievanceStatus,
   MediaDto,
   PageDto,
   PageSectionDto,
+  ProjectDto,
+  ProjectStage,
+  SchemeDto,
+  SchemeLevel,
   TenantDto,
   TenantStatus,
   UserDto,
@@ -152,3 +159,85 @@ export const media = {
 export function adminMediaUrl(mediaId: string): string {
   return `${API_BASE}/media/${encodeURIComponent(mediaId)}/file`;
 }
+
+// ---------------------------------------------------- schemes & projects
+export interface SchemeBody {
+  level: SchemeLevel;
+  nameEn?: string | null;
+  nameMr?: string | null;
+  descriptionEn?: string | null;
+  descriptionMr?: string | null;
+  eligibilityEn?: string | null;
+  eligibilityMr?: string | null;
+  processEn?: string | null;
+  processMr?: string | null;
+  externalUrl?: string | null;
+  beneficiaryCount?: number | null;
+  amountDisbursed?: number | null;
+}
+export type CreateSchemeBody = SchemeBody & ({ tenantId: string } | { ownerUnitId: string; targetUnitIds: string[] });
+
+export interface ProjectBody {
+  stage: ProjectStage;
+  nameEn?: string | null;
+  nameMr?: string | null;
+  descriptionEn?: string | null;
+  descriptionMr?: string | null;
+  wardNo?: string | null;
+  year?: number | null;
+  budget?: number | null;
+  familiesBenefited?: number | null;
+  outcomeEn?: string | null;
+  outcomeMr?: string | null;
+  coverImageId?: string | null;
+}
+
+/** Content resources with the shared draft → review → publish workflow. */
+export interface WorkflowResource<T> {
+  get: (id: string, o?: Opts) => Promise<T>;
+  remove: (id: string, o?: Opts) => Promise<void>;
+  transition: (id: string, action: WorkflowAction, note?: string | null, o?: Opts) => Promise<T>;
+}
+
+export const schemes = {
+  list: (query: ListQuery, o: Opts = {}) => apiFetchPage<SchemeDto>("/schemes", { query, ...o }),
+  get: (id: string, o: Opts = {}) => apiFetch<SchemeDto>(`/schemes/${id}`, o),
+  create: (body: CreateSchemeBody, o: Opts = {}) => apiFetch<SchemeDto>("/schemes", { method: "POST", body, ...o }),
+  update: (id: string, body: Partial<SchemeBody>, o: Opts = {}) => apiFetch<SchemeDto>(`/schemes/${id}`, { method: "PATCH", body, ...o }),
+  remove: (id: string, o: Opts = {}) => apiFetch<void>(`/schemes/${id}`, { method: "DELETE", ...o }),
+  transition: (id: string, action: WorkflowAction, note?: string | null, o: Opts = {}) =>
+    apiFetch<SchemeDto>(`/schemes/${id}/${action}`, { method: "POST", body: { note: note ?? null }, ...o }),
+};
+
+export const projects = {
+  list: (query: ListQuery, o: Opts = {}) => apiFetchPage<ProjectDto>("/projects", { query, ...o }),
+  get: (id: string, o: Opts = {}) => apiFetch<ProjectDto>(`/projects/${id}`, o),
+  create: (body: ProjectBody & { tenantId: string }, o: Opts = {}) => apiFetch<ProjectDto>("/projects", { method: "POST", body, ...o }),
+  update: (id: string, body: Partial<ProjectBody>, o: Opts = {}) => apiFetch<ProjectDto>(`/projects/${id}`, { method: "PATCH", body, ...o }),
+  remove: (id: string, o: Opts = {}) => apiFetch<void>(`/projects/${id}`, { method: "DELETE", ...o }),
+  transition: (id: string, action: WorkflowAction, note?: string | null, o: Opts = {}) =>
+    apiFetch<ProjectDto>(`/projects/${id}/${action}`, { method: "POST", body: { note: note ?? null }, ...o }),
+};
+
+// --------------------------------------------------------------- grievances
+export const grievances = {
+  list: (query: ListQuery, o: Opts = {}) => apiFetchPage<GrievanceDto>("/grievances", { query, ...o }),
+  get: (id: string, o: Opts = {}) => apiFetch<GrievanceDto>(`/grievances/${id}`, o),
+  assign: (id: string, assignedToId: string | null, o: Opts = {}) =>
+    apiFetch<GrievanceDto>(`/grievances/${id}/assign`, { method: "POST", body: { assignedToId }, ...o }),
+  setStatus: (id: string, status: "IN_PROGRESS" | "RESOLVED" | "REJECTED", note?: string | null, o: Opts = {}) =>
+    apiFetch<GrievanceDto>(`/grievances/${id}/status`, { method: "POST", body: { status, note: note ?? null }, ...o }),
+};
+
+/** Mirrors GRIEVANCE_TRANSITIONS in src/features/grievances/validators.ts. */
+export const GRIEVANCE_NEXT: Record<GrievanceStatus, ("IN_PROGRESS" | "RESOLVED" | "REJECTED")[]> = {
+  OPEN: ["IN_PROGRESS", "RESOLVED", "REJECTED"],
+  IN_PROGRESS: ["RESOLVED", "REJECTED"],
+  RESOLVED: ["IN_PROGRESS"],
+  REJECTED: ["IN_PROGRESS"],
+};
+
+// ---------------------------------------------------------------- audit
+export const audit = {
+  list: (query: ListQuery, o: Opts = {}) => apiFetchPage<AuditLogDto>("/audit-logs", { query, ...o }),
+};

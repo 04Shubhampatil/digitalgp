@@ -308,6 +308,77 @@
       "IN_PROGRESS": "In progress",
       "RESOLVED": "Resolved",
       "REJECTED": "Rejected"
+    },
+    "deleteConfirm": "Delete this item? This cannot be undone.",
+    "schemesUi": {
+      "subtitle": "Government schemes shown on the websites, with the same review workflow as announcements.",
+      "create": "New scheme",
+      "gpOwned": "Gram Panchayat scheme",
+      "level": "Scheme level",
+      "externalUrl": "Application / information link",
+      "nameEn": "Name (English)",
+      "nameMr": "Name (Marathi)",
+      "descriptionEn": "Description (English)",
+      "descriptionMr": "Description (Marathi)",
+      "eligibilityEn": "Eligibility (English)",
+      "eligibilityMr": "Eligibility (Marathi)",
+      "processEn": "How to apply (English)",
+      "processMr": "How to apply (Marathi)",
+      "aggregateHint": "Aggregate numbers only — never individual beneficiary details.",
+      "details": "Details"
+    },
+    "projectsUi": {
+      "subtitle": "Development works of a Gram Panchayat: upcoming, ongoing and completed.",
+      "create": "New project",
+      "stage": "Stage",
+      "year": "Year",
+      "outcomeEn": "Outcome (English)",
+      "outcomeMr": "Outcome (Marathi)",
+      "coverImage": "Cover image",
+      "pickWebsiteFirst": "Choose the website first to upload a cover image."
+    },
+    "grievancesUi": {
+      "subtitle": "Citizen complaints filed on the public websites. Assign, work and close them with a note the citizen can see.",
+      "code": "Tracking code",
+      "citizen": "Citizen",
+      "assignee": "Assigned to",
+      "unassigned": "Unassigned",
+      "searchPlaceholder": "Search code, name or description",
+      "complaint": "Complaint",
+      "timeline": "Timeline",
+      "resolutionNote": "Note to the citizen",
+      "noteHint": "The note is shown to the citizen when they track the complaint.",
+      "moveTo": {
+        "IN_PROGRESS": "Start working",
+        "RESOLVED": "Mark resolved",
+        "REJECTED": "Reject"
+      }
+    },
+    "mediaUi": {
+      "subtitle": "Images, videos and PDFs used across a website's pages, projects and announcements.",
+      "website": "Website",
+      "upload": "Upload files",
+      "hint": "Uploading to: {name}. JPG, PNG, WebP, GIF, MP4, WebM or PDF, up to 10 MB each.",
+      "deleteConfirm": "Delete “{name}”? Pages that use it will show no image."
+    },
+    "auditUi": {
+      "subtitle": "Who did what, and when. Operators see only their own actions.",
+      "time": "Time",
+      "action": "Action",
+      "actor": "Actor role",
+      "entity": "Entity",
+      "change": "Change",
+      "view": "View",
+      "from": "From",
+      "to": "To"
+    },
+    "rolesUi": {
+      "subtitle": "Review what each role can do across the platform.",
+      "matrix": "Permission matrix",
+      "fixedNote": "Permissions are fixed per role for now (requirements open decision #9). Changes need a backend release.",
+      "capability": "Capability",
+      "allowed": "Allowed",
+      "notAllowed": "Not allowed"
     }
   },
   "public": {
