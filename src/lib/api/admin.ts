@@ -3,7 +3,9 @@ import type {
   AdminUnitLevel,
   AnnouncementDto,
   ContentStatus,
+  MediaDto,
   PageDto,
+  PageSectionDto,
   TenantDto,
   TenantStatus,
   UserDto,
@@ -12,7 +14,7 @@ import type { CreateAnnouncementInput, UpdateAnnouncementInput } from "@/feature
 import type { CreateUnitInput } from "@/features/hierarchy/validators";
 import type { CreateTenantInput } from "@/features/tenants/validators";
 import type { AssignmentInput, CreateUserInput, UpdateUserInput } from "@/features/users/validators";
-import { apiFetch, apiFetchPage, type ApiRequest, type QueryValue } from "./client";
+import { API_BASE, apiFetch, apiFetchPage, type ApiRequest, type QueryValue } from "./client";
 
 /**
  * Typed admin clients for docs/api-contract.md. Each function takes an optional `cookie` so the
@@ -97,3 +99,56 @@ export const announcements = {
   transition: (id: string, action: WorkflowAction, note?: string | null, o: Opts = {}) =>
     apiFetch<AnnouncementDto>(`/announcements/${id}/${action}`, { method: "POST", body: { note: note ?? null }, ...o }),
 };
+
+// ---------------------------------------------------------- page sections
+export type SectionAction = "submit" | "start_review" | "approve" | "reject" | "publish" | "unpublish";
+export const SECTION_ACTIONS: SectionAction[] = ["submit", "start_review", "approve", "reject", "publish", "unpublish"];
+
+export interface SaveSectionDraftBody {
+  data: Record<string, unknown>;
+  isVisible?: boolean;
+  sortOrder?: number;
+}
+export interface UpdatePageBody {
+  isEnabled?: boolean;
+  seoTitleEn?: string | null;
+  seoTitleMr?: string | null;
+  seoDescriptionEn?: string | null;
+  seoDescriptionMr?: string | null;
+  shareImageId?: string | null;
+}
+
+const sectionPath = (tenantId: string, pageKey: string, sectionKey: string) =>
+  `/content/${tenantId}/pages/${pageKey}/sections/${encodeURIComponent(sectionKey)}`;
+
+export const sections = {
+  updatePage: (tenantId: string, pageKey: string, body: UpdatePageBody, o: Opts = {}) =>
+    apiFetch<PageDto>(`/content/${tenantId}/pages/${pageKey}`, { method: "PATCH", body, ...o }),
+  saveDraft: (tenantId: string, pageKey: string, sectionKey: string, body: SaveSectionDraftBody, o: Opts = {}) =>
+    apiFetch<PageSectionDto>(`${sectionPath(tenantId, pageKey, sectionKey)}/draft`, { method: "PUT", body, ...o }),
+  discardDraft: (tenantId: string, pageKey: string, sectionKey: string, o: Opts = {}) =>
+    apiFetch<PageSectionDto>(`${sectionPath(tenantId, pageKey, sectionKey)}/draft`, { method: "DELETE", ...o }),
+  transition: (tenantId: string, pageKey: string, sectionKey: string, action: SectionAction, note?: string | null, o: Opts = {}) =>
+    apiFetch<PageSectionDto>(`${sectionPath(tenantId, pageKey, sectionKey)}/${action}`, { method: "POST", body: { note: note ?? null }, ...o }),
+};
+
+// -------------------------------------------------------------------- media
+export const media = {
+  list: (query: ListQuery, o: Opts = {}) => apiFetchPage<MediaDto>("/media", { query, ...o }),
+  /** Browser only: multipart upload of one file for a website (or a shared unit). */
+  upload: (file: File, scope: { tenantId: string } | { ownerUnitId: string }, alt?: { altEn?: string; altMr?: string }) => {
+    const fd = new FormData();
+    fd.set("file", file);
+    if ("tenantId" in scope) fd.set("tenantId", scope.tenantId);
+    else fd.set("ownerUnitId", scope.ownerUnitId);
+    if (alt?.altEn) fd.set("altEn", alt.altEn);
+    if (alt?.altMr) fd.set("altMr", alt.altMr);
+    return apiFetch<MediaDto>("/media", { method: "POST", body: fd });
+  },
+  remove: (id: string, o: Opts = {}) => apiFetch<void>(`/media/${id}`, { method: "DELETE", ...o }),
+};
+
+/** Admin-only file URL (session cookie required; served `private, no-store`). */
+export function adminMediaUrl(mediaId: string): string {
+  return `${API_BASE}/media/${encodeURIComponent(mediaId)}/file`;
+}
