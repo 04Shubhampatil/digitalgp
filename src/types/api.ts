@@ -48,6 +48,10 @@ export type UserStatus = "ACTIVE" | "SUSPENDED";
 export type ContentStatus = "DRAFT" | "SUBMITTED" | "UNDER_REVIEW" | "APPROVED" | "PUBLISHED" | "REJECTED" | "ARCHIVED";
 export type AnnouncementPriority = "NORMAL" | "IMPORTANT" | "URGENT" | "EMERGENCY";
 export type ModuleKey = "announcements" | "schemes" | "projects" | "pages" | "media" | "grievances";
+export type SchemeLevel = "CENTRAL" | "STATE" | "DISTRICT" | "GRAM_PANCHAYAT";
+export type ProjectStage = "UPCOMING" | "ONGOING" | "COMPLETED";
+export type MediaKind = "IMAGE" | "VIDEO" | "DOCUMENT";
+export type GrievanceStatus = "OPEN" | "IN_PROGRESS" | "RESOLVED" | "REJECTED";
 
 // ---------------------------------------------------------------------------
 // DTOs
@@ -164,6 +168,218 @@ export interface PublicAnnouncementDto {
   expiresAt: string | null;
   /** True when the announcement was published by a higher-level authority. */
   isShared: boolean;
+}
+
+export interface SchemeDto {
+  id: string;
+  tenantId: string | null;
+  ownerUnitId: string;
+  level: SchemeLevel;
+  nameEn: string | null;
+  nameMr: string | null;
+  descriptionEn: string | null;
+  descriptionMr: string | null;
+  eligibilityEn: string | null;
+  eligibilityMr: string | null;
+  processEn: string | null;
+  processMr: string | null;
+  externalUrl: string | null;
+  /** Aggregate statistics only — no beneficiary PII. */
+  beneficiaryCount: number | null;
+  /** Decimal serialised as a string with two decimals, e.g. "150000.50". */
+  amountDisbursed: string | null;
+  status: ContentStatus;
+  targets: { unitId: string; level: AdminUnitLevel; nameEn: string; nameMr: string }[];
+  createdById: string;
+  submittedAt: string | null;
+  reviewedById: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+  publishedById: string | null;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Public projection — no reviewer/author ids. */
+export interface PublicSchemeDto {
+  id: string;
+  level: SchemeLevel;
+  nameEn: string | null;
+  nameMr: string | null;
+  descriptionEn: string | null;
+  descriptionMr: string | null;
+  eligibilityEn: string | null;
+  eligibilityMr: string | null;
+  processEn: string | null;
+  processMr: string | null;
+  externalUrl: string | null;
+  beneficiaryCount: number | null;
+  amountDisbursed: string | null;
+  publishedAt: string | null;
+  isShared: boolean;
+}
+
+export interface ProjectDto {
+  id: string;
+  tenantId: string;
+  stage: ProjectStage;
+  nameEn: string | null;
+  nameMr: string | null;
+  descriptionEn: string | null;
+  descriptionMr: string | null;
+  wardNo: string | null;
+  year: number | null;
+  /** Decimal serialised as a string with two decimals. */
+  budget: string | null;
+  familiesBenefited: number | null;
+  outcomeEn: string | null;
+  outcomeMr: string | null;
+  coverImageId: string | null;
+  status: ContentStatus;
+  createdById: string;
+  submittedAt: string | null;
+  reviewedById: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+  publishedById: string | null;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Public projection — no reviewer/author ids. */
+export interface PublicProjectDto {
+  id: string;
+  stage: ProjectStage;
+  nameEn: string | null;
+  nameMr: string | null;
+  descriptionEn: string | null;
+  descriptionMr: string | null;
+  wardNo: string | null;
+  year: number | null;
+  budget: string | null;
+  familiesBenefited: number | null;
+  outcomeEn: string | null;
+  outcomeMr: string | null;
+  coverImageId: string | null;
+  publishedAt: string | null;
+}
+
+/** File metadata. Bytes: `GET /media/:id/file` (admin) or `GET /public/:tenantSlug/media/:id` (public). */
+export interface MediaDto {
+  id: string;
+  tenantId: string | null;
+  ownerUnitId: string;
+  kind: MediaKind;
+  originalName: string;
+  mimeType: string;
+  sizeBytes: number;
+  width: number | null;
+  height: number | null;
+  altEn: string | null;
+  altMr: string | null;
+  uploadedById: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GrievanceEventDto {
+  id: string;
+  actorId: string | null;
+  actorName: string | null;
+  fromStatus: GrievanceStatus | null;
+  toStatus: GrievanceStatus;
+  note: string | null;
+  createdAt: string;
+}
+
+/** Admin view — includes citizen contact details; never returned publicly. */
+export interface GrievanceDto {
+  id: string;
+  tenantId: string;
+  trackingCode: string;
+  category: string;
+  citizenName: string;
+  citizenPhone: string | null;
+  citizenEmail: string | null;
+  description: string;
+  status: GrievanceStatus;
+  assignedToId: string | null;
+  assignedToName: string | null;
+  resolutionNote: string | null;
+  resolvedAt: string | null;
+  events: GrievanceEventDto[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Returned once after a public submission. */
+export interface PublicGrievanceReceiptDto {
+  trackingCode: string;
+  status: GrievanceStatus;
+  createdAt: string;
+}
+
+/** Public status lookup — no citizen details, no staff identities, no internal notes. */
+export interface PublicGrievanceStatusDto {
+  trackingCode: string;
+  category: string;
+  status: GrievanceStatus;
+  /** Shown only when RESOLVED/REJECTED. */
+  resolutionNote: string | null;
+  resolvedAt: string | null;
+  timeline: { status: GrievanceStatus; at: string }[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SectionRevisionDto {
+  id: string;
+  version: number;
+  status: ContentStatus;
+  /** Section data validated by the registry schema (src/config/sections.ts); null when omitted. */
+  data: Record<string, unknown> | null;
+  createdById: string;
+  submittedAt: string | null;
+  reviewedById: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+  publishedById: string | null;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** One registered section of a page; `draft`/`published` are null until content exists. */
+export interface PageSectionDto {
+  sectionKey: string;
+  sortOrder: number;
+  isVisible: boolean;
+  draft: SectionRevisionDto | null;
+  published: SectionRevisionDto | null;
+}
+
+export interface PageDto {
+  id: string;
+  tenantId: string;
+  pageKey: string;
+  isEnabled: boolean;
+  seoTitleEn: string | null;
+  seoTitleMr: string | null;
+  seoDescriptionEn: string | null;
+  seoDescriptionMr: string | null;
+  shareImageId: string | null;
+  sections: PageSectionDto[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Public page: published + visible sections only, ordered by `sortOrder`. */
+export interface PublicPageDto {
+  pageKey: string;
+  seo: { titleEn: string | null; titleMr: string | null; descriptionEn: string | null; descriptionMr: string | null; shareImageId: string | null };
+  sections: { sectionKey: string; sortOrder: number; data: Record<string, unknown>; publishedAt: string | null }[];
 }
 
 export interface AuditLogDto {

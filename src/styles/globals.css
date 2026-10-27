@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens — taken from the Figma file (docs/requirements/frontend-inspection-summary.md §4.4.4).
+ * Use the semantic names (bg-primary, text-muted, border-line …) in components; never raw hex.
+ */
+@theme {
+  /* Brand */
+  --color-primary: #034f3c;
+  --color-primary-hover: #04634b;
+  --color-primary-deep: #064e3b;
+  --color-primary-edge: #065f46;
+  --color-primary-alt: #135130;
+  --color-accent: #10b981;
+  --color-cream: #fcf7ee;
+
+  /* Surfaces */
+  --color-canvas: #f9faf9;
+  --color-canvas-alt: #f8fbf9;
+  --color-surface: #ffffff;
+  --color-surface-soft: #f4faf6;
+  --color-surface-table: #f6f9f7;
+  --color-surface-select: #f1fff8;
+  --color-track: #ebf0ed;
+  --color-line: #d6e0d9;
+  --color-line-strong: rgba(65, 65, 65, 0.2);
+
+  /* Text */
+  --color-ink: #14211b;
+  --color-ink-strong: #1a241f;
+  --color-muted: #6e7a73;
+  --color-placeholder: #99a39c;
+
+  /* Status tints (bg / fg) */
+  --color-success-soft: #e8f6ee;
+  --color-success: #034f3c;
+  --color-warning-soft: #fff2de;
+  --color-warning: #fa9e14;
+  --color-danger-soft: #ffebeb;
+  --color-danger: #e84040;
+  --color-info-soft: #e8f2ff;
+  --color-info: #1f6ecc;
+  --color-violet-soft: #f2ebff;
+  --color-violet: #754dc7;
+
+  /* Typography (set by next/font in app/layout.tsx) */
+  --font-sans: var(--font-noto-devanagari), "Noto Sans Devanagari", system-ui, sans-serif;
+  --font-inter: var(--font-inter), "Inter", system-ui, sans-serif;
+  --font-brand: var(--font-sora), "Sora", system-ui, sans-serif;
+  --font-brand-sub: var(--font-manrope), "Manrope", system-ui, sans-serif;
+
+  /* Radii */
+  --radius-card: 10px;
+  --radius-input: 8px;
+  --radius-pill: 13px;
+  --radius-button: 7px;
+
+  /* Layout */
+  --spacing-sidebar: 263px;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    color: var(--color-ink);
+    background-color: var(--color-canvas);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    min-height: 100dvh;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+}
