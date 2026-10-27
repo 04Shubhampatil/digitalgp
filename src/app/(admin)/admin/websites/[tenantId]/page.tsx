@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ExternalLink } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import type { PageDto } from "@/types/api";
 import { DataTable, type Column } from "@/components/admin/DataTable";
@@ -88,6 +89,19 @@ export default async function WebsitePage({ params }: { params: Promise<{ tenant
       },
     },
     { key: "updated", header: t("websites.lastUpdated"), cell: (p) => formatDate(p.updatedAt, ui), className: "text-muted" },
+    {
+      key: "actions",
+      header: tc("actions"),
+      align: "right",
+      cell: (p) =>
+        p.sections.length === 0 ? (
+          <span className="text-xs text-muted">{t("websites.noSections")}</span>
+        ) : (
+          <Link href={`/admin/websites/${tenant.id}/pages/${p.pageKey}`} className="inline-flex rounded-button border border-line px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-soft">
+            {t("websites.edit")}
+          </Link>
+        ),
+    },
   ];
 
   return (
