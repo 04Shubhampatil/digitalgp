@@ -1,8 +1,9 @@
-import { ArrowRight, Briefcase, Building2, Brush, Droplet, FileText, GraduationCap, Hammer, LayoutGrid, Scissors, Users, Wrench, Zap, type LucideIcon } from "lucide-react";
+import { ArrowRight, Brush, Cog, Droplets, FileText, Hammer, Handshake, Layers, Megaphone, Briefcase, Scissors, Ellipsis, Zap, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { pickText, type Bilingual } from "@/i18n/text";
 import { resolveHref } from "@/lib/href";
+import { FigmaIcon } from "@/components/ui/FigmaIcon";
 import { MediaTabs, type MediaCard } from "./KitClient";
 import type { SectionProps } from "./index";
 
@@ -14,7 +15,13 @@ interface Btn {
 
 /** More reusable inner-page blocks (Employment, Education, Gallery …), driven by section `data`. */
 
-const STAT_ICONS: LucideIcon[] = [Briefcase, Building2, GraduationCap, FileText];
+/** Icon + colour per Employment stat card (document, briefcase, handshake, megaphone). */
+const STAT_ICONS: { Icon: LucideIcon; fg: string; ring: string }[] = [
+  { Icon: FileText, fg: "text-[#135130]", ring: "bg-[#e9f4e9]" },
+  { Icon: Briefcase, fg: "text-[#5b2a9a]", ring: "bg-[#efe6f8]" },
+  { Icon: Handshake, fg: "text-[#1a62e0]", ring: "bg-[#e2edfa]" },
+  { Icon: Megaphone, fg: "text-[#f5871f]", ring: "bg-[#fdeedd]" },
+];
 
 /** `stat-cards`: large number cards with a round icon (Employment "Active job openings" …). */
 export function StatCardsSection({ locale, data }: SectionProps) {
@@ -24,11 +31,11 @@ export function StatCardsSection({ locale, data }: SectionProps) {
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[62px]">
         <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {(d.items ?? []).map((it, i) => {
-            const Icon = STAT_ICONS[i % STAT_ICONS.length]!;
+            const { Icon, fg, ring } = STAT_ICONS[i % STAT_ICONS.length]!;
             return (
               <li key={i} className="flex min-h-[288px] flex-col items-center rounded-[10px] bg-white px-6 pt-[21px] pb-6 text-center shadow-[0_0_14px_rgba(0,0,0,0.2)]">
-                <span aria-hidden className="flex size-[91px] items-center justify-center rounded-full bg-[#e9f4e9] text-[#135130]">
-                  <Icon className="size-10" />
+                <span aria-hidden className={`flex size-[91px] items-center justify-center rounded-full ${ring} ${fg}`}>
+                  <Icon className="size-10" strokeWidth={1.7} />
                 </span>
                 <p className="mt-3 text-[45px] leading-[54px] font-bold text-[#135130]">{it.value}</p>
                 <p className="mt-2 text-[20px] leading-[27px] font-semibold text-black">{pickText(it.label, locale)}</p>
@@ -42,7 +49,7 @@ export function StatCardsSection({ locale, data }: SectionProps) {
   );
 }
 
-const TILE_ICONS: LucideIcon[] = [Zap, Droplet, Hammer, Brush, Wrench, Scissors, Building2, LayoutGrid];
+const TILE_ICONS: LucideIcon[] = [Zap, Droplets, Hammer, Scissors, Cog, Layers, Brush, Ellipsis];
 
 /** `tile-grid`: heading + 4-column grid of icon tiles with a count caption, optional action. */
 export function TileGridSection({ slug, locale, data }: SectionProps) {
@@ -78,7 +85,7 @@ export function TileGridSection({ slug, locale, data }: SectionProps) {
   );
 }
 
-const LINK_ICONS: LucideIcon[] = [GraduationCap, Briefcase, FileText, Building2, Users];
+const LINK_ICONS = ["edu-scholarship", "edu-skill", "edu-exams", "edu-internship", "edu-clubs"];
 
 /** `link-cards`: icon + title + description + "Explore Now" cards (Education schemes & opportunities). */
 export function LinkCardsSection({ slug, locale, data }: SectionProps) {
@@ -89,12 +96,10 @@ export function LinkCardsSection({ slug, locale, data }: SectionProps) {
         <h2 className="text-center text-[30px] leading-[45px] font-semibold text-black">{pickText(d.heading, locale)}</h2>
         <ul className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
           {(d.items ?? []).map((it, i) => {
-            const Icon = LINK_ICONS[i % LINK_ICONS.length]!;
+            const icon = LINK_ICONS[i % LINK_ICONS.length]!;
             return (
               <li key={i} className="flex min-h-[286px] flex-col rounded-[10px] bg-white px-6 py-6 shadow-[0_0_14px_rgba(0,0,0,0.2)]">
-                <span aria-hidden className="flex size-[77px] items-center justify-center rounded-full bg-[#e9f4e9] text-[#135130]">
-                  <Icon className="size-9" />
-                </span>
+                <FigmaIcon name={icon} width={64} />
                 <h3 className="mt-6 text-[18px] leading-[22px] font-bold text-black">{pickText(it.title, locale)}</h3>
                 <p className="mt-3 text-[14px] leading-[22px] text-[#414141]">{pickText(it.body, locale)}</p>
                 <Link href={resolveHref(it.href ?? "#", slug)} className="mt-auto inline-flex items-center gap-2 pt-4 text-[16px] font-medium text-[#135130] hover:underline">

@@ -23,7 +23,7 @@ export default async function MediaPage({ searchParams }: { searchParams: Search
       <PageHeader title={t("media")} description={t("mediaUi.subtitle")} />
       <MediaLibrary items={page.data} canManage={hasCapability(user, "media:manage")} initialTenantId={tenantId} />
       <div className="mt-2 rounded-card border border-line bg-surface">
-        <CursorPager basePath="/admin/media" params={{ tenantId, kind: kindFilter, cursor }} nextCursor={page.page.nextCursor} shown={page.data.length} labels={{ showing: tc("showing"), first: tc("firstPage"), next: tc("nextPage") }} />
+        <CursorPager basePath="/admin/media" params={{ tenantId, kind: kindFilter, cursor }} nextCursor={page.page.nextCursor} shown={page.data.length} labels={{ showing: tc.raw("showing") as string, first: tc("firstPage"), next: tc("nextPage") }} />
       </div>
     </div>
   );

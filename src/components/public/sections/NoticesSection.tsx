@@ -58,6 +58,7 @@ export async function NoticesSection({ slug, locale, data }: SectionProps) {
             viewAllLabel={tc("viewAll")}
             viewAllHref={d.viewAll?.href ? resolveHref(d.viewAll.href, slug) : undefined}
             emptyLabel={t("noAnnouncements")}
+            newLabel={t("newBadge")}
           />
         </div>
       </div>

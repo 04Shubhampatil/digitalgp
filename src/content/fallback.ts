@@ -29,6 +29,29 @@ export const FALLBACK_SECTIONS: Partial<Record<PageKey, FallbackSection[]>> = {
 };
 
 /**
+ * Home page section order from the Figma design. Backend sort orders are overridden for these
+ * keys so the page always follows the design (hero → stats → Citizen Services → About → indicators
+ * → achievements → weather → welcome → leaders → notices).
+ */
+const HOME_ORDER: Record<string, number> = {
+  hero: 0,
+  "quick-stats": 10,
+  "quick-links": 15,
+  welcome: 20,
+  "about-cards": 20,
+  "monthly-metrics": 22,
+  "ward-details": 23,
+  achievements: 28,
+  "whats-new": 29,
+  weather: 30,
+  "sarpanch-message": 31,
+  "welcome-video": 34,
+  "village-progress": 35,
+  leaders: 45,
+  notices: 50,
+};
+
+/**
  * Merge published backend sections with Figma placeholders for the same page.
  * Returns a page-shaped object so the existing renderers need no change.
  */
@@ -38,9 +61,10 @@ export function withFallback(pageKey: PageKey, page: PublicPageDto | null): Publ
   const extra = (FALLBACK_SECTIONS[pageKey] ?? [])
     .filter((s) => !have.has(s.sectionKey) && !(s.skipIfPresent ?? []).some((k) => have.has(k)))
     .map((s) => ({ sectionKey: s.sectionKey, sortOrder: s.sortOrder, data: s.data, publishedAt: null }));
+  const order = (s: { sectionKey: string; sortOrder: number }) => (pageKey === "home" ? (HOME_ORDER[s.sectionKey] ?? s.sortOrder) : s.sortOrder);
   return {
     pageKey,
     seo: page?.seo ?? { titleEn: null, titleMr: null, descriptionEn: null, descriptionMr: null, shareImageId: null },
-    sections: [...published, ...extra].sort((a, b) => a.sortOrder - b.sortOrder),
+    sections: [...published, ...extra].map((s) => ({ ...s, sortOrder: order(s) })).sort((a, b) => a.sortOrder - b.sortOrder),
   };
 }

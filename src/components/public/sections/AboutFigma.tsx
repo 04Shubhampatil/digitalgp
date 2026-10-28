@@ -1,5 +1,6 @@
-import { Ambulance, Flame, HeartPulse, Phone, ShieldAlert, Siren, TreePine, Zap, type LucideIcon } from "lucide-react";
+import { Phone } from "lucide-react";
 import Link from "next/link";
+import { FigmaIcon } from "@/components/ui/FigmaIcon";
 import { pickText, type Bilingual } from "@/i18n/text";
 import { resolveHref } from "@/lib/href";
 import type { SectionProps } from "./index";
@@ -192,7 +193,7 @@ export function AboutRolesSection({ locale, data }: SectionProps) {
   );
 }
 
-const EMERGENCY_ICONS: LucideIcon[] = [Siren, Ambulance, Flame, HeartPulse, ShieldAlert, Zap, Zap, TreePine, Siren, HeartPulse];
+const EMERGENCY_ICONS = ["total", "ambulance", "fire", "health", "disaster", "electricity", "tollfree", "forest", "state", "women"];
 
 /** `about-emergency`: important contact numbers grid with call pills. */
 export function AboutEmergencySection({ locale, data }: SectionProps) {
@@ -204,12 +205,10 @@ export function AboutEmergencySection({ locale, data }: SectionProps) {
         <h2 className="mt-3 text-center text-[35px] leading-[45px] font-semibold text-black">{pickText(d.heading, locale)}</h2>
         <ul className="mt-8 flex flex-wrap justify-center gap-5">
           {(d.items ?? []).map((it, i) => {
-            const Icon = EMERGENCY_ICONS[i % EMERGENCY_ICONS.length]!;
+            const icon = EMERGENCY_ICONS[i % EMERGENCY_ICONS.length]!;
             return (
               <li key={i} className="flex min-h-[199px] w-[203px] flex-col items-center gap-4 rounded-[10px] border border-black/15 bg-white px-6 py-6 shadow-[0_0_10px_rgba(0,0,0,0.25)]">
-                <span aria-hidden className="flex size-[58px] items-center justify-center rounded-full bg-[#138808]/10 text-[#138808]">
-                  <Icon className="size-7" />
-                </span>
+                <FigmaIcon name={`emerg-${icon}`} width={88} height={76} />
                 <p className="text-center text-[14.8px] leading-4 font-semibold text-black">{pickText(it.label, locale)}</p>
                 <div className="mt-auto flex flex-wrap justify-center gap-2">
                   {(it.numbers ?? []).map((n) => (

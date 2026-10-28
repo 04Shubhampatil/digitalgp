@@ -82,7 +82,7 @@ export default async function AuditLogsPage({ searchParams }: { searchParams: Se
       <Card>
         <CardHeader title={t("auditLogs")} />
         <DataTable columns={columns} rows={page.data} rowKey={(l) => l.id} emptyMessage={tc("noResults")} />
-        <CursorPager basePath="/admin/audit-logs" params={{ action, entityType, from, to, cursor }} nextCursor={page.page.nextCursor} shown={page.data.length} labels={{ showing: tc("showing"), first: tc("firstPage"), next: tc("nextPage") }} />
+        <CursorPager basePath="/admin/audit-logs" params={{ action, entityType, from, to, cursor }} nextCursor={page.page.nextCursor} shown={page.data.length} labels={{ showing: tc.raw("showing") as string, first: tc("firstPage"), next: tc("nextPage") }} />
       </Card>
     </div>
   );

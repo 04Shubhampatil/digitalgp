@@ -64,7 +64,7 @@ export default async function GrievancesPage({ searchParams }: { searchParams: S
       <Card>
         <CardHeader title={t("grievances")} />
         <DataTable columns={columns} rows={page.data} rowKey={(g) => g.id} emptyMessage={tc("noResults")} />
-        <CursorPager basePath="/admin/grievances" params={{ status: statusFilter, q, cursor }} nextCursor={page.page.nextCursor} shown={page.data.length} labels={{ showing: tc("showing"), first: tc("firstPage"), next: tc("nextPage") }} />
+        <CursorPager basePath="/admin/grievances" params={{ status: statusFilter, q, cursor }} nextCursor={page.page.nextCursor} shown={page.data.length} labels={{ showing: tc.raw("showing") as string, first: tc("firstPage"), next: tc("nextPage") }} />
       </Card>
     </div>
   );

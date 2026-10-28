@@ -101,7 +101,7 @@ export default async function WebsitesPage({ searchParams }: { searchParams: Sea
           params={{ status: statusFilter, q, cursor }}
           nextCursor={page.page.nextCursor}
           shown={page.data.length}
-          labels={{ showing: tc("showing"), first: tc("firstPage"), next: tc("nextPage") }}
+          labels={{ showing: tc.raw("showing") as string, first: tc("firstPage"), next: tc("nextPage") }}
         />
       </Card>
     </div>

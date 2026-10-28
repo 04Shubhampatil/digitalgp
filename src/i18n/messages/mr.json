@@ -126,7 +126,7 @@
       "searchPlaceholder": "ग्रामपंचायत शोधा",
       "statusFilter": "संकेतस्थळ स्थिती",
       "unitLabel": "ग्रामपंचायत (रचना)",
-      "slugHint": "सार्वजनिक पत्ता: /<slug> किंवा <slug>.digitalgp.in",
+      "slugHint": "सार्वजनिक पत्ता: /'<'slug'>' किंवा '<'slug'>'.digitalgp.in",
       "defaultLocale": "मूलभूत भाषा",
       "createdOk": "संकेतस्थळ तयार झाले. पाने पूर्ण करून प्रकाशित करा.",
       "publish": "संकेतस्थळ प्रकाशित करा",
@@ -572,7 +572,25 @@
     "viewDetails": "तपशील पहा",
     "before": "आधी",
     "after": "नंतर",
-    "mailtoHint": "तुमचे मेल अॅप संदेशासह उघडेल."
+    "mailtoHint": "तुमचे मेल अॅप संदेशासह उघडेल.",
+    "selectWard": "वॉर्ड निवडा",
+    "allWards": "सर्व वॉर्ड",
+    "viewAllServices": "सर्व सेवा पहा",
+    "viewAll": "सर्व पहा",
+    "status": {
+      "completed": "पूर्ण",
+      "event": "कार्यक्रम",
+      "ongoing": "सुरू आहे"
+    },
+    "weatherLabels": {
+      "feelsLike": "जाणवणारे तापमान",
+      "humidity": "आर्द्रता",
+      "wind": "वारा",
+      "visibility": "दृश्यमानता",
+      "sunrise": "सूर्योदय",
+      "sunset": "सूर्यास्त"
+    },
+    "newBadge": "नवीन"
   },
   "editor": {
     "subtitle": "{name} साठी सामग्री संपादित करत आहात. प्रत्येक विभागाचा स्वतंत्र मसुदा असतो; तयार झाल्यावर प्रकाशित करा.",

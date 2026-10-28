@@ -23,7 +23,7 @@ export async function PublicAnnouncements({ slug, locale, page, limit = 20, comp
             <StatusPill status={a.priority} label={ta(`announcements.priorityLabel.${a.priority}`)} />
             {a.isShared && <span className="rounded-pill bg-info-soft px-3 py-1 text-[11px] font-semibold text-info">{ta("announcements.isShared")}</span>}
             <span className="text-xs text-muted">
-              {a.category} · {formatDate(a.publishedAt, locale)}
+              {pickText({ en: a.category }, locale)} · {formatDate(a.publishedAt, locale)}
             </span>
           </div>
           <h3 className="mt-2 text-lg font-bold text-ink">{pickText(pair(a.titleEn, a.titleMr), locale)}</h3>

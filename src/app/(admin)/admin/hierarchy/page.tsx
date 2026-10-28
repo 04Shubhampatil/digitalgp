@@ -163,7 +163,7 @@ export default async function HierarchyPage({ searchParams }: { searchParams: Se
             params={{ parentId: parent.id, q, cursor }}
             nextCursor={nextCursor}
             shown={rows.length}
-            labels={{ showing: tc("showing"), first: tc("firstPage"), next: tc("nextPage") }}
+            labels={{ showing: tc.raw("showing") as string, first: tc("firstPage"), next: tc("nextPage") }}
           />
         )}
       </Card>

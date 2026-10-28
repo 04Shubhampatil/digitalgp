@@ -72,7 +72,7 @@ export default async function SchemesPage({ searchParams }: { searchParams: Sear
       <Card>
         <CardHeader title={t("schemes")} />
         <DataTable columns={columns} rows={page.data} rowKey={(s) => s.id} emptyMessage={tc("noResults")} />
-        <CursorPager basePath="/admin/schemes" params={{ status: statusFilter, level: levelFilter, q, cursor }} nextCursor={page.page.nextCursor} shown={page.data.length} labels={{ showing: tc("showing"), first: tc("firstPage"), next: tc("nextPage") }} />
+        <CursorPager basePath="/admin/schemes" params={{ status: statusFilter, level: levelFilter, q, cursor }} nextCursor={page.page.nextCursor} shown={page.data.length} labels={{ showing: tc.raw("showing") as string, first: tc("firstPage"), next: tc("nextPage") }} />
       </Card>
     </div>
   );
