@@ -126,7 +126,7 @@
       "searchPlaceholder": "Search Gram Panchayat",
       "statusFilter": "Website status",
       "unitLabel": "Gram Panchayat (hierarchy)",
-      "slugHint": "Public address: /<slug> or <slug>.digitalgp.in",
+      "slugHint": "Public address: /'<'slug'>' or '<'slug'>'.digitalgp.in",
       "defaultLocale": "Default language",
       "createdOk": "Website created. Complete the pages, then publish.",
       "publish": "Publish website",

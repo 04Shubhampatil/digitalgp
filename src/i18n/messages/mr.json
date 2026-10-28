@@ -126,7 +126,7 @@
       "searchPlaceholder": "ग्रामपंचायत शोधा",
       "statusFilter": "संकेतस्थळ स्थिती",
       "unitLabel": "ग्रामपंचायत (रचना)",
-      "slugHint": "सार्वजनिक पत्ता: /<slug> किंवा <slug>.digitalgp.in",
+      "slugHint": "सार्वजनिक पत्ता: /'<'slug'>' किंवा '<'slug'>'.digitalgp.in",
       "defaultLocale": "मूलभूत भाषा",
       "createdOk": "संकेतस्थळ तयार झाले. पाने पूर्ण करून प्रकाशित करा.",
       "publish": "संकेतस्थळ प्रकाशित करा",
