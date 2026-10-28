@@ -1,7 +1,8 @@
 "use client";
 
-import { ChevronDown, Trophy } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useState } from "react";
+import { FigmaIcon } from "@/components/ui/FigmaIcon";
 
 export interface AchievementView {
   title: string;
@@ -9,14 +10,6 @@ export interface AchievementView {
   completed: string;
   ward?: string;
 }
-
-const MEDAL = [
-  { ring: "bg-[#fff1d6]", fg: "text-[#f5a500]" },
-  { ring: "bg-[#e8eef6]", fg: "text-[#2a5d9f]" },
-  { ring: "bg-[#fde7da]", fg: "text-[#d9531e]" },
-  { ring: "bg-[#e5f4e2]", fg: "text-[#138808]" },
-  { ring: "bg-[#efe6f8]", fg: "text-[#6a1b9a]" },
-];
 
 /** "Top Five Achievements of the Ward" card with a ward selector (Figma 375:13333). */
 export function AchievementsCard({ heading, selectLabel, allLabel, wards, items }: { heading: string; selectLabel: string; allLabel: string; wards: string[]; items: AchievementView[] }) {
@@ -43,19 +36,9 @@ export function AchievementsCard({ heading, selectLabel, allLabel, wards, items 
       </div>
       <ol className="mt-2 rounded-[10px] border border-black/15">
         {shown.map((a, i) => {
-          const m = MEDAL[i % MEDAL.length]!;
           return (
             <li key={i} className="flex items-center gap-5 border-b border-black px-5 py-4 last:border-b-0">
-              <span aria-hidden className={`flex size-[62px] shrink-0 flex-col items-center justify-center rounded-full ${m.ring} ${m.fg}`}>
-                {i < 3 ? (
-                  <>
-                    <Trophy className="size-6 fill-current" />
-                    <span className="text-[14px] leading-none font-bold">{i + 1}</span>
-                  </>
-                ) : (
-                  <span className="text-[30px] leading-none font-bold">{i + 1}</span>
-                )}
-              </span>
+              <FigmaIcon name={`medal-${(i % 5) + 1}`} width={62} />
               <div>
                 <p className="text-[18px] leading-[24px] font-semibold text-black">{a.title}</p>
                 <p className="text-[13px] leading-[24px] text-[#414141]">{a.body}</p>
