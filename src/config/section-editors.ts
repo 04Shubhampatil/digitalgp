@@ -85,6 +85,45 @@ const home: SectionEditorSpec[] = [
     fields: [bilingual("heading", "heading", { required: true }), bilingualLong("body", "body", { required: true }), { name: "imageId", type: "image", labelKey: "image" }],
   },
   {
+    key: "sarpanch-message",
+    labelKey: "sarpanchMessage",
+    fields: [
+      bilingual("heading", "heading"),
+      bilingualLong("message", "message", { required: true }),
+      bilingual("name", "name", { required: true }),
+      bilingual("designation", "designation", { required: true }),
+      { name: "photoId", type: "image", labelKey: "photo" },
+    ],
+  },
+  {
+    key: "monthly-metrics",
+    labelKey: "monthlyMetrics",
+    fields: [bilingual("heading", "heading"), bilingual("period", "period")],
+    items: {
+      name: "items",
+      labelKey: "metric",
+      min: 1,
+      max: 12,
+      fields: [
+        bilingual("label", "label", { required: true }),
+        { name: "value", type: "text", labelKey: "value", max: 40, required: true },
+        { name: "change", type: "text", labelKey: "change", max: 40 },
+      ],
+    },
+  },
+  {
+    key: "village-progress",
+    labelKey: "villageProgress",
+    fields: [bilingual("heading", "heading"), bilingual("subheading", "subheading")],
+    items: {
+      name: "items",
+      labelKey: "progressItem",
+      min: 1,
+      max: 20,
+      fields: [bilingual("label", "label", { required: true }), { name: "valueText", type: "text", labelKey: "valueText", max: 60 }],
+    },
+  },
+  {
     key: "leaders",
     labelKey: "leaders",
     descriptionKey: "leadersDesc",

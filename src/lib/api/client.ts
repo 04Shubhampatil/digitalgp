@@ -1,4 +1,5 @@
 import type { ApiErrorBody, ApiPaginated, ApiSuccess, ErrorCode, ValidationIssue } from "@/types/api";
+import { dummyRead, isDummyMode } from "./dummy";
 
 /**
  * Thin fetch wrapper around the backend contract (docs/api-contract.md):
@@ -74,6 +75,11 @@ export function buildUrl(path: string, query?: Record<string, QueryValue>): stri
 }
 
 export async function apiFetch<T>(path: string, req: ApiRequest = {}): Promise<T> {
+  const dummy = dummyRead(path);
+  if (dummy) {
+    if (dummy.error) throw new ApiError(dummy.error, dummy.status ?? 404, dummy.message ?? "Not found");
+    return dummy.value as T;
+  }
   const headers: Record<string, string> = { Accept: "application/json" };
   let body: BodyInit | undefined;
 
@@ -122,6 +128,7 @@ export async function apiFetch<T>(path: string, req: ApiRequest = {}): Promise<T
 
 /** Like `apiFetch` but keeps the pagination envelope. */
 export async function apiFetchPage<T>(path: string, req: ApiRequest = {}): Promise<ApiPaginated<T>> {
+  if (isDummyMode() && path.startsWith("/public/")) return { data: [], page: { nextCursor: null, limit: 20 } };
   const headers: Record<string, string> = { Accept: "application/json" };
   if (req.cookie) headers.Cookie = req.cookie;
   let res: Response;

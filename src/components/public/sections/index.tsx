@@ -1,7 +1,9 @@
 import type { PublicPageDto } from "@/types/api";
 import type { UiLocale } from "@/i18n/config";
+import { AboutCardsSection } from "./AboutCardsSection";
 import { GeographySection, HistorySection, MembersSection, OfficeSection } from "./AboutSections";
 import { HeroSection } from "./HeroSection";
+import { MonthlyMetricsSection, SarpanchMessageSection, VillageProgressSection, WardDetailsSection, WeatherSection, WelcomeVideoSection } from "./HomeExtras";
 import { LeadersSection } from "./LeadersSection";
 import { QuickLinksSection } from "./QuickLinksSection";
 import { QuickStatsSection } from "./QuickStatsSection";
@@ -9,6 +11,8 @@ import { WelcomeSection } from "./WelcomeSection";
 
 export interface SectionProps {
   slug: string;
+  /** Display name of the website in the active language (e.g. for the hero eyebrow). */
+  tenantName?: string;
   locale: UiLocale;
   /** Published section JSON; shape is defined by the backend registry (src/config/sections.ts). */
   data: Record<string, unknown>;
@@ -23,6 +27,13 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
   hero: HeroSection,
   "quick-stats": QuickStatsSection,
   welcome: WelcomeSection,
+  "about-cards": AboutCardsSection,
+  weather: WeatherSection,
+  "sarpanch-message": SarpanchMessageSection,
+  "welcome-video": WelcomeVideoSection,
+  "monthly-metrics": MonthlyMetricsSection,
+  "village-progress": VillageProgressSection,
+  "ward-details": WardDetailsSection,
   leaders: LeadersSection,
   "quick-links": QuickLinksSection,
   // about page
@@ -33,12 +44,38 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
   office: OfficeSection,
 };
 
-export function renderSections(page: PublicPageDto, slug: string, locale: UiLocale): React.ReactNode[] {
-  return page.sections
-    .slice()
-    .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map((s) => {
-      const Section = RENDERERS[s.sectionKey];
-      return Section ? <Section key={s.sectionKey} slug={slug} locale={locale} data={s.data} /> : null;
-    });
+/** Sections that share one two-column row (card renderers only; the wrapper supplies the layout). */
+const ROW_GROUPS: string[][] = [
+  ["weather", "sarpanch-message"],
+  ["welcome-video", "village-progress"],
+];
+const GROUPED = new Set(ROW_GROUPS.flat());
+
+export function renderSections(page: PublicPageDto, slug: string, locale: UiLocale, tenantName?: string): React.ReactNode[] {
+  const sorted = page.sections.slice().sort((a, b) => a.sortOrder - b.sortOrder);
+  const out: React.ReactNode[] = [];
+  const done = new Set<string>();
+  for (const s of sorted) {
+    if (done.has(s.sectionKey)) continue;
+    const Section = RENDERERS[s.sectionKey];
+    if (!Section) continue;
+    if (GROUPED.has(s.sectionKey)) {
+      const group = ROW_GROUPS.find((g) => g.includes(s.sectionKey)) ?? [];
+      const members = sorted.filter((m) => group.includes(m.sectionKey) && RENDERERS[m.sectionKey]);
+      members.forEach((m) => done.add(m.sectionKey));
+      out.push(
+        <section key={group.join("+")} className="bg-cream py-8">
+          <div className="mx-auto grid max-w-[1440px] gap-5 px-4 sm:px-8 lg:grid-cols-2 lg:gap-[20px] lg:px-[60px] [&>*:only-child]:lg:col-span-2">
+            {members.map((m) => {
+              const Card = RENDERERS[m.sectionKey]!;
+              return <Card key={m.sectionKey} slug={slug} locale={locale} data={m.data} tenantName={tenantName} />;
+            })}
+          </div>
+        </section>,
+      );
+      continue;
+    }
+    out.push(<Section key={s.sectionKey} slug={slug} locale={locale} data={s.data} tenantName={tenantName} />);
+  }
+  return out;
 }

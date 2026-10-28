@@ -533,7 +533,8 @@
         "tax": "Tax & payments",
         "other": "Other"
       }
-    }
+    },
+    "openInMaps": "Open in Maps"
   },
   "editor": {
     "subtitle": "Editing content for {name}. Each section has its own draft; publish when it is ready.",
@@ -571,7 +572,10 @@
       "history": "Village history",
       "geography": "Geography & demographics",
       "members": "Panchayat members",
-      "office": "Office information"
+      "office": "Office information",
+      "sarpanchMessage": "Message from the Sarpanch",
+      "monthlyMetrics": "Village indicators (monthly)",
+      "villageProgress": "Village development progress"
     },
     "fields": {
       "title": "Title",
@@ -604,7 +608,14 @@
       "wardNo": "Ward no.",
       "address": "Address",
       "hours": "Office hours",
-      "mapUrl": "Map link"
+      "mapUrl": "Map link",
+      "message": "Message",
+      "period": "Period label",
+      "metric": "Indicator",
+      "change": "Change",
+      "progressItem": "Progress item",
+      "valueText": "Value (text or %)",
+      "subheading": "Subheading"
     }
   }
 }
