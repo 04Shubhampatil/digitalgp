@@ -57,8 +57,40 @@ const HOME_ORDER: Record<string, number> = {
  * Merge published backend sections with Figma placeholders for the same page.
  * Returns a page-shaped object so the existing renderers need no change.
  */
+type Obj = Record<string, unknown>;
+const labelOf = (v: unknown): string => {
+  const o = v as { en?: string } | undefined;
+  return (o?.en ?? "").trim().toLowerCase();
+};
+
+/**
+ * Fill presentation-only labels (captions, link labels) that a published section left out, using the
+ * Figma placeholder for the same section. Values and data rows are never copied: only text that
+ * describes a row the backend already has (matched by its English label), or a missing section link.
+ */
+function fillLabels(sectionKey: string, data: Obj, fallback: Obj): Obj {
+  if (sectionKey === "monthly-metrics") {
+    const items = (data.items as Obj[] | undefined) ?? [];
+    const base = new Map(((fallback.items as Obj[] | undefined) ?? []).map((i) => [labelOf(i.label), i]));
+    return {
+      ...data,
+      period: data.period ?? fallback.period,
+      items: items.map((i) => {
+        const match = base.get(labelOf(i.label));
+        return match?.caption && !i.caption ? { ...i, caption: match.caption } : i;
+      }),
+    };
+  }
+  if (sectionKey === "ward-details") return { ...data, viewAll: data.viewAll ?? fallback.viewAll };
+  return data;
+}
+
 export function withFallback(pageKey: PageKey, page: PublicPageDto | null): PublicPageDto {
-  const published = page?.sections ?? [];
+  const fallbacks = FALLBACK_SECTIONS[pageKey] ?? [];
+  const published = (page?.sections ?? []).map((s) => {
+    const f = fallbacks.find((x) => x.sectionKey === s.sectionKey);
+    return f ? { ...s, data: fillLabels(s.sectionKey, s.data as Obj, f.data) } : s;
+  });
   const have = new Set(published.map((s) => s.sectionKey));
   const extra = (FALLBACK_SECTIONS[pageKey] ?? [])
     .filter((s) => !have.has(s.sectionKey) && !(s.skipIfPresent ?? []).some((k) => have.has(k)))

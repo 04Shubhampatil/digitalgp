@@ -188,7 +188,7 @@ export const FIGMA_HOME_SECTIONS: FallbackSection[] = [
     sortOrder: 23,
     data: {
       heading: { en: "Ward Details" },
-      viewAll: { label: { en: "View Ward Details" }, href: "page:our-village" },
+      viewAll: { label: { en: "View Ward Details" }, href: "page:culture" },
       wards: [
         {
           name: { en: "Ward 1" },
