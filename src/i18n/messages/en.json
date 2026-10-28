@@ -84,7 +84,10 @@
     "setPassword": "Set password",
     "changePassword": "Change password",
     "required": "Required",
-    "mustResetNotice": "You signed in with a temporary password. Please set a new one now."
+    "mustResetNotice": "You signed in with a temporary password. Please set a new one now.",
+    "loginAs": "Login as",
+    "roleMismatch": "This account does not have the selected role. Choose the role you were assigned.",
+    "roleNone": "Select your role"
   },
   "admin": {
     "dashboard": "Dashboard",

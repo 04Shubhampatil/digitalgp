@@ -68,22 +68,38 @@ async function ensureTenant(unitId: string, slug: string, nameEn: string, nameMr
 }
 
 // ---------------------------------------------------------------------------
-// Savardari test data — taken from the Figma "Gram panchayat" home and about designs.
-// Gram Panchayat Savardari, Taluka Khed, District Pune. Values not present in the design are
-// omitted rather than invented (see the notes printed at the end of the seed).
+// Savardari test data — copied from the Figma "Gram panchayat" home and about designs
+// (file qBVt7yv0KG41onObVWfnP1, node 375:12877). Text is kept exactly as shown in the design,
+// including its spelling. Content the schemas cannot hold is left out (see the notes printed
+// by the seed). Savardari's announcements, projects and schemes are replaced on each run so
+// the seed always matches the design; sections are republished only when their content changes.
 // ---------------------------------------------------------------------------
 
 const day = (y: number, m: number, d: number) => new Date(Date.UTC(y, m - 1, d, 4, 30));
 
-/** Publish one section directly (draft + publish in one step). Skips when already published. */
+/** Stable JSON: sorted keys, so a value read back from Postgres (jsonb reorders keys) compares equal. */
+function canonical(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value)
+      .sort()
+      .map((k) => `${JSON.stringify(k)}:${canonical((value as Record<string, unknown>)[k])}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
+/** Publish a section. A new revision is created only when the content differs from the live one. */
 async function publishSection(tenantId: string, pageKey: string, sectionKey: string, sortOrder: number, data: object, authorId: string) {
   const page = await prisma.page.findUniqueOrThrow({ where: { tenantId_pageKey: { tenantId, pageKey } } });
   const section = await prisma.section.upsert({
     where: { pageId_sectionKey: { pageId: page.id, sectionKey } },
     create: { tenantId, pageId: page.id, sectionKey, sortOrder },
-    update: {},
+    update: { sortOrder },
   });
-  if (section.publishedId) return;
+  const live = section.publishedId ? await prisma.sectionRevision.findUnique({ where: { id: section.publishedId } }) : null;
+  if (live && canonical(live.data) === canonical(data)) return;
+
   const version = (await prisma.sectionRevision.count({ where: { sectionId: section.id } })) + 1;
   const now = new Date();
   const rev = await prisma.sectionRevision.create({
@@ -110,7 +126,7 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
   const tenant = await ensureTenant(unit.id, "savardari", "Savardari", "सवरदरी");
   await prisma.tenant.update({
     where: { id: tenant.id },
-    data: { settings: { contact: { address: "Gram Panchayat Savardari, Taluka: Khed, District: Pune – 410501" } } },
+    data: { settings: { contact: { address: "Gram Panchayat: Savardari, Taluka: Khed, District: Pune – 410501" } } },
   });
 
   // Accounts for the test website
@@ -121,39 +137,92 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
   const operator = await upsertUser("savardari.operator@digitalgp.local", "Savardari Data Entry Operator", SAMPLE_PASSWORD);
   await ensureAssignment(operator.id, "DATA_ENTRY_OPERATOR", unit.id, ["announcements", "projects", "schemes", "media"]);
 
-  // ---- Home page sections
+  // ---- Home page (design: hero, quick statistics, welcome, Message from the Sarpanch, Citizen Services)
   await publishSection(tenant.id, "home", "hero", 0, {
     title: { en: "Welcome to Gram Panchayat Savardari" },
     subtitle: { en: "Building a Sustainable, Transparent & Digital Village." },
     cta: { label: { en: "Explore Village" }, href: "/savardari/about" },
+    actions: [
+      { label: { en: "Explore Village" }, href: "/savardari/about" },
+      { label: { en: "Explore Services" }, href: "/savardari/services" },
+      { label: { en: "Register Complaint" }, href: "/savardari/grievance" },
+    ],
   }, gpAdmin.id);
 
   await publishSection(tenant.id, "home", "quick-stats", 10, {
     items: [
       { label: { en: "Population" }, value: "2,857" },
       { label: { en: "Households" }, value: "2,857" },
-      { label: { en: "Agriculture area (hectares)" }, value: "1,243" },
-      { label: { en: "Literacy rate" }, value: "91.4%" },
-      { label: { en: "Government schemes implemented" }, value: "9" },
+      { label: { en: "Hectares Agriculture Area" }, value: "1,243" },
+      { label: { en: "Literacy Rate" }, value: "1,243" },
+      { label: { en: "Govt. Schemes Implemented" }, value: "9" },
       { label: { en: "Schools" }, value: "5" },
-      { label: { en: "Water resources" }, value: "100%" },
-      { label: { en: "Ongoing projects" }, value: "12" },
+      { label: { en: "Water Resources" }, value: "100%" },
+      { label: { en: "Ongoing Projects" }, value: "12" },
     ],
   }, gpAdmin.id);
 
   await publishSection(tenant.id, "home", "welcome", 20, {
     heading: { en: "Welcome to Savardari" },
-    body: {
-      en: "Gram Panchayat Savardari is working by prioritizing the values of nature conservation, industrial development, cleanliness, education and social inclusion. Gram Panchayat Savardari is known for embracing modern development while preserving the traditional lifestyle, maintaining a balance between agriculture and industry, and setting an example of sustainable development.",
+    body: { en: "Gram Panchayat: Savardari, Taluka: Khed, District: Pune This village is a progressive village that combines natural wealth with industrial development" },
+  }, gpAdmin.id);
+
+  await publishSection(tenant.id, "home", "sarpanch-message", 25, {
+    heading: { en: "Message from the Sarpanch" },
+    message: {
+      en: "Dear fellow citizens, we are committed to making Savardari a model village of Maharashtra, Your cooperation in our development journey is our greatest strength. Together, we build a clean, prosperous , and digitally empowered Savardari.",
     },
+    name: { en: "Smt. Sabitabai Gaikwad" },
+    designation: { en: "Sarpanch, Gram Panchayat Savardari" },
   }, gpAdmin.id);
 
-  await publishSection(tenant.id, "home", "leaders", 30, {
-    heading: { en: "Our Leaders" },
-    items: [{ name: { en: "Smt. Sabitabai Gaikwad" }, designation: { en: "Sarpanch" } }],
+  await publishSection(tenant.id, "home", "monthly-metrics", 30, {
+    period: { en: "this month" },
+    items: [
+      { label: { en: "Population" }, value: "2,857", change: "1.2%" },
+      { label: { en: "Literacy Rate" }, value: "91.4%", change: "2.3%" },
+      { label: { en: "Health Coverage" }, value: "96%", change: "1.5%" },
+      { label: { en: "Water Supply" }, value: "100%", change: "0.5%" },
+      { label: { en: "Electricity Supply" }, value: "91.4%", change: "0.8%" },
+      { label: { en: "Scheme Beneficiaries" }, value: "1,245", change: "3.6%" },
+      { label: { en: "Gram Sabha Participation" }, value: "78%", change: "5.4%" },
+      { label: { en: "Grievance Redressal" }, value: "92%", change: "4.1%" },
+      { label: { en: "Tree Plantation" }, value: "18,560", change: "8.7%" },
+    ],
   }, gpAdmin.id);
 
-  await publishSection(tenant.id, "home", "quick-links", 40, {
+  await publishSection(tenant.id, "home", "village-progress", 35, {
+    heading: { en: "Village Development Progress" },
+    subheading: { en: "Live indicators tracking Savardari's development journey" },
+    items: [
+      { label: { en: "Tap Water (Jal Jeevan Mission)" } },
+      { label: { en: "Sanitation Coverage (ODF++)" } },
+      { label: { en: "Solar Street Lights" } },
+      { label: { en: "PM Awas Housing Completed" } },
+      { label: { en: "All-Weather Road Connectivity" } },
+      { label: { en: "Digital Literacy Enrolment" } },
+    ],
+  }, gpAdmin.id);
+
+  await publishSection(tenant.id, "home", "ward-details", 40, {
+    heading: { en: "Ward Details" },
+    wards: [
+      {
+        name: { en: "Ward 1" },
+        items: [
+          { label: { en: "Water Pipeline" }, valueText: "2,450 / 3000" },
+          { label: { en: "Street Lights" }, valueText: "6.5 km / 8 km" },
+          { label: { en: "Drainage" }, valueText: "98 / 120" },
+          { label: { en: "Plantation" }, valueText: "8.2 km / 10 km" },
+        ],
+      },
+    ],
+  }, gpAdmin.id);
+
+  // The old home "leaders" section is replaced by "sarpanch-message" above.
+  await prisma.section.deleteMany({ where: { tenantId: tenant.id, sectionKey: "leaders", page: { pageKey: "home" } } });
+
+  await publishSection(tenant.id, "home", "quick-links", 50, {
     items: [
       { label: { en: "Property Tax" }, href: "/savardari/services#property-tax" },
       { label: { en: "Water Tax" }, href: "/savardari/services#water-tax" },
@@ -164,20 +233,20 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
       { label: { en: "Income Certificate" }, href: "/savardari/services#income-certificate" },
       { label: { en: "Caste Certificate" }, href: "/savardari/services#caste-certificate" },
       { label: { en: "Residence Certificate" }, href: "/savardari/services#residence-certificate" },
-      { label: { en: "Aadhar Card Services" }, href: "/savardari/services#aadhar" },
+      { label: { en: "Aadhar Card Services" }, href: "/savardari/services#aadhar-card" },
       { label: { en: "Complaint Registration" }, href: "/savardari/grievance" },
     ],
   }, gpAdmin.id);
 
-  // ---- About page sections
+  // ---- About page (design: About Savardari, Vision & Governance, Industrial Growth, Nature & Agriculture)
   await publishSection(tenant.id, "about", "overview", 0, {
     heading: { en: "About Savardari" },
-    body: { en: "Gram Panchayat: Savardari, Taluka: Khed, District: Pune. This village is a progressive village that combines natural wealth with industrial development." },
+    body: { en: "Gram Panchayat: Savardari, Taluka: Khed, District: Pune This village is a progressive village that combines natural wealth with industrial development" },
   }, gpAdmin.id);
 
   await publishSection(tenant.id, "about", "history", 10, {
     heading: { en: "Vision & Governance" },
-    body: { en: "Gram Panchayat Savardari is working by prioritizing the values of nature conservation, industrial development, cleanliness, education and social inclusion." },
+    body: { en: "Gram Panchayat Savardari is working by prioritizing the values of nature conservation, industrial development, cleanliness, education and social inclusion . Gram Panchayat Savardari is known for embracing modern development while preserving the traditional lifestyle, maintaining a balance between agriculture and industry, and setting an example of sustainable development" },
   }, gpAdmin.id);
 
   await publishSection(tenant.id, "about", "geography", 20, {
@@ -186,68 +255,65 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
     households: 2857,
     pinCode: "410501",
     description: {
-      en: "Industrially, Savardari has become an important center for employment generation as it is located in close proximity to the growing industrial area of Khed taluka. Due to the mountainous terrain, green agriculture, fertile land and local water resources, the geographical form of Savardari is very rich and environmentally friendly. Most of the citizens of the village depend on agriculture and related businesses.",
+      en: "Industrial Growth\n\nIndustrially, Savardari has become an important center for employment generation as it is located in close proximity to the growing industrial area of ​​Khed taluka. The nearby industrial estates, small and medium industries and service sector are providing employment opportunities to the youth of the village at the local level. Due to this, the economic development of the village is rapid and it is moving towards modernity\n\nNature & Agriculture\n\nDue to the mountainous terrain, green agriculture, fertile land and local water resources, the geographical form of Savardari is very rich and environmentally friendly. Most of the citizens of the village depend on agriculture and related businesses and the traditional agricultural culture is preserved here even today",
     },
   }, gpAdmin.id);
 
   await publishSection(tenant.id, "about", "members", 30, {
-    heading: { en: "Our Leaders" },
+    heading: { en: "Message from the Sarpanch" },
     items: [{ name: { en: "Smt. Sabitabai Gaikwad" }, designation: { en: "Sarpanch" } }],
   }, gpAdmin.id);
 
   await publishSection(tenant.id, "about", "office", 40, {
-    address: { en: "Gram Panchayat Savardari, Taluka: Khed, District: Pune – 410501" },
+    address: { en: "Gram Panchayat: Savardari, Taluka: Khed, District: Pune – 410501" },
   }, gpAdmin.id);
 
-  // ---- Announcements ("Notice & Announcement" section and the "What's New" list)
-  const announcements = [
-    { category: "scheme", priority: "IMPORTANT" as const, titleEn: "Chief Minister's Prosperous Panchayat Raj Mission", at: day(2026, 7, 9) },
-    { category: "project", priority: "NORMAL" as const, titleEn: "New Water Pipeline Project Completed in Ward 2", at: day(2026, 7, 8) },
-    { category: "environment", priority: "NORMAL" as const, titleEn: "450 Trees Planted in Village Plantation Drive", at: day(2026, 7, 6) },
-    { category: "meeting", priority: "NORMAL" as const, titleEn: "Gram Sabha Meeting Held with Record Participation", at: day(2026, 7, 5) },
-    { category: "project", priority: "NORMAL" as const, titleEn: "Solar Street Lights Installation Started in Ward 3", at: day(2026, 7, 4) },
-    { category: "event", priority: "NORMAL" as const, titleEn: "Health Check-up Camp Organized for Villagers", at: day(2026, 7, 3) },
+  // ---- Announcements ("Notice & Announcement" and the "What's New This Week?" list), in design order
+  // Replaced on every run: Savardari's announcements, projects and schemes come only from this seed.
+  await prisma.announcement.deleteMany({ where: { tenantId: tenant.id } });
+  const announcements: { category: string; titleEn: string; at?: Date }[] = [
+    { category: "Completed", titleEn: "New Water Pipeline Project Completed in Ward 2", at: day(2026, 7, 8) },
+    { category: "Completed", titleEn: "450 Trees Planted in Village Plantation Drive", at: day(2026, 7, 6) },
+    { category: "Event", titleEn: "Gram Sabha Meeting Held with Record Participation", at: day(2026, 7, 5) },
+    { category: "Ongoing", titleEn: "Solar Street Lights Installtion Started in Ward 3", at: day(2026, 7, 4) },
+    { category: "Event", titleEn: "Health Check-up Camp Organized for Villagers", at: day(2026, 7, 3) },
+    { category: "Notice", titleEn: "Chief Minister's Prosperous Panchayat Raj Mission" },
   ];
   for (const a of announcements) {
-    const exists = await prisma.announcement.findFirst({ where: { tenantId: tenant.id, titleEn: a.titleEn } });
-    if (exists) continue;
     await prisma.announcement.create({
       data: {
         tenantId: tenant.id,
         ownerUnitId: unit.id,
         category: a.category,
-        priority: a.priority,
+        priority: "NORMAL",
         titleEn: a.titleEn,
         displayPages: ["home", "announcements"],
         status: "PUBLISHED",
-        publishAt: a.at,
-        publishedAt: a.at,
+        publishAt: a.at ?? null,
+        publishedAt: a.at ?? new Date(),
         publishedById: gpAdmin.id,
-        submittedAt: a.at,
+        submittedAt: a.at ?? new Date(),
         reviewedById: gpAdmin.id,
-        reviewedAt: a.at,
+        reviewedAt: a.at ?? new Date(),
         createdById: gpAdmin.id,
       },
     });
   }
 
-  // ---- Projects (achievements and ongoing works from the design)
-  const projects: { stage: "COMPLETED" | "ONGOING"; nameEn: string; descriptionEn?: string; wardNo?: string; year: number; familiesBenefited?: number; outcomeEn?: string }[] = [
-    { stage: "COMPLETED", nameEn: "100% Household Tap Water Connections", descriptionEn: "Achieved complete tap water supply coverage in the village", wardNo: "All Wards", year: 2026, outcomeEn: "Completed 28 Jun 2026" },
-    { stage: "COMPLETED", nameEn: "18,560 Trees Planted in 2026", descriptionEn: "Large scale plantation drive across all wards.", wardNo: "All Wards", year: 2026, outcomeEn: "Completed 25 Jun 2026" },
-    { stage: "COMPLETED", nameEn: "100% LED Street Lights in All Wards", descriptionEn: "Completed LED street light installation project.", wardNo: "All Wards", year: 2026, outcomeEn: "Completed 20 Jun 2026" },
-    { stage: "COMPLETED", nameEn: "High Gram Sabha Participation (78%)", descriptionEn: "Encouraged maximum citizen participation in governance.", wardNo: "All Wards", year: 2026, outcomeEn: "Completed 18 Jun 2026" },
-    { stage: "COMPLETED", nameEn: "92% Grievances Resolved", descriptionEn: "Improved grievance redressal system and citizen satisfaction.", wardNo: "All Wards", year: 2026, outcomeEn: "Completed 15 Jun 2026" },
-    { stage: "COMPLETED", nameEn: "New Water Pipeline Project in Ward 2", wardNo: "2", year: 2026, outcomeEn: "Completed 08 Jul 2026" },
-    { stage: "ONGOING", nameEn: "Solar Street Lights Installation in Ward 3", wardNo: "3", year: 2026, outcomeEn: "Installation started 04 Jul 2026" },
-    { stage: "ONGOING", nameEn: "Water Pipeline – Ward 1", wardNo: "1", year: 2026, familiesBenefited: 2450, outcomeEn: "2,450 / 3,000 families covered" },
-    { stage: "ONGOING", nameEn: "Street Lights – Ward 1", wardNo: "1", year: 2026, outcomeEn: "6.5 km / 8 km completed" },
-    { stage: "ONGOING", nameEn: "Drainage – Ward 1", wardNo: "1", year: 2026, outcomeEn: "98 / 120 completed" },
-    { stage: "ONGOING", nameEn: "Roads – Ward 1", wardNo: "1", year: 2026, outcomeEn: "8.2 km / 10 km completed" },
+  // ---- Projects: "Top Five Achievements" and the Ward 1 progress list
+  await prisma.project.deleteMany({ where: { tenantId: tenant.id } });
+  const projects: { stage: "COMPLETED" | "ONGOING"; nameEn: string; descriptionEn?: string; wardNo?: string; outcomeEn: string }[] = [
+    { stage: "COMPLETED", nameEn: "100% Household Top Water Connections", descriptionEn: "Achieved complete tap water supply coverage in the village", outcomeEn: "Completed: 28 Jun 2026" },
+    { stage: "COMPLETED", nameEn: "18,560 Trees Planted in 2026", descriptionEn: "Large scale plantation drive across all wards.", outcomeEn: "Completed: 25 Jun 2026" },
+    { stage: "COMPLETED", nameEn: "100% LED Street Lights in All Wards", descriptionEn: "Completed LED street light installation project.", outcomeEn: "Completed: 20 Jun 2026" },
+    { stage: "COMPLETED", nameEn: "High Gram Sabha Participation (78%)", descriptionEn: "Encouraged maximum citizen participation in governance.", outcomeEn: "Completed: 18 Jun 2026" },
+    { stage: "COMPLETED", nameEn: "92% Grievances Resolved", descriptionEn: "Improved grievance redressal system and citizen satisfaction.", outcomeEn: "Completed: 15 Jun 2026" },
+    { stage: "ONGOING", nameEn: "Water Pipeline", wardNo: "1", outcomeEn: "2,450 / 3000" },
+    { stage: "ONGOING", nameEn: "Street Lights", wardNo: "1", outcomeEn: "6.5 km / 8 km" },
+    { stage: "ONGOING", nameEn: "Drainage", wardNo: "1", outcomeEn: "98 / 120" },
+    { stage: "ONGOING", nameEn: "Plantation", wardNo: "1", outcomeEn: "8.2 km / 10 km" },
   ];
   for (const p of projects) {
-    const exists = await prisma.project.findFirst({ where: { tenantId: tenant.id, nameEn: p.nameEn } });
-    if (exists) continue;
     await prisma.project.create({
       data: {
         tenantId: tenant.id,
@@ -255,34 +321,19 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
         nameEn: p.nameEn,
         descriptionEn: p.descriptionEn ?? null,
         wardNo: p.wardNo ?? null,
-        year: p.year,
-        familiesBenefited: p.familiesBenefited ?? null,
-        outcomeEn: p.outcomeEn ?? null,
+        year: 2026,
+        outcomeEn: p.outcomeEn,
         status: "PUBLISHED",
         publishedById: gpAdmin.id,
-        publishedAt: day(2026, 7, 1),
+        publishedAt: new Date(),
         createdById: gpAdmin.id,
       },
     });
   }
 
-  // ---- Scheme (design: "Scheme Beneficiaries 1,245")
-  const scheme = await prisma.scheme.findFirst({ where: { tenantId: tenant.id, nameEn: "Chief Minister's Prosperous Panchayat Raj Mission" } });
-  if (!scheme) {
-    await prisma.scheme.create({
-      data: {
-        tenantId: tenant.id,
-        ownerUnitId: unit.id,
-        level: "STATE",
-        nameEn: "Chief Minister's Prosperous Panchayat Raj Mission",
-        beneficiaryCount: 1245,
-        status: "PUBLISHED",
-        publishedById: gpAdmin.id,
-        publishedAt: day(2026, 7, 9),
-        createdById: gpAdmin.id,
-      },
-    });
-  }
+  // The design shows "Govt. Schemes Implemented 9" and "Scheme Beneficiaries 1,245" as statistics,
+  // not as named scheme records, so no scheme rows are created here.
+  await prisma.scheme.deleteMany({ where: { tenantId: tenant.id } });
 
   return { gpAdmin, unit, tenant, superAdminId };
 }

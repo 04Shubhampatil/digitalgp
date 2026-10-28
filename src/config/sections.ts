@@ -36,6 +36,8 @@ const home: SectionDefinition[] = [
         subtitle: bilingualSchema.optional(),
         backgroundImageId: mediaId.optional(),
         cta: z.object({ label: bilingualSchema, href }).strict().optional(),
+        /** Full list of hero buttons as shown in the design; `cta` stays as the primary button. */
+        actions: z.array(z.object({ label: bilingualSchema, href }).strict()).min(1).max(4).optional(),
       })
       .strict(),
   },
@@ -56,8 +58,67 @@ const home: SectionDefinition[] = [
       .strict(),
   },
   {
-    key: "leaders",
+    key: "sarpanch-message",
+    sortOrder: 25,
+    schema: z
+      .object({
+        heading: bilingualSchema.optional(),
+        message: bilingualLongSchema,
+        name: bilingualSchema,
+        designation: bilingualSchema,
+        photoId: mediaId.optional(),
+      })
+      .strict(),
+  },
+  {
+    key: "monthly-metrics",
     sortOrder: 30,
+    schema: z
+      .object({
+        heading: bilingualSchema.optional(),
+        /** Period label shown with the change figures, e.g. "this month". */
+        period: bilingualSchema.optional(),
+        items: z
+          .array(z.object({ label: bilingualSchema, value: text(40), change: text(40).optional() }).strict())
+          .min(1)
+          .max(12),
+      })
+      .strict(),
+  },
+  {
+    key: "village-progress",
+    sortOrder: 35,
+    schema: z
+      .object({
+        heading: bilingualSchema.optional(),
+        subheading: bilingualSchema.optional(),
+        items: z.array(z.object({ label: bilingualSchema, valueText: text(60).optional() }).strict()).min(1).max(20),
+      })
+      .strict(),
+  },
+  {
+    key: "ward-details",
+    sortOrder: 40,
+    schema: z
+      .object({
+        heading: bilingualSchema.optional(),
+        wards: z
+          .array(
+            z
+              .object({
+                name: bilingualSchema,
+                items: z.array(z.object({ label: bilingualSchema, valueText: text(60) }).strict()).min(1).max(12),
+              })
+              .strict(),
+          )
+          .min(1)
+          .max(50),
+      })
+      .strict(),
+  },
+  {
+    key: "leaders",
+    sortOrder: 45,
     schema: z
       .object({
         heading: bilingualSchema.optional(),
@@ -70,7 +131,7 @@ const home: SectionDefinition[] = [
   },
   {
     key: "quick-links",
-    sortOrder: 40,
+    sortOrder: 50,
     schema: z
       .object({ items: z.array(z.object({ label: bilingualSchema, href, icon: text(40).optional() }).strict()).min(1).max(12) })
       .strict(),

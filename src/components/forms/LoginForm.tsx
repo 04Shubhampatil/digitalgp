@@ -10,10 +10,14 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { login } from "@/lib/api/auth";
+import { Select } from "@/components/ui/Select";
+import { login, logout, me } from "@/lib/api/auth";
 import { isApiError } from "@/lib/api/client";
 
+const ROLES = ["SUPER_ADMIN", "TALUKA_ADMIN", "BLOCK_ADMIN", "GP_ADMIN", "DATA_ENTRY_OPERATOR"] as const;
+
 const schema = z.object({
+  role: z.enum(ROLES, { error: "Select your role" }),
   email: z.email(),
   password: z.string().min(1),
   rememberMe: z.boolean(),
@@ -22,6 +26,7 @@ type FormValues = z.infer<typeof schema>;
 
 export function LoginForm({ redirectTo = "/admin/dashboard" }: { redirectTo?: string }) {
   const t = useTranslations("auth");
+  const tRole = useTranslations("admin.role");
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -33,13 +38,20 @@ export function LoginForm({ redirectTo = "/admin/dashboard" }: { redirectTo?: st
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { email: "", password: "", rememberMe: false },
+    defaultValues: { role: undefined as unknown as FormValues["role"], email: "", password: "", rememberMe: false },
   });
 
   async function onSubmit(values: FormValues) {
     setFormError(null);
     try {
-      await login(values);
+      const { role, ...credentials } = values;
+      await login(credentials);
+      // The chosen role must be one this account actually holds; otherwise sign out again.
+      const current = await me();
+      if (!current.assignments.some((a) => a.role === role && !a.revokedAt)) {
+        await logout();
+        return setFormError(t("roleMismatch"));
+      }
       router.replace(redirectTo);
       router.refresh();
     } catch (err) {
@@ -59,6 +71,13 @@ export function LoginForm({ redirectTo = "/admin/dashboard" }: { redirectTo?: st
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-5">
+      <Select
+        label={t("loginAs")}
+        placeholder={t("roleNone")}
+        options={ROLES.map((r) => ({ value: r, label: tRole(r) }))}
+        error={errors.role?.message}
+        {...register("role")}
+      />
       <Input
         label={t("email")}
         type="email"
