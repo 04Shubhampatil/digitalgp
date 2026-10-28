@@ -539,7 +539,11 @@
     "wardDetails": "Ward Details",
     "allRightsReserved": "All Rights Reserved.",
     "designedHosted": "Designed & Hosted by NIC Maharashtra",
-    "officials": "Officials"
+    "officials": "Officials",
+    "projectYear": "Year Completed",
+    "viewDetails": "View Details",
+    "before": "Before",
+    "after": "After"
   },
   "editor": {
     "subtitle": "Editing content for {name}. Each section has its own draft; publish when it is ready.",

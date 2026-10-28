@@ -17,31 +17,39 @@ interface Btn {
  */
 
 
-/** `about-hero`: eyebrow, heading with the village name in green, paragraph, two pill buttons, photo. */
+/**
+ * `about-hero` / `page-hero`: eyebrow, heading (optional green accent, default the village name),
+ * paragraph, pill buttons (first filled) and photo on the right. Shared by every inner page.
+ */
 export function AboutHeroSection({ slug, locale, data, tenantName }: SectionProps) {
-  const d = data as { eyebrow?: B; title?: B; body?: B; primary?: Btn; secondary?: Btn; imageUrl?: string };
+  const d = data as { eyebrow?: B; title?: B; titleAccent?: B; noTenantName?: boolean; body?: B; primary?: Btn; secondary?: Btn; actions?: Btn[]; imageUrl?: string };
+  const buttons = (d.actions?.length ? d.actions : [d.primary, d.secondary]).filter((b): b is Btn => !!b?.href);
+  const accent = pickText(d.titleAccent, locale) || (d.noTenantName ? "" : (tenantName ?? ""));
   return (
     <section className="overflow-hidden bg-cream">
-      <div className="mx-auto grid max-w-[1440px] items-center gap-8 px-4 sm:px-8 lg:grid-cols-[minmax(0,6fr)_minmax(0,6fr)] lg:px-[62px]">
+      <div className="mx-auto grid max-w-[1440px] items-center gap-8 px-4 sm:px-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:px-[62px]">
         <div className="flex flex-col gap-10 py-12 lg:py-0">
           <div className="flex flex-col gap-8">
             <p className="text-[22px] font-semibold text-[#ea7f14] uppercase">{pickText(d.eyebrow, locale)}</p>
-            <h1 className="max-w-[547px] text-[36px] leading-[50px] font-bold text-black lg:text-[45px]">
-              {pickText(d.title, locale)} {tenantName && <span className="text-[#135130]">{tenantName}</span>}
+            <h1 className="max-w-[547px] text-[36px] leading-[50px] font-bold text-black lg:text-[40px]">
+              {pickText(d.title, locale)} {accent && <span className="text-[#135130]">{accent}</span>}
             </h1>
           </div>
           <p className="max-w-[491px] text-[15px] leading-[25px] text-[#414141]">{pickText(d.body, locale)}</p>
           <div className="flex flex-wrap items-center gap-2">
-            {d.primary?.href && (
-              <Link href={resolveHref(d.primary.href, slug)} className="inline-flex rounded-full border border-[#135130] bg-[#135130] px-4 py-2 text-[12.5px] font-semibold text-white hover:opacity-90">
-                {pickText(d.primary.label, locale)}
+            {buttons.map((b, i) => (
+              <Link
+                key={i}
+                href={resolveHref(b.href ?? "#", slug)}
+                className={
+                  i === 0
+                    ? "inline-flex rounded-full border border-[#135130] bg-[#135130] px-4 py-2 text-[12.5px] font-medium text-white hover:opacity-90"
+                    : "inline-flex rounded-full border-[0.6px] border-[#135130] px-4 py-2 text-[13.5px] text-[#135130] hover:bg-[#135130]/5"
+                }
+              >
+                {pickText(b.label, locale)}
               </Link>
-            )}
-            {d.secondary?.href && (
-              <Link href={resolveHref(d.secondary.href, slug)} className="inline-flex rounded-full border-[0.6px] border-[#135130] bg-white/10 px-4 py-2 text-[13.5px] font-semibold text-[#135130] hover:bg-[#135130]/5">
-                {pickText(d.secondary.label, locale)}
-              </Link>
-            )}
+            ))}
           </div>
         </div>
         <div className="relative h-[300px] sm:h-[420px] lg:h-[539px]">

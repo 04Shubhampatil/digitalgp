@@ -1,6 +1,7 @@
 import type { PublicPageDto } from "@/types/api";
 import type { UiLocale } from "@/i18n/config";
 import { AboutEmergencySection, AboutHeroSection, AboutHistorySection, AboutRolesSection, AboutStructureSection, AboutVisionSection } from "./AboutFigma";
+import { BeforeAfterSection, CtaBannerSection, DevTimelineSection, FinancialOverviewSection, ImpactGridSection, ProgressTrackerSection, ProjectShowcaseSection, SuccessStoriesSection } from "./PageKit";
 import { AboutCardsSection } from "./AboutCardsSection";
 import { GeographySection, HistorySection, MembersSection, OfficeSection } from "./AboutSections";
 import { HeroSection } from "./HeroSection";
@@ -31,6 +32,15 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
   welcome: WelcomeSection,
   "about-cards": AboutCardsSection,
   "about-hero": AboutHeroSection,
+  "page-hero": AboutHeroSection,
+  "project-showcase": ProjectShowcaseSection,
+  "before-after": BeforeAfterSection,
+  "progress-tracker": ProgressTrackerSection,
+  "impact-grid": ImpactGridSection,
+  "dev-timeline": DevTimelineSection,
+  "financial-overview": FinancialOverviewSection,
+  "success-stories": SuccessStoriesSection,
+  "cta-banner": CtaBannerSection,
   "about-history": AboutHistorySection,
   "about-structure": AboutStructureSection,
   "about-roles": AboutRolesSection,
@@ -56,6 +66,8 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
 /** Sections that share one two-column row (card renderers only; the wrapper supplies the layout). */
 const ROW_GROUPS: { keys: string[]; cols: string }[] = [
   { keys: ["monthly-metrics", "ward-details"], cols: "lg:grid-cols-[683px_minmax(0,1fr)]" },
+  { keys: ["progress-tracker", "impact-grid"], cols: "lg:grid-cols-[567px_minmax(0,1fr)]" },
+  { keys: ["dev-timeline", "financial-overview"], cols: "lg:grid-cols-[601px_minmax(0,1fr)]" },
   { keys: ["weather", "sarpanch-message"], cols: "lg:grid-cols-2" },
   { keys: ["welcome-video", "village-progress"], cols: "lg:grid-cols-2" },
 ];
