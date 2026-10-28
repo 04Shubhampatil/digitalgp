@@ -2,20 +2,21 @@ import Image from "next/image";
 import { cn } from "@/lib/cn";
 
 /**
- * National emblem placeholder. The Figma uses the Ashoka emblem PNG; the real asset goes in
- * public/images/emblem.png (government branding, circular rule 1). Until it is added, an
- * inline SVG keeps the layout intact.
+ * State Emblem of India with "सत्यमेव जयते" (the design's own artwork, public/images/emblem.png —
+ * a black emblem on a transparent background, 500×500 source). `size` is the height in px; the
+ * width follows the artwork's aspect ratio. Pass `onDark` on green/dark backgrounds to render it white.
  */
-export function Emblem({ size = 44, className }: { size?: number; className?: string }) {
+export function Emblem({ size = 44, onDark = false, className }: { size?: number; onDark?: boolean; className?: string }) {
+  const width = Math.round(size * (184 / 256));
   return (
     <Image
-      src="/images/emblem.svg"
+      src="/images/emblem.png"
       alt=""
-      width={size}
+      width={width}
       height={size}
       priority
       unoptimized
-      className={cn("shrink-0 object-contain", className)}
+      className={cn("shrink-0 object-contain", onDark && "brightness-0 invert", className)}
     />
   );
 }

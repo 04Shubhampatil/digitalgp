@@ -9,7 +9,7 @@ export async function AuthSplitLayout({ children }: { children: React.ReactNode 
     <div className="flex min-h-dvh bg-canvas-alt">
       <aside className="relative hidden w-[42%] max-w-[610px] flex-col justify-center bg-primary px-12 text-white lg:flex">
         <div className="flex items-center gap-5">
-          <Emblem size={120} className="rounded-full bg-cream/90 p-3" />
+          <Emblem size={206} />
           <div>
             <p className="font-inter text-[26px] leading-tight font-bold">{t("common.systemName")}</p>
             <p className="mt-2 font-inter text-[19px] leading-snug text-[#b8dbc7]">{t("common.department")}</p>
