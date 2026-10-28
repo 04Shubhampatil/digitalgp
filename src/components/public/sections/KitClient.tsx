@@ -116,6 +116,7 @@ export function ProjectTabs({ tabs, items, labels }: { tabs: TabDef[]; items: Pr
 
 export interface BeforeAfterItem {
   label: string;
+  height?: number;
   beforeUrl: string;
   afterUrl: string;
 }
@@ -125,7 +126,7 @@ function Compare({ item, before, after }: { item: BeforeAfterItem; before: strin
   const [pos, setPos] = useState(50);
   return (
     <div>
-      <div className="relative h-[190px] overflow-hidden rounded-[10px] bg-[#e8e4d9]">
+      <div className="relative overflow-hidden rounded-[10px] bg-[#e8e4d9]" style={{ height: item.height ?? 190 }}>
         {/* eslint-disable @next/next/no-img-element -- static design assets */}
         <img src={item.afterUrl} alt="" className="absolute inset-0 size-full object-cover" loading="lazy" />
         <img src={item.beforeUrl} alt="" className="absolute inset-0 size-full object-cover" style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }} loading="lazy" />
@@ -144,12 +145,79 @@ function Compare({ item, before, after }: { item: BeforeAfterItem; before: strin
 
 export function BeforeAfterGrid({ items, before, after }: { items: BeforeAfterItem[]; before: string; after: string }) {
   return (
-    <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <ul className={items.length === 1 ? "grid gap-5" : "grid gap-5 sm:grid-cols-2 lg:grid-cols-4"}>
       {items.map((it, i) => (
         <li key={i}>
           <Compare item={it} before={before} after={after} />
         </li>
       ))}
     </ul>
+  );
+}
+
+export interface MediaCard {
+  category?: string;
+  title: string;
+  meta?: string;
+  imageUrl?: string;
+  /** "photo" shows a camera badge, "play" a play button over the picture. */
+  kind?: "photo" | "play" | "none";
+}
+
+/** Category tabs + media/blog cards (Gallery photos & videos, Youth Speak blogs). */
+export function MediaTabs({ tabs, items, emptyLabel }: { tabs: TabDef[]; items: MediaCard[]; emptyLabel: string }) {
+  const [active, setActive] = useState(tabs[0]?.key ?? "");
+  const shown = items.filter((m) => active === tabs[0]?.key || !m.category || m.category === active);
+  return (
+    <div>
+      {tabs.length > 1 && (
+        <div role="tablist" className="mb-6 flex flex-wrap justify-center gap-4">
+          {tabs.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              role="tab"
+              aria-selected={t.key === active}
+              onClick={() => setActive(t.key)}
+              className={cn("rounded-full border px-4 py-1.5 text-[13.5px]", t.key === active ? "border-[#135130] bg-[#135130] text-white" : "border-[#135130] text-[#135130] hover:bg-[#135130]/5")}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
+      {shown.length === 0 ? (
+        <p className="rounded-[10px] border border-black/10 bg-white p-8 text-center text-sm text-[#414141]">{emptyLabel}</p>
+      ) : (
+        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {shown.map((m, i) => (
+            <li key={i} className="overflow-hidden rounded-[10px] bg-white shadow-[0_0_14px_rgba(0,0,0,0.2)]">
+              <div className="relative h-[194px] bg-[#e8e4d9]">
+                {m.imageUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element -- static design asset / backend media
+                  <img src={m.imageUrl} alt="" className="size-full object-cover" loading="lazy" />
+                )}
+                {m.kind === "play" && (
+                  <span aria-hidden className="absolute inset-0 flex items-center justify-center bg-black/20">
+                    <span className="flex size-12 items-center justify-center rounded-full bg-white/90 text-[#135130]">▶</span>
+                  </span>
+                )}
+              </div>
+              <div className="flex items-start justify-between gap-2 px-[17px] py-4">
+                <div>
+                  <p className="text-[14px] leading-5 font-medium text-black">{m.title}</p>
+                  {m.meta && <p className="mt-2 text-[12px] text-[#414141]">{m.meta}</p>}
+                </div>
+                {m.kind === "photo" && (
+                  <span aria-hidden className="flex size-[34px] shrink-0 items-center justify-center rounded-full bg-[#e9f4e9] text-[#135130]">
+                    ▣
+                  </span>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

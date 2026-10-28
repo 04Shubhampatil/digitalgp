@@ -2,6 +2,7 @@ import type { PublicPageDto } from "@/types/api";
 import type { UiLocale } from "@/i18n/config";
 import { AboutEmergencySection, AboutHeroSection, AboutHistorySection, AboutRolesSection, AboutStructureSection, AboutVisionSection } from "./AboutFigma";
 import { BeforeAfterSection, CtaBannerSection, DevTimelineSection, FinancialOverviewSection, ImpactGridSection, FacilityGridSection, ImageCropsSection, ProgressTrackerSection, ProjectShowcaseSection, SuccessStoriesSection } from "./PageKit";
+import { LinkCardsSection, MediaCardsSection, StatCardsSection, TileGridSection, VideoFeatureSection } from "./PageKit2";
 import { AboutCardsSection } from "./AboutCardsSection";
 import { GeographySection, HistorySection, MembersSection, OfficeSection } from "./AboutSections";
 import { HeroSection } from "./HeroSection";
@@ -43,6 +44,11 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
   "cta-banner": CtaBannerSection,
   "facility-grid": FacilityGridSection,
   "image-crops": ImageCropsSection,
+  "stat-cards": StatCardsSection,
+  "tile-grid": TileGridSection,
+  "link-cards": LinkCardsSection,
+  "media-cards": MediaCardsSection,
+  "video-feature": VideoFeatureSection,
   "about-history": AboutHistorySection,
   "about-structure": AboutStructureSection,
   "about-roles": AboutRolesSection,

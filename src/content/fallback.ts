@@ -4,6 +4,7 @@ import { FIGMA_ABOUT_SECTIONS } from "./figma-about";
 import { FIGMA_HOME_SECTIONS } from "./figma-home";
 import { FIGMA_PAGE_SECTIONS } from "./figma-pages";
 import { FIGMA_PAGE_SECTIONS_B } from "./figma-pages-b";
+import { FIGMA_PAGE_SECTIONS_C } from "./figma-pages-c";
 
 /** A section as the public site receives it, before backend data exists. */
 export interface FallbackSection {
@@ -24,6 +25,7 @@ export const FALLBACK_SECTIONS: Partial<Record<PageKey, FallbackSection[]>> = {
   about: FIGMA_ABOUT_SECTIONS,
   ...FIGMA_PAGE_SECTIONS,
   ...FIGMA_PAGE_SECTIONS_B,
+  ...FIGMA_PAGE_SECTIONS_C,
 };
 
 /**

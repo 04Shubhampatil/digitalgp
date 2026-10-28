@@ -117,16 +117,18 @@ export async function ProjectShowcaseSection({ slug, locale, data }: SectionProp
 /** `before-after`: draggable comparison tiles. */
 export async function BeforeAfterSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public");
-  const d = data as { eyebrow?: B; items?: { label?: B; beforeUrl?: string; afterUrl?: string }[]; viewAll?: Btn };
+  const d = data as { eyebrow?: B; heading?: B; items?: { label?: B; beforeUrl?: string; afterUrl?: string; height?: number }[]; viewAll?: Btn };
   const items = (d.items ?? []).map((i) => ({
     label: pickText(i.label, locale),
     beforeUrl: i.beforeUrl ?? "/images/figma/about-aerial.png",
     afterUrl: i.afterUrl ?? "/images/figma/about-road.png",
+    height: i.height,
   }));
   if (items.length === 0) return null;
   return (
     <section className="bg-cream py-8">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
+        {pickText(d.heading, locale) && <h2 className="mb-6 text-center text-[30px] leading-[45px] font-semibold text-black">{pickText(d.heading, locale)}</h2>}
         <div className="mb-5 flex items-center justify-between">
           <Eyebrow>{pickText(d.eyebrow, locale)}</Eyebrow>
           {d.viewAll?.href && (
