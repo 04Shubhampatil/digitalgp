@@ -71,7 +71,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Sea
       <Card>
         <CardHeader title={t("projects")} />
         <DataTable columns={columns} rows={page.data} rowKey={(p) => p.id} emptyMessage={tc("noResults")} />
-        <CursorPager basePath="/admin/projects" params={{ status: statusFilter, stage: stageFilter, q, cursor }} nextCursor={page.page.nextCursor} shown={page.data.length} labels={{ showing: tc("showing"), first: tc("firstPage"), next: tc("nextPage") }} />
+        <CursorPager basePath="/admin/projects" params={{ status: statusFilter, stage: stageFilter, q, cursor }} nextCursor={page.page.nextCursor} shown={page.data.length} labels={{ showing: tc.raw("showing") as string, first: tc("firstPage"), next: tc("nextPage") }} />
       </Card>
     </div>
   );

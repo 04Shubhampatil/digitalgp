@@ -48,7 +48,7 @@ export default async function AnnouncementsPage({ searchParams }: { searchParams
           <Link href={`/admin/announcements/${a.id}`} className="font-semibold text-ink hover:text-primary hover:underline">
             {pickText(pair(a.titleEn, a.titleMr), ui, "—")}
           </Link>
-          <p className="text-xs text-muted">{a.category}</p>
+          <p className="text-xs text-muted">{pickText({ en: a.category }, ui)}</p>
         </div>
       ),
     },
@@ -102,7 +102,7 @@ export default async function AnnouncementsPage({ searchParams }: { searchParams
           params={{ status: statusFilter, priority: priorityFilter, q, cursor }}
           nextCursor={page.page.nextCursor}
           shown={page.data.length}
-          labels={{ showing: tc("showing"), first: tc("firstPage"), next: tc("nextPage") }}
+          labels={{ showing: tc.raw("showing") as string, first: tc("firstPage"), next: tc("nextPage") }}
         />
       </Card>
     </div>
