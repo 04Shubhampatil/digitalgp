@@ -10,6 +10,8 @@ export interface NavItem {
   label: string;
   /** Hidden when false (capability missing). Defaults to visible. */
   show?: boolean;
+  /** Active only on this exact path (e.g. a dashboard whose sub-pages are separate items). */
+  exact?: boolean;
 }
 export interface NavGroup {
   label?: string;
@@ -30,7 +32,7 @@ export function AdminNav({ groups }: { groups: NavGroup[] }) {
             )}
             <ul>
               {items.map((item) => {
-                const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                const active = pathname === item.href || (!item.exact && pathname.startsWith(`${item.href}/`));
                 return (
                   <li key={item.href}>
                     <Link

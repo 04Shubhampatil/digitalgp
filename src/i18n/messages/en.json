@@ -146,7 +146,28 @@
       "setupProgress": "Setup progress",
       "pagesWithContent": "{done} of {total} pages have published content",
       "edit": "Edit content",
-      "noSections": "No sections registered"
+      "noSections": "No sections registered",
+      "cmsTitle": "{name} CMS",
+      "setupHint": "Website created successfully • Complete the setup before publishing",
+      "goBack": "Go Back to Dashboard",
+      "cmsPages": "CMS Pages",
+      "completedPages": "Completed Pages",
+      "pendingItems": "Pending Items",
+      "setupTitle": "Complete Website Setup",
+      "setupDescription": "Finish the essential information required before publishing.",
+      "percentCompleted": "{n}% completed",
+      "websiteGenerated": "Website generated",
+      "previewWebsite": "Preview Website",
+      "cmsOverview": "CMS Page Overview",
+      "cmsPage": "CMS Page",
+      "requiredActions": "Required Actions",
+      "start": "Start",
+      "sectionsPending": "{n} sections pending",
+      "state": {
+        "completed": "Completed",
+        "inProgress": "In Progress",
+        "notStarted": "Not Started"
+      }
     },
     "users": {
       "title": "Users & Roles",
@@ -433,6 +454,13 @@
       "none": "No attachment",
       "replace": "Replace",
       "choose": "Choose file"
+    },
+    "cmsGroups": {
+      "content": "Content management",
+      "development": "Development management",
+      "dynamic": "Dynamic content",
+      "media": "Media & communication",
+      "settings": "Settings"
     }
   },
   "public": {
@@ -533,7 +561,18 @@
         "tax": "Tax & payments",
         "other": "Other"
       }
-    }
+    },
+    "openInMaps": "Open in Maps",
+    "download": "Download",
+    "wardDetails": "Ward Details",
+    "allRightsReserved": "All Rights Reserved.",
+    "designedHosted": "Designed & Hosted by NIC Maharashtra",
+    "officials": "Officials",
+    "projectYear": "Year Completed",
+    "viewDetails": "View Details",
+    "before": "Before",
+    "after": "After",
+    "mailtoHint": "Your mail app should open with the message ready to send."
   },
   "editor": {
     "subtitle": "Editing content for {name}. Each section has its own draft; publish when it is ready.",
@@ -571,7 +610,10 @@
       "history": "Village history",
       "geography": "Geography & demographics",
       "members": "Panchayat members",
-      "office": "Office information"
+      "office": "Office information",
+      "sarpanchMessage": "Message from the Sarpanch",
+      "monthlyMetrics": "Village indicators (monthly)",
+      "villageProgress": "Village development progress"
     },
     "fields": {
       "title": "Title",
@@ -604,7 +646,14 @@
       "wardNo": "Ward no.",
       "address": "Address",
       "hours": "Office hours",
-      "mapUrl": "Map link"
+      "mapUrl": "Map link",
+      "message": "Message",
+      "period": "Period label",
+      "metric": "Indicator",
+      "change": "Change",
+      "progressItem": "Progress item",
+      "valueText": "Value (text or %)",
+      "subheading": "Subheading"
     }
   }
 }

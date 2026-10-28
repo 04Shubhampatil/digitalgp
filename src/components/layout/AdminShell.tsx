@@ -17,7 +17,23 @@ export async function AdminShell({ user, children }: { user: CurrentUserDto; chi
   const tc = await getTranslations("common");
   const role = primaryRole(user);
 
-  const groups: NavGroup[] = [
+  // Gram Panchayat staff with a single website get the Figma "GP CMS" sidebar: one entry per CMS page.
+  const active = user.assignments.filter((a) => !a.revokedAt);
+  const soleTenant = active.length === 1 ? active[0]?.tenantId : null;
+  const gpCms = (role === "GP_ADMIN" || role === "DATA_ENTRY_OPERATOR") && soleTenant;
+  const page = (key: string, href?: string) => ({ href: href ?? `/admin/websites/${soleTenant}/pages/${key}`, label: t(`pageNames.${key}`) });
+  const cmsGroups: NavGroup[] = gpCms
+    ? [
+        { items: [{ href: `/admin/websites/${soleTenant}`, label: t("dashboard"), exact: true }] },
+        { label: t("cmsGroups.content"), items: [page("home"), page("about"), page("projects", "/admin/projects"), page("schemes", "/admin/schemes"), page("infrastructure"), page("finance")] },
+        { label: t("cmsGroups.development"), items: [page("services"), page("grievance", "/admin/grievances")] },
+        { label: t("cmsGroups.dynamic"), items: [page("culture"), page("employment"), page("education"), page("environment")] },
+        { label: t("cmsGroups.media"), items: [page("announcements", "/admin/announcements"), page("gallery", "/admin/media"), page("contact")] },
+        { label: t("cmsGroups.settings"), items: [{ href: "/admin/profile", label: t("profile") }] },
+      ]
+    : [];
+
+  const groups: NavGroup[] = cmsGroups.length > 0 ? cmsGroups : [
     { items: [{ href: "/admin/dashboard", label: t("dashboard") }] },
     {
       label: t("management"),

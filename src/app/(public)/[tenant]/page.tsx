@@ -1,5 +1,6 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import { renderSections } from "@/components/public/sections";
+import { withFallback } from "@/content/fallback";
 import type { UiLocale } from "@/i18n/config";
 import { pair, pickText } from "@/i18n/text";
 import { isApiError } from "@/lib/api/client";
@@ -18,7 +19,7 @@ export default async function TenantHomePage({ params }: { params: Promise<{ ten
     if (!isApiError(err, "NOT_FOUND")) throw err;
   }
 
-  const sections = page ? renderSections(page, slug, locale as UiLocale).filter(Boolean) : [];
+  const sections = renderSections(withFallback("home", page), slug, locale as UiLocale, pickText(pair(tenant.nameEn, tenant.nameMr), locale as UiLocale, slug)).filter(Boolean);
   if (sections.length === 0) {
     return (
       <section className="mx-auto max-w-7xl px-4 py-24 text-center sm:px-6">

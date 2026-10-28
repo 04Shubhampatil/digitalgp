@@ -8,6 +8,7 @@ import { PublicAnnouncements } from "@/components/public/PublicAnnouncements";
 import { PublicProjects } from "@/components/public/PublicProjects";
 import { PublicSchemes } from "@/components/public/PublicSchemes";
 import { renderSections } from "@/components/public/sections";
+import { withFallback } from "@/content/fallback";
 import type { UiLocale } from "@/i18n/config";
 import { pair, pickText } from "@/i18n/text";
 import { isApiError } from "@/lib/api/client";
@@ -17,7 +18,7 @@ import { loadTenant } from "@/lib/public-tenant";
 type Params = Promise<{ tenant: string; pageKey: string }>;
 
 /** Pages whose content comes from a dedicated API in addition to (or instead of) published sections. */
-const DATA_PAGES: Partial<Record<PageKey, true>> = { announcements: true, schemes: true, projects: true, grievance: true, contact: true };
+const DATA_PAGES: Partial<Record<PageKey, true>> = { announcements: true, schemes: true };
 
 async function loadPage(slug: string, pageKey: PageKey): Promise<PublicPageDto | null> {
   try {
@@ -51,7 +52,7 @@ export default async function TenantPage({ params }: { params: Params }) {
   const [tenant, locale, t] = await Promise.all([loadTenant(slug), getLocale(), getTranslations("public")]);
   const ui = locale as UiLocale;
   const page = await loadPage(slug, pageKey);
-  const sections = page ? renderSections(page, slug, ui).filter(Boolean) : [];
+  const sections = renderSections(withFallback(pageKey, page), slug, ui, pickText(pair(tenant.nameEn, tenant.nameMr), ui, slug)).filter(Boolean);
 
   const dataBlock = DATA_PAGES[pageKey] ? <DataBlock pageKey={pageKey} slug={slug} locale={ui} tenant={tenant} /> : null;
 
