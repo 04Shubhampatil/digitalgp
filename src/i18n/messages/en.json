@@ -146,7 +146,28 @@
       "setupProgress": "Setup progress",
       "pagesWithContent": "{done} of {total} pages have published content",
       "edit": "Edit content",
-      "noSections": "No sections registered"
+      "noSections": "No sections registered",
+      "cmsTitle": "{name} CMS",
+      "setupHint": "Website created successfully • Complete the setup before publishing",
+      "goBack": "Go Back to Dashboard",
+      "cmsPages": "CMS Pages",
+      "completedPages": "Completed Pages",
+      "pendingItems": "Pending Items",
+      "setupTitle": "Complete Website Setup",
+      "setupDescription": "Finish the essential information required before publishing.",
+      "percentCompleted": "{n}% completed",
+      "websiteGenerated": "Website generated",
+      "previewWebsite": "Preview Website",
+      "cmsOverview": "CMS Page Overview",
+      "cmsPage": "CMS Page",
+      "requiredActions": "Required Actions",
+      "start": "Start",
+      "sectionsPending": "{n} sections pending",
+      "state": {
+        "completed": "Completed",
+        "inProgress": "In Progress",
+        "notStarted": "Not Started"
+      }
     },
     "users": {
       "title": "Users & Roles",
@@ -433,6 +454,13 @@
       "none": "No attachment",
       "replace": "Replace",
       "choose": "Choose file"
+    },
+    "cmsGroups": {
+      "content": "Content management",
+      "development": "Development management",
+      "dynamic": "Dynamic content",
+      "media": "Media & communication",
+      "settings": "Settings"
     }
   },
   "public": {

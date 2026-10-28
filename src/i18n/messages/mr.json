@@ -146,7 +146,28 @@
       "setupProgress": "सेटअप प्रगती",
       "pagesWithContent": "{total} पैकी {done} पानांवर प्रकाशित सामग्री आहे",
       "edit": "सामग्री संपादित करा",
-      "noSections": "विभाग नोंदवलेले नाहीत"
+      "noSections": "विभाग नोंदवलेले नाहीत",
+      "cmsTitle": "{name} CMS",
+      "setupHint": "संकेतस्थळ यशस्वीरित्या तयार झाले • प्रकाशनापूर्वी सेटअप पूर्ण करा",
+      "goBack": "डॅशबोर्डवर परत जा",
+      "cmsPages": "CMS पृष्ठे",
+      "completedPages": "पूर्ण झालेली पृष्ठे",
+      "pendingItems": "प्रलंबित बाबी",
+      "setupTitle": "संकेतस्थळ सेटअप पूर्ण करा",
+      "setupDescription": "प्रकाशनापूर्वी आवश्यक माहिती भरा.",
+      "percentCompleted": "{n}% पूर्ण",
+      "websiteGenerated": "संकेतस्थळ तयार",
+      "previewWebsite": "संकेतस्थळ पूर्वावलोकन",
+      "cmsOverview": "CMS पृष्ठ आढावा",
+      "cmsPage": "CMS पृष्ठ",
+      "requiredActions": "आवश्यक कृती",
+      "start": "सुरू करा",
+      "sectionsPending": "{n} विभाग प्रलंबित",
+      "state": {
+        "completed": "पूर्ण",
+        "inProgress": "प्रगतीपथावर",
+        "notStarted": "सुरू नाही"
+      }
     },
     "users": {
       "title": "वापरकर्ते व भूमिका",
@@ -433,6 +454,13 @@
       "none": "फाईल जोडलेली नाही",
       "replace": "बदला",
       "choose": "फाईल निवडा"
+    },
+    "cmsGroups": {
+      "content": "सामग्री व्यवस्थापन",
+      "development": "विकास व्यवस्थापन",
+      "dynamic": "गतिमान सामग्री",
+      "media": "माध्यम व संवाद",
+      "settings": "सेटिंग्ज"
     }
   },
   "public": {
