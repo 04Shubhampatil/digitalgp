@@ -18,7 +18,7 @@ import { loadTenant } from "@/lib/public-tenant";
 type Params = Promise<{ tenant: string; pageKey: string }>;
 
 /** Pages whose content comes from a dedicated API in addition to (or instead of) published sections. */
-const DATA_PAGES: Partial<Record<PageKey, true>> = { announcements: true, schemes: true };
+const DATA_PAGES: Partial<Record<PageKey, true>> = { announcements: true };
 
 async function loadPage(slug: string, pageKey: PageKey): Promise<PublicPageDto | null> {
   try {

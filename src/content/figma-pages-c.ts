@@ -17,6 +17,45 @@ const STORY = (n: number) => img(`edu-story${n}.png`, 315, 439, { shadow: true }
 const PHOTO = (title: string, kind: string, src: string, category = "") => ({ category, title: t(title), meta: t("March 25, 2024"), imageUrl: P + src, kind });
 
 export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> = {
+  schemes: [
+    hero({
+      eyebrow: t("Government Schemes & Beneficiary Information"),
+      title: t("Empowering Lives. Building a Better"),
+      titleAccent: t("Savardari."),
+      body: t("Explore government schemes and their benefits. Check eligibility, apply online and track your application status"),
+      imageUrl: P + "sch-hero.png",
+    }),
+    {
+      sectionKey: "scheme-levels",
+      sortOrder: 5,
+      data: {
+        items: [
+          { level: "CENTRAL", label: t("Central Government Schemes"), count: 48 },
+          { level: "STATE", label: t("State Government Schemes"), count: 36 },
+          { level: "DISTRICT", label: t("District Level Schemes"), count: 22 },
+        ],
+      },
+    },
+    {
+      sectionKey: "scheme-showcase",
+      sortOrder: 10,
+      data: {
+        heading: t("Featured Schemes"),
+        benefitsLabel: t("Benefits"),
+        items: [
+          { name: t("Pradhan Mantri Awas Yojna"), category: t("Housing"), level: t("Central"), description: t("Provides pucca houses to homeless families"), benefitValue: t("₹1.20 Lakh"), benefitCaption: t("Financial Assistance") },
+          { name: t("MGNREGA"), category: t("Employment"), level: t("Central"), description: t("Provides 100 days of wage employment in a financial year"), benefitValue: t("₹221/Day"), benefitCaption: t("Wage rate") },
+          { name: t("PM Kisan Samman Nidhi"), category: t("Agriculture"), level: t("Central"), description: t("Financial Support to small and marginal farmers"), benefitValue: t("₹6000/Year"), benefitCaption: t("Direct Bank Transfer") },
+          { name: t("Mukhyamantri Uddhav Balasaheb Thackeray Awas Yona"), category: t("Housing"), level: t("State"), description: t("Provides houses to eligible beneficiaries in Maharashtra"), benefitValue: t("₹1.50 Lakh"), benefitCaption: t("Financial Assistance") },
+          { name: t("Social Justice Schloarship"), category: t("Education"), level: t("State"), description: t("Schlarships for students from backward classes"), benefitValue: t("Up to ₹75,000"), benefitCaption: t("Scholarship Amount") },
+        ],
+        viewAll: { label: t("View All Schemes"), href: "page:schemes" },
+      },
+    },
+    crops(20, { rows: [{ items: [img("sch-sheet.png", 1622, 970)] }] }),
+    crops(30, { rows: [{ items: [img("sch-stories.png", 1866, 843)] }] }),
+  ],
+
   contact: [
     hero({
       eyebrow: t("Contact & Collaboration"),

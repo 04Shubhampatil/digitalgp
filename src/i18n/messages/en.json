@@ -590,7 +590,8 @@
       "sunrise": "Sunrise",
       "sunset": "Sunset"
     },
-    "newBadge": "NEW"
+    "newBadge": "NEW",
+    "schemesAvailable": "{n} Schemes Available"
   },
   "editor": {
     "subtitle": "Editing content for {name}. Each section has its own draft; publish when it is ready.",

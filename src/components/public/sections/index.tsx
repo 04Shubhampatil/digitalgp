@@ -6,6 +6,7 @@ import { LinkCardsSection, MediaCardsSection, StatCardsSection, TileGridSection,
 import { CalloutSection, GrievanceRegisterSection, GrievanceTrackSection } from "./GrievanceSections";
 import { ContactCardsSection, ContactFeedbackSection, VolunteerFormSection } from "./ContactSections";
 import { AchievementsSection, WhatsNewSection } from "./HomeFeedSections";
+import { SchemeLevelsSection, SchemeShowcaseSection } from "./PageKit3";
 import { AboutCardsSection } from "./AboutCardsSection";
 import { GeographySection, HistorySection, MembersSection, OfficeSection } from "./AboutSections";
 import { HeroSection } from "./HeroSection";
@@ -47,6 +48,8 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
   "cta-banner": CtaBannerSection,
   "facility-grid": FacilityGridSection,
   "image-crops": ImageCropsSection,
+  "scheme-levels": SchemeLevelsSection,
+  "scheme-showcase": SchemeShowcaseSection,
   callout: CalloutSection,
   "contact-cards": ContactCardsSection,
   "contact-feedback": ContactFeedbackSection,
