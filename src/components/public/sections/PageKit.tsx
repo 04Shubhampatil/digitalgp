@@ -1,35 +1,10 @@
-import {
-  ArrowRight,
-  Baby,
-  BookOpen,
-  Bus,
-  Building2,
-  CircleCheck,
-  Droplet,
-  HeartPulse,
-  Hourglass,
-  Landmark,
-  LayoutGrid,
-  Leaf,
-  Lightbulb,
-  Monitor,
-  Recycle,
-  Route,
-  School,
-  Star,
-  Stethoscope,
-  Syringe,
-  TreePine,
-  Trophy,
-  Users,
-  Zap,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowRight, Building2, CircleCheck, ClipboardPlus, Droplet, GlassWater, GraduationCap, Hourglass, House, Leaf, Lightbulb, Monitor, Plug, Recycle, Route, Star, Toilet, TreePine, Users, Wifi, Zap, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { pair, pickText, type Bilingual } from "@/i18n/text";
 import { listPublicProjects, publicMediaUrl } from "@/lib/api/public";
 import { resolveHref } from "@/lib/href";
+import { FigmaIcon } from "@/components/ui/FigmaIcon";
 import { BeforeAfterGrid, ProjectTabs, type ProjectCard } from "./KitClient";
 import type { SectionProps } from "./index";
 
@@ -174,6 +149,9 @@ export function ProgressTrackerSection({ locale, data }: SectionProps) {
   );
 }
 
+/** Outline icons for the Impact Dashboard tiles, in the Figma order. */
+const IMPACT_ICONS: LucideIcon[] = [Toilet, Plug, GlassWater, House, Route, Lightbulb, Wifi, GraduationCap, TreePine, Users, ClipboardPlus, Recycle];
+
 /** `impact-grid`: "Impact Dashboard" — indicator tiles. */
 export function ImpactGridSection({ locale, data }: SectionProps) {
   const d = data as { title?: B; subtitle?: B; items?: { label?: B; value?: string; unit?: string }[] };
@@ -182,10 +160,12 @@ export function ImpactGridSection({ locale, data }: SectionProps) {
       <h2 className="text-[22px] leading-[27px] font-semibold text-black uppercase">{pickText(d.title, locale)}</h2>
       <p className="mt-2 text-[12px] text-[#414141]">{pickText(d.subtitle, locale)}</p>
       <ul className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
-        {(d.items ?? []).map((it, i) => (
+        {(d.items ?? []).map((it, i) => {
+          const Icon = IMPACT_ICONS[i % IMPACT_ICONS.length]!;
+          return (
           <li key={i} className="flex items-center gap-3 rounded-[10px] border border-black/15 bg-white px-3 py-5">
             <span aria-hidden className="flex size-[50px] shrink-0 items-center justify-center rounded-full bg-[#e9f4e9] text-[#135130]">
-              <CircleCheck className="size-6" />
+              <Icon className="size-6" strokeWidth={1.6} />
             </span>
             <div>
               <p className="text-[11px] font-medium text-[#135130]">{pickText(it.label, locale)}</p>
@@ -195,7 +175,8 @@ export function ImpactGridSection({ locale, data }: SectionProps) {
               </p>
             </div>
           </li>
-        ))}
+          );
+        })}
       </ul>
     </div>
   );
@@ -381,7 +362,7 @@ export function CtaBannerSection({ slug, locale, data }: SectionProps) {
   );
 }
 
-const FACILITY_ICONS: LucideIcon[] = [Droplet, Recycle, Route, Lightbulb, School, Baby, Stethoscope, BookOpen, Trophy, Users, Bus, HeartPulse, Syringe, Landmark, LayoutGrid];
+const FACILITY_ICONS = ["water", "sanitation", "roads", "lighting", "schools", "anganwadi", "health-centre", "library", "playground", "shg", "bus", "camps", "vaccination", "halls", "other"];
 
 /** `facility-grid`: "Public Facilities Overview" — a floating card with a 5-column grid of icon tiles. */
 export function FacilityGridSection({ locale, data }: SectionProps) {
@@ -392,12 +373,10 @@ export function FacilityGridSection({ locale, data }: SectionProps) {
         <h2 className="text-center text-[30px] leading-[41px] font-semibold text-black">{pickText(d.heading, locale)}</h2>
         <ul className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-5">
           {(d.items ?? []).map((it, i) => {
-            const Icon = FACILITY_ICONS[i % FACILITY_ICONS.length]!;
+            const icon = FACILITY_ICONS[i % FACILITY_ICONS.length]!;
             return (
               <li key={i} className="flex min-h-[202px] flex-col items-center rounded-[10px] border border-black/15 bg-white px-3 py-4 text-center shadow-[0_0_10px_rgba(0,0,0,0.12)]">
-                <span aria-hidden className="flex size-[67px] items-center justify-center rounded-full bg-[#e9f4e9] text-[#135130]">
-                  <Icon className="size-8" />
-                </span>
+                <FigmaIcon name={`fac-${icon}`} width={67} />
                 <p className="mt-4 text-[16px] leading-[22px] font-semibold text-black">{pickText(it.label, locale)}</p>
                 <p className="mt-auto pt-3 text-[12px] text-[#414141]">{pickText(it.value, locale)}</p>
               </li>
