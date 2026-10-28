@@ -129,7 +129,7 @@ export async function VolunteerFormSection({ slug, locale, data }: SectionProps)
   const t = await getTranslations("public");
   const d = data as { heading?: B; subheading?: B; images?: string[]; formHeading?: B; submit?: B; email?: string; fields?: { name: string; label: B; placeholder?: B; type?: MailtoField["type"]; options?: string[]; span?: number }[] };
   const to = tenant.settings.contact?.email || d.email || "";
-  const fields: MailtoField[] = (d.fields ?? []).map((f) => ({ name: f.name, label: pickText(f.label, locale), placeholder: pickText(f.placeholder, locale), type: f.type, options: f.options, span: f.span, required: true }));
+  const fields: MailtoField[] = (d.fields ?? []).map((f) => ({ name: f.name, label: pickText(f.label, locale), placeholder: pickText(f.placeholder, locale), type: f.type, options: f.options?.map((o) => pickText({ en: o }, locale)), span: f.span, required: true }));
   const name = pickText(pair(tenant.nameEn, tenant.nameMr), locale, slug);
   return (
     <section className="bg-cream py-8">
