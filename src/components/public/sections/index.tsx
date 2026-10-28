@@ -4,6 +4,7 @@ import { AboutEmergencySection, AboutHeroSection, AboutHistorySection, AboutRole
 import { BeforeAfterSection, CtaBannerSection, DevTimelineSection, FinancialOverviewSection, ImpactGridSection, FacilityGridSection, ImageCropsSection, ProgressTrackerSection, ProjectShowcaseSection, SuccessStoriesSection } from "./PageKit";
 import { LinkCardsSection, MediaCardsSection, StatCardsSection, TileGridSection, VideoFeatureSection } from "./PageKit2";
 import { CalloutSection, GrievanceRegisterSection, GrievanceTrackSection } from "./GrievanceSections";
+import { ContactCardsSection, ContactFeedbackSection, VolunteerFormSection } from "./ContactSections";
 import { AboutCardsSection } from "./AboutCardsSection";
 import { GeographySection, HistorySection, MembersSection, OfficeSection } from "./AboutSections";
 import { HeroSection } from "./HeroSection";
@@ -46,6 +47,9 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
   "facility-grid": FacilityGridSection,
   "image-crops": ImageCropsSection,
   callout: CalloutSection,
+  "contact-cards": ContactCardsSection,
+  "contact-feedback": ContactFeedbackSection,
+  "volunteer-form": VolunteerFormSection,
   "grievance-register": GrievanceRegisterSection,
   "grievance-track": GrievanceTrackSection,
   "stat-cards": StatCardsSection,

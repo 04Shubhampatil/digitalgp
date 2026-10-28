@@ -543,7 +543,8 @@
     "projectYear": "Year Completed",
     "viewDetails": "View Details",
     "before": "Before",
-    "after": "After"
+    "after": "After",
+    "mailtoHint": "Your mail app should open with the message ready to send."
   },
   "editor": {
     "subtitle": "Editing content for {name}. Each section has its own draft; publish when it is ready.",

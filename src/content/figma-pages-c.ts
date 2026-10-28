@@ -17,6 +17,80 @@ const STORY = (n: number) => img(`edu-story${n}.png`, 315, 439, { shadow: true }
 const PHOTO = (title: string, kind: string, src: string, category = "") => ({ category, title: t(title), meta: t("March 25, 2024"), imageUrl: P + src, kind });
 
 export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> = {
+  contact: [
+    hero({
+      eyebrow: t("Contact & Collaboration"),
+      title: t("Let’s Build a Stronger Savardari Together"),
+      body: t("We welcome your feedback, suggestions, and collaboration to make our village better, stronger, and more sustainable"),
+      actions: [
+        { label: t("Become a Volunteer"), href: "page:contact" },
+        { label: t("Send Feedback"), href: "page:contact" },
+      ],
+      imageUrl: P + "con-hero.png",
+    }),
+    {
+      sectionKey: "callout",
+      sortOrder: 5,
+      data: {
+        text: t("We believe in people’s participation, strong partnerships, and transparent communication for inclusive and sustainable village development"),
+      },
+    },
+    {
+      sectionKey: "contact-cards",
+      sortOrder: 10,
+      data: {
+        heading: t("Contact Information"),
+        phone: "+919767694340",
+        email: "savardarigrampanchayat@gmail.com",
+        address: t("Gram Panchayat: Savardari, Taluka: Khed, District: Pune – 410501"),
+        hours: t("Monday to Friday: 9:45 am to 6:15 pm\nWeekends and Sundays: Closed"),
+        labels: { inquiries: t("General Inquires"), hours: t("Office Hours"), address: t("Office Address"), follow: t("Follow Us") },
+      },
+    },
+    {
+      sectionKey: "contact-feedback",
+      sortOrder: 20,
+      data: {
+        mapHeading: t("Our Office Location"),
+        formHeading: t("Send Us Your Feedback"),
+        mapImage: P + "con-map.png",
+        email: "savardarigrampanchayat@gmail.com",
+        submit: t("Submit Feedback"),
+        fields: [
+          { name: "name", label: t("Your Name"), placeholder: t("Enter your full name") },
+          { name: "email", label: t("Email Address"), placeholder: t("Enter your Email"), type: "email" },
+          { name: "mobile", label: t("Mobile Number"), placeholder: t("Enter your mobile number"), type: "tel" },
+          { name: "subject", label: t("Subject"), placeholder: t("Enter Subject") },
+          { name: "message", label: t("Your Message/Feedback"), placeholder: t("Write your message here..."), type: "textarea", span: 4 },
+        ],
+      },
+    },
+    crops(30, {
+      heading: t("Our Partners & Collaborators"),
+      rows: [{ gap: 20, items: [1, 2, 3].map((n) => img("con-p" + n + ".png", 467, 339, { shadow: true })) }],
+    }),
+    {
+      sectionKey: "volunteer-form",
+      sortOrder: 40,
+      data: {
+        heading: t("Become a Volunteer"),
+        subheading: t("Join hand with us and contribute towards the development of Savardari"),
+        images: [1, 2, 3, 4].map((n) => P + "con-v" + n + ".png"),
+        formHeading: t("Volunteer Registration Form"),
+        email: "savardarigrampanchayat@gmail.com",
+        submit: t("Register Now"),
+        fields: [
+          { name: "name", label: t("Full Name"), placeholder: t("Enter your full name") },
+          { name: "email", label: t("Email Address"), placeholder: t("Enter your email"), type: "email" },
+          { name: "mobile", label: t("Mobile Number"), placeholder: t("Enter your mobile number"), type: "tel" },
+          { name: "category", label: t("Category"), placeholder: t("Select Category"), type: "select", options: ["Youth Volunteers", "NGOs", "Social Organizations", "Citizen Volunteers"] },
+          { name: "address", label: t("Address"), placeholder: t("Enter your full address"), span: 2 },
+          { name: "interest", label: t("Area of Interest"), placeholder: t("e.g. Education, Environment, Health..."), span: 2 },
+        ],
+      },
+    },
+  ],
+
   grievance: [
     hero({
       eyebrow: t("Grievance Redressal & Citizen Feedback"),
