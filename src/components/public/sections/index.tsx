@@ -7,6 +7,7 @@ import { CalloutSection, GrievanceRegisterSection, GrievanceTrackSection } from 
 import { ContactCardsSection, ContactFeedbackSection, VolunteerFormSection } from "./ContactSections";
 import { AchievementsSection, WhatsNewSection } from "./HomeFeedSections";
 import { SchemeLevelsSection, SchemeShowcaseSection } from "./PageKit3";
+import { ActionCardsSection, AnnounceCategoriesSection, AnnounceFeedSection, DeadlinesDownloadsSection, HelpCardSection, RtsGridSection, ServiceStripSection } from "./PageKit4";
 import { AboutCardsSection } from "./AboutCardsSection";
 import { GeographySection, HistorySection, MembersSection, OfficeSection } from "./AboutSections";
 import { HeroSection } from "./HeroSection";
@@ -48,6 +49,13 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
   "cta-banner": CtaBannerSection,
   "facility-grid": FacilityGridSection,
   "image-crops": ImageCropsSection,
+  "announce-categories": AnnounceCategoriesSection,
+  "announce-feed": AnnounceFeedSection,
+  "deadlines-downloads": DeadlinesDownloadsSection,
+  "service-strip": ServiceStripSection,
+  "rts-grid": RtsGridSection,
+  "action-cards": ActionCardsSection,
+  "help-card": HelpCardSection,
   "scheme-levels": SchemeLevelsSection,
   "scheme-showcase": SchemeShowcaseSection,
   callout: CalloutSection,

@@ -591,7 +591,9 @@
       "sunset": "Sunset"
     },
     "newBadge": "NEW",
-    "schemesAvailable": "{n} Schemes Available"
+    "schemesAvailable": "{n} Schemes Available",
+    "viewFullCalendar": "View Full Calendar",
+    "noEvents": "No events this month."
   },
   "editor": {
     "subtitle": "Editing content for {name}. Each section has its own draft; publish when it is ready.",
