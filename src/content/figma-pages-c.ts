@@ -17,6 +17,33 @@ const STORY = (n: number) => img(`edu-story${n}.png`, 315, 439, { shadow: true }
 const PHOTO = (title: string, kind: string, src: string, category = "") => ({ category, title: t(title), meta: t("March 25, 2024"), imageUrl: P + src, kind });
 
 export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> = {
+  grievance: [
+    hero({
+      eyebrow: t("Grievance Redressal & Citizen Feedback"),
+      title: t("Your Voice, Our Commitment to Better Savardari"),
+      body: t("We are here to listen and act. Register your complaints, track status, share suggestions, and help us build a transparent and responsive Savardari"),
+      actions: [
+        { label: t("Register a Complaint"), href: "page:grievance" },
+        { label: t("Track Complaint Status"), href: "page:grievance" },
+      ],
+      imageUrl: P + "gri-hero.png",
+    }),
+    {
+      sectionKey: "callout",
+      sortOrder: 5,
+      data: {
+        text: t("Your feedback and suggestions help us improve services and develop a better Savardari for everyone. Together, we can build a stronger and more prosperous Savardari"),
+        highlight: t("stronger and more prosperous Savardari"),
+      },
+    },
+    // Real form: category, name, phone, email, description. The design also shows type, subject,
+    // location and an attachment; those fields are not in the backend contract yet.
+    { sectionKey: "grievance-register", sortOrder: 10, data: { heading: t("Register Your Complaint") } },
+    crops(20, { rows: [{ gap: 10, items: [1, 2, 3, 4, 5].map((n) => img("gri-c" + n + ".png", 256, 228, { shadow: true })) }] }),
+    { sectionKey: "grievance-track", sortOrder: 30, data: { heading: t("Track Your Complaint"), howImage: P + "gri-how.png" } },
+    crops(40, { rows: [{ items: [img("gri-report.png", 1378, 681)] }] }),
+  ],
+
   employment: [
     hero({
       eyebrow: t("Employment & Skill Development"),
