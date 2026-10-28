@@ -631,8 +631,6 @@ const MR: Record<string, string> = {
   "How can I track my application status?": "माझ्या अर्जाची स्थिती कशी तपासावी?",
   "How do I pay taxes online?": "कर ऑनलाइन कसा भरावा?",
   "I'm facing login issues. What to do?": "लॉगिनमध्ये अडचण येत आहे. काय करावे?",
-  Attendance: "उपस्थिती",
-  Resolved: "निराकरण",
   // seeded content
   "Welcome to Gram Panchayat Savardari": "ग्रामपंचायत सवरदरीमध्ये आपले स्वागत आहे",
   "Welcome to Savardari": "सवरदरीमध्ये आपले स्वागत आहे",
