@@ -534,7 +534,12 @@
         "other": "Other"
       }
     },
-    "openInMaps": "Open in Maps"
+    "openInMaps": "Open in Maps",
+    "download": "Download",
+    "wardDetails": "Ward Details",
+    "allRightsReserved": "All Rights Reserved.",
+    "designedHosted": "Designed & Hosted by NIC Maharashtra",
+    "officials": "Officials"
   },
   "editor": {
     "subtitle": "Editing content for {name}. Each section has its own draft; publish when it is ready.",

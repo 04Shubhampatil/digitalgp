@@ -1,7 +1,10 @@
-import { Play } from "lucide-react";
+import { ArrowUp, BookOpen, Droplet, Play, Users, type LucideIcon } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { pickText, type Bilingual } from "@/i18n/text";
 import { publicMediaUrl } from "@/lib/api/public";
+import { resolveHref } from "@/lib/href";
 import type { SectionProps } from "./index";
+import { WardDetailsCard } from "./WardDetailsCard";
 
 /** Underline under card headings: orange / white / green segments (Figma 375:12438). */
 function HeadingRule() {
@@ -167,62 +170,94 @@ export function VillageProgressSection({ locale, data }: SectionProps) {
   );
 }
 
-/** `monthly-metrics`: indicator tiles with the period's change. */
+/** Decorative upward trend line under each KPI tile. */
+function Sparkline() {
+  return (
+    <svg aria-hidden viewBox="0 0 100 24" className="h-6 w-[100px] shrink-0 drop-shadow-[0_4px_4px_rgba(34,160,10,0.35)]">
+      <path d="M1 20 C 12 12, 20 8, 30 14 S 46 20, 56 12 S 74 2, 99 5" fill="none" stroke="#22a00a" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** Icon + circle colours per KPI tile, in the Figma order. */
+const KPI_ICONS: { Icon: LucideIcon; ring: string; fg: string }[] = [
+  { Icon: Users, ring: "bg-[#e3f1d4]", fg: "text-[#5a9a1f]" },
+  { Icon: BookOpen, ring: "bg-[#ece3f5]", fg: "text-[#7a4cb0]" },
+  { Icon: Users, ring: "bg-[#e3f1d4]", fg: "text-[#5a9a1f]" },
+  { Icon: Droplet, ring: "bg-[#e2edfa]", fg: "text-[#2a6fc4]" },
+  { Icon: BookOpen, ring: "bg-[#ece3f5]", fg: "text-[#7a4cb0]" },
+  { Icon: Users, ring: "bg-[#e3f1d4]", fg: "text-[#5a9a1f]" },
+  { Icon: Droplet, ring: "bg-[#e2edfa]", fg: "text-[#2a6fc4]" },
+  { Icon: BookOpen, ring: "bg-[#ece3f5]", fg: "text-[#7a4cb0]" },
+  { Icon: Users, ring: "bg-[#e3f1d4]", fg: "text-[#5a9a1f]" },
+];
+
+/** `monthly-metrics`: 3-column KPI tiles with icon, value, monthly change and trend line (Figma 375:12550). */
 export function MonthlyMetricsSection({ locale, data }: SectionProps) {
-  const d = data as { heading?: Bilingual; period?: Bilingual; items?: { label?: Bilingual; value?: string; change?: string }[] };
+  const d = data as { heading?: Bilingual; period?: Bilingual; items?: { label?: Bilingual; caption?: Bilingual; value?: string; change?: string }[] };
   const items = d.items ?? [];
   if (items.length === 0) return null;
   const period = pickText(d.period, locale);
   return (
-    <section className="bg-canvas py-14">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        {pickText(d.heading, locale) && <h2 className="mb-6 text-2xl font-bold text-ink md:text-3xl">{pickText(d.heading, locale)}</h2>}
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((m, i) => (
-            <li key={i} className="flex flex-col justify-between rounded-card border border-line bg-surface p-5">
-              <p className="text-sm font-medium text-muted">{pickText(m.label, locale)}</p>
-              <p className="mt-3 text-3xl font-bold text-ink">{m.value}</p>
-              {m.change && (
-                <p className="mt-2 text-xs font-semibold text-success">
-                  {m.change} {period && <span className="font-normal text-muted">{period}</span>}
-                </p>
-              )}
+    <div>
+      {pickText(d.heading, locale) && <h2 className="mb-4 text-[22px] font-semibold text-black">{pickText(d.heading, locale)}</h2>}
+      <ul className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        {items.map((m, i) => {
+          const k = KPI_ICONS[i % KPI_ICONS.length]!;
+          const caption = pickText(m.caption, locale);
+          return (
+            <li key={i} className="flex min-h-[142px] flex-col justify-between rounded-[8px] bg-white px-[13px] py-[9px] shadow-[0_0_10px_rgba(0,0,0,0.12)]">
+              <p className="text-[12px] leading-[19px] text-black">{pickText(m.label, locale)}</p>
+              <div className="flex items-center gap-4 px-1">
+                <span aria-hidden className={`flex size-[54px] shrink-0 items-center justify-center rounded-full ${k.ring}`}>
+                  <k.Icon className={`size-6 ${k.fg}`} />
+                </span>
+                <div>
+                  <p className="text-[24px] leading-[30px] font-semibold text-[#135130]">{m.value}</p>
+                  {caption && <p className="text-[8px] leading-3 text-[#414141]">{caption}</p>}
+                </div>
+              </div>
+              <div className="flex items-end justify-between">
+                {m.change && (
+                  <p className="inline-flex items-center gap-1 whitespace-nowrap text-[11px] text-[#1b7a0a]">
+                    <ArrowUp className="size-3.5" aria-hidden />
+                    {m.change.replace(/^\+/, "")} {period && <span className="text-black">{period}</span>}
+                  </p>
+                )}
+                <Sparkline />
+              </div>
             </li>
-          ))}
-        </ul>
-      </div>
-    </section>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 
-/** `ward-details`: per-ward figures as label/value rows (first ward shown by default). */
-export function WardDetailsSection({ locale, data }: SectionProps) {
-  const d = data as { heading?: Bilingual; wards?: { name?: Bilingual; items?: { label?: Bilingual; valueText?: string }[] }[] };
-  const wards = d.wards ?? [];
+/** Ward map placeholder from the design; swap via `mapImageUrl` once a ward map is uploaded. */
+const FIGMA_WARD_MAP = "/images/figma/ward-map.png";
+
+/** `ward-details`: ward map + ward selector with per-ward progress rows (Figma 375:12497). */
+export async function WardDetailsSection({ slug, locale, data }: SectionProps) {
+  const t = await getTranslations("public");
+  const d = data as {
+    heading?: Bilingual;
+    mapImageUrl?: string;
+    viewAll?: { label?: Bilingual; href?: string };
+    wards?: { name?: Bilingual; items?: { label?: Bilingual; valueText?: string; percent?: number }[] }[];
+  };
+  const wards = (d.wards ?? []).map((w) => ({
+    name: pickText(w.name, locale),
+    items: (w.items ?? []).map((it) => ({ label: pickText(it.label, locale), valueText: it.valueText ?? "", percent: it.percent })),
+  }));
   if (wards.length === 0) return null;
+  const va = d.viewAll;
   return (
-    <section className="bg-canvas py-14">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        {pickText(d.heading, locale) && <h2 className="mb-6 text-2xl font-bold text-ink md:text-3xl">{pickText(d.heading, locale)}</h2>}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {wards.map((w, wi) => (
-            <details key={wi} open={wi === 0} className="group rounded-card border border-line bg-surface">
-              <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 font-semibold text-ink [&::-webkit-details-marker]:hidden">
-                {pickText(w.name, locale)}
-                <span aria-hidden className="text-muted transition-transform group-open:rotate-180">▾</span>
-              </summary>
-              <dl className="divide-y divide-line border-t border-line px-5">
-                {(w.items ?? []).map((it, i) => (
-                  <div key={i} className="flex items-center justify-between py-3 text-sm">
-                    <dt className="text-muted">{pickText(it.label, locale)}</dt>
-                    <dd className="font-semibold text-ink">{it.valueText}</dd>
-                  </div>
-                ))}
-              </dl>
-            </details>
-          ))}
-        </div>
-      </div>
-    </section>
+    <WardDetailsCard
+      heading={pickText(d.heading, locale) || t("wardDetails")}
+      wards={wards}
+      mapSrc={d.mapImageUrl ?? FIGMA_WARD_MAP}
+      viewAll={va?.href && pickText(va.label, locale) ? { label: pickText(va.label, locale), href: resolveHref(va.href, slug) } : undefined}
+    />
   );
 }
