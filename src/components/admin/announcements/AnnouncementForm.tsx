@@ -9,6 +9,7 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import type { AdminUnitDto, AnnouncementDto, AssignmentDto } from "@/types/api";
 import { PAGE_KEYS, type PageKey } from "@/config/pages";
+import { AttachmentField, type AttachmentScope } from "@/components/admin/AttachmentField";
 import { TenantSelect } from "@/components/admin/TenantSelect";
 import { UnitPicker } from "@/components/admin/UnitPicker";
 import { Button } from "@/components/ui/Button";
@@ -35,6 +36,7 @@ const schema = z
     displayPages: z.array(z.enum(PAGE_KEYS)).min(1),
     publishAt: z.string(),
     expiresAt: z.string(),
+    attachmentId: z.string(),
   })
   .refine((v) => !!(v.titleEn || v.titleMr), { message: "A title in English or Marathi is required", path: ["titleEn"] })
   .refine((v) => (v.kind === "tenant" ? !!v.tenantId : !!v.ownerUnitId), { message: "Required", path: ["tenantId"] });
@@ -75,6 +77,7 @@ export function AnnouncementForm({ assignments, capabilities, existing }: Announ
           displayPages: existing.displayPages.filter((p): p is PageKey => (PAGE_KEYS as readonly string[]).includes(p)),
           publishAt: toDateTimeLocal(existing.publishAt),
           expiresAt: toDateTimeLocal(existing.expiresAt),
+          attachmentId: existing.attachmentId ?? "",
         }
       : {
           kind: canEditGp ? "tenant" : "shared",
@@ -89,10 +92,15 @@ export function AnnouncementForm({ assignments, capabilities, existing }: Announ
           displayPages: ["home", "announcements"],
           publishAt: "",
           expiresAt: "",
+          attachmentId: "",
         },
   });
   const { register, handleSubmit, control, setValue, setError, formState } = form;
   const kind = useWatch({ control, name: "kind" });
+  const tenantId = useWatch({ control, name: "tenantId" });
+  const ownerUnitId = useWatch({ control, name: "ownerUnitId" });
+  const attachmentScope: AttachmentScope =
+    kind === "tenant" ? (tenantId ? { tenantId } : null) : ownerUnitId ? { ownerUnitId } : null;
 
   async function onSubmit(values: FormValues) {
     setFormError(null);
@@ -106,6 +114,7 @@ export function AnnouncementForm({ assignments, capabilities, existing }: Announ
       displayPages: values.displayPages,
       publishAt: fromDateTimeLocal(values.publishAt),
       expiresAt: fromDateTimeLocal(values.expiresAt),
+      attachmentId: values.attachmentId || null,
     };
     try {
       let saved: AnnouncementDto;
@@ -183,6 +192,17 @@ export function AnnouncementForm({ assignments, capabilities, existing }: Announ
           <Textarea label={t("announcements.bodyEn")} rows={6} error={formState.errors.bodyEn?.message} {...register("bodyEn")} />
           <Textarea label={t("announcements.bodyMr")} lang="mr" rows={6} error={formState.errors.bodyMr?.message} {...register("bodyMr")} />
         </div>
+      </section>
+
+      <section className="rounded-card border border-line bg-surface p-5">
+        <h2 className="mb-4 text-[17px] font-bold text-ink">{t("announcements.attachment")}</h2>
+        <Controller
+          control={control}
+          name="attachmentId"
+          render={({ field }) => (
+            <AttachmentField label={t("announcements.attachmentHint")} value={field.value} onChange={field.onChange} scope={attachmentScope} error={formState.errors.attachmentId?.message} />
+          )}
+        />
       </section>
 
       <section className="rounded-card border border-line bg-surface p-5">

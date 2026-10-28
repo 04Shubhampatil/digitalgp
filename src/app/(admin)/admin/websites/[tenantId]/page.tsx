@@ -5,6 +5,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import type { PageDto } from "@/types/api";
 import { DataTable, type Column } from "@/components/admin/DataTable";
+import { TenantSettingsForm } from "@/components/admin/websites/TenantSettingsForm";
 import { TenantStatusActions } from "@/components/admin/websites/TenantStatusActions";
 import { Card, CardHeader, MetricCard, PageHeader } from "@/components/ui/Card";
 import { StatusPill } from "@/components/ui/StatusPill";
@@ -155,6 +156,10 @@ export default async function WebsitePage({ params }: { params: Promise<{ tenant
             <dd className="text-ink">{formatDate(tenant.createdAt, ui)}</dd>
           </dl>
         </Card>
+      </div>
+
+      <div className="mb-5">
+        <TenantSettingsForm tenant={tenant} canUpdate={hasCapability(user, "tenant:update")} />
       </div>
 
       <Card>

@@ -18,8 +18,8 @@ import type {
   UserDto,
 } from "@/types/api";
 import type { CreateAnnouncementInput, UpdateAnnouncementInput } from "@/features/announcements/validators";
-import type { CreateUnitInput } from "@/features/hierarchy/validators";
-import type { CreateTenantInput } from "@/features/tenants/validators";
+import type { CreateUnitInput, UpdateUnitInput } from "@/features/hierarchy/validators";
+import type { CreateTenantInput, UpdateTenantInput } from "@/features/tenants/validators";
 import type { AssignmentInput, CreateUserInput, UpdateUserInput } from "@/features/users/validators";
 import { API_BASE, apiFetch, apiFetchPage, type ApiRequest, type QueryValue } from "./client";
 
@@ -36,6 +36,8 @@ export const hierarchy = {
   list: (query: ListQuery, o: Opts = {}) => apiFetchPage<AdminUnitDto>("/hierarchy/units", { query, ...o }),
   get: (unitId: string, o: Opts = {}) =>
     apiFetch<{ unit: AdminUnitDto; ancestors: AdminUnitDto[] }>(`/hierarchy/units/${unitId}`, o),
+  update: (unitId: string, body: UpdateUnitInput, o: Opts = {}) =>
+    apiFetch<AdminUnitDto>(`/hierarchy/units/${unitId}`, { method: "PATCH", body, ...o }),
   create: (body: CreateUnitInput, o: Opts = {}) => apiFetch<AdminUnitDto>("/hierarchy/units", { method: "POST", body, ...o }),
 };
 
@@ -49,6 +51,8 @@ export const tenants = {
   list: (query: ListQuery, o: Opts = {}) => apiFetchPage<TenantDto>("/tenants", { query, ...o }),
   get: (tenantId: string, o: Opts = {}) => apiFetch<TenantDto>(`/tenants/${tenantId}`, o),
   create: (body: CreateTenantInput, o: Opts = {}) => apiFetch<TenantDto>("/tenants", { method: "POST", body, ...o }),
+  update: (tenantId: string, body: UpdateTenantInput, o: Opts = {}) =>
+    apiFetch<TenantDto>(`/tenants/${tenantId}`, { method: "PATCH", body, ...o }),
   setStatus: (tenantId: string, status: TenantStatus, o: Opts = {}) =>
     apiFetch<TenantDto>(`/tenants/${tenantId}/status`, { method: "POST", body: { status }, ...o }),
 };

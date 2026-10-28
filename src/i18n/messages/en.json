@@ -109,7 +109,8 @@
       "createdOk": "{name} created.",
       "breadcrumbRoot": "Root",
       "levelField": "Level",
-      "slugHint": "Lowercase letters, numbers and hyphens (used in URLs)."
+      "slugHint": "Lowercase letters, numbers and hyphens (used in URLs).",
+      "editUnit": "Edit unit"
     },
     "websites": {
       "title": "GP Website Management",
@@ -227,7 +228,9 @@
       },
       "isShared": "Shared",
       "websites": "{count} websites",
-      "locked": "This item is {status} and cannot be edited."
+      "locked": "This item is {status} and cannot be edited.",
+      "attachment": "Attachment",
+      "attachmentHint": "Image or PDF (optional, up to 10 MB)"
     },
     "schemes": "Schemes",
     "projects": "Projects",
@@ -399,6 +402,34 @@
       "quickGrievances": "Open citizen complaints",
       "recentWebsites": "Recently updated websites",
       "recentActivity": "Recent activity"
+    },
+    "settingsUi": {
+      "title": "Website settings",
+      "hint": "Identity, contact details, social links and search appearance shown on the public site.",
+      "customDomain": "Custom domain (optional)",
+      "contact": "Contact",
+      "address": "Address",
+      "phone": "Phone",
+      "email": "Email",
+      "hours": "Office hours",
+      "social": "Social links",
+      "branding": "Branding & search",
+      "tagline": "Tagline",
+      "seoTitle": "Search title",
+      "seoDescription": "Search description"
+    },
+    "usersUi": {
+      "profile": "Profile",
+      "needModule": "Choose at least one module for a data entry operator.",
+      "none": "No assignments",
+      "revokeConfirm": "Revoke the role {role} at {unit}? The user loses that access immediately."
+    },
+    "attach": {
+      "pickScopeFirst": "Choose the website or unit first, then attach a file.",
+      "open": "Open attachment",
+      "none": "No attachment",
+      "replace": "Replace",
+      "choose": "Choose file"
     }
   },
   "public": {
