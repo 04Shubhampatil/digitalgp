@@ -77,7 +77,7 @@ export async function PublicFooter({ tenant }: { tenant: PublicTenantDto }) {
         <div className="grid gap-10 py-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] lg:gap-0 lg:divide-x lg:divide-black/15">
           <div className="lg:pr-10">
             <div className="flex items-center gap-4">
-              <Emblem size={44} />
+              <Emblem size={56} />
               <div>
                 <p className="text-[18px] leading-7 font-bold text-[#135130]">
                   {t("common.gramPanchayat")} {name}
@@ -145,7 +145,7 @@ export async function PublicFooter({ tenant }: { tenant: PublicTenantDto }) {
           <p>
             © {year} {t("common.gramPanchayat")} {name}. {t("public.allRightsReserved")}
           </p>
-          <Emblem size={28} />
+          <Emblem size={36} />
           <p>{t("public.designedHosted")}</p>
         </div>
       </div>
