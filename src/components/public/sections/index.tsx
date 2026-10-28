@@ -1,7 +1,7 @@
 import type { PublicPageDto } from "@/types/api";
 import type { UiLocale } from "@/i18n/config";
 import { AboutEmergencySection, AboutHeroSection, AboutHistorySection, AboutRolesSection, AboutStructureSection, AboutVisionSection } from "./AboutFigma";
-import { BeforeAfterSection, CtaBannerSection, DevTimelineSection, FinancialOverviewSection, ImpactGridSection, ProgressTrackerSection, ProjectShowcaseSection, SuccessStoriesSection } from "./PageKit";
+import { BeforeAfterSection, CtaBannerSection, DevTimelineSection, FinancialOverviewSection, ImpactGridSection, FacilityGridSection, ImageCropsSection, ProgressTrackerSection, ProjectShowcaseSection, SuccessStoriesSection } from "./PageKit";
 import { AboutCardsSection } from "./AboutCardsSection";
 import { GeographySection, HistorySection, MembersSection, OfficeSection } from "./AboutSections";
 import { HeroSection } from "./HeroSection";
@@ -41,6 +41,8 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
   "financial-overview": FinancialOverviewSection,
   "success-stories": SuccessStoriesSection,
   "cta-banner": CtaBannerSection,
+  "facility-grid": FacilityGridSection,
+  "image-crops": ImageCropsSection,
   "about-history": AboutHistorySection,
   "about-structure": AboutStructureSection,
   "about-roles": AboutRolesSection,
@@ -98,7 +100,7 @@ export function renderSections(page: PublicPageDto, slug: string, locale: UiLoca
       );
       continue;
     }
-    out.push(<Section key={s.sectionKey} slug={slug} locale={locale} data={s.data} tenantName={tenantName} />);
+    out.push(<Section key={`${s.sectionKey}-${s.sortOrder}`} slug={slug} locale={locale} data={s.data} tenantName={tenantName} />);
   }
   return out;
 }

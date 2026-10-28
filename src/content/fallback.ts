@@ -3,6 +3,7 @@ import type { PublicPageDto } from "@/types/api";
 import { FIGMA_ABOUT_SECTIONS } from "./figma-about";
 import { FIGMA_HOME_SECTIONS } from "./figma-home";
 import { FIGMA_PAGE_SECTIONS } from "./figma-pages";
+import { FIGMA_PAGE_SECTIONS_B } from "./figma-pages-b";
 
 /** A section as the public site receives it, before backend data exists. */
 export interface FallbackSection {
@@ -22,6 +23,7 @@ export const FALLBACK_SECTIONS: Partial<Record<PageKey, FallbackSection[]>> = {
   home: FIGMA_HOME_SECTIONS,
   about: FIGMA_ABOUT_SECTIONS,
   ...FIGMA_PAGE_SECTIONS,
+  ...FIGMA_PAGE_SECTIONS_B,
 };
 
 /**

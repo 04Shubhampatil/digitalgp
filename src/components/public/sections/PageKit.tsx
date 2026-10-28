@@ -1,14 +1,27 @@
 import {
   ArrowRight,
+  Baby,
+  BookOpen,
+  Bus,
   Building2,
   CircleCheck,
   Droplet,
+  HeartPulse,
   Hourglass,
+  Landmark,
+  LayoutGrid,
   Leaf,
+  Lightbulb,
   Monitor,
   Recycle,
+  Route,
+  School,
   Star,
+  Stethoscope,
+  Syringe,
   TreePine,
+  Trophy,
+  Users,
   Zap,
   type LucideIcon,
 } from "lucide-react";
@@ -361,6 +374,100 @@ export function CtaBannerSection({ slug, locale, data }: SectionProps) {
             )}
           </div>
         </div>
+      </div>
+    </section>
+  );
+}
+
+const FACILITY_ICONS: LucideIcon[] = [Droplet, Recycle, Route, Lightbulb, School, Baby, Stethoscope, BookOpen, Trophy, Users, Bus, HeartPulse, Syringe, Landmark, LayoutGrid];
+
+/** `facility-grid`: "Public Facilities Overview" — a floating card with a 5-column grid of icon tiles. */
+export function FacilityGridSection({ locale, data }: SectionProps) {
+  const d = data as { heading?: B; items?: { label?: B; value?: B }[] };
+  return (
+    <section className="relative z-10 mx-auto -mt-16 max-w-[1440px] px-4 sm:px-8 lg:-mt-[94px] lg:px-[62px]">
+      <div className="rounded-[20px] bg-white px-4 py-6 shadow-[0_2px_16px_rgba(0,0,0,0.18)] sm:px-9">
+        <h2 className="text-center text-[30px] leading-[41px] font-semibold text-black">{pickText(d.heading, locale)}</h2>
+        <ul className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-5">
+          {(d.items ?? []).map((it, i) => {
+            const Icon = FACILITY_ICONS[i % FACILITY_ICONS.length]!;
+            return (
+              <li key={i} className="flex min-h-[202px] flex-col items-center rounded-[10px] border border-black/15 bg-white px-3 py-4 text-center shadow-[0_0_10px_rgba(0,0,0,0.12)]">
+                <span aria-hidden className="flex size-[67px] items-center justify-center rounded-full bg-[#e9f4e9] text-[#135130]">
+                  <Icon className="size-8" />
+                </span>
+                <p className="mt-4 text-[16px] leading-[22px] font-semibold text-black">{pickText(it.label, locale)}</p>
+                <p className="mt-auto pt-3 text-[12px] text-[#414141]">{pickText(it.value, locale)}</p>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+interface CropItem {
+  src: string;
+  /** Frame size in design pixels (sets the aspect ratio and the share of the row). */
+  w: number;
+  h: number;
+  /** Figma crop: image size and offset as % of the frame. */
+  crop?: { w: number; h: number; l: number; t: number };
+  shadow?: boolean;
+  bordered?: boolean;
+}
+
+/**
+ * `image-crops`: heading + rows of picture frames taken from the Figma design. Used for the parts of
+ * the design that are illustrations/dashboards without separate data (maps, charts, galleries) until
+ * real content replaces them.
+ */
+export function ImageCropsSection({ slug, locale, data }: SectionProps) {
+  const d = data as {
+    heading?: B;
+    subheading?: B;
+    surface?: "cream" | "tint";
+    maxWidth?: number;
+    rows?: { gap?: number; framed?: boolean; items: CropItem[] }[];
+    action?: Btn;
+  };
+  return (
+    <section className={d.surface === "tint" ? "bg-[rgba(34,138,83,0.05)] py-8" : "bg-cream py-6"}>
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
+        {pickText(d.heading, locale) && <h2 className="text-center text-[30px] leading-[45px] font-semibold text-black">{pickText(d.heading, locale)}</h2>}
+        {pickText(d.subheading, locale) && <p className="mx-auto mt-2 max-w-[1094px] text-center text-[20px] leading-[30px] text-black">{pickText(d.subheading, locale)}</p>}
+        <div className="mx-auto mt-6 flex flex-col gap-6" style={d.maxWidth ? { maxWidth: d.maxWidth } : undefined}>
+          {(d.rows ?? []).map((row, ri) => (
+            <div key={ri} className={row.framed ? "rounded-[10px] border border-black/20 bg-white p-3" : undefined}>
+              <div className="grid items-start" style={{ gridTemplateColumns: row.items.map((i) => `${i.w}fr`).join(" "), gap: row.gap ?? 20 }}>
+                {row.items.map((it, ii) => (
+                  <div
+                    key={ii}
+                    className={`relative overflow-hidden rounded-[10px] bg-white ${it.shadow ? "shadow-[0_0_20px_rgba(0,0,0,0.25)]" : ""} ${it.bordered ? "border border-black/20" : ""}`}
+                    style={{ aspectRatio: `${it.w} / ${it.h}` }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element -- static design asset */}
+                    <img
+                      src={it.src}
+                      alt=""
+                      loading="lazy"
+                      className="absolute max-w-none"
+                      style={it.crop ? { width: `${it.crop.w}%`, height: `${it.crop.h}%`, left: `${it.crop.l}%`, top: `${it.crop.t}%` } : { inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        {d.action?.href && (
+          <div className="mt-8 flex justify-center">
+            <Link href={resolveHref(d.action.href, slug)} className="inline-flex rounded-full border border-[#135130] bg-[#135130] px-5 py-2.5 text-[14.6px] font-semibold text-white hover:opacity-90">
+              {pickText(d.action.label, locale)}
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   );
