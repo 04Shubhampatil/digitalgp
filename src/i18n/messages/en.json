@@ -572,7 +572,25 @@
     "viewDetails": "View Details",
     "before": "Before",
     "after": "After",
-    "mailtoHint": "Your mail app should open with the message ready to send."
+    "mailtoHint": "Your mail app should open with the message ready to send.",
+    "selectWard": "Select Ward",
+    "allWards": "All Wards",
+    "viewAllServices": "View All Services",
+    "viewAll": "View All",
+    "status": {
+      "completed": "Completed",
+      "event": "Event",
+      "ongoing": "Ongoing"
+    },
+    "weatherLabels": {
+      "feelsLike": "Feels like",
+      "humidity": "Humidity",
+      "wind": "Wind",
+      "visibility": "Visibility",
+      "sunrise": "Sunrise",
+      "sunset": "Sunset"
+    },
+    "newBadge": "NEW"
   },
   "editor": {
     "subtitle": "Editing content for {name}. Each section has its own draft; publish when it is ready.",

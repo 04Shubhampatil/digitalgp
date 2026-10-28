@@ -33,8 +33,8 @@ export async function ContactCardsSection({ slug, locale, data }: SectionProps) 
   const d = data as ContactData;
   const phone = c.phone || d.phone;
   const email = c.email || d.email;
-  const address = c.address || pickText(d.address, locale);
-  const hours = c.hours || pickText(d.hours, locale);
+  const address = c.address ? pickText({ en: c.address }, locale) : pickText(d.address, locale);
+  const hours = c.hours ? pickText({ en: c.hours }, locale) : pickText(d.hours, locale);
   const L = d.labels ?? {};
   const card = "flex min-h-[269px] flex-col items-center rounded-[10px] bg-white px-6 py-8 text-center shadow-[0_0_14px_rgba(0,0,0,0.2)]";
   const ring = "flex size-[86px] items-center justify-center rounded-full bg-[#e9f4e9] text-[#135130]";

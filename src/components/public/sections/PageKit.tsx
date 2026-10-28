@@ -191,7 +191,7 @@ export function ImpactGridSection({ locale, data }: SectionProps) {
               <p className="text-[11px] font-medium text-[#135130]">{pickText(it.label, locale)}</p>
               <p className="mt-1 text-[24px] leading-[30px] font-bold text-black">
                 {it.value}
-                {it.unit && <span className="ml-1 text-[14px] font-semibold">{it.unit}</span>}
+                {it.unit && <span className="ml-1 text-[14px] font-semibold">{pickText({ en: it.unit }, locale)}</span>}
               </p>
             </div>
           </li>

@@ -5,6 +5,7 @@ import type { PublicTenantDto } from "@/types/api";
 import { Emblem } from "@/components/ui/Emblem";
 import { pageHref } from "@/config/public-nav";
 import type { UiLocale } from "@/i18n/config";
+import { marathiFor } from "@/i18n/mr-fallback";
 import { pair, pickText } from "@/i18n/text";
 
 /**
@@ -58,7 +59,8 @@ export async function PublicFooter({ tenant }: { tenant: PublicTenantDto }) {
   const name = pickText(pair(tenant.nameEn, tenant.nameMr), locale, tenant.slug);
   const contact = tenant.settings.contact ?? {};
   const social = tenant.settings.social ?? {};
-  const address = contact.address || FIGMA_CONTACT.address;
+  const rawAddress = contact.address || FIGMA_CONTACT.address;
+  const address = locale === "mr" ? (marathiFor(rawAddress) ?? rawAddress) : rawAddress;
   const phone = contact.phone || FIGMA_CONTACT.phone;
   const email = contact.email || FIGMA_CONTACT.email;
   const year = new Date().getFullYear();

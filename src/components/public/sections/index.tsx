@@ -5,6 +5,7 @@ import { BeforeAfterSection, CtaBannerSection, DevTimelineSection, FinancialOver
 import { LinkCardsSection, MediaCardsSection, StatCardsSection, TileGridSection, VideoFeatureSection } from "./PageKit2";
 import { CalloutSection, GrievanceRegisterSection, GrievanceTrackSection } from "./GrievanceSections";
 import { ContactCardsSection, ContactFeedbackSection, VolunteerFormSection } from "./ContactSections";
+import { AchievementsSection, WhatsNewSection } from "./HomeFeedSections";
 import { AboutCardsSection } from "./AboutCardsSection";
 import { GeographySection, HistorySection, MembersSection, OfficeSection } from "./AboutSections";
 import { HeroSection } from "./HeroSection";
@@ -62,6 +63,8 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
   "about-roles": AboutRolesSection,
   "about-emergency": AboutEmergencySection,
   "about-vision": AboutVisionSection,
+  achievements: AchievementsSection,
+  "whats-new": WhatsNewSection,
   weather: WeatherSection,
   "sarpanch-message": SarpanchMessageSection,
   "welcome-video": WelcomeVideoSection,
@@ -84,6 +87,7 @@ const ROW_GROUPS: { keys: string[]; cols: string }[] = [
   { keys: ["monthly-metrics", "ward-details"], cols: "lg:grid-cols-[683px_minmax(0,1fr)]" },
   { keys: ["progress-tracker", "impact-grid"], cols: "lg:grid-cols-[567px_minmax(0,1fr)]" },
   { keys: ["dev-timeline", "financial-overview"], cols: "lg:grid-cols-[601px_minmax(0,1fr)]" },
+  { keys: ["achievements", "whats-new"], cols: "lg:grid-cols-2" },
   { keys: ["weather", "sarpanch-message"], cols: "lg:grid-cols-2" },
   { keys: ["welcome-video", "village-progress"], cols: "lg:grid-cols-2" },
 ];

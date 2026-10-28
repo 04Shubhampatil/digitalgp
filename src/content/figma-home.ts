@@ -83,6 +83,36 @@ export const FIGMA_HOME_SECTIONS: FallbackSection[] = [
     },
   },
   {
+    sectionKey: "achievements",
+    sortOrder: 28,
+    data: {
+      heading: { en: "Top Five Achievements of the Ward" },
+      wards: [{ en: "Ward 1" }, { en: "Ward 2" }, { en: "Ward 3" }, { en: "Ward 4" }],
+      items: [
+        { title: { en: "100% Household Top Water Connections" }, body: { en: "Achieved complete tap water supply coverage in the village" }, completed: { en: "Completed: 28 Jun 2026" } },
+        { title: { en: "18,560 Trees Planted in 2026" }, body: { en: "Large scale plantation drive across all wards." }, completed: { en: "Completed: 25 Jun 2026" } },
+        { title: { en: "100% LED Street Lights in All Wards" }, body: { en: "Completed LED street light installation project." }, completed: { en: "Completed: 20 Jun 2026" } },
+        { title: { en: "High Gram Sabha Participation (78%)" }, body: { en: "Encouraged maximum citizen participation in governance." }, completed: { en: "Completed: 18 Jun 2026" } },
+        { title: { en: "92% Grievances Resolved" }, body: { en: "Improved grievance redressal system and citizen satisfaction." }, completed: { en: "Completed: 15 Jun 2026" } },
+      ],
+    },
+  },
+  {
+    sectionKey: "whats-new",
+    sortOrder: 29,
+    data: {
+      heading: { en: "What’s New This Week?" },
+      viewAll: { label: { en: "View All" }, href: "page:announcements" },
+      items: [
+        { title: { en: "New Water Pipeline Project Completed in Ward 2" }, date: { en: "08 July, 2026" }, status: "completed", imageUrl: "/images/figma/pages/news-1.png" },
+        { title: { en: "450 Trees Planted in Village Plantation Drive" }, date: { en: "06 July, 2026" }, status: "completed", imageUrl: "/images/figma/pages/news-2.png" },
+        { title: { en: "Gram Sabha Meeting Held with Record Participation" }, date: { en: "05 July, 2026" }, status: "event", imageUrl: "/images/figma/pages/news-3.png" },
+        { title: { en: "Solar Street Lights Installtion Started in Ward 3" }, date: { en: "04 July, 2026" }, status: "ongoing", imageUrl: "/images/figma/pages/news-4.png" },
+        { title: { en: "Health Check-up Camp Organized for Villagers" }, date: { en: "03 July, 2026" }, status: "event", imageUrl: "/images/figma/pages/news-5.png" },
+      ],
+    },
+  },
+  {
     sectionKey: "weather",
     sortOrder: 24,
     data: {

@@ -18,7 +18,7 @@ export interface NoticeTab {
 }
 
 /** Tabbed notice list (Figma 375:12300): blue active underline, dated rows, NEW badge, Download pill. */
-export function NoticeTabs({ tabs, downloadLabel, viewAllLabel, viewAllHref, emptyLabel }: { tabs: NoticeTab[]; downloadLabel: string; viewAllLabel: string; viewAllHref?: string; emptyLabel: string }) {
+export function NoticeTabs({ tabs, downloadLabel, viewAllLabel, viewAllHref, emptyLabel, newLabel }: { tabs: NoticeTab[]; downloadLabel: string; viewAllLabel: string; viewAllHref?: string; emptyLabel: string; newLabel: string }) {
   const [active, setActive] = useState(tabs[0]?.key ?? "");
   const current = tabs.find((t) => t.key === active) ?? tabs[0];
   if (!current) return null;
@@ -53,7 +53,7 @@ export function NoticeTabs({ tabs, downloadLabel, viewAllLabel, viewAllHref, emp
               </div>
               <p className="flex-1 text-[13px] font-medium text-[#1b2430]">
                 {n.title}{" "}
-                {n.isNew && <span className="ml-1 rounded-[3px] bg-[#ff2d3d] px-1.5 py-0.5 align-middle text-[9px] font-bold text-white">NEW</span>}
+                {n.isNew && <span className="ml-1 rounded-[3px] bg-[#ff2d3d] px-1.5 py-0.5 align-middle text-[9px] font-bold text-white">{newLabel}</span>}
               </p>
               {n.href ? (
                 <a href={n.href} className="inline-flex shrink-0 items-center gap-1.5 rounded-[4px] border border-[#c3cbe0] px-3 py-1.5 text-[11px] text-[#1e4aa0] hover:bg-[#eaf0fb]">
