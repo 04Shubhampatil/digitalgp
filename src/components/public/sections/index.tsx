@@ -1,5 +1,6 @@
 import type { PublicPageDto } from "@/types/api";
 import type { UiLocale } from "@/i18n/config";
+import { AboutEmergencySection, AboutHeroSection, AboutHistorySection, AboutRolesSection, AboutStructureSection, AboutVisionSection } from "./AboutFigma";
 import { AboutCardsSection } from "./AboutCardsSection";
 import { GeographySection, HistorySection, MembersSection, OfficeSection } from "./AboutSections";
 import { HeroSection } from "./HeroSection";
@@ -29,6 +30,12 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
   "quick-stats": QuickStatsSection,
   welcome: WelcomeSection,
   "about-cards": AboutCardsSection,
+  "about-hero": AboutHeroSection,
+  "about-history": AboutHistorySection,
+  "about-structure": AboutStructureSection,
+  "about-roles": AboutRolesSection,
+  "about-emergency": AboutEmergencySection,
+  "about-vision": AboutVisionSection,
   weather: WeatherSection,
   "sarpanch-message": SarpanchMessageSection,
   "welcome-video": WelcomeVideoSection,
