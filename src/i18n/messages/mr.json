@@ -683,7 +683,9 @@
       "yourMessage": "संदेश",
       "yourName": "तुमचे नाव",
       "yourPhone": "फोन क्रमांक",
-      "youthSpeak": "युवा संवाद"
+      "youthSpeak": "युवा संवाद",
+      "statusCards": "स्मार्ट व्हिलेज डॅशबोर्ड",
+      "statusCardsSub": "आवश्यक पायाभूत सुविधा आणि सार्वजनिक सेवांची ताजी स्थिती."
     }
   },
   "editor": {

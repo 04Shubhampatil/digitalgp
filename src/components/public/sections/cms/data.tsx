@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { resolveHref } from "@/lib/href";
 import type { SectionProps } from "../index";
-import { Band, Icon, LinkButton, cardClass, externalProps, list, mediaUrl, tx, type B } from "./kit";
+import { Band, Icon, LinkButton, cardClass, externalProps, list, mediaUrl, readableText, tx, type B } from "./kit";
 
 const inr = (n: number | string) => Number(n).toLocaleString("en-IN");
 
@@ -102,12 +102,13 @@ const THEMES = {
 } as const;
 
 /** `status-cards`: infrastructure status tiles (value, status text, bottom figure, button). */
-export function StatusCardsSection({ slug, locale, data }: SectionProps) {
+export async function StatusCardsSection({ slug, locale, data }: SectionProps) {
+  const t = await getTranslations("public.cms");
   const items = list<StatusCard>((data as { items?: unknown }).items);
   if (items.length === 0) return null;
   return (
-    <Band tone="white">
-      <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <Band heading={t("statusCards")} subheading={t("statusCardsSub")} tone="white">
+      <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(215px,1fr))]">
         {items.map((c, i) => {
           const th = THEMES[c.theme ?? "green"];
           return (
@@ -272,11 +273,11 @@ export function ExpenditureSection({ slug, locale, data }: SectionProps) {
   const categories = list<Category>(d.categories);
   if (categories.length === 0) return null;
   return (
-    <section className="py-10" style={{ backgroundColor: d.backgroundColour || "#fcf7ee" }}>
+    <section className="py-10" style={{ backgroundColor: d.backgroundColour || "#fcf7ee", color: readableText(d.backgroundColour) }}>
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
-        <h2 className="text-[26px] font-semibold text-black">{tx(d.heading, locale)}</h2>
-        {tx(d.subtitle, locale) && <p className="mt-1 mb-6 text-[14px] text-[#414141]">{tx(d.subtitle, locale)}</p>}
-        <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <h2 className="text-[26px] font-semibold">{tx(d.heading, locale)}</h2>
+        {tx(d.subtitle, locale) && <p className="mt-1 mb-6 text-[14px] opacity-80">{tx(d.subtitle, locale)}</p>}
+        <div className="mt-4 grid text-black gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <div className={cardClass}>
             <Bars categories={categories} locale={locale} colourful />
           </div>
@@ -308,11 +309,11 @@ export async function BudgetVisualizerSection({ slug, locale, data }: SectionPro
   const fields = list<{ label?: B; valueType?: string; prefixSuffix?: string; colour?: string }>(d.overviewCard?.fields).filter((f) => f.valueType === "dynamic");
   const file = mediaUrl(slug, d.downloadReport?.enabled === false ? undefined : d.downloadReport?.fileId);
   return (
-    <section className="py-10" style={{ backgroundColor: d.backgroundColour || "#ffffff" }}>
+    <section className="py-10" style={{ backgroundColor: d.backgroundColour || "#ffffff", color: readableText(d.backgroundColour) }}>
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
-        <h2 className="text-[26px] font-semibold text-black">{tx(d.heading, locale)}</h2>
-        {tx(d.subtitle, locale) && <p className="mt-1 text-[14px] text-[#414141]">{tx(d.subtitle, locale)}</p>}
-        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <h2 className="text-[26px] font-semibold">{tx(d.heading, locale)}</h2>
+        {tx(d.subtitle, locale) && <p className="mt-1 text-[14px] opacity-80">{tx(d.subtitle, locale)}</p>}
+        <div className="mt-6 grid gap-6 text-black lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <div className={cardClass}>
             {tab && <p className="mb-4 text-[14px] font-semibold text-[#135130]">{tx(tab.name, locale)}</p>}
             <ul className="space-y-3">
@@ -360,11 +361,11 @@ export async function DocumentsSection({ slug, locale, data }: SectionProps) {
   const items = list<{ title?: B; fileId?: string; buttonText?: B }>(d.items).filter((i) => i.fileId);
   if (items.length === 0) return null;
   return (
-    <section className="py-10" style={{ backgroundColor: d.backgroundColour || "#ffffff" }}>
+    <section className="py-10" style={{ backgroundColor: d.backgroundColour || "#ffffff", color: readableText(d.backgroundColour) }}>
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
-        <h2 className="text-[26px] font-semibold text-black">{tx(d.heading, locale)}</h2>
-        {tx(d.subtitle, locale) && <p className="mt-1 text-[14px] text-[#414141]">{tx(d.subtitle, locale)}</p>}
-        {tx(d.description, locale) && <p className="mt-1 text-[13px] text-[#414141]">{tx(d.description, locale)}</p>}
+        <h2 className="text-[26px] font-semibold">{tx(d.heading, locale)}</h2>
+        {tx(d.subtitle, locale) && <p className="mt-1 text-[14px] opacity-80">{tx(d.subtitle, locale)}</p>}
+        {tx(d.description, locale) && <p className="mt-1 text-[13px] opacity-80">{tx(d.description, locale)}</p>}
         <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {items.map((it, i) => (
             <li key={i} className={`${cardClass} flex flex-col items-center text-center`}>

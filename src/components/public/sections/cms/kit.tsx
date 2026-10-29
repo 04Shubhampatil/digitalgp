@@ -151,6 +151,22 @@ export function withOpacity(hex: string, percent: number): string {
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${Math.max(0, Math.min(100, percent)) / 100})`;
 }
 
+/**
+ * Text colour that stays readable on an admin-chosen background: white on dark colours, black on light
+ * ones (WCAG relative luminance). Returns undefined when there is no (valid) background colour.
+ */
+export function readableText(bg: string | undefined): string | undefined {
+  const m = /^#([0-9a-f]{6})$/i.exec(bg ?? "");
+  if (!m) return undefined;
+  const n = parseInt(m[1]!, 16);
+  const lin = (c: number) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  };
+  const lum = 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
+  return lum > 0.4 ? "#000000" : "#ffffff";
+}
+
 /** https link that opens safely in a new tab. */
 export const externalProps = { target: "_blank", rel: "noopener noreferrer" } as const;
 

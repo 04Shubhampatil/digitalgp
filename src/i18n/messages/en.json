@@ -683,7 +683,9 @@
       "yourMessage": "Message",
       "yourName": "Your name",
       "yourPhone": "Phone number",
-      "youthSpeak": "Youth Speak"
+      "youthSpeak": "Youth Speak",
+      "statusCards": "Smart Village Dashboard",
+      "statusCardsSub": "Live updates and status of essential infrastructure and public services."
     }
   },
   "editor": {

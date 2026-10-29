@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { resolveHref } from "@/lib/href";
 import type { SectionProps } from "../index";
-import { Band, Icon, LinkButton, cardClass, externalProps, list, mediaUrl, tx, withOpacity, type B } from "./kit";
+import { Band, Icon, LinkButton, cardClass, externalProps, list, mediaUrl, readableText, tx, withOpacity, type B } from "./kit";
 
 // ------------------------------------------------------------------------------------ banner
 
@@ -68,13 +68,14 @@ export function BannerSection({ slug, locale, data }: SectionProps) {
 
   const copy = (light: boolean) => (
     <>
+      {!light && supporting && <p className="mb-6 text-[20px] leading-7 font-semibold text-[#ea7f14] uppercase">{supporting}</p>}
       {heading && (
         <h1 className="text-[32px] leading-[1.25] font-bold lg:text-[40px]" style={light && text ? { color: text } : undefined}>
           {heading}
         </h1>
       )}
-      {supporting && (
-        <p className="mt-3 text-[18px] leading-7 font-medium" style={light && text ? { color: text } : undefined}>
+      {light && supporting && (
+        <p className="mt-3 text-[18px] leading-7 font-medium" style={text ? { color: text } : undefined}>
           {supporting}
         </p>
       )}
@@ -142,22 +143,23 @@ export function TopStatsSection({ locale, data }: SectionProps) {
   if (items.length === 0) return null;
   return (
     <Band tone="cream">
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {items.map((s, i) => (
-          <li key={i} className={`${cardClass} flex items-center gap-4`} style={s.background ? { backgroundColor: s.background } : undefined}>
-            <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#135130]/10 text-[#135130]">
-              <Icon name={s.icon} />
-            </span>
-            <div className="min-w-0">
-              <p className="text-[24px] leading-8 font-semibold text-[#135130]">
+      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
+        {items.map((s, i) => {
+          const fg = readableText(s.background);
+          return (
+            <li key={i} className={`${cardClass} flex flex-col items-center text-center`} style={s.background ? { backgroundColor: s.background, color: fg } : undefined}>
+              <span className={`flex size-12 shrink-0 items-center justify-center rounded-full ${fg ? "bg-current/10" : "bg-[#135130]/10 text-[#135130]"}`}>
+                <Icon name={s.icon} />
+              </span>
+              <p className={`mt-3 text-[24px] leading-8 font-semibold ${fg ? "" : "text-[#135130]"}`}>
                 {s.value}
-                {tx(s.unit, locale) && <span className="ml-1 text-[13px] font-medium text-[#414141]">{tx(s.unit, locale)}</span>}
+                {tx(s.unit, locale) && <span className={`ml-1 text-[13px] font-medium ${fg ? "opacity-80" : "text-[#414141]"}`}>{tx(s.unit, locale)}</span>}
               </p>
-              <p className="text-[13px] font-medium text-black">{tx(s.title, locale)}</p>
-              {tx(s.description, locale) && <p className="text-[12px] text-[#414141]">{tx(s.description, locale)}</p>}
-            </div>
-          </li>
-        ))}
+              <p className={`text-[14px] font-semibold ${fg ? "" : "text-black"}`}>{tx(s.title, locale)}</p>
+              {tx(s.description, locale) && <p className={`text-[12px] ${fg ? "opacity-80" : "text-[#414141]"}`}>{tx(s.description, locale)}</p>}
+            </li>
+          );
+        })}
       </ul>
     </Band>
   );
