@@ -43,6 +43,7 @@ import {
 import { createElement, type ReactNode } from "react";
 import { pickText, type Bilingual } from "@/i18n/text";
 import { publicMediaUrl } from "@/lib/api/public";
+import { qrMatrix } from "@/lib/qr";
 import type { UiLocale } from "@/i18n/config";
 
 export type B = Bilingual | undefined;
@@ -151,6 +152,22 @@ export function withOpacity(hex: string, percent: number): string {
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${Math.max(0, Math.min(100, percent)) / 100})`;
 }
 
+/**
+ * Text colour that stays readable on an admin-chosen background: white on dark colours, black on light
+ * ones (WCAG relative luminance). Returns undefined when there is no (valid) background colour.
+ */
+export function readableText(bg: string | undefined): string | undefined {
+  const m = /^#([0-9a-f]{6})$/i.exec(bg ?? "");
+  if (!m) return undefined;
+  const n = parseInt(m[1]!, 16);
+  const lin = (c: number) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  };
+  const lum = 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
+  return lum > 0.4 ? "#000000" : "#ffffff";
+}
+
 /** https link that opens safely in a new tab. */
 export const externalProps = { target: "_blank", rel: "noopener noreferrer" } as const;
 
@@ -160,6 +177,7 @@ export function Band({
   subheading,
   tone = "white",
   action,
+  center = true,
   children,
   id,
 }: {
@@ -167,6 +185,8 @@ export function Band({
   subheading?: string;
   tone?: "white" | "cream";
   action?: ReactNode;
+  /** Centre the heading block (default: every Figma section heading is centred). */
+  center?: boolean;
   children: ReactNode;
   id?: string;
 }) {
@@ -174,8 +194,8 @@ export function Band({
     <section id={id} className={tone === "cream" ? "bg-cream py-10" : "bg-white py-10"}>
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
         {(heading || subheading || action) && (
-          <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-            <div className="max-w-3xl">
+          <div className={`mb-6 flex flex-wrap items-end gap-3 ${center ? "justify-center text-center" : "justify-between"}`}>
+            <div className={center ? "mx-auto max-w-3xl" : "max-w-3xl"}>
               {heading && <h2 className="text-[26px] leading-tight font-semibold text-black">{heading}</h2>}
               {subheading && <p className="mt-1 text-[14px] leading-6 text-[#414141]">{subheading}</p>}
             </div>
@@ -248,5 +268,33 @@ export function VideoEmbed({ url, title }: { url: string | undefined; title: str
         className="size-full border-0"
       />
     </div>
+  );
+}
+
+/** QR code for a link, drawn as one SVG path (null when the link is too long to encode). */
+export function QrCode({ text, label, className }: { text: string; label: string; className?: string }) {
+  const m = qrMatrix(text);
+  if (!m) return null;
+  const quiet = 2;
+  const n = m.length;
+  let d = "";
+  m.forEach((row, r) => {
+    let c = 0;
+    while (c < n) {
+      if (!row[c]) {
+        c++;
+        continue;
+      }
+      let end = c;
+      while (end < n && row[end]) end++;
+      d += `M${c + quiet} ${r + quiet}h${end - c}v1h-${end - c}z`;
+      c = end;
+    }
+  });
+  return (
+    <svg viewBox={`0 0 ${n + quiet * 2} ${n + quiet * 2}`} role="img" aria-label={label} shapeRendering="crispEdges" className={className ?? "w-full"}>
+      <rect width="100%" height="100%" fill="#fff" />
+      <path d={d} fill="#000" />
+    </svg>
   );
 }

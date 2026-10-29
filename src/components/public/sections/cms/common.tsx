@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { resolveHref } from "@/lib/href";
 import type { SectionProps } from "../index";
-import { Band, Icon, LinkButton, cardClass, externalProps, list, mediaUrl, tx, withOpacity, type B } from "./kit";
+import { Band, Icon, LinkButton, cardClass, externalProps, list, mediaUrl, readableText, tx, withOpacity, type B } from "./kit";
 
 // ------------------------------------------------------------------------------------ banner
 
@@ -68,13 +68,14 @@ export function BannerSection({ slug, locale, data }: SectionProps) {
 
   const copy = (light: boolean) => (
     <>
+      {!light && supporting && <p className="mb-6 text-[20px] leading-7 font-semibold text-[#ea7f14] uppercase">{supporting}</p>}
       {heading && (
         <h1 className="text-[32px] leading-[1.25] font-bold lg:text-[40px]" style={light && text ? { color: text } : undefined}>
           {heading}
         </h1>
       )}
-      {supporting && (
-        <p className="mt-3 text-[18px] leading-7 font-medium" style={light && text ? { color: text } : undefined}>
+      {light && supporting && (
+        <p className="mt-3 text-[18px] leading-7 font-medium" style={text ? { color: text } : undefined}>
           {supporting}
         </p>
       )}
@@ -142,22 +143,23 @@ export function TopStatsSection({ locale, data }: SectionProps) {
   if (items.length === 0) return null;
   return (
     <Band tone="cream">
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {items.map((s, i) => (
-          <li key={i} className={`${cardClass} flex items-center gap-4`} style={s.background ? { backgroundColor: s.background } : undefined}>
-            <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#135130]/10 text-[#135130]">
-              <Icon name={s.icon} />
-            </span>
-            <div className="min-w-0">
-              <p className="text-[24px] leading-8 font-semibold text-[#135130]">
+      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
+        {items.map((s, i) => {
+          const fg = readableText(s.background);
+          return (
+            <li key={i} className={`${cardClass} flex flex-col items-center text-center`} style={s.background ? { backgroundColor: s.background, color: fg } : undefined}>
+              <span className={`flex size-12 shrink-0 items-center justify-center rounded-full ${fg ? "bg-current/10" : "bg-[#135130]/10 text-[#135130]"}`}>
+                <Icon name={s.icon} />
+              </span>
+              <p className={`mt-3 text-[24px] leading-8 font-semibold ${fg ? "" : "text-[#135130]"}`}>
                 {s.value}
-                {tx(s.unit, locale) && <span className="ml-1 text-[13px] font-medium text-[#414141]">{tx(s.unit, locale)}</span>}
+                {tx(s.unit, locale) && <span className={`ml-1 text-[13px] font-medium ${fg ? "opacity-80" : "text-[#414141]"}`}>{tx(s.unit, locale)}</span>}
               </p>
-              <p className="text-[13px] font-medium text-black">{tx(s.title, locale)}</p>
-              {tx(s.description, locale) && <p className="text-[12px] text-[#414141]">{tx(s.description, locale)}</p>}
-            </div>
-          </li>
-        ))}
+              <p className={`text-[14px] font-semibold ${fg ? "" : "text-black"}`}>{tx(s.title, locale)}</p>
+              {tx(s.description, locale) && <p className={`text-[12px] ${fg ? "opacity-80" : "text-[#414141]"}`}>{tx(s.description, locale)}</p>}
+            </li>
+          );
+        })}
       </ul>
     </Band>
   );
@@ -173,7 +175,7 @@ interface SupportItem {
   visible?: boolean;
 }
 
-function SupportCards({ locale, data, heading }: { locale: SectionProps["locale"]; data: Record<string, unknown>; heading: string }) {
+function SupportCards({ locale, data, heading, figureFirst }: { locale: SectionProps["locale"]; data: Record<string, unknown>; heading?: string; figureFirst?: boolean }) {
   const items = list<SupportItem>(data.items).filter((i) => i.visible !== false);
   if (items.length === 0) return null;
   return (
@@ -184,9 +186,10 @@ function SupportCards({ locale, data, heading }: { locale: SectionProps["locale"
             <span className="flex size-12 items-center justify-center rounded-full bg-[#135130]/10 text-[#135130]">
               <Icon name={c.icon} />
             </span>
-            <p className="mt-3 text-[14px] font-semibold text-black">{tx(c.title, locale)}</p>
+            {figureFirst && c.contactOrAction && <p className="mt-3 text-[30px] leading-9 font-bold text-black">{c.contactOrAction}</p>}
+            <p className={`${figureFirst && c.contactOrAction ? "mt-1" : "mt-3"} text-[14px] font-semibold text-black`}>{tx(c.title, locale)}</p>
             {tx(c.description, locale) && <p className="mt-1 text-[12px] text-[#414141]">{tx(c.description, locale)}</p>}
-            {c.contactOrAction && <p className="mt-2 text-[13px] font-medium text-[#135130]">{c.contactOrAction}</p>}
+            {!figureFirst && c.contactOrAction && <p className="mt-2 text-[13px] font-medium text-[#135130]">{c.contactOrAction}</p>}
           </li>
         ))}
       </ul>
@@ -195,15 +198,14 @@ function SupportCards({ locale, data, heading }: { locale: SectionProps["locale"
 }
 
 /** `support-cards`: help / contact cards (Grievance, Employment, Education, Announcements). */
-export async function SupportCardsSection({ locale, data }: SectionProps) {
-  const t = await getTranslations("public.cms");
-  return <SupportCards locale={locale} data={data} heading={t("supportCards")} />;
+export function SupportCardsSection({ locale, data }: SectionProps) {
+  return <SupportCards locale={locale} data={data} />;
 }
 
 /** `local-opportunities`: the second card list on the Employment page. */
 export async function LocalOpportunitiesSection({ locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
-  return <SupportCards locale={locale} data={data} heading={t("localOpportunities")} />;
+  return <SupportCards locale={locale} data={data} heading={t("localOpportunities")} figureFirst />;
 }
 
 interface IconCardItem {

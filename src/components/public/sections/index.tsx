@@ -15,6 +15,7 @@ import {
   DocumentsSection,
   ExpenditureSection,
   IncomeSourcesSection,
+  GreenScoreboardSection,
   InfraMapSection,
   LatestAnnouncementsCard,
   MapFiltersSection,
@@ -145,7 +146,7 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
   // backend sections of the other pages (src/config/sections-pages.ts)
   banner: BannerSection,
   "top-stats": TopStatsSection,
-  "green-scoreboard": TopStatsSection,
+  "green-scoreboard": GreenScoreboardSection,
   "support-cards": SupportCardsSection,
   "local-opportunities": LocalOpportunitiesSection,
   "assistance-items": AssistanceItemsSection,
@@ -216,6 +217,10 @@ const ROW_GROUPS: { keys: string[]; cols: string }[] = [
   { keys: ["weather", "sarpanch-message"], cols: "lg:grid-cols-2" },
   { keys: ["welcome-video", "village-progress"], cols: "lg:grid-cols-2" },
   { keys: ["latest-announcements", "upcoming-events"], cols: "lg:grid-cols-2" },
+  { keys: ["market-prices", "weather-update"], cols: "lg:grid-cols-2" },
+  { keys: ["office-location", "feedback-form"], cols: "lg:grid-cols-2" },
+  { keys: ["live-announcements", "calendar"], cols: "lg:grid-cols-[minmax(0,1fr)_340px]" },
+  { keys: ["deadline-cards", "download-forms"], cols: "lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]" },
 ];
 const GROUPED = new Set(ROW_GROUPS.flatMap((g) => g.keys));
 

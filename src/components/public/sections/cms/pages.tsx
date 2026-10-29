@@ -410,8 +410,9 @@ export async function LiveAnnouncementsSection({ slug, locale }: SectionProps) {
   if (rows.length === 0) return null;
   const fmt = new Intl.DateTimeFormat(locale === "mr" ? "mr-IN" : "en-IN", { day: "numeric", month: "short", year: "numeric" });
   return (
-    <Band heading={tc("latestAnnouncements")}>
-      <ul className={`${cardClass} divide-y divide-black/10 !p-0`}>
+    <div className={cardClass}>
+      <h2 className="mb-2 text-[18px] font-semibold text-black">{tc("latestAnnouncements")}</h2>
+      <ul className="divide-y divide-black/10">
         {rows.map((a) => (
           <li key={a.id} className="flex items-center gap-3 px-5 py-3">
             <span className="min-w-0 flex-1">
@@ -427,7 +428,7 @@ export async function LiveAnnouncementsSection({ slug, locale }: SectionProps) {
           </li>
         ))}
       </ul>
-    </Band>
+    </div>
   );
 }
 
@@ -446,11 +447,7 @@ export async function CalendarSection({ locale, data }: SectionProps) {
   const monthNames = Array.from({ length: 12 }, (_, m) => new Intl.DateTimeFormat(locale === "mr" ? "mr-IN" : "en-IN", { month: "long" }).format(new Date(2026, m, 1)));
   const initial = d.defaultMonthView === "custom" && d.defaultMonth ? `${d.defaultMonth}-01T00:00:00` : new Date().toISOString();
   return (
-    <Band tone="cream">
-      <div className="mx-auto max-w-md">
-        <CalendarCard title={tx(d.title, locale)} initial={initial} events={events} weekdays={weekdays} monthNames={monthNames} allLabel={t("viewFullCalendar")} emptyLabel={t("noEvents")} />
-      </div>
-    </Band>
+    <CalendarCard title={tx(d.title, locale)} initial={initial} events={events} weekdays={weekdays} monthNames={monthNames} allLabel={t("viewFullCalendar")} emptyLabel={t("noEvents")} />
   );
 }
 
@@ -460,10 +457,11 @@ export async function DeadlineCardsSection({ locale, data }: SectionProps) {
   const items = list<{ icon?: string; date?: string; title?: B; subtitle?: B }>((data as { items?: unknown }).items);
   if (items.length === 0) return null;
   return (
-    <Band heading={t("deadlines")}>
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className={cardClass}>
+      <h2 className="mb-3 text-[18px] font-semibold text-black">{t("deadlines")}</h2>
+      <ul className="grid gap-3 sm:grid-cols-2">
         {items.map((c, i) => (
-          <li key={i} className={`${cardClass} text-center`}>
+          <li key={i} className="rounded-[10px] bg-[#fcf7ee] p-4 text-center">
             <span className="mx-auto flex size-11 items-center justify-center rounded-full bg-[#f5871f]/15 text-[#c25f00]">
               <Icon name={c.icon ?? "calendar"} />
             </span>
@@ -473,7 +471,7 @@ export async function DeadlineCardsSection({ locale, data }: SectionProps) {
           </li>
         ))}
       </ul>
-    </Band>
+    </div>
   );
 }
 
@@ -483,10 +481,11 @@ export async function DownloadFormsSection({ slug, locale, data }: SectionProps)
   const items = list<{ icon?: string; name?: B; description?: B; fileId?: string }>((data as { items?: unknown }).items).filter((f) => f.fileId);
   if (items.length === 0) return null;
   return (
-    <Band heading={t("downloads")} tone="cream">
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <div className={cardClass}>
+      <h2 className="mb-3 text-[18px] font-semibold text-black">{t("downloads")}</h2>
+      <ul className="space-y-2">
         {items.map((f, i) => (
-          <li key={i} className={`${cardClass} flex items-center gap-3 !p-4`}>
+          <li key={i} className="flex items-center gap-3 rounded-[8px] border border-black/10 px-3 py-2.5">
             <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#135130]/10 text-[#135130]">
               <Icon name={f.icon ?? "file"} className="size-5" />
             </span>
@@ -500,7 +499,7 @@ export async function DownloadFormsSection({ slug, locale, data }: SectionProps)
           </li>
         ))}
       </ul>
-    </Band>
+    </div>
   );
 }
 
@@ -565,30 +564,28 @@ export async function VideoGallerySection({ slug, locale, data }: SectionProps) 
   );
 }
 
-/** `press-coverage`: articles about the village. */
+/** `press-coverage`: article cards (logo, headline, date, link). */
 export async function PressCoverageSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
   const items = list<{ logoId?: string; mediaName?: string; title?: B; date?: string; url?: string; order?: number }>((data as { items?: unknown }).items).sort(byOrder).filter((p) => p.url);
   if (items.length === 0) return null;
   return (
     <Band heading={t("pressCoverage")}>
-      <ul className="divide-y divide-black/10 rounded-[10px] border border-black/10 bg-white">
+      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
         {items.map((p, i) => {
           const logo = mediaUrl(slug, p.logoId);
           return (
-            <li key={i}>
-              <a href={p.url} {...externalProps} className="flex items-center gap-4 px-4 py-3 hover:bg-black/[0.03]">
-                {logo ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- website media served by the backend
-                  <img src={logo} alt="" loading="lazy" className="h-10 w-24 shrink-0 object-contain" />
-                ) : (
-                  <span className="w-24 shrink-0 text-[12px] font-semibold text-[#135130]">{p.mediaName}</span>
-                )}
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[14px] font-medium text-black">{tx(p.title, locale)}</span>
-                  <span className="block text-[11px] text-[#414141]">{[p.mediaName, p.date ? dateFmt(locale, p.date) : ""].filter(Boolean).join(" · ")}</span>
-                </span>
-                <ExternalLink className="size-4 shrink-0 text-[#135130]" aria-hidden />
+            <li key={i} className={`${cardClass} flex flex-col`}>
+              {logo ? (
+                // eslint-disable-next-line @next/next/no-img-element -- website media served by the backend
+                <img src={logo} alt={p.mediaName ?? ""} loading="lazy" className="h-12 w-auto max-w-full self-start object-contain" />
+              ) : (
+                <span className="text-[16px] font-bold text-[#135130]">{p.mediaName}</span>
+              )}
+              <p className="mt-3 text-[14px] leading-5 font-medium text-black">{tx(p.title, locale)}</p>
+              {p.date && <p className="mt-2 text-[11px] text-[#414141]">{dateFmt(locale, p.date)}</p>}
+              <a href={p.url} {...externalProps} className="mt-auto inline-flex items-center gap-1 pt-3 text-[12px] font-semibold text-[#135130] hover:underline">
+                {t("readMore")} <ExternalLink className="size-3.5" aria-hidden />
               </a>
             </li>
           );
@@ -615,7 +612,8 @@ export async function ThenAndNowSection({ slug, locale, data }: SectionProps) {
 }
 
 /** `mini-documentary`: an uploaded video or a YouTube / Vimeo embed. */
-export function MiniDocumentarySection({ slug, locale, data }: SectionProps) {
+export async function MiniDocumentarySection({ slug, locale, data }: SectionProps) {
+  const t = await getTranslations("public.cms");
   const d = data as {
     heading?: B;
     title?: B;
@@ -631,17 +629,17 @@ export function MiniDocumentarySection({ slug, locale, data }: SectionProps) {
   const p = d.playback ?? {};
   return (
     <Band heading={tx(d.heading, locale)}>
-      <div className="grid items-center gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
-        <div>
-          <h3 className="text-[22px] font-semibold text-black">{tx(d.title, locale)}</h3>
-          {d.publishedDate && <p className="mt-1 text-[12px] text-[#414141]">{dateFmt(locale, d.publishedDate)}</p>}
-          {tx(d.description, locale) && <p className="mt-3 text-[14px] leading-6 text-[#414141]">{tx(d.description, locale)}</p>}
-        </div>
+      <div className="grid items-center gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         {video ? (
           <video src={video} controls={p.controls !== false} autoPlay={p.autoplay} muted={p.muted || p.autoplay} loop={p.loop} playsInline preload="metadata" className="aspect-video w-full rounded-[10px] bg-black" />
         ) : (
           <VideoEmbed url={d.videoUrl} title={tx(d.title, locale)} />
         )}
+        <div>
+          <h3 className="text-[22px] font-semibold text-black">{tx(d.title, locale)}</h3>
+          {tx(d.description, locale) && <p className="mt-3 text-[14px] leading-6 text-[#414141]">{tx(d.description, locale)}</p>}
+          {d.publishedDate && <p className="mt-3 text-[12px] text-[#414141]">{t("published", { date: dateFmt(locale, d.publishedDate) })}</p>}
+        </div>
       </div>
     </Band>
   );
