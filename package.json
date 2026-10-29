@@ -18,7 +18,8 @@
     "postinstall": "prisma generate",
     "test:ui": "vitest run --config vitest.frontend.config.ts",
     "test:ui:watch": "vitest --config vitest.frontend.config.ts",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "forms:purge": "tsx scripts/purge-form-submissions.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "5.9.2",

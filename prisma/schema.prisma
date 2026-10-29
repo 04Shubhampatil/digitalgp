@@ -154,6 +154,7 @@ model Tenant {
   projects      Project[]
   media         Media[]
   grievances    Grievance[]
+  formSubmissions FormSubmission[]
   auditLogs     AuditLog[]
 
   createdAt DateTime @default(now())
@@ -511,6 +512,7 @@ model Media {
   pageShareImages      Page[]
   announcementAttachments Announcement[]
   projectCovers        Project[]
+  grievanceAttachments GrievanceAttachment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -538,6 +540,7 @@ model Grievance {
   resolutionNote String?
   resolvedAt     DateTime?
   events         GrievanceEvent[]
+  attachments    GrievanceAttachment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -584,4 +587,42 @@ model AuditLog {
   @@index([tenantId, createdAt])
   @@index([actorId, createdAt])
   @@index([entityType, entityId])
+}
+
+// ---------------------------------------------------------------------------
+// Public contact-page submissions (feedback and volunteer applications)
+// ---------------------------------------------------------------------------
+
+enum FormSubmissionKind {
+  FEEDBACK
+  VOLUNTEER
+}
+
+/// Stored only for admins of the tenant; never returned by public endpoints. Kept for
+/// FORM_SUBMISSION_RETENTION_MONTHS (see src/features/forms/service.ts). No IP address is stored.
+model FormSubmission {
+  id        String             @id @default(cuid())
+  tenantId  String
+  tenant    Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  kind      FormSubmissionKind
+  name      String
+  email     String?
+  phone     String?
+  category  String?
+  message   String?
+  createdAt DateTime           @default(now())
+
+  @@index([tenantId, kind, createdAt])
+}
+
+/// Files a citizen attached to a complaint (only when the complaint form allows uploads).
+model GrievanceAttachment {
+  grievanceId String
+  grievance   Grievance @relation(fields: [grievanceId], references: [id], onDelete: Cascade)
+  mediaId     String
+  media       Media     @relation(fields: [mediaId], references: [id], onDelete: Restrict)
+  createdAt   DateTime  @default(now())
+
+  @@id([grievanceId, mediaId])
+  @@index([mediaId])
 }

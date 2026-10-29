@@ -11,8 +11,11 @@ export const submitGrievanceSchema = z.object({
   citizenPhone: phoneSchema.optional().nullable(),
   citizenEmail: emailSchema.optional().nullable(),
   description: z.string().trim().min(10).max(5000),
+  /** Media ids of files the citizen attached. Allowed only when the complaint form enables uploads. */
+  attachmentIds: z.array(z.string().trim().min(10).max(40).regex(/^[a-z0-9]+$/, "Invalid file id")).max(5).optional().default([]),
+  turnstileToken: z.string().trim().min(1).max(2048).optional(),
 });
-export type SubmitGrievanceInput = z.infer<typeof submitGrievanceSchema>;
+export type SubmitGrievanceInput = z.input<typeof submitGrievanceSchema>;
 
 export const trackingCodeSchema = z
   .string()
