@@ -175,7 +175,7 @@ interface SupportItem {
   visible?: boolean;
 }
 
-function SupportCards({ locale, data, heading }: { locale: SectionProps["locale"]; data: Record<string, unknown>; heading: string }) {
+function SupportCards({ locale, data, heading, figureFirst }: { locale: SectionProps["locale"]; data: Record<string, unknown>; heading?: string; figureFirst?: boolean }) {
   const items = list<SupportItem>(data.items).filter((i) => i.visible !== false);
   if (items.length === 0) return null;
   return (
@@ -186,9 +186,10 @@ function SupportCards({ locale, data, heading }: { locale: SectionProps["locale"
             <span className="flex size-12 items-center justify-center rounded-full bg-[#135130]/10 text-[#135130]">
               <Icon name={c.icon} />
             </span>
-            <p className="mt-3 text-[14px] font-semibold text-black">{tx(c.title, locale)}</p>
+            {figureFirst && c.contactOrAction && <p className="mt-3 text-[30px] leading-9 font-bold text-black">{c.contactOrAction}</p>}
+            <p className={`${figureFirst && c.contactOrAction ? "mt-1" : "mt-3"} text-[14px] font-semibold text-black`}>{tx(c.title, locale)}</p>
             {tx(c.description, locale) && <p className="mt-1 text-[12px] text-[#414141]">{tx(c.description, locale)}</p>}
-            {c.contactOrAction && <p className="mt-2 text-[13px] font-medium text-[#135130]">{c.contactOrAction}</p>}
+            {!figureFirst && c.contactOrAction && <p className="mt-2 text-[13px] font-medium text-[#135130]">{c.contactOrAction}</p>}
           </li>
         ))}
       </ul>
@@ -197,15 +198,14 @@ function SupportCards({ locale, data, heading }: { locale: SectionProps["locale"
 }
 
 /** `support-cards`: help / contact cards (Grievance, Employment, Education, Announcements). */
-export async function SupportCardsSection({ locale, data }: SectionProps) {
-  const t = await getTranslations("public.cms");
-  return <SupportCards locale={locale} data={data} heading={t("supportCards")} />;
+export function SupportCardsSection({ locale, data }: SectionProps) {
+  return <SupportCards locale={locale} data={data} />;
 }
 
 /** `local-opportunities`: the second card list on the Employment page. */
 export async function LocalOpportunitiesSection({ locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
-  return <SupportCards locale={locale} data={data} heading={t("localOpportunities")} />;
+  return <SupportCards locale={locale} data={data} heading={t("localOpportunities")} figureFirst />;
 }
 
 interface IconCardItem {

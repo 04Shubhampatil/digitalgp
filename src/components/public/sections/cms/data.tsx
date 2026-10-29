@@ -210,77 +210,122 @@ interface InfoCard {
   buttonLink?: string;
 }
 
+/** Colours for income categories (the schema stores a colour only for expenditure). */
+const INCOME_COLOURS = ["#135130", "#2563eb", "#f5871f", "#0ea5a4", "#7c3aed", "#eab308", "#ec4899", "#64748b"];
+
+/** ₹ amount in rupees → "₹1.80 Cr" / "₹4.50 L" / "₹12,500" (Marathi: कोटी / लाख). */
+export function formatMoney(rupees: number, locale: SectionProps["locale"]): string {
+  const cr = locale === "mr" ? "कोटी" : "Cr";
+  const lakh = locale === "mr" ? "लाख" : "L";
+  if (rupees >= 1e7) return `₹${(rupees / 1e7).toFixed(2)} ${cr}`;
+  if (rupees >= 1e5) return `₹${(rupees / 1e5).toFixed(2)} ${lakh}`;
+  return `₹${inr(rupees)}`;
+}
+
+const sumAmount = (cats: Category[]) => cats.reduce((s, c) => s + (Number(c.amount) || 0), 0);
+
 function InfoCardBlock({ slug, locale, card }: { slug: string; locale: SectionProps["locale"]; card?: InfoCard }) {
   if (!card || card.enabled === false || !tx(card.title, locale)) return null;
   return (
-    <aside className={`${cardClass} flex flex-col items-start`}>
-      <span className="flex size-12 items-center justify-center rounded-full bg-[#135130]/10 text-[#135130]">
-        <Icon name={card.icon} />
+    <aside className="flex flex-col items-center rounded-[10px] border border-black/10 bg-[#f1f7f3] p-6 text-center">
+      <span className="flex size-14 items-center justify-center rounded-full bg-[#135130]/10 text-[#135130]">
+        <Icon name={card.icon} className="size-7" />
       </span>
-      <p className="mt-3 text-[16px] font-semibold text-black">{tx(card.title, locale)}</p>
-      {tx(card.description, locale) && <p className="mt-1 text-[13px] leading-5 text-[#414141]">{tx(card.description, locale)}</p>}
+      <p className="mt-3 text-[18px] font-semibold text-[#135130]">{tx(card.title, locale)}</p>
+      {tx(card.description, locale) && <p className="mt-2 text-[13px] leading-5 text-black">{tx(card.description, locale)}</p>}
       {card.buttonLink && (
         <div className="mt-4">
-          <LinkButton href={resolveHref(card.buttonLink, slug)} external={/^https?:\/\//.test(card.buttonLink)}>
+          <Link href={resolveHref(card.buttonLink, slug)} className="inline-flex rounded-[8px] bg-[#135130] px-5 py-2.5 text-[13px] font-medium text-white hover:opacity-90">
             {tx(card.buttonText, locale) || "→"}
-          </LinkButton>
+          </Link>
         </div>
       )}
     </aside>
   );
 }
 
-function Bars({ categories, locale, colourful }: { categories: Category[]; locale: SectionProps["locale"]; colourful: boolean }) {
+/** Donut chart (SVG): segments in order, with a label and value in the middle. */
+function Donut({ segments, label, value }: { segments: { value: number; colour: string; pct: number }[]; label: string; value: string }) {
+  const total = segments.reduce((s, x) => s + x.value, 0) || 1;
+  const R = 70;
+  const C = 2 * Math.PI * R;
+  const arcs = segments.reduce<{ dash: number; offset: number; colour: string; pct: number }[]>((acc, s) => {
+    const used = acc.reduce((n, a) => n + a.dash, 0);
+    return [...acc, { dash: (s.value / total) * C, offset: -used, colour: s.colour, pct: s.pct }];
+  }, []);
   return (
-    <ul className="space-y-4">
-      {categories.map((c, i) => (
-        <li key={i}>
-          <div className="flex items-baseline justify-between gap-3 text-[13px]">
-            <span className="font-medium text-black">{tx(c.name, locale)}</span>
-            <span className="text-[#414141]">
-              ₹ {inr(c.amount ?? 0)} · <span className="font-semibold text-black">{c.percentage ?? 0}%</span>
-            </span>
-          </div>
-          <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-black/10" role="img" aria-label={`${tx(c.name, locale)} ${c.percentage ?? 0}%`}>
-            <div className="h-full rounded-full" style={{ width: `${Math.max(0, Math.min(100, c.percentage ?? 0))}%`, backgroundColor: colourful ? (c.colour ?? "#135130") : "#135130" }} />
-          </div>
-        </li>
-      ))}
-    </ul>
+    <div className="relative mx-auto aspect-square w-full max-w-[300px]">
+      <svg viewBox="0 0 200 200" className="size-full -rotate-90" role="img" aria-label={`${label} ${value}`}>
+        {arcs.map((a, i) => (
+          <circle key={i} cx="100" cy="100" r={R} fill="none" stroke={a.colour} strokeWidth="38" strokeDasharray={`${a.dash} ${C - a.dash}`} strokeDashoffset={a.offset} />
+        ))}
+      </svg>
+      <div className="absolute inset-[27%] flex flex-col items-center justify-center rounded-full bg-white text-center shadow-inner">
+        <span className="text-[11px] text-[#414141]">{label}</span>
+        <span className="text-[17px] leading-tight font-bold text-black">{value}</span>
+      </div>
+    </div>
   );
 }
 
-/** `income-sources`: categories as proportional bars plus an optional information card. */
-export function IncomeSourcesSection({ slug, locale, data }: SectionProps) {
+/** `income-sources`: legend list, donut with the total in the middle, and an optional information card. */
+export async function IncomeSourcesSection({ slug, locale, data }: SectionProps) {
+  const t = await getTranslations("public.cms");
   const d = data as { enabled?: boolean; heading?: B; subtitle?: B; categories?: unknown; supportCard?: InfoCard };
   const categories = list<Category>(d.categories);
   if (d.enabled === false || categories.length === 0) return null;
+  const total = sumAmount(categories);
+  const coloured = categories.map((c, i) => ({ ...c, colour: INCOME_COLOURS[i % INCOME_COLOURS.length]! }));
   return (
-    <Band heading={tx(d.heading, locale)} subheading={tx(d.subtitle, locale)}>
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <div className={cardClass}>
-          <Bars categories={categories} locale={locale} colourful={false} />
-        </div>
+    <Band heading={tx(d.heading, locale)} subheading={tx(d.subtitle, locale)} center>
+      <div className="grid items-center gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,0.8fr)]">
+        <ul className={`${cardClass} space-y-3`}>
+          {coloured.map((c, i) => (
+            <li key={i} className="flex items-center gap-3 text-[13px]">
+              <span aria-hidden className="size-3 shrink-0 rounded-full" style={{ backgroundColor: c.colour }} />
+              <span className="flex-1 text-black">{tx(c.name, locale)}</span>
+              <span className="text-[#414141]">
+                {formatMoney(Number(c.amount) || 0, locale)} ({c.percentage ?? 0}%)
+              </span>
+            </li>
+          ))}
+        </ul>
+        <Donut segments={coloured.map((c) => ({ value: Number(c.amount) || 0, colour: c.colour, pct: c.percentage ?? 0 }))} label={t("totalIncome")} value={formatMoney(total, locale)} />
         <InfoCardBlock slug={slug} locale={locale} card={d.supportCard} />
       </div>
     </Band>
   );
 }
 
-/** `expenditure`: coloured category bars on a coloured band plus an optional side card. */
-export function ExpenditureSection({ slug, locale, data }: SectionProps) {
+/** `expenditure`: donut, category bars with the colours the GP chose, and an optional side card. */
+export async function ExpenditureSection({ slug, locale, data }: SectionProps) {
+  const t = await getTranslations("public.cms");
   const d = data as { heading?: B; subtitle?: B; backgroundColour?: string; categories?: unknown; sideCard?: InfoCard };
   const categories = list<Category>(d.categories);
   if (categories.length === 0) return null;
+  const total = sumAmount(categories);
   return (
     <section className="py-10" style={{ backgroundColor: d.backgroundColour || "#fcf7ee", color: readableText(d.backgroundColour) }}>
-      <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
+      <div className="mx-auto max-w-[1440px] px-4 text-center sm:px-8 lg:px-[60px]">
         <h2 className="text-[26px] font-semibold">{tx(d.heading, locale)}</h2>
-        {tx(d.subtitle, locale) && <p className="mt-1 mb-6 text-[14px] opacity-80">{tx(d.subtitle, locale)}</p>}
-        <div className="mt-4 grid text-black gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-          <div className={cardClass}>
-            <Bars categories={categories} locale={locale} colourful />
-          </div>
+        {tx(d.subtitle, locale) && <p className="mt-1 text-[14px] opacity-80">{tx(d.subtitle, locale)}</p>}
+        <div className="mt-6 grid items-center gap-6 text-left text-black lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.3fr)_minmax(0,0.8fr)]">
+          <Donut segments={categories.map((c) => ({ value: Number(c.amount) || 0, colour: c.colour ?? "#135130", pct: c.percentage ?? 0 }))} label={t("totalExpenditure")} value={formatMoney(total, locale)} />
+          <ul className={`${cardClass} space-y-4`}>
+            {categories.map((c, i) => (
+              <li key={i}>
+                <div className="flex items-baseline justify-between gap-3 text-[13px]">
+                  <span className="font-medium text-black">{tx(c.name, locale)}</span>
+                  <span className="text-[#414141]">
+                    {formatMoney(Number(c.amount) || 0, locale)} <span className="ml-2 font-semibold text-black">{c.percentage ?? 0}%</span>
+                  </span>
+                </div>
+                <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-black/10" role="img" aria-label={`${tx(c.name, locale)} ${c.percentage ?? 0}%`}>
+                  <div className="h-full rounded-full" style={{ width: `${Math.max(0, Math.min(100, c.percentage ?? 0))}%`, backgroundColor: c.colour ?? "#135130" }} />
+                </div>
+              </li>
+            ))}
+          </ul>
           <InfoCardBlock slug={slug} locale={locale} card={d.sideCard} />
         </div>
       </div>
@@ -288,8 +333,13 @@ export function ExpenditureSection({ slug, locale, data }: SectionProps) {
   );
 }
 
-/** `budget-visualizer`: bar chart of the entered values, totals card and the report download. */
-export async function BudgetVisualizerSection({ slug, locale, data }: SectionProps) {
+/**
+ * `budget-visualizer`: vertical bar chart (values are in ₹ lakh), the first enabled tab name as the
+ * chart title, the budget overview card and the report download. The overview totals are computed from
+ * the page's own income and expenditure sections: `dynamic` fields are total income, then total
+ * expenditure; `auto` fields are the surplus, and the budget utilisation when their suffix is "%".
+ */
+export async function BudgetVisualizerSection({ slug, locale, data, siblings }: SectionProps) {
   const t = await getTranslations("public.cms");
   const d = data as {
     enabled?: boolean;
@@ -304,47 +354,76 @@ export async function BudgetVisualizerSection({ slug, locale, data }: SectionPro
   const bars = list<{ label?: B; value?: string; colour?: string }>(d.barChart);
   if (d.enabled === false || bars.length === 0) return null;
   const max = Math.max(...bars.map((b) => Number(b.value) || 0), 1);
-  const total = bars.reduce((s, b) => s + (Number(b.value) || 0), 0);
-  const tab = list<{ name?: B; enabled?: boolean }>(d.tabs).find((x) => x.enabled !== false);
-  const fields = list<{ label?: B; valueType?: string; prefixSuffix?: string; colour?: string }>(d.overviewCard?.fields).filter((f) => f.valueType === "dynamic");
+  const tabs = list<{ name?: B; enabled?: boolean }>(d.tabs).filter((x) => x.enabled !== false);
+  const income = sumAmount(list<Category>((siblings?.["income-sources"] as { categories?: unknown } | undefined)?.categories));
+  const spent = sumAmount(list<Category>((siblings?.["expenditure"] as { categories?: unknown } | undefined)?.categories));
+  const known = income > 0 && spent > 0;
+  let dynamicIndex = 0;
+  const fields = list<{ label?: B; valueType?: string; prefixSuffix?: string; colour?: string }>(d.overviewCard?.fields).map((f) => {
+    let value = "—";
+    if (known) {
+      if (f.valueType === "dynamic") value = formatMoney(dynamicIndex++ === 0 ? income : spent, locale);
+      else if (f.prefixSuffix === "%") value = `${((spent / income) * 100).toFixed(1)}%`;
+      else value = formatMoney(Math.abs(income - spent), locale);
+    }
+    return { ...f, value };
+  });
   const file = mediaUrl(slug, d.downloadReport?.enabled === false ? undefined : d.downloadReport?.fileId);
+  const ticks = [0, 0.25, 0.5, 0.75, 1].map((p) => Math.round(max * p));
   return (
     <section className="py-10" style={{ backgroundColor: d.backgroundColour || "#ffffff", color: readableText(d.backgroundColour) }}>
-      <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
+      <div className="mx-auto max-w-[1440px] px-4 text-center sm:px-8 lg:px-[60px]">
         <h2 className="text-[26px] font-semibold">{tx(d.heading, locale)}</h2>
         {tx(d.subtitle, locale) && <p className="mt-1 text-[14px] opacity-80">{tx(d.subtitle, locale)}</p>}
-        <div className="mt-6 grid gap-6 text-black lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div className="mt-6 grid gap-6 text-left text-black lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)]">
           <div className={cardClass}>
-            {tab && <p className="mb-4 text-[14px] font-semibold text-[#135130]">{tx(tab.name, locale)}</p>}
-            <ul className="space-y-3">
-              {bars.map((b, i) => (
-                <li key={i} className="grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)_3.5rem] items-center gap-3 text-[13px]">
-                  <span className="truncate text-black">{tx(b.label, locale)}</span>
-                  <span className="h-3 overflow-hidden rounded-full bg-black/10" aria-hidden>
-                    <span className="block h-full rounded-full" style={{ width: `${((Number(b.value) || 0) / max) * 100}%`, backgroundColor: b.colour ?? "#135130" }} />
+            {tabs.length > 0 && (
+              <div className="mb-4 flex flex-wrap gap-2">
+                {tabs.map((tab, i) => (
+                  <span key={i} className={`rounded-[8px] border px-4 py-2 text-[13px] font-medium ${i === 0 ? "border-[#135130] bg-[#135130] text-white" : "border-black/20 text-black"}`}>
+                    {tx(tab.name, locale)}
                   </span>
-                  <span className="text-right font-semibold text-black">{b.value}</span>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-3">
+              <ul aria-hidden className="flex h-64 flex-col-reverse justify-between pb-6 text-right text-[11px] text-[#414141]">
+                {ticks.map((v) => (
+                  <li key={v}>₹{v}L</li>
+                ))}
+              </ul>
+              <ul className="flex h-64 flex-1 items-end justify-around gap-2 border-b border-l border-black/20 px-2">
+                {bars.map((b, i) => (
+                  <li key={i} className="flex h-full flex-1 flex-col items-center justify-end">
+                    <span className="mb-1 text-[11px] font-semibold text-black">₹{b.value}L</span>
+                    <span className="block w-full max-w-12 rounded-t-[4px]" style={{ height: `${((Number(b.value) || 0) / max) * 78}%`, backgroundColor: b.colour ?? "#135130" }} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <ul className="mt-2 flex justify-around gap-2 pl-12 text-center text-[11px] text-[#414141]">
+              {bars.map((b, i) => (
+                <li key={i} className="flex-1">
+                  {tx(b.label, locale)}
                 </li>
               ))}
             </ul>
           </div>
           <div className={`${cardClass} flex flex-col`}>
             <p className="text-[16px] font-semibold text-black">{tx(d.overviewCard?.title, locale)}</p>
-            <ul className="mt-3 space-y-2">
+            <ul className="mt-3 divide-y divide-black/10">
               {fields.map((f, i) => (
-                <li key={i} className="flex items-center justify-between text-[13px]">
-                  <span className="text-[#414141]">{tx(f.label, locale)}</span>
+                <li key={i} className="flex items-center justify-between py-2.5 text-[13px]">
+                  <span className="text-black">{tx(f.label, locale)}</span>
                   <span className="font-semibold" style={{ color: f.colour }}>
-                    {f.prefixSuffix && /^[₹$€]/.test(f.prefixSuffix) ? f.prefixSuffix : ""}
-                    {inr(total)}
-                    {f.prefixSuffix && !/^[₹$€]/.test(f.prefixSuffix) ? ` ${f.prefixSuffix}` : ""}
+                    {f.value}
                   </span>
                 </li>
               ))}
             </ul>
             {file && (
-              <a href={file} download className="mt-auto inline-flex items-center justify-center gap-2 rounded-full bg-[#135130] px-4 py-2.5 text-[13px] font-medium text-white hover:opacity-90">
-                <Download className="size-4" aria-hidden /> {tx(d.downloadReport?.buttonText, locale) || t("download")}
+              <a href={file} download className="mt-auto inline-flex items-center justify-center gap-2 rounded-[8px] bg-[#135130] px-4 py-3 text-[13px] font-medium text-white hover:opacity-90">
+                {tx(d.downloadReport?.buttonText, locale) || t("download")} <Download className="size-4" aria-hidden />
               </a>
             )}
           </div>
@@ -362,19 +441,20 @@ export async function DocumentsSection({ slug, locale, data }: SectionProps) {
   if (items.length === 0) return null;
   return (
     <section className="py-10" style={{ backgroundColor: d.backgroundColour || "#ffffff", color: readableText(d.backgroundColour) }}>
-      <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
+      <div className="mx-auto max-w-[1440px] px-4 text-center sm:px-8 lg:px-[60px]">
         <h2 className="text-[26px] font-semibold">{tx(d.heading, locale)}</h2>
         {tx(d.subtitle, locale) && <p className="mt-1 text-[14px] opacity-80">{tx(d.subtitle, locale)}</p>}
         {tx(d.description, locale) && <p className="mt-1 text-[13px] opacity-80">{tx(d.description, locale)}</p>}
-        <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <ul className="mt-6 grid gap-4 text-black sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
           {items.map((it, i) => (
             <li key={i} className={`${cardClass} flex flex-col items-center text-center`}>
               <span className="flex size-12 items-center justify-center rounded-full bg-[#e53935]/10 text-[#e53935]">
                 <Icon name="file" />
               </span>
               <p className="mt-3 text-[13px] font-semibold text-black">{tx(it.title, locale)}</p>
+              <p className="text-[11px] text-[#414141]">PDF</p>
               <a href={mediaUrl(slug, it.fileId)} download className="mt-auto inline-flex items-center gap-1.5 pt-3 text-[12px] font-medium text-[#135130] hover:underline">
-                <Download className="size-3.5" aria-hidden /> {tx(it.buttonText, locale) || t("download")}
+                {tx(it.buttonText, locale) || t("download")} <Download className="size-3.5" aria-hidden />
               </a>
             </li>
           ))}
@@ -475,8 +555,8 @@ export async function SustainabilityInitiativesSection({ slug, locale, data }: S
 
 const STALE_DAYS = 7;
 
-/** `market-prices`: commodity price table with its update time; stale prices are flagged. */
-export async function MarketPricesSection({ locale, data }: SectionProps) {
+/** `market-prices` (card in a two-column row with `weather-update`): commodity table with its update time; stale prices are flagged. */
+export async function MarketPricesSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
   const d = data as { title?: B; lastUpdatedAt?: string; marketName?: B; currency?: string; rows?: unknown; note?: B; buttonText?: B; buttonLink?: string };
   const rows = list<{ commodity?: B; unit?: string; minPrice?: number; maxPrice?: number; modalPrice?: number }>(d.rows);
@@ -485,9 +565,11 @@ export async function MarketPricesSection({ locale, data }: SectionProps) {
   const stale = updated ? new Date().getTime() - updated.getTime() > STALE_DAYS * 86_400_000 : true;
   const sym = d.currency === "INR" || !d.currency ? "₹" : `${d.currency} `;
   return (
-    <Band heading={tx(d.title, locale)} subheading={tx(d.marketName, locale)}>
-      <div className={`${cardClass} overflow-x-auto`}>
-        <table className="w-full min-w-[32rem] text-left text-[13px]">
+    <div className={cardClass}>
+      <h2 className="text-[18px] font-semibold text-black">{tx(d.title, locale)}</h2>
+      {tx(d.marketName, locale) && <p className="text-[12px] text-[#414141]">{tx(d.marketName, locale)}</p>}
+      <div className="mt-3 overflow-x-auto">
+        <table className="w-full min-w-[26rem] text-left text-[13px]">
           <thead className="text-[11px] tracking-wide text-[#414141] uppercase">
             <tr>
               <th className="py-2 pr-3">{t("commodity")}</th>
@@ -500,33 +582,33 @@ export async function MarketPricesSection({ locale, data }: SectionProps) {
           <tbody className="divide-y divide-black/10">
             {rows.map((r, i) => (
               <tr key={i}>
-                <td className="py-2.5 pr-3 font-medium text-black">{tx(r.commodity, locale)}</td>
-                <td className="py-2.5 pr-3 text-[#414141]">{r.unit}</td>
-                <td className="py-2.5 pr-3 text-right">{sym}{inr(r.minPrice ?? 0)}</td>
-                <td className="py-2.5 pr-3 text-right">{sym}{inr(r.maxPrice ?? 0)}</td>
-                <td className="py-2.5 text-right font-semibold text-[#135130]">{sym}{inr(r.modalPrice ?? 0)}</td>
+                <td className="py-2 pr-3 font-medium text-black">{tx(r.commodity, locale)}</td>
+                <td className="py-2 pr-3 text-[#414141]">{r.unit}</td>
+                <td className="py-2 pr-3 text-right">{sym}{inr(r.minPrice ?? 0)}</td>
+                <td className="py-2 pr-3 text-right">{sym}{inr(r.maxPrice ?? 0)}</td>
+                <td className="py-2 text-right font-semibold text-[#135130]">{sym}{inr(r.modalPrice ?? 0)}</td>
               </tr>
             ))}
           </tbody>
         </table>
-        <p className={`mt-3 text-[12px] ${stale ? "font-medium text-[#c25f00]" : "text-[#414141]"}`}>
-          {updated ? t("pricesUpdated", { date: updated.toLocaleDateString(locale === "mr" ? "mr-IN" : "en-IN", { day: "numeric", month: "short", year: "numeric" }) }) : ""}
-          {stale && ` · ${t("pricesStale")}`}
-        </p>
-        {tx(d.note, locale) && <p className="mt-1 text-[12px] text-[#414141]">{tx(d.note, locale)}</p>}
       </div>
+      <p className={`mt-3 text-[12px] ${stale ? "font-medium text-[#c25f00]" : "text-[#414141]"}`}>
+        {updated ? t("pricesUpdated", { date: updated.toLocaleDateString(locale === "mr" ? "mr-IN" : "en-IN", { day: "numeric", month: "short", year: "numeric" }) }) : ""}
+        {stale && ` · ${t("pricesStale")}`}
+      </p>
+      {tx(d.note, locale) && <p className="mt-1 text-[12px] text-[#414141]">{tx(d.note, locale)}</p>}
       {d.buttonLink && (
-        <div className="mt-4">
-          <LinkButton href={d.buttonLink} external={/^https?:\/\//.test(d.buttonLink)}>
+        <div className="mt-3">
+          <LinkButton href={resolveHref(d.buttonLink, slug)} external={/^https?:\/\//.test(d.buttonLink)}>
             {tx(d.buttonText, locale) || t("learnMore")}
           </LinkButton>
         </div>
       )}
-    </Band>
+    </div>
   );
 }
 
-/** `weather-update`: current conditions and the forecast the GP entered. */
+/** `weather-update` (card in a two-column row with `market-prices`): current conditions and the forecast the GP entered. */
 export async function WeatherUpdateSection({ locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
   const d = data as {
@@ -539,32 +621,61 @@ export async function WeatherUpdateSection({ locale, data }: SectionProps) {
   const days = list<{ date?: string; icon?: string; maxTemp?: string; minTemp?: string }>(d.forecast);
   if (!c) return null;
   return (
-    <Band heading={tx(d.title, locale)} subheading={tx(d.location, locale)} tone="cream">
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-        <div className={cardClass}>
-          <p className="text-[40px] leading-none font-bold text-black">{c.temperature}°C</p>
-          <p className="mt-2 text-[14px] font-medium text-[#135130]">{tx(c.condition, locale)}</p>
-          <dl className="mt-4 grid grid-cols-3 gap-2 text-[12px]">
-            <div><dt className="text-[#414141]">{t("humidity")}</dt><dd className="font-semibold text-black">{c.humidity}%</dd></div>
-            <div><dt className="text-[#414141]">{t("wind")}</dt><dd className="font-semibold text-black">{c.wind}</dd></div>
-            <div><dt className="text-[#414141]">{t("feelsLike")}</dt><dd className="font-semibold text-black">{c.feelsLike}°C</dd></div>
-          </dl>
+    <div className={cardClass}>
+      <h2 className="text-[18px] font-semibold text-black">{tx(d.title, locale)}</h2>
+      {tx(d.location, locale) && <p className="text-[12px] text-[#414141]">{tx(d.location, locale)}</p>}
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-4 rounded-[10px] bg-[#135130] p-4 text-white">
+        <div>
+          <p className="text-[40px] leading-none font-bold">{c.temperature}°C</p>
+          <p className="mt-1 text-[13px] opacity-90">{tx(c.condition, locale)}</p>
         </div>
-        {days.length > 0 && (
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-            {days.map((day, i) => (
-              <li key={i} className={`${cardClass} flex flex-col items-center text-center !p-3`}>
-                <span className="text-[12px] font-medium text-[#414141]">
-                  {day.date ? new Date(`${day.date}T00:00:00`).toLocaleDateString(locale === "mr" ? "mr-IN" : "en-IN", { weekday: "short", day: "numeric", month: "short" }) : ""}
-                </span>
-                <Icon name={day.icon ?? "sun"} className="my-2 size-7 text-[#f5871f]" />
-                <span className="text-[13px] font-semibold text-black">{day.maxTemp}°</span>
-                <span className="text-[12px] text-[#414141]">{day.minTemp}°</span>
+        <dl className="grid grid-cols-1 gap-1 text-[12px]">
+          <div className="flex gap-2"><dt className="opacity-80">{t("humidity")}:</dt><dd className="font-semibold">{c.humidity}%</dd></div>
+          <div className="flex gap-2"><dt className="opacity-80">{t("wind")}:</dt><dd className="font-semibold">{c.wind}</dd></div>
+          <div className="flex gap-2"><dt className="opacity-80">{t("feelsLike")}:</dt><dd className="font-semibold">{c.feelsLike}°C</dd></div>
+        </dl>
+      </div>
+      {days.length > 0 && (
+        <ul className="mt-3 grid grid-cols-5 gap-2">
+          {days.slice(0, 5).map((day, i) => (
+            <li key={i} className="flex flex-col items-center rounded-[8px] border border-black/10 p-2 text-center">
+              <span className="text-[11px] font-medium text-[#414141]">
+                {day.date ? new Date(`${day.date}T00:00:00`).toLocaleDateString(locale === "mr" ? "mr-IN" : "en-IN", { weekday: "short", day: "numeric", month: "short" }) : ""}
+              </span>
+              <Icon name={day.icon ?? "sun"} className="my-1.5 size-6 text-[#f5871f]" />
+              <span className="text-[12px] font-semibold text-black">{day.maxTemp}°</span>
+              <span className="text-[11px] text-[#414141]">{day.minTemp}°</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/** `green-scoreboard`: dark green panel with the headline environmental figures. */
+export async function GreenScoreboardSection({ locale, data }: SectionProps) {
+  const t = await getTranslations("public.cms");
+  const items = list<{ icon?: string; title?: B; value?: string; description?: B; visible?: boolean }>((data as { items?: unknown }).items).filter((i) => i.visible !== false);
+  if (items.length === 0) return null;
+  return (
+    <section className="bg-white py-8">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
+        <div className="rounded-[14px] bg-[#135130] p-6 text-center text-white sm:p-8">
+          <h2 className="text-[24px] font-semibold">{t("greenScoreboard")}</h2>
+          <p className="mt-1 text-[13px] opacity-85">{t("greenScoreboardSub")}</p>
+          <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(170px,1fr))]">
+            {items.map((s, i) => (
+              <li key={i} className="flex flex-col items-center rounded-[10px] bg-white/10 p-4 backdrop-blur-sm">
+                <Icon name={s.icon} className="size-6 opacity-90" />
+                <p className="mt-2 text-[28px] leading-8 font-bold">{s.value}</p>
+                <p className="text-[13px] font-medium">{tx(s.title, locale)}</p>
+                {tx(s.description, locale) && <p className="text-[11px] opacity-80">{tx(s.description, locale)}</p>}
               </li>
             ))}
           </ul>
-        )}
+        </div>
       </div>
-    </Band>
+    </section>
   );
 }

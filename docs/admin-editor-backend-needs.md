@@ -229,8 +229,8 @@ Every section in `src/config/sections-pages.ts` now has a public renderer (`src/
   videos are embedded only from YouTube / Vimeo; map embeds only from Google Maps / OpenStreetMap, in a sandboxed
   iframe; market prices show their update time and a warning once older than 7 days.
 - **Open points for the team:**
-  - **QR codes:** shown as link cards. Generating the QR image needs a QR library (new dependency, to be agreed).
+  - **QR codes:** generated on the page from the link by a small built-in encoder (`src/lib/qr.ts`, byte mode, level M, links up to 213 bytes; verified against the reference `qrcode` package). No dependency was added; longer links show no QR.
   - **Monthly performance report:** not shown yet, because the figures must come from a stats endpoint over real complaints.
-  - **Budget visualizer:** totals use the entered bar values (`valueType: dynamic`); `auto` fields need a rule for how to calculate them. The schema holds one bar chart, so the tabs are names only.
+  - **Budget visualizer:** bar values are shown as ₹ lakh. The overview card is computed from the page's own sections: `dynamic` fields are total income then total expenditure, `auto` fields are the surplus (or the utilisation % when the suffix is `%`). The schema holds one bar chart, so the tabs are names only.
   - **Forms:** complaint and tracking forms use the real endpoints; feedback and volunteer forms open the visitor's mail app until public submit endpoints exist.
   - **Weather and calendar:** manual entry only (no provider fetch); the calendar ignores `eventsToShow`.

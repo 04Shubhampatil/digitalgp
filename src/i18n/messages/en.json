@@ -642,7 +642,7 @@
       "initiatives": "Sustainability initiatives",
       "jobPortals": "Government job portals",
       "latestAnnouncements": "Latest announcements",
-      "leaders": "Our local leaders",
+      "leaders": "Distinguished personalities of Savardari",
       "learnMore": "Learn more",
       "localOpportunities": "Local opportunities",
       "mailHint": "Your mail app should open with the message ready to send.",
@@ -660,8 +660,8 @@
       "pressCoverage": "Press coverage & media reports",
       "pricesStale": "These prices may be out of date",
       "pricesUpdated": "Updated {date}",
-      "quickAccess": "Quick access",
-      "quickAccessSub": "Open our most used online services.",
+      "quickAccess": "Scan QR codes for quick access",
+      "quickAccessSub": "Scan the QR codes below to quickly access our online services.",
       "schemeCards": "Schemes for students & youth",
       "send": "Send",
       "serviceLinks": "Right to Service: apply online",
@@ -685,7 +685,14 @@
       "yourPhone": "Phone number",
       "youthSpeak": "Youth Speak",
       "statusCards": "Smart Village Dashboard",
-      "statusCardsSub": "Live updates and status of essential infrastructure and public services."
+      "statusCardsSub": "Live updates and status of essential infrastructure and public services.",
+      "totalIncome": "Total Income",
+      "totalExpenditure": "Total Expenditure",
+      "greenScoreboard": "Green Scoreboard",
+      "greenScoreboardSub": "Tracking our progress towards a cleaner and greener Savardari.",
+      "readMore": "Read more",
+      "published": "Published: {date}",
+      "contactInfo": "Contact information"
     }
   },
   "editor": {

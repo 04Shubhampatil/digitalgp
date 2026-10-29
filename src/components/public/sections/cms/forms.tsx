@@ -4,7 +4,7 @@ import { GrievanceSubmitForm, GrievanceTrackForm } from "@/components/public/Gri
 import { resolveHref } from "@/lib/href";
 import type { SectionProps } from "../index";
 import { MailtoForm } from "../MailtoForm";
-import { Band, Icon, LinkButton, cardClass, externalProps, list, mediaUrl, tx, type B } from "./kit";
+import { Band, Icon, QrCode, cardClass, externalProps, list, mediaUrl, tx, type B } from "./kit";
 
 // ------------------------------------------------------------------------------------ services
 
@@ -22,7 +22,7 @@ export async function ServiceLinksSection({ slug, locale, data }: SectionProps) 
   const items = list<ServiceLink>((data as { items?: unknown }).items).filter((s) => s.visible !== false && s.href);
   if (items.length === 0) return null;
   return (
-    <Band heading={t("serviceLinks")} subheading={t("serviceLinksSub")}>
+    <Band heading={t("serviceLinks")} subheading={t("serviceLinksSub")} center>
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {items.map((s, i) => {
           const external = /^https?:\/\//.test(s.href!);
@@ -105,29 +105,24 @@ export function ServiceCategoriesSection({ slug, locale, data }: SectionProps) {
   );
 }
 
-/** `qr-codes`: quick-access link cards. The QR image itself needs a QR generator (not added yet). */
+/** `qr-codes`: a QR code (generated from the link) with the service icon, title and description. */
 export async function QrCodesSection({ locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
   const items = list<{ title?: B; description?: B; serviceIcon?: string; buttonText?: B; linkUrl?: string }>((data as { items?: unknown }).items).filter((i) => i.linkUrl);
   if (items.length === 0) return null;
   return (
-    <Band heading={t("quickAccess")} subheading={t("quickAccessSub")}>
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <Band heading={t("quickAccess")} subheading={t("quickAccessSub")} center>
+      <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-[repeat(auto-fit,minmax(150px,1fr))]">
         {items.map((q, i) => (
-          <li key={i} className={`${cardClass} flex items-start gap-4`}>
-            <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#135130]/10 text-[#135130]">
-              <Icon name={q.serviceIcon} />
-            </span>
-            <div className="min-w-0">
-              <p className="text-[15px] font-semibold text-black">{tx(q.title, locale)}</p>
-              {tx(q.description, locale) && <p className="text-[12px] text-[#414141]">{tx(q.description, locale)}</p>}
-              <p className="mt-1 truncate text-[11px] text-[#6b6b6b]">{q.linkUrl}</p>
-              <div className="mt-3">
-                <LinkButton href={q.linkUrl!} external>
-                  {tx(q.buttonText, locale) || t("open")}
-                </LinkButton>
-              </div>
-            </div>
+          <li key={i}>
+            <a href={q.linkUrl} {...externalProps} aria-label={`${tx(q.title, locale)}: ${tx(q.buttonText, locale) || t("open")}`} className={`${cardClass} flex h-full flex-col items-center text-center hover:shadow-md`}>
+              <QrCode text={q.linkUrl!} label={tx(q.title, locale)} className="w-full max-w-[140px]" />
+              <span className="relative -mt-5 flex size-9 items-center justify-center rounded-full border-2 border-white bg-[#135130] text-white shadow">
+                <Icon name={q.serviceIcon} className="size-4" />
+              </span>
+              <span className="mt-2 text-[14px] font-semibold text-black">{tx(q.title, locale)}</span>
+              {tx(q.description, locale) && <span className="text-[12px] text-[#414141]">{tx(q.description, locale)}</span>}
+            </a>
           </li>
         ))}
       </ul>
@@ -235,9 +230,14 @@ export async function EscalationMatrixSection({ locale, data }: SectionProps) {
   return (
     <Band heading={t("escalation")} subheading={t("escalationSub")}>
       {steps.length > 0 && (
-        <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(170px,1fr))]">
           {steps.map((s, i) => (
-            <li key={i} className={`${cardClass} text-center`}>
+            <li key={i} className={`${cardClass} relative text-center`}>
+              {i < steps.length - 1 && (
+                <span aria-hidden className="absolute top-1/2 -right-3.5 z-10 hidden -translate-y-1/2 text-[#135130] lg:block">
+                  →
+                </span>
+              )}
               <span className="mx-auto flex size-10 items-center justify-center rounded-full bg-[#135130] text-[15px] font-semibold text-white">{i + 1}</span>
               <p className="mt-3 text-[14px] font-semibold text-black">{tx(s.title, locale)}</p>
               {tx(s.description, locale) && <p className="mt-1 text-[12px] leading-5 text-[#414141]">{tx(s.description, locale)}</p>}
@@ -262,11 +262,12 @@ export async function EscalationMatrixSection({ locale, data }: SectionProps) {
 // ------------------------------------------------------------------------------------ contact
 
 /** `contact-cards`: icon, title, details and social links. */
-export function CmsContactCardsSection({ slug, locale, data }: SectionProps) {
+export async function CmsContactCardsSection({ slug, locale, data }: SectionProps) {
+  const t = await getTranslations("public.cms");
   const items = list<{ iconId?: string; title?: B; details?: B; socialLinks?: { label?: string; url?: string }[] }>((data as { items?: unknown }).items);
   if (items.length === 0) return null;
   return (
-    <Band tone="cream">
+    <Band heading={t("contactInfo")} tone="cream">
       <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {items.map((c, i) => {
           const icon = mediaUrl(slug, c.iconId);
@@ -305,55 +306,56 @@ export function CmsContactCardsSection({ slug, locale, data }: SectionProps) {
 
 const MAP_PREFIXES = ["https://www.google.com/maps/embed", "https://maps.google.com/maps", "https://www.openstreetmap.org/export/embed"];
 
-/** `office-location`: address and a sandboxed Google Maps / OpenStreetMap embed. */
+/** `office-location` (card in a two-column row with `feedback-form`): address and a sandboxed Google Maps / OpenStreetMap embed. */
 export async function OfficeLocationSection({ locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
   const d = data as { title?: B; address?: B; mapEmbedUrl?: string };
   // Re-checked here as well as in the backend schema: only these providers may be framed.
   const map = d.mapEmbedUrl && MAP_PREFIXES.some((p) => d.mapEmbedUrl!.startsWith(p)) ? d.mapEmbedUrl : undefined;
   return (
-    <Band heading={tx(d.title, locale)} tone="white">
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-        <div className={cardClass}>
-          <p className="text-[12px] font-semibold tracking-wide text-[#414141] uppercase">{t("address")}</p>
-          <p className="mt-1 text-[14px] leading-6 whitespace-pre-line text-black">{tx(d.address, locale)}</p>
-        </div>
-        {map && (
-          <iframe
-            src={map}
-            title={tx(d.title, locale) || t("officeMap")}
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            sandbox="allow-scripts allow-same-origin"
-            className="h-80 w-full rounded-[10px] border border-black/10"
-          />
-        )}
-      </div>
-    </Band>
+    <div className={cardClass}>
+      <h2 className="text-[22px] font-semibold text-black">{tx(d.title, locale)}</h2>
+      {tx(d.address, locale) && (
+        <p className="mt-2 flex gap-2 text-[14px] leading-6 whitespace-pre-line text-[#414141]">
+          <Icon name="map" className="mt-1 size-4 shrink-0 text-[#135130]" />
+          {tx(d.address, locale)}
+        </p>
+      )}
+      {map && (
+        <iframe
+          src={map}
+          title={tx(d.title, locale) || t("officeMap")}
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+          sandbox="allow-scripts allow-same-origin"
+          className="mt-4 h-72 w-full rounded-[10px] border border-black/10"
+        />
+      )}
+    </div>
   );
 }
 
-/** `feedback-form`: opens the visitor's mail app (the backend has no feedback endpoint yet). */
+/** `feedback-form` (card in a two-column row with `office-location`): opens the visitor's mail app (no feedback endpoint yet). */
 export async function FeedbackFormSection({ locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
   const d = data as { enabled?: boolean; showOnWebsite?: boolean; heading?: B; description?: B; recipientEmail?: string; submitButtonText?: B };
   if (d.enabled === false || d.showOnWebsite === false || !d.recipientEmail) return null;
   return (
-    <Band heading={tx(d.heading, locale)} subheading={tx(d.description, locale)} tone="cream">
-      <div className={`${cardClass} sm:p-8`}>
-        <MailtoForm
-          to={d.recipientEmail}
-          subject={tx(d.heading, locale) || t("feedback")}
-          submitLabel={tx(d.submitButtonText, locale) || t("send")}
-          hint={t("mailHint")}
-          fields={[
-            { name: "name", label: t("yourName"), required: true },
-            { name: "email", label: t("yourEmail"), type: "email", required: true },
-            { name: "message", label: t("yourMessage"), type: "textarea", span: 4, required: true },
-          ]}
-        />
-      </div>
-    </Band>
+    <div className={cardClass}>
+      <h2 className="text-[22px] font-semibold text-black">{tx(d.heading, locale)}</h2>
+      {tx(d.description, locale) && <p className="mt-1 mb-4 text-[13px] text-[#414141]">{tx(d.description, locale)}</p>}
+      <MailtoForm
+        to={d.recipientEmail}
+        subject={tx(d.heading, locale) || t("feedback")}
+        submitLabel={tx(d.submitButtonText, locale) || t("send")}
+        hint={t("mailHint")}
+        fields={[
+          { name: "name", label: t("yourName"), required: true },
+          { name: "email", label: t("yourEmail"), type: "email", required: true },
+          { name: "message", label: t("yourMessage"), type: "textarea", span: 4, required: true },
+        ]}
+      />
+    </div>
   );
 }
 
