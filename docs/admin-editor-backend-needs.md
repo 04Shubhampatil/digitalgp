@@ -191,7 +191,29 @@ Decision needed: Figma shows video upload up to **500 MB**, the backend caps eve
 raise the cap for videos (with storage/streaming planning) or support external video links only.
 Photos of identifiable people (especially children) should follow the guardian-consent rule from Education.
 
-## Pages still to be reviewed
+## Contact & Collaboration (`contact`, Figma 375:18331)
 
-Contact — this file is extended as each frame is reviewed.
-Key Projects and Schemes already work through their own list + workflow (cards in the page editor).
+Done in the frontend: a "Contact information" card in the page editor showing the website's address, phone,
+email, hours and social links (from the website settings, which the footer and Contact page also use) with an
+"Edit contact details" link to the settings form.
+
+Still needed from the backend (new sections / endpoints):
+
+| section key | content |
+| --- | --- |
+| `banner` | shared, above |
+| `contact-cards` | `items[]: { iconId, title, details, socialLinks[] }` — beyond the four settings fields |
+| `office-location` | `{ title, address, mapEmbedUrl }` — `mapEmbedUrl` must be restricted to Google Maps embed URLs (or OpenStreetMap) and rendered in a sandboxed iframe |
+| `feedback-form` | `{ enabled, heading, description, recipientEmail, notificationEmail, successMessage, autoReply, submitButtonText, showOnWebsite }` + a **public submit endpoint** (validation, rate limit, CAPTCHA, spam protection) and a responses list in the admin (the "View feedback responses" button with a count) |
+| `partners` | `items[]: { logoId, title, description, partnerLogoIds[] }` |
+| `volunteer-categories` | `items[]: { title, order }` |
+| `volunteer-registration` | `{ enabled, heading, description, deadline?, recipientEmail, successMessage, submitButtonText, showOnWebsite }` + a public submit endpoint and an applications list ("View volunteer applications") |
+
+Privacy: feedback and volunteer forms collect personal data (names, phone, email). Store only what the form
+needs, keep it tenant-scoped, never return it from public endpoints, and add a retention rule.
+
+## Status of the admin editors
+
+All 16 admin frames have now been reviewed. Home and About are fully editable; Key Projects, Schemes,
+Announcements, Gallery and Contact have working cards in the page editor; the remaining pages wait for the
+sections listed above.

@@ -9,6 +9,7 @@ import { SECTION_EDITORS, editorSpec } from "@/config/section-editors";
 import { PageSettingsForm } from "@/components/admin/editor/PageSettingsForm";
 import { SectionEditor } from "@/components/admin/editor/SectionEditor";
 import { AnnouncementsManager } from "@/components/admin/websites/AnnouncementsManager";
+import { ContactManager } from "@/components/admin/websites/ContactManager";
 import { GalleryManager } from "@/components/admin/websites/GalleryManager";
 import { ProjectsManager } from "@/components/admin/websites/ProjectsManager";
 import { SchemesManager } from "@/components/admin/websites/SchemesManager";
@@ -61,7 +62,7 @@ export default async function PageEditor({ params, searchParams }: { params: Pro
       />
 
       <div className="grid gap-4">
-        {/* Key Projects, Schemes, Announcements and Gallery have no registered sections: their content is a list with its own workflow. */}
+        {/* Key Projects, Schemes, Announcements, Gallery and Contact have no registered sections: their content is a list with its own workflow. */}
         {pageKey === "projects" && <ProjectsManager user={user} tenantId={tenantId} basePath={`/admin/websites/${tenantId}/pages/projects`} stage={stage} />}
 
         {pageKey === "schemes" && <SchemesManager user={user} tenantId={tenantId} basePath={`/admin/websites/${tenantId}/pages/schemes`} level={level} />}
@@ -70,7 +71,9 @@ export default async function PageEditor({ params, searchParams }: { params: Pro
 
         {pageKey === "gallery" && <GalleryManager user={user} tenantId={tenantId} />}
 
-        {specs.length === 0 && !["projects", "schemes", "announcements", "gallery"].includes(pageKey) && <p className="rounded-card border border-line bg-surface p-5 text-sm text-muted">{t("noSections")}</p>}
+        {pageKey === "contact" && <ContactManager tenant={tenant} canUpdate={hasCapability(user, "tenant:update")} />}
+
+        {specs.length === 0 && !["projects", "schemes", "announcements", "gallery", "contact"].includes(pageKey) && <p className="rounded-card border border-line bg-surface p-5 text-sm text-muted">{t("noSections")}</p>}
 
         {ordered.map((section) => {
           const spec = editorSpec(pageKey, section.sectionKey);

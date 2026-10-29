@@ -167,7 +167,10 @@
         "completed": "Completed",
         "inProgress": "In Progress",
         "notStarted": "Not Started"
-      }
+      },
+      "contactCardTitle": "Contact information",
+      "contactCardDesc": "Address, phone, email, hours and social links shown on the Contact page and footer.",
+      "editContact": "Edit contact details"
     },
     "users": {
       "title": "Users & Roles",

@@ -181,7 +181,7 @@ export default async function WebsitePage({ params }: { params: Promise<{ tenant
         </Card>
       </div>
 
-      <div className="mb-5">
+      <div id="settings" className="mb-5 scroll-mt-4">
         <TenantSettingsForm tenant={tenant} canUpdate={hasCapability(user, "tenant:update")} />
       </div>
 
