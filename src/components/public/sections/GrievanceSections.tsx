@@ -47,7 +47,8 @@ export async function GrievanceRegisterSection({ slug, locale, data }: SectionPr
 /** `grievance-track`: centred heading + the real status lookup (POST /public/:slug/grievances/track). */
 export async function GrievanceTrackSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public.grievanceForm");
-  const d = data as { heading?: B; howImage?: string };
+  const d = data as { heading?: B; howTitle?: B; howSteps?: unknown };
+  const steps = Array.isArray(d.howSteps) ? (d.howSteps as B[]) : [];
   return (
     <section id="track" className="bg-cream py-8">
       <div className="mx-auto max-w-[1320px] px-4 sm:px-8">
@@ -56,9 +57,18 @@ export async function GrievanceTrackSection({ slug, locale, data }: SectionProps
           <div className="rounded-[10px] border border-black/20 bg-white p-6 sm:p-8">
             <GrievanceTrackForm slug={slug} />
           </div>
-          {d.howImage && (
-            // eslint-disable-next-line @next/next/no-img-element -- static design asset
-            <img src={d.howImage} alt="" className="w-full rounded-[10px]" loading="lazy" />
+          {steps.length > 0 && (
+            <div className="rounded-[10px] bg-white p-6 shadow-[0_2px_10px_rgba(0,0,0,0.08)]">
+              {pickText(d.howTitle, locale) && <h3 className="text-[20px] font-semibold text-[#135130]">{pickText(d.howTitle, locale)}</h3>}
+              <ol className="mt-4 space-y-3">
+                {steps.map((s, i) => (
+                  <li key={i} className="flex items-center gap-3 text-[15px] text-black">
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#135130] text-[12px] font-semibold text-white">{i + 1}</span>
+                    {pickText(s, locale)}
+                  </li>
+                ))}
+              </ol>
+            </div>
           )}
         </div>
       </div>

@@ -191,7 +191,7 @@ export const FIGMA_HOME_SECTIONS: FallbackSection[] = [
       viewAll: { label: { en: "View Ward Details" }, href: "page:culture" },
       wards: [
         {
-          name: { en: "Ward 1" },
+          name: { en: "Ward 1", mr: "प्रभाग १" },
           items: [
             { label: { en: "Roads Completed" }, valueText: "12.5 km/15 km", percent: 98 },
             { label: { en: "Water Pipeline" }, valueText: "8.2 km / 10 km", percent: 84 },
@@ -199,6 +199,39 @@ export const FIGMA_HOME_SECTIONS: FallbackSection[] = [
             { label: { en: "Drainage" }, valueText: "6.5 km / 8 km", percent: 81 },
             { label: { en: "Plantation" }, valueText: "2,450 / 3000", percent: 72 },
             { label: { en: "Ongoing Projects" }, valueText: "5", percent: 33 },
+          ],
+        },
+        {
+          name: { en: "Ward 2", mr: "प्रभाग २" },
+          items: [
+            { label: { en: "Roads Completed" }, valueText: "11.0 km / 14 km", percent: 79 },
+            { label: { en: "Water Pipeline" }, valueText: "7.5 km / 9 km", percent: 83 },
+            { label: { en: "Street Lights" }, valueText: "88 / 110", percent: 80 },
+            { label: { en: "Drainage" }, valueText: "5.2 km / 7 km", percent: 74 },
+            { label: { en: "Plantation" }, valueText: "2,100 / 2,800", percent: 75 },
+            { label: { en: "Ongoing Projects" }, valueText: "3", percent: 20 },
+          ],
+        },
+        {
+          name: { en: "Ward 3", mr: "प्रभाग ३" },
+          items: [
+            { label: { en: "Roads Completed" }, valueText: "9.8 km / 12 km", percent: 82 },
+            { label: { en: "Water Pipeline" }, valueText: "6.9 km / 8 km", percent: 86 },
+            { label: { en: "Street Lights" }, valueText: "76 / 90", percent: 84 },
+            { label: { en: "Drainage" }, valueText: "4.8 km / 6 km", percent: 80 },
+            { label: { en: "Plantation" }, valueText: "1,900 / 2,400", percent: 79 },
+            { label: { en: "Ongoing Projects" }, valueText: "4", percent: 27 },
+          ],
+        },
+        {
+          name: { en: "Ward 4", mr: "प्रभाग ४" },
+          items: [
+            { label: { en: "Roads Completed" }, valueText: "13.2 km / 16 km", percent: 83 },
+            { label: { en: "Water Pipeline" }, valueText: "9.1 km / 11 km", percent: 83 },
+            { label: { en: "Street Lights" }, valueText: "104 / 130", percent: 80 },
+            { label: { en: "Drainage" }, valueText: "7.0 km / 9 km", percent: 78 },
+            { label: { en: "Plantation" }, valueText: "2,600 / 3,200", percent: 81 },
+            { label: { en: "Ongoing Projects" }, valueText: "6", percent: 40 },
           ],
         },
       ],

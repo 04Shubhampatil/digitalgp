@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { resolveHref } from "@/lib/href";
 import type { SectionProps } from "../index";
-import { Band, Icon, LinkButton, cardClass, externalProps, list, mediaUrl, readableText, tx, withOpacity, type B } from "./kit";
+import { Band, Icon, LinkButton, cardClass, externalProps, list, mediaUrl, plain, readableText, tx, withOpacity, type B } from "./kit";
 
 // ------------------------------------------------------------------------------------ banner
 
@@ -175,21 +175,24 @@ interface SupportItem {
   visible?: boolean;
 }
 
+/** Desktop column count that fills the row: one to six cards sit side by side, more wrap. */
+const SUPPORT_COLS = ["", "lg:grid-cols-1", "lg:grid-cols-2", "lg:grid-cols-3", "lg:grid-cols-4", "lg:grid-cols-5", "lg:grid-cols-6"];
+
 function SupportCards({ locale, data, heading, figureFirst }: { locale: SectionProps["locale"]; data: Record<string, unknown>; heading?: string; figureFirst?: boolean }) {
   const items = list<SupportItem>(data.items).filter((i) => i.visible !== false);
   if (items.length === 0) return null;
   return (
     <Band heading={heading}>
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <ul className={`grid gap-4 sm:grid-cols-2 ${SUPPORT_COLS[Math.min(items.length, 6)]}`}>
         {items.map((c, i) => (
           <li key={i} className={`${cardClass} flex flex-col items-center text-center`}>
             <span className="flex size-12 items-center justify-center rounded-full bg-[#135130]/10 text-[#135130]">
               <Icon name={c.icon} />
             </span>
-            {figureFirst && c.contactOrAction && <p className="mt-3 text-[30px] leading-9 font-bold text-black">{c.contactOrAction}</p>}
+            {figureFirst && c.contactOrAction && <p className="mt-3 text-[30px] leading-9 font-bold text-black">{plain(c.contactOrAction, locale)}</p>}
             <p className={`${figureFirst && c.contactOrAction ? "mt-1" : "mt-3"} text-[14px] font-semibold text-black`}>{tx(c.title, locale)}</p>
             {tx(c.description, locale) && <p className="mt-1 text-[12px] text-[#414141]">{tx(c.description, locale)}</p>}
-            {!figureFirst && c.contactOrAction && <p className="mt-2 text-[13px] font-medium text-[#135130]">{c.contactOrAction}</p>}
+            {!figureFirst && c.contactOrAction && <p className="mt-2 text-[13px] font-medium text-[#135130]">{plain(c.contactOrAction, locale)}</p>}
           </li>
         ))}
       </ul>

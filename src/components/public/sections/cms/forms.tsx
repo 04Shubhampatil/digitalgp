@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { GrievanceSubmitForm, GrievanceTrackForm } from "@/components/public/GrievanceForms";
 import { resolveHref } from "@/lib/href";
@@ -106,10 +107,19 @@ export function ServiceCategoriesSection({ slug, locale, data }: SectionProps) {
 }
 
 /** `qr-codes`: a QR code (generated from the link) with the service icon, title and description. */
-export async function QrCodesSection({ locale, data }: SectionProps) {
+export async function QrCodesSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
-  const items = list<{ title?: B; description?: B; serviceIcon?: string; buttonText?: B; linkUrl?: string }>((data as { items?: unknown }).items).filter((i) => i.linkUrl);
-  if (items.length === 0) return null;
+  const raw = list<{ title?: B; description?: B; serviceIcon?: string; buttonText?: B; linkUrl?: string }>((data as { items?: unknown }).items).filter((i) => i.linkUrl);
+  if (raw.length === 0) return null;
+  // Published links are absolute https addresses. Placeholder links may point at the site's own pages
+  // ("page:grievance"); those are turned into full addresses here, because a QR code needs one to scan.
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? "http";
+  const items = raw.map((i) => {
+    const href = resolveHref(i.linkUrl!, slug);
+    return { ...i, linkUrl: /^https?:\/\//.test(href) || !host ? href : `${proto}://${host}${href}` };
+  });
   return (
     <Band heading={t("quickAccess")} subheading={t("quickAccessSub")} center>
       <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-[repeat(auto-fit,minmax(150px,1fr))]">
@@ -336,7 +346,7 @@ export async function OfficeLocationSection({ locale, data }: SectionProps) {
 }
 
 /** `feedback-form` (card in a two-column row with `office-location`): opens the visitor's mail app (no feedback endpoint yet). */
-export async function FeedbackFormSection({ locale, data }: SectionProps) {
+export async function FeedbackFormSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
   const d = data as { enabled?: boolean; showOnWebsite?: boolean; heading?: B; description?: B; recipientEmail?: string; submitButtonText?: B };
   if (d.enabled === false || d.showOnWebsite === false || !d.recipientEmail) return null;
@@ -349,9 +359,10 @@ export async function FeedbackFormSection({ locale, data }: SectionProps) {
         subject={tx(d.heading, locale) || t("feedback")}
         submitLabel={tx(d.submitButtonText, locale) || t("send")}
         hint={t("mailHint")}
+        api={{ slug, kind: "feedback" }}
         fields={[
           { name: "name", label: t("yourName"), required: true },
-          { name: "email", label: t("yourEmail"), type: "email", required: true },
+          { name: "email", label: t("yourEmail"), type: "email" },
           { name: "message", label: t("yourMessage"), type: "textarea", span: 4, required: true },
         ]}
       />
@@ -360,11 +371,12 @@ export async function FeedbackFormSection({ locale, data }: SectionProps) {
 }
 
 /** `partners`: partner logos with their own logo rows. */
-export function PartnersSection({ slug, locale, data }: SectionProps) {
+export async function PartnersSection({ slug, locale, data }: SectionProps) {
+  const t = await getTranslations("public.cms");
   const items = list<{ logoId?: string; title?: B; description?: B; partnerLogoIds?: string[] }>((data as { items?: unknown }).items);
   if (items.length === 0) return null;
   return (
-    <Band tone="white">
+    <Band tone="white" heading={t("partnersHeading")}>
       <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((p, i) => {
           const logo = mediaUrl(slug, p.logoId);
@@ -413,7 +425,7 @@ export async function VolunteerCategoriesSection({ locale, data }: SectionProps)
 }
 
 /** `volunteer-registration`: opens the visitor's mail app; the category list comes from `volunteer-categories`. */
-export async function VolunteerRegistrationSection({ locale, data, siblings }: SectionProps) {
+export async function VolunteerRegistrationSection({ slug, locale, data, siblings }: SectionProps) {
   const t = await getTranslations("public.cms");
   const d = data as { enabled?: boolean; showOnWebsite?: boolean; heading?: B; description?: B; deadline?: string; recipientEmail?: string; submitButtonText?: B };
   if (d.enabled === false || d.showOnWebsite === false || !d.recipientEmail) return null;
@@ -429,11 +441,12 @@ export async function VolunteerRegistrationSection({ locale, data, siblings }: S
           subject={tx(d.heading, locale) || t("volunteer")}
           submitLabel={tx(d.submitButtonText, locale) || t("send")}
           hint={t("mailHint")}
+          api={{ slug, kind: "volunteers", map: { area: "category" } }}
           fields={[
             { name: "name", label: t("yourName"), required: true },
-            { name: "phone", label: t("yourPhone"), type: "tel" },
+            { name: "phone", label: t("yourPhone"), type: "tel", required: true },
             { name: "email", label: t("yourEmail"), type: "email", required: true },
-            ...(categories.length ? [{ name: "area", label: t("volunteerArea"), type: "select" as const, options: categories, placeholder: t("choose") }] : []),
+            ...(categories.length ? [{ name: "area", label: t("volunteerArea"), type: "select" as const, options: categories, placeholder: t("choose"), required: true }] : []),
             { name: "message", label: t("yourMessage"), type: "textarea", span: 4 },
           ]}
         />

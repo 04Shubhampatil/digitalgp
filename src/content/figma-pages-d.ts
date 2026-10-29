@@ -7,13 +7,10 @@ import type { PageKey } from "@/config/pages";
 import type { FallbackSection } from "./fallback";
 
 const t = (en: string) => ({ en });
+/** Bilingual text with an explicit Marathi translation. */
+const b = (en: string, mr: string) => ({ en, mr });
 const P = "/images/figma/pages/";
 const hero = (data: Record<string, unknown>): FallbackSection => ({ sectionKey: "page-hero", sortOrder: 0, data: { noTenantName: true, ...data } });
-const sheet = (sortOrder: number, src: string, w: number, h: number): FallbackSection => ({
-  sectionKey: "image-crops",
-  sortOrder,
-  data: { rows: [{ items: [{ src: P + src, w, h }] }] },
-});
 
 export const FIGMA_PAGE_SECTIONS_D: Partial<Record<PageKey, FallbackSection[]>> = {
   announcements: [
@@ -21,7 +18,7 @@ export const FIGMA_PAGE_SECTIONS_D: Partial<Record<PageKey, FallbackSection[]>> 
       eyebrow: t("Announcements & Circulars"),
       title: t("Stay Informed. Stay Connected."),
       titleAccent: t("Stay Savardari."),
-      body: t("Find the latest announcements, circulars, notices and imoportant updates from Gram Panchayat Savardari"),
+      body: t("Find the latest announcements, circulars, notices and important updates from Gram Panchayat Savardari"),
       imageUrl: P + "ann-hero.png",
     }),
     {
@@ -39,7 +36,7 @@ export const FIGMA_PAGE_SECTIONS_D: Partial<Record<PageKey, FallbackSection[]>> 
         heading: t("Latest Announcements"),
         calendarTitle: t("Interactive Calendar"),
         viewAll: { label: t("View All"), href: "page:announcements" },
-        viewAllLong: t("View All Annoucements"),
+        viewAllLong: t("View All Announcements"),
         items: [
           { title: t("Gram Sabha Meeting Notice - July 2026"), body: t("All villagers are informed that the Gram Sabha meeting will be held on 15th July 2026."), date: t("July 5, 2025") },
           { title: t("Health Camp at Primary Health Centre"), body: t("Free health check-up camp on 22nd July 2026. All are requested to attend."), date: t("July 4, 2025") },
@@ -135,9 +132,32 @@ export const FIGMA_PAGE_SECTIONS_D: Partial<Record<PageKey, FallbackSection[]>> 
         ],
       },
     },
-    // QR codes and the results strip are design pictures: the codes must be generated for the real service links.
-    sheet(20, "svc-qr.png", 2014, 781),
-    sheet(30, "svc-stats.png", 1983, 793),
+    {
+      sectionKey: "qr-codes",
+      sortOrder: 20,
+      data: {
+        items: [
+          { title: b("RTS Portal", "RTS पोर्टल"), description: b("Apply for Certificates", "दाखल्यांसाठी अर्ज करा"), serviceIcon: "file", linkUrl: "https://rts.maharashtra.gov.in" },
+          { title: b("Grievance Portal", "तक्रार पोर्टल"), description: b("Lodge Complaints", "तक्रार नोंदवा"), serviceIcon: "info", linkUrl: "page:grievance" },
+          { title: b("Tax Payment", "कर भरणा"), description: b("Pay Taxes Online", "कर ऑनलाइन भरा"), serviceIcon: "rupee", linkUrl: "page:finance" },
+          { title: b("Feedback Form", "अभिप्राय अर्ज"), description: b("Share Feedback", "अभिप्राय द्या"), serviceIcon: "mail", linkUrl: "page:contact" },
+          { title: b("Village Website", "गावाचे संकेतस्थळ"), description: b("Visit Our Website", "आमच्या संकेतस्थळाला भेट द्या"), serviceIcon: "globe", linkUrl: "page:home" },
+          { title: b("Help & Support", "मदत आणि सहाय्य"), description: b("Get Assistance", "मदत मिळवा"), serviceIcon: "phone", linkUrl: "page:contact" },
+        ],
+      },
+    },
+    {
+      sectionKey: "top-stats",
+      sortOrder: 30,
+      data: {
+        items: [
+          { icon: "file", title: b("Certificates Issued This Month", "या महिन्यात दिलेले दाखले"), value: "500+", background: "#E8F1EA", visible: true },
+          { icon: "info", title: b("Grievances Resolved This Month", "या महिन्यात निराकरण झालेल्या तक्रारी"), value: "250+", background: "#E8F1EA", visible: true },
+          { icon: "rupee", title: b("Tax Collection This Month", "या महिन्यातील कर संकलन"), value: "₹12.5L+", background: "#E8F1EA", visible: true },
+          { icon: "shield", title: b("Citizen Satisfaction Rate", "नागरिक समाधान दर"), value: "98%", background: "#E8F1EA", visible: true },
+        ],
+      },
+    },
     {
       sectionKey: "help-card",
       sortOrder: 40,

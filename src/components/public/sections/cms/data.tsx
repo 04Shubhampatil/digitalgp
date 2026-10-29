@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { resolveHref } from "@/lib/href";
 import type { SectionProps } from "../index";
-import { Band, Icon, LinkButton, cardClass, externalProps, list, mediaUrl, readableText, tx, type B } from "./kit";
+import { Band, Icon, LinkButton, cardClass, externalProps, list, mediaUrl, plain, readableText, tx, type B } from "./kit";
 
 const inr = (n: number | string) => Number(n).toLocaleString("en-IN");
 
@@ -26,7 +26,7 @@ export async function InfraMapSection({ slug, locale, data }: SectionProps) {
   if (!image && markers.length === 0) return null;
   return (
     <Band heading={t("infraMap")} subheading={t("infraMapSub")} tone="cream">
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <div className={`grid gap-5 ${markers.length > 0 ? "lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]" : ""}`}>
         {image && (
           // eslint-disable-next-line @next/next/no-img-element -- website media served by the backend
           <img src={image} alt={t("infraMap")} className="w-full rounded-[10px] border border-black/10 object-cover" style={{ maxHeight: d.height ?? 500 }} />
@@ -172,7 +172,7 @@ function EntriesCard({ slug, locale, data, heading }: { slug: string; locale: Se
               <Icon name={e.icon} className="size-4" />
             </span>
             <span className="min-w-0 flex-1 text-[13px] font-medium text-black">{tx(e.title, locale)}</span>
-            <span className="shrink-0 text-[12px] text-[#414141]">{e.date}</span>
+            <span className="shrink-0 text-[12px] text-[#414141]">{plain(e.date, locale)}</span>
           </li>
         ))}
       </ul>
@@ -214,12 +214,24 @@ interface InfoCard {
 const INCOME_COLOURS = ["#135130", "#2563eb", "#f5871f", "#0ea5a4", "#7c3aed", "#eab308", "#ec4899", "#64748b"];
 
 /** ₹ amount in rupees → "₹1.80 Cr" / "₹4.50 L" / "₹12,500" (Marathi: कोटी / लाख). */
-export function formatMoney(rupees: number, locale: SectionProps["locale"]): string {
+export function formatMoney(rupees: number, locale: SectionProps["locale"], unit: "auto" | "cr" | "lakh" = "auto"): string {
   const cr = locale === "mr" ? "कोटी" : "Cr";
   const lakh = locale === "mr" ? "लाख" : "L";
-  if (rupees >= 1e7) return `₹${(rupees / 1e7).toFixed(2)} ${cr}`;
-  if (rupees >= 1e5) return `₹${(rupees / 1e5).toFixed(2)} ${lakh}`;
+  const u = unit === "auto" ? (rupees >= 1e7 ? "cr" : rupees >= 1e5 ? "lakh" : "none") : unit;
+  if (u === "cr") return `₹${(rupees / 1e7).toFixed(2)} ${cr}`;
+  if (u === "lakh") return `₹${(rupees / 1e5).toFixed(2)} ${lakh}`;
   return `₹${inr(rupees)}`;
+}
+
+/** The unit that suits a block's biggest figure, so every amount in it is shown the same way. */
+const blockUnit = (biggest: number): "cr" | "lakh" | "auto" => (biggest >= 1e7 ? "cr" : biggest >= 1e5 ? "lakh" : "auto");
+
+/** Round upper bound and step for a chart axis (1, 2 or 5 × a power of ten). */
+function niceScale(max: number, ticks = 4): { top: number; step: number } {
+  const raw = Math.max(max, 1) / ticks;
+  const pow = 10 ** Math.floor(Math.log10(raw));
+  const step = ([1, 2, 5, 10].find((m) => m * pow >= raw) ?? 10) * pow;
+  return { top: step * Math.ceil(Math.max(max, 1) / step), step };
 }
 
 const sumAmount = (cats: Category[]) => cats.reduce((s, c) => s + (Number(c.amount) || 0), 0);
@@ -275,6 +287,7 @@ export async function IncomeSourcesSection({ slug, locale, data }: SectionProps)
   const categories = list<Category>(d.categories);
   if (d.enabled === false || categories.length === 0) return null;
   const total = sumAmount(categories);
+  const unit = blockUnit(total);
   const coloured = categories.map((c, i) => ({ ...c, colour: INCOME_COLOURS[i % INCOME_COLOURS.length]! }));
   return (
     <Band heading={tx(d.heading, locale)} subheading={tx(d.subtitle, locale)} center>
@@ -285,12 +298,12 @@ export async function IncomeSourcesSection({ slug, locale, data }: SectionProps)
               <span aria-hidden className="size-3 shrink-0 rounded-full" style={{ backgroundColor: c.colour }} />
               <span className="flex-1 text-black">{tx(c.name, locale)}</span>
               <span className="text-[#414141]">
-                {formatMoney(Number(c.amount) || 0, locale)} ({c.percentage ?? 0}%)
+                {formatMoney(Number(c.amount) || 0, locale, unit)} ({c.percentage ?? 0}%)
               </span>
             </li>
           ))}
         </ul>
-        <Donut segments={coloured.map((c) => ({ value: Number(c.amount) || 0, colour: c.colour, pct: c.percentage ?? 0 }))} label={t("totalIncome")} value={formatMoney(total, locale)} />
+        <Donut segments={coloured.map((c) => ({ value: Number(c.amount) || 0, colour: c.colour, pct: c.percentage ?? 0 }))} label={t("totalIncome")} value={formatMoney(total, locale, unit)} />
         <InfoCardBlock slug={slug} locale={locale} card={d.supportCard} />
       </div>
     </Band>
@@ -304,20 +317,21 @@ export async function ExpenditureSection({ slug, locale, data }: SectionProps) {
   const categories = list<Category>(d.categories);
   if (categories.length === 0) return null;
   const total = sumAmount(categories);
+  const unit = blockUnit(total);
   return (
     <section className="py-10" style={{ backgroundColor: d.backgroundColour || "#fcf7ee", color: readableText(d.backgroundColour) }}>
       <div className="mx-auto max-w-[1440px] px-4 text-center sm:px-8 lg:px-[60px]">
         <h2 className="text-[26px] font-semibold">{tx(d.heading, locale)}</h2>
         {tx(d.subtitle, locale) && <p className="mt-1 text-[14px] opacity-80">{tx(d.subtitle, locale)}</p>}
         <div className="mt-6 grid items-center gap-6 text-left text-black lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.3fr)_minmax(0,0.8fr)]">
-          <Donut segments={categories.map((c) => ({ value: Number(c.amount) || 0, colour: c.colour ?? "#135130", pct: c.percentage ?? 0 }))} label={t("totalExpenditure")} value={formatMoney(total, locale)} />
+          <Donut segments={categories.map((c) => ({ value: Number(c.amount) || 0, colour: c.colour ?? "#135130", pct: c.percentage ?? 0 }))} label={t("totalExpenditure")} value={formatMoney(total, locale, unit)} />
           <ul className={`${cardClass} space-y-4`}>
             {categories.map((c, i) => (
               <li key={i}>
                 <div className="flex items-baseline justify-between gap-3 text-[13px]">
                   <span className="font-medium text-black">{tx(c.name, locale)}</span>
                   <span className="text-[#414141]">
-                    {formatMoney(Number(c.amount) || 0, locale)} <span className="ml-2 font-semibold text-black">{c.percentage ?? 0}%</span>
+                    {formatMoney(Number(c.amount) || 0, locale, unit)} <span className="ml-2 font-semibold text-black">{c.percentage ?? 0}%</span>
                   </span>
                 </div>
                 <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-black/10" role="img" aria-label={`${tx(c.name, locale)} ${c.percentage ?? 0}%`}>
@@ -358,18 +372,20 @@ export async function BudgetVisualizerSection({ slug, locale, data, siblings }: 
   const income = sumAmount(list<Category>((siblings?.["income-sources"] as { categories?: unknown } | undefined)?.categories));
   const spent = sumAmount(list<Category>((siblings?.["expenditure"] as { categories?: unknown } | undefined)?.categories));
   const known = income > 0 && spent > 0;
+  const unit = blockUnit(Math.max(income, spent));
   let dynamicIndex = 0;
   const fields = list<{ label?: B; valueType?: string; prefixSuffix?: string; colour?: string }>(d.overviewCard?.fields).map((f) => {
     let value = "—";
     if (known) {
-      if (f.valueType === "dynamic") value = formatMoney(dynamicIndex++ === 0 ? income : spent, locale);
+      if (f.valueType === "dynamic") value = formatMoney(dynamicIndex++ === 0 ? income : spent, locale, unit);
       else if (f.prefixSuffix === "%") value = `${((spent / income) * 100).toFixed(1)}%`;
-      else value = formatMoney(Math.abs(income - spent), locale);
+      else value = formatMoney(Math.abs(income - spent), locale, unit);
     }
     return { ...f, value };
   });
   const file = mediaUrl(slug, d.downloadReport?.enabled === false ? undefined : d.downloadReport?.fileId);
-  const ticks = [0, 0.25, 0.5, 0.75, 1].map((p) => Math.round(max * p));
+  const scale = niceScale(max);
+  const ticks = [0, 1, 2, 3, 4].map((i) => (scale.top / 4) * i);
   return (
     <section className="py-10" style={{ backgroundColor: d.backgroundColour || "#ffffff", color: readableText(d.backgroundColour) }}>
       <div className="mx-auto max-w-[1440px] px-4 text-center sm:px-8 lg:px-[60px]">
@@ -396,7 +412,7 @@ export async function BudgetVisualizerSection({ slug, locale, data, siblings }: 
                 {bars.map((b, i) => (
                   <li key={i} className="flex h-full flex-1 flex-col items-center justify-end">
                     <span className="mb-1 text-[11px] font-semibold text-black">₹{b.value}L</span>
-                    <span className="block w-full max-w-12 rounded-t-[4px]" style={{ height: `${((Number(b.value) || 0) / max) * 78}%`, backgroundColor: b.colour ?? "#135130" }} />
+                    <span className="block w-full max-w-12 rounded-t-[4px]" style={{ height: `${((Number(b.value) || 0) / scale.top) * 78}%`, backgroundColor: b.colour ?? "#135130" }} />
                   </li>
                 ))}
               </ul>
@@ -437,7 +453,7 @@ export async function BudgetVisualizerSection({ slug, locale, data, siblings }: 
 export async function DocumentsSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
   const d = data as { heading?: B; subtitle?: B; description?: B; backgroundColour?: string; items?: unknown };
-  const items = list<{ title?: B; fileId?: string; buttonText?: B }>(d.items).filter((i) => i.fileId);
+  const items = list<{ title?: B; fileId?: string; buttonText?: B }>(d.items);
   if (items.length === 0) return null;
   return (
     <section className="py-10" style={{ backgroundColor: d.backgroundColour || "#ffffff", color: readableText(d.backgroundColour) }}>
@@ -453,9 +469,11 @@ export async function DocumentsSection({ slug, locale, data }: SectionProps) {
               </span>
               <p className="mt-3 text-[13px] font-semibold text-black">{tx(it.title, locale)}</p>
               <p className="text-[11px] text-[#414141]">PDF</p>
-              <a href={mediaUrl(slug, it.fileId)} download className="mt-auto inline-flex items-center gap-1.5 pt-3 text-[12px] font-medium text-[#135130] hover:underline">
-                {tx(it.buttonText, locale) || t("download")} <Download className="size-3.5" aria-hidden />
-              </a>
+              {it.fileId && (
+                <a href={mediaUrl(slug, it.fileId)} download className="mt-auto inline-flex items-center gap-1.5 pt-3 text-[12px] font-medium text-[#135130] hover:underline">
+                  {tx(it.buttonText, locale) || t("download")} <Download className="size-3.5" aria-hidden />
+                </a>
+              )}
             </li>
           ))}
         </ul>

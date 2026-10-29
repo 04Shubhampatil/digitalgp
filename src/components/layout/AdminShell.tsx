@@ -51,6 +51,7 @@ export async function AdminShell({ user, children }: { user: CurrentUserDto; chi
         { href: "/admin/projects", label: t("projects"), show: hasCapability(user, "content:read") },
         { href: "/admin/media", label: t("media"), show: hasCapability(user, "media:manage") },
         { href: "/admin/grievances", label: t("grievances"), show: hasCapability(user, "grievance:manage") },
+        { href: "/admin/form-submissions", label: t("formSubmissions.title"), show: hasCapability(user, "content:review") },
       ],
     },
     {
