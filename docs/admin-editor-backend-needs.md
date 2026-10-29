@@ -151,7 +151,27 @@ Weather note: typing the forecast by hand goes stale quickly. Prefer a server-si
 provider (cached, with the location from the tenant) and keep the manual fields only as an override or
 fallback. The Home page already has a manual `weather` placeholder card with the same problem.
 
+## Announcements & Circulars (`announcements`, Figma 375:19583)
+
+Done in the frontend: the "Latest Announcements" card in the page editor lists the website's real announcements
+(own + shared) with add/edit links into the existing announcements module and its review workflow. The public
+page already reads published announcements.
+
+Still needed from the backend (new sections for this page):
+
+| section key | content |
+| --- | --- |
+| `banner`, `top-stats` | shared, above |
+| `announcement-categories` | `items[]: { label, icon }` — the category tiles under the banner. Better: derive them from the `category` values that announcements actually use |
+| `calendar` | `{ title, defaultMonthView: current|custom, defaultMonth, eventsToShow (1-10), visible, events[]: { date, title, colour, startTime, endTime } }` |
+| `deadline-cards` | `items[]: { icon, date, title, subtitle }` reorderable |
+| `download-forms` | `items[]: { icon, name, description?, fileId }` — needs the **PDF media kind** (see Finance); size is derived from the file |
+| `support-cards` | shared icon-card list |
+
+Suggestion: calendar events and deadlines could be a single "dated item" model so one entry can appear in both
+the calendar and the deadline strip.
+
 ## Pages still to be reviewed
 
-Announcements & Circulars, Gallery, Contact — this file is extended as each frame is reviewed.
+Gallery, Contact — this file is extended as each frame is reviewed.
 Key Projects and Schemes already work through their own list + workflow (cards in the page editor).

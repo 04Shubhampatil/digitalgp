@@ -254,7 +254,11 @@
       "websites": "{count} संकेतस्थळे",
       "locked": "ही नोंद {status} आहे आणि संपादित करता येत नाही.",
       "attachment": "संलग्न फाईल",
-      "attachmentHint": "प्रतिमा किंवा PDF (ऐच्छिक, कमाल 10 MB)"
+      "attachmentHint": "प्रतिमा किंवा PDF (ऐच्छिक, कमाल 10 MB)",
+      "managementTitle": "ताज्या घोषणा",
+      "managementDesc": "या वेबसाइटवर दिसणाऱ्या घोषणा जोडा, संपादित करा आणि व्यवस्थापित करा.",
+      "showingFirst": "ताज्या {n} घोषणा दाखवत आहे.",
+      "viewAll": "सर्व घोषणा पहा"
     },
     "schemes": "योजना",
     "projects": "प्रकल्प",

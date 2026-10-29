@@ -254,7 +254,11 @@
       "websites": "{count} websites",
       "locked": "This item is {status} and cannot be edited.",
       "attachment": "Attachment",
-      "attachmentHint": "Image or PDF (optional, up to 10 MB)"
+      "attachmentHint": "Image or PDF (optional, up to 10 MB)",
+      "managementTitle": "Latest announcements",
+      "managementDesc": "Add, edit and manage the announcements shown on this website.",
+      "showingFirst": "Showing the latest {n} announcements.",
+      "viewAll": "View all announcements"
     },
     "schemes": "Schemes",
     "projects": "Projects",
