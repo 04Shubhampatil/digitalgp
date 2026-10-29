@@ -7,7 +7,7 @@ import { resolveHref } from "@/lib/href";
 import { CalendarCard, type CalendarEvent } from "../CalendarCard";
 import type { SectionProps } from "../index";
 import { PhotoGalleryClient, ThenNowClient, YouthPostsClient } from "./client";
-import { Band, Icon, LinkButton, VideoEmbed, cardClass, externalProps, list, mediaUrl, tx, type B } from "./kit";
+import { Band, Icon, LinkButton, VideoEmbed, cardClass, externalProps, list, mediaUrl, plain, tx, type B } from "./kit";
 
 const byOrder = <T extends { order?: number }>(a: T, b: T) => (a.order ?? 0) - (b.order ?? 0);
 const dateFmt = (locale: SectionProps["locale"], d: string) => new Date(`${d}T00:00:00`).toLocaleDateString(locale === "mr" ? "mr-IN" : "en-IN", { day: "numeric", month: "short", year: "numeric" });
@@ -166,9 +166,10 @@ export function FpoGalleryVoiceSection({ slug, locale, data }: SectionProps) {
   const points = list<B>(d.fpo?.points).filter((p) => tx(p, locale));
   const images = list<string>(d.gallery?.imageIds).filter(Boolean);
   const video = mediaUrl(slug, d.voice?.videoId);
+  const cardCount = [!!tx(d.fpo?.title, locale), images.length > 0 || !!tx(d.gallery?.title, locale), !!(video || d.voice?.videoUrl)].filter(Boolean).length;
   return (
     <Band tone="white">
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className={`grid gap-5 ${cardCount === 2 ? "lg:grid-cols-2" : cardCount === 3 ? "lg:grid-cols-3" : ""}`}>
         {tx(d.fpo?.title, locale) && (
           <div className={cardClass}>
             {fpoIcon && (
@@ -197,7 +198,7 @@ export function FpoGalleryVoiceSection({ slug, locale, data }: SectionProps) {
               {images.slice(0, 9).map((id) => (
                 <li key={id}>
                   {/* eslint-disable-next-line @next/next/no-img-element -- website media served by the backend */}
-                  <img src={publicMediaUrl(slug, id)} alt="" loading="lazy" className="aspect-square w-full rounded-[6px] object-cover" />
+                  <img src={mediaUrl(slug, id)} alt="" loading="lazy" className="aspect-square w-full rounded-[6px] object-cover" />
                 </li>
               ))}
             </ul>
@@ -267,7 +268,7 @@ export async function JobPortalsSection({ slug, locale, data }: SectionProps) {
   if (items.length === 0) return null;
   return (
     <Band heading={t("jobPortals")} tone="cream">
-      <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className={`grid gap-5 sm:grid-cols-2 ${items.length === 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
         {items.map((p, i) => {
           const logo = mediaUrl(slug, p.logoId);
           return (
@@ -465,7 +466,7 @@ export async function DeadlineCardsSection({ locale, data }: SectionProps) {
             <span className="mx-auto flex size-11 items-center justify-center rounded-full bg-[#f5871f]/15 text-[#c25f00]">
               <Icon name={c.icon ?? "calendar"} />
             </span>
-            <p className="mt-2 text-[13px] font-semibold text-[#c25f00]">{c.date}</p>
+            <p className="mt-2 text-[13px] font-semibold text-[#c25f00]">{plain(c.date, locale)}</p>
             <p className="text-[14px] font-semibold text-black">{tx(c.title, locale)}</p>
             {tx(c.subtitle, locale) && <p className="text-[12px] text-[#414141]">{tx(c.subtitle, locale)}</p>}
           </li>
@@ -513,7 +514,7 @@ export async function PhotoGallerySection({ slug, locale, data }: SectionProps) 
   const photos = list<{ imageId?: string; title?: B; categoryKey?: string; date?: string; order?: number }>(d.photos)
     .sort(byOrder)
     .filter((p) => p.imageId)
-    .map((p) => ({ src: publicMediaUrl(slug, p.imageId!), title: tx(p.title, locale), category: p.categoryKey ?? "", date: p.date ? dateFmt(locale, p.date) : undefined }));
+    .map((p) => ({ src: mediaUrl(slug, p.imageId!) ?? "", title: tx(p.title, locale), category: p.categoryKey ?? "", date: p.date ? dateFmt(locale, p.date) : undefined }));
   if (photos.length === 0) return null;
   return (
     <Band heading={t("photoGallery")}>
@@ -602,7 +603,7 @@ export async function ThenAndNowSection({ slug, locale, data }: SectionProps) {
   const comparisons = list<{ beforeImageId?: string; afterImageId?: string; heading?: B; order?: number }>(d.comparisons)
     .sort(byOrder)
     .filter((c) => c.beforeImageId && c.afterImageId)
-    .map((c) => ({ before: publicMediaUrl(slug, c.beforeImageId!), after: publicMediaUrl(slug, c.afterImageId!), heading: tx(c.heading, locale) }));
+    .map((c) => ({ before: mediaUrl(slug, c.beforeImageId!) ?? "", after: mediaUrl(slug, c.afterImageId!) ?? "", heading: tx(c.heading, locale) }));
   if (comparisons.length === 0) return null;
   return (
     <Band heading={tx(d.heading, locale)} tone="cream">

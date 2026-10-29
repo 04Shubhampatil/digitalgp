@@ -1,28 +1,39 @@
 import {
   Award,
+  Ban,
+  BarChart3,
   BookOpen,
+  Bot,
   Briefcase,
   Building2,
   Bus,
   Calendar,
   CircleDot,
   Cloud,
+  CloudRain,
+  Compass,
   Download,
   Droplets,
+  Dumbbell,
   FileText,
   Globe,
   GraduationCap,
   Hammer,
+  Headset,
   Heart,
+  HeartHandshake,
   House,
   IndianRupee,
   Info,
   Landmark,
   Leaf,
   Lightbulb,
+  Link2,
   Mail,
   MapPin,
   Megaphone,
+  MessageCircle,
+  Monitor,
   Phone,
   Recycle,
   School,
@@ -31,10 +42,13 @@ import {
   Star,
   Stethoscope,
   Sun,
+  Target,
   Trash2,
   TreePine,
+  TrendingUp,
   Trophy,
   Users,
+  Wallet,
   Wheat,
   Wrench,
   Zap,
@@ -126,6 +140,30 @@ const ICONS: Record<string, LucideIcon> = {
   trophy: Trophy,
   sun: Sun,
   cloud: Cloud,
+  wallet: Wallet,
+  growth: TrendingUp,
+  trending: TrendingUp,
+  trendingup: TrendingUp,
+  monitor: Monitor,
+  computer: Monitor,
+  link: Link2,
+  compass: Compass,
+  sports: Dumbbell,
+  nss: HeartHandshake,
+  volunteer: HeartHandshake,
+  rain: CloudRain,
+  ban: Ban,
+  noplastic: Ban,
+  target: Target,
+  goal: Target,
+  chart: BarChart3,
+  barchart: BarChart3,
+  headset: Headset,
+  helpline: Headset,
+  whatsapp: MessageCircle,
+  chat: MessageCircle,
+  bot: Bot,
+  chatbot: Bot,
 };
 
 /** Resolve a free-text icon name (`"Users"`, `"street-light"`, …) to an icon; unknown names get a neutral dot. */
@@ -141,7 +179,9 @@ export function Icon({ name, className }: { name?: string; className?: string })
 
 /** URL of a website media id, or undefined. */
 export function mediaUrl(slug: string, id: string | undefined): string | undefined {
-  return id ? publicMediaUrl(slug, id) : undefined;
+  if (!id) return undefined;
+  // Placeholder content points at bundled pictures with a site path; real media ids are plain tokens.
+  return id.startsWith("/") ? id : publicMediaUrl(slug, id);
 }
 
 /** `#RRGGBB` + opacity (0-100) → `rgba(...)`. */
@@ -224,6 +264,16 @@ export function LinkButton({ href, children, external }: { href: string; childre
 
 /** A localized string from bilingual data. */
 export const tx = (b: B, locale: UiLocale): string => pickText(b, locale);
+
+/**
+ * Text that the backend stores as a plain string (dates, values) but placeholder content may give as
+ * { en, mr } so it can be translated.
+ */
+export function plain(v: unknown, locale: UiLocale): string {
+  if (typeof v === "string") return v;
+  if (v && typeof v === "object") return pickText(v as Bilingual, locale);
+  return "";
+}
 
 /** Items of a list field, tolerant of missing data. */
 export function list<T>(v: unknown): T[] {

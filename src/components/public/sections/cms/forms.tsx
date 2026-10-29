@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { GrievanceSubmitForm, GrievanceTrackForm } from "@/components/public/GrievanceForms";
 import { resolveHref } from "@/lib/href";
@@ -106,10 +107,19 @@ export function ServiceCategoriesSection({ slug, locale, data }: SectionProps) {
 }
 
 /** `qr-codes`: a QR code (generated from the link) with the service icon, title and description. */
-export async function QrCodesSection({ locale, data }: SectionProps) {
+export async function QrCodesSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
-  const items = list<{ title?: B; description?: B; serviceIcon?: string; buttonText?: B; linkUrl?: string }>((data as { items?: unknown }).items).filter((i) => i.linkUrl);
-  if (items.length === 0) return null;
+  const raw = list<{ title?: B; description?: B; serviceIcon?: string; buttonText?: B; linkUrl?: string }>((data as { items?: unknown }).items).filter((i) => i.linkUrl);
+  if (raw.length === 0) return null;
+  // Published links are absolute https addresses. Placeholder links may point at the site's own pages
+  // ("page:grievance"); those are turned into full addresses here, because a QR code needs one to scan.
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? "http";
+  const items = raw.map((i) => {
+    const href = resolveHref(i.linkUrl!, slug);
+    return { ...i, linkUrl: /^https?:\/\//.test(href) || !host ? href : `${proto}://${host}${href}` };
+  });
   return (
     <Band heading={t("quickAccess")} subheading={t("quickAccessSub")} center>
       <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-[repeat(auto-fit,minmax(150px,1fr))]">
@@ -360,11 +370,12 @@ export async function FeedbackFormSection({ locale, data }: SectionProps) {
 }
 
 /** `partners`: partner logos with their own logo rows. */
-export function PartnersSection({ slug, locale, data }: SectionProps) {
+export async function PartnersSection({ slug, locale, data }: SectionProps) {
+  const t = await getTranslations("public.cms");
   const items = list<{ logoId?: string; title?: B; description?: B; partnerLogoIds?: string[] }>((data as { items?: unknown }).items);
   if (items.length === 0) return null;
   return (
-    <Band tone="white">
+    <Band tone="white" heading={t("partnersHeading")}>
       <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((p, i) => {
           const logo = mediaUrl(slug, p.logoId);
