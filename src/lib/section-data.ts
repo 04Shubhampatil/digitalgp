@@ -1,4 +1,4 @@
-import type { FieldSpec, SectionEditorSpec } from "@/config/section-editors";
+import type { FieldSpec, ItemsSpec, SectionEditorSpec } from "@/config/section-editors";
 
 /**
  * Convert between the editor form values and the section JSON the backend validates.
@@ -25,27 +25,47 @@ export function emptyValues(spec: SectionEditorSpec): FormRecord {
   return v;
 }
 
+/** One blank row for an items list, including a starter row for its nested list. */
+export function emptyRow(items: ItemsSpec): FormRecord {
+  const row: FormRecord = Object.fromEntries(items.fields.map((f) => [f.name, emptyField(f)]));
+  if (items.children) row[items.children.name] = [emptyRow({ ...items.children, children: undefined })];
+  return row;
+}
+
 export function emptyItem(spec: SectionEditorSpec): FormRecord {
-  return Object.fromEntries((spec.items?.fields ?? []).map((f) => [f.name, emptyField(f)]));
+  return spec.items ? emptyRow(spec.items) : {};
+}
+
+function fillRow(items: ItemsSpec, src: Record<string, unknown>): FormRecord {
+  const dst: FormRecord = {};
+  fillFields(items.fields, src, dst);
+  if (items.children) {
+    const raw = src[items.children.name];
+    const rows = Array.isArray(raw) ? (raw as Record<string, unknown>[]) : [];
+    dst[items.children.name] = rows.map((r) => fillRow(items.children!, r));
+  }
+  return dst;
+}
+
+function fillFields(fields: FieldSpec[], src: Record<string, unknown>, dst: FormRecord) {
+  for (const f of fields) {
+    const raw = src[f.name];
+    if (f.type === "bilingual" || f.type === "bilingualLong") {
+      const b = (raw ?? {}) as { en?: string; mr?: string };
+      dst[f.name] = { en: b.en ?? "", mr: b.mr ?? "" };
+    } else if (raw === undefined || raw === null) {
+      dst[f.name] = "";
+    } else {
+      dst[f.name] = String(raw);
+    }
+  }
 }
 
 /** API data → form values (fill in every field so inputs are controlled). */
 export function toFormValues(spec: SectionEditorSpec, data: Record<string, unknown> | null | undefined): FormRecord {
   const base = emptyValues(spec);
   if (!data) return base;
-  const fill = (fields: FieldSpec[], src: Record<string, unknown>, dst: FormRecord) => {
-    for (const f of fields) {
-      const raw = src[f.name];
-      if (f.type === "bilingual" || f.type === "bilingualLong") {
-        const b = (raw ?? {}) as { en?: string; mr?: string };
-        dst[f.name] = { en: b.en ?? "", mr: b.mr ?? "" };
-      } else if (raw === undefined || raw === null) {
-        dst[f.name] = "";
-      } else {
-        dst[f.name] = String(raw);
-      }
-    }
-  };
+  const fill = fillFields;
   fill(spec.fields, data, base);
   for (const g of spec.groups ?? []) {
     const sub = (data[g.name] ?? {}) as Record<string, unknown>;
@@ -55,11 +75,7 @@ export function toFormValues(spec: SectionEditorSpec, data: Record<string, unkno
   }
   if (spec.items) {
     const rows = Array.isArray(data[spec.items.name]) ? (data[spec.items.name] as Record<string, unknown>[]) : [];
-    base[spec.items.name] = rows.map((row) => {
-      const dst: FormRecord = {};
-      fill(spec.items!.fields, row, dst);
-      return dst;
-    });
+    base[spec.items.name] = rows.map((row) => fillRow(spec.items!, row));
   }
   return base;
 }
@@ -77,6 +93,19 @@ function cleanField(f: FieldSpec, raw: unknown): unknown {
   if (f.type === "number") return Number(s);
   if (f.type === "integer") return Math.trunc(Number(s));
   return s;
+}
+
+function cleanRow(items: ItemsSpec, row: FormRecord): Record<string, unknown> {
+  const sub: Record<string, unknown> = {};
+  for (const f of items.fields) {
+    const v = cleanField(f, row[f.name]);
+    if (v !== undefined) sub[f.name] = v;
+  }
+  if (items.children) {
+    const rows = Array.isArray(row[items.children.name]) ? (row[items.children.name] as FormRecord[]) : [];
+    sub[items.children.name] = rows.map((r) => cleanRow(items.children!, r));
+  }
+  return sub;
 }
 
 /** Form values → API data: drop empty values, parse numbers, keep nesting. */
@@ -97,14 +126,7 @@ export function toApiData(spec: SectionEditorSpec, values: FormRecord): Record<s
   }
   if (spec.items) {
     const rows = Array.isArray(values[spec.items.name]) ? (values[spec.items.name] as FormRecord[]) : [];
-    out[spec.items.name] = rows.map((row) => {
-      const sub: Record<string, unknown> = {};
-      for (const f of spec.items!.fields) {
-        const v = cleanField(f, row[f.name]);
-        if (v !== undefined) sub[f.name] = v;
-      }
-      return sub;
-    });
+    out[spec.items.name] = rows.map((row) => cleanRow(spec.items!, row));
   }
   return out;
 }
@@ -122,7 +144,15 @@ export function requiredErrors(spec: SectionEditorSpec, values: FormRecord): Rec
   check(spec.fields, values, "");
   if (spec.items) {
     const rows = Array.isArray(values[spec.items.name]) ? (values[spec.items.name] as FormRecord[]) : [];
-    rows.forEach((row, i) => check(spec.items!.fields, row, `${spec.items!.name}.${i}.`));
+    const walk = (items: ItemsSpec, list: FormRecord[], prefix: string) =>
+      list.forEach((row, i) => {
+        check(items.fields, row, `${prefix}${items.name}.${i}.`);
+        if (items.children) {
+          const sub = Array.isArray(row[items.children.name]) ? (row[items.children.name] as FormRecord[]) : [];
+          walk(items.children, sub, `${prefix}${items.name}.${i}.`);
+        }
+      });
+    walk(spec.items, rows, "");
   }
   return errors;
 }

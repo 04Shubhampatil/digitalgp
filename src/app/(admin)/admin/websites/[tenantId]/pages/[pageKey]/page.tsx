@@ -57,15 +57,16 @@ export default async function PageEditor({ params }: { params: Promise<{ tenantI
       />
 
       <div className="grid gap-4">
-        <PageSettingsForm page={page} canUpdate={hasCapability(user, "tenant:update")} />
-
         {specs.length === 0 && <p className="rounded-card border border-line bg-surface p-5 text-sm text-muted">{t("noSections")}</p>}
 
-        {ordered.map((section, i) => {
+        {ordered.map((section) => {
           const spec = editorSpec(pageKey, section.sectionKey);
           if (!spec) return null;
-          return <SectionEditor key={section.sectionKey} tenantId={tenantId} pageKey={pageKey} spec={spec} section={section} capabilities={user.capabilities} defaultOpen={i === 0} />;
+          return <SectionEditor key={section.sectionKey} tenantId={tenantId} pageKey={pageKey} spec={spec} section={section} capabilities={user.capabilities} defaultOpen />;
         })}
+
+        {/* SEO / page-enabled settings sit below the sections (not part of the Figma section cards). */}
+        <PageSettingsForm page={page} canUpdate={hasCapability(user, "tenant:update")} />
 
         {unknown.length > 0 && (
           <p className="text-xs text-muted">

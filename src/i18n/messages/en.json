@@ -634,7 +634,9 @@
       "office": "Office information",
       "sarpanchMessage": "Message from the Sarpanch",
       "monthlyMetrics": "Village indicators (monthly)",
-      "villageProgress": "Village development progress"
+      "villageProgress": "Village development progress",
+      "wardDetails": "Ward details",
+      "wardDetailsDesc": "Ward-wise development progress shown on the home page."
     },
     "fields": {
       "title": "Title",
@@ -674,7 +676,12 @@
       "change": "Change",
       "progressItem": "Progress item",
       "valueText": "Value (text or %)",
-      "subheading": "Subheading"
-    }
+      "subheading": "Subheading",
+      "ward": "Ward",
+      "wardName": "Ward name",
+      "wardItem": "Indicator"
+    },
+    "order": "Order",
+    "addNew": "Add New {name}"
   }
 }

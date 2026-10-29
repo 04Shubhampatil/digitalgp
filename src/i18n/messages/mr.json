@@ -634,7 +634,9 @@
       "office": "कार्यालय माहिती",
       "sarpanchMessage": "सरपंचांचा संदेश",
       "monthlyMetrics": "गावाचे निर्देशक (मासिक)",
-      "villageProgress": "गाव विकास प्रगती"
+      "villageProgress": "गाव विकास प्रगती",
+      "wardDetails": "वॉर्ड तपशील",
+      "wardDetailsDesc": "मुख्यपृष्ठावर दिसणारी वॉर्डनिहाय विकास प्रगती."
     },
     "fields": {
       "title": "शीर्षक",
@@ -674,7 +676,12 @@
       "change": "बदल",
       "progressItem": "प्रगती घटक",
       "valueText": "मूल्य (मजकूर किंवा %)",
-      "subheading": "उपशीर्षक"
-    }
+      "subheading": "उपशीर्षक",
+      "ward": "वॉर्ड",
+      "wardName": "वॉर्डचे नाव",
+      "wardItem": "निर्देशक"
+    },
+    "order": "क्रम",
+    "addNew": "नवीन {name} जोडा"
   }
 }

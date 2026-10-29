@@ -5,6 +5,7 @@ import { requiredErrors, toApiData, toFormValues } from "./section-data";
 const hero = editorSpec("home", "hero")!;
 const stats = editorSpec("home", "quick-stats")!;
 const geo = editorSpec("about", "geography")!;
+const wards = editorSpec("home", "ward-details")!;
 
 describe("section-data", () => {
   it("round-trips API data through form values", () => {
@@ -30,5 +31,13 @@ describe("section-data", () => {
     const form = toFormValues(stats, { items: [{ label: { en: "Population" }, value: "2,857" }, { label: {}, value: "" }] });
     expect(requiredErrors(stats, form)).toEqual({ "items.1.label": "required", "items.1.value": "required" });
     expect(toApiData(stats, form).items).toEqual([{ label: { en: "Population" }, value: "2,857" }, {}]);
+  });
+
+  it("round-trips nested ward rows and flags missing nested fields", () => {
+    const data = { wards: [{ name: { en: "Ward 1" }, items: [{ label: { en: "Roads" }, valueText: "12 / 15 km" }] }] };
+    const form = toFormValues(wards, data);
+    expect(toApiData(wards, form)).toEqual(data);
+    const bad = toFormValues(wards, { wards: [{ name: { en: "Ward 2" }, items: [{ label: {}, valueText: "" }] }] });
+    expect(requiredErrors(wards, bad)).toEqual({ "wards.0.items.0.label": "required", "wards.0.items.0.valueText": "required" });
   });
 });

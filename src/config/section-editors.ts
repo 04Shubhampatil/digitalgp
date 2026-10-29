@@ -36,6 +36,8 @@ export interface ItemsSpec {
   min: number;
   max: number;
   fields: FieldSpec[];
+  /** A nested list inside every row (e.g. ward-details: wards → items). One level only. */
+  children?: ItemsSpec;
 }
 
 export interface GroupSpec {
@@ -121,6 +123,26 @@ const home: SectionEditorSpec[] = [
       min: 1,
       max: 20,
       fields: [bilingual("label", "label", { required: true }), { name: "valueText", type: "text", labelKey: "valueText", max: 60 }],
+    },
+  },
+  {
+    key: "ward-details",
+    labelKey: "wardDetails",
+    descriptionKey: "wardDetailsDesc",
+    fields: [bilingual("heading", "heading")],
+    items: {
+      name: "wards",
+      labelKey: "ward",
+      min: 1,
+      max: 50,
+      fields: [bilingual("name", "wardName", { required: true })],
+      children: {
+        name: "items",
+        labelKey: "wardItem",
+        min: 1,
+        max: 12,
+        fields: [bilingual("label", "label", { required: true }), { name: "valueText", type: "text", labelKey: "valueText", max: 60, required: true }],
+      },
     },
   },
   {
