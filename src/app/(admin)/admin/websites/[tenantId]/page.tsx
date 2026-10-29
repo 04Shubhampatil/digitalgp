@@ -11,7 +11,7 @@ import { Card, CardHeader, MetricCard, PageHeader } from "@/components/ui/Card";
 import { StatusPill } from "@/components/ui/StatusPill";
 import type { UiLocale } from "@/i18n/config";
 import { pair, pickText } from "@/i18n/text";
-import { content, tenants } from "@/lib/api/admin";
+import { content, hierarchy, tenants } from "@/lib/api/admin";
 import { isApiError } from "@/lib/api/client";
 import { cookieHeader } from "@/lib/api/server";
 import { formatDate } from "@/lib/format";
@@ -43,6 +43,14 @@ export default async function WebsitePage({ params }: { params: Promise<{ tenant
     if (isApiError(err, "NOT_FOUND")) notFound();
     throw err;
   }
+
+  // District / Taluka from the unit's ancestors; a GP admin without hierarchy access simply sees no row.
+  const ancestors = await hierarchy.get(tenant.unitId, { cookie }).then((r) => r.ancestors, () => []);
+  const unitName = (level: "DISTRICT" | "TALUKA") => {
+    const u = ancestors.find((a) => a.level === level);
+    return u ? pickText(pair(u.nameEn, u.nameMr), ui, u.nameEn) : "";
+  };
+  const districtTaluka = [unitName("DISTRICT"), unitName("TALUKA")].filter(Boolean).join(" / ");
 
   const name = pickText(pair(tenant.nameEn, tenant.nameMr), ui, tenant.slug);
   const withPublished = pages.filter((p) => p.sections.some((s) => s.published)).length;
@@ -149,6 +157,12 @@ export default async function WebsitePage({ params }: { params: Promise<{ tenant
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-3 px-5 pb-5 text-sm">
             <dt className="text-muted">{t("websites.gp")}</dt>
             <dd className="font-semibold text-ink">{tenant.nameEn}</dd>
+            {districtTaluka && (
+              <>
+                <dt className="text-muted">{t("websites.districtTaluka")}</dt>
+                <dd className="font-semibold text-ink">{districtTaluka}</dd>
+              </>
+            )}
             <dt className="text-muted">{t("websites.defaultLocale")}</dt>
             <dd className="font-semibold text-ink">{tenant.defaultLocale}</dd>
             <dt className="text-muted">{t("websites.publicUrl")}</dt>
