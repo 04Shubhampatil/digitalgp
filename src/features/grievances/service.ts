@@ -8,6 +8,11 @@ import { Errors } from "@/lib/errors";
 import type { ClientInfo } from "@/lib/http";
 import { ROLE_CAPABILITIES, assertCan, can, isWithinScope } from "@/lib/permissions";
 import { consumeRateLimit } from "@/lib/rate-limit";
+import { publishedSectionData } from "@/lib/published-section";
+import { verifyCaptcha } from "@/lib/captcha";
+import { sendMail } from "@/lib/mailer";
+import { getEnv } from "@/lib/env";
+import { AppError } from "@/lib/errors";
 import { getPublicTenantBySlug } from "@/lib/tenant";
 import { paginate } from "@/lib/validation";
 import type { GrievanceDto, GrievanceEventDto, PublicGrievanceReceiptDto, PublicGrievanceStatusDto } from "@/types/api";
@@ -187,9 +192,68 @@ const SUBMIT_LIMIT_PER_IP = 5;
 const SUBMIT_WINDOW_MS = 60 * 60 * 1000;
 
 /** Citizen submission on a published website. Rate-limited per IP; the code is the only handle returned. */
+/** Published complaint-form settings, with safe defaults when the section is missing or unpublished. */
+type ComplaintFormSettings = {
+  captchaEnabled: boolean;
+  allowFileUpload: boolean;
+  maxFileSizeMb: number;
+  allowedFileTypes: string[];
+  recipientEmail?: string;
+};
+
+const FILE_TYPE_MIME: Record<string, string> = {
+  pdf: "application/pdf",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+};
+
+async function complaintFormSettings(tenantId: string): Promise<ComplaintFormSettings> {
+  const data = (await publishedSectionData(tenantId, "grievance", "complaint-form")) as Partial<ComplaintFormSettings> | null;
+  return {
+    captchaEnabled: data?.captchaEnabled === true,
+    allowFileUpload: data?.allowFileUpload === true,
+    maxFileSizeMb: data?.maxFileSizeMb ?? 10,
+    allowedFileTypes: data?.allowedFileTypes ?? [],
+    recipientEmail: data?.recipientEmail,
+  };
+}
+
+/** Fail closed: a form that requires CAPTCHA cannot accept submissions until TURNSTILE_SECRET_KEY is set. */
+async function requireCaptcha(token: string | undefined, ip: string | null): Promise<void> {
+  if (!getEnv().TURNSTILE_SECRET_KEY) throw new AppError("INTERNAL_ERROR", 503, "The security check is not configured for this form");
+  await verifyCaptcha(token, ip);
+}
+
+/** Attached files must be this website's own, not deleted, within the size limit and allowed types. */
+async function validateAttachments(tenantId: string, ids: string[], form: ComplaintFormSettings): Promise<string[]> {
+  if (ids.length === 0) return [];
+  if (!form.allowFileUpload) throw Errors.badRequest("File uploads are not enabled for this form");
+  if (new Set(ids).size !== ids.length) throw Errors.validation([{ path: "attachmentIds", message: "Each file can be attached once" }]);
+
+  const allowedMime = new Set(form.allowedFileTypes.map((t) => FILE_TYPE_MIME[t]).filter((m): m is string => !!m));
+  const files = await db.media.findMany({
+    where: { id: { in: ids }, tenantId, deletedAt: null },
+    select: { id: true, mimeType: true, sizeBytes: true },
+  });
+  if (files.length !== ids.length) {
+    throw Errors.validation([{ path: "attachmentIds", message: "One or more files do not belong to this website" }]);
+  }
+  const maxBytes = form.maxFileSizeMb * 1024 * 1024;
+  for (const f of files) {
+    if (f.sizeBytes > maxBytes) throw Errors.validation([{ path: "attachmentIds", message: `Files must be ${form.maxFileSizeMb} MB or smaller` }]);
+    if (!allowedMime.has(f.mimeType)) throw Errors.validation([{ path: "attachmentIds", message: "This file type is not allowed for this form" }]);
+  }
+  return ids;
+}
+
 export async function submitGrievance(tenantSlug: string, input: SubmitGrievanceInput, client: ClientInfo): Promise<PublicGrievanceReceiptDto> {
   const tenant = await getPublicTenantBySlug(tenantSlug);
+  const form = await complaintFormSettings(tenant.id);
   await consumeRateLimit(`grievance:ip:${client.ipAddress ?? "unknown"}`, SUBMIT_LIMIT_PER_IP, SUBMIT_WINDOW_MS);
+  if (form.captchaEnabled) await requireCaptcha(input.turnstileToken, client.ipAddress);
+  const attachmentIds = await validateAttachments(tenant.id, input.attachmentIds ?? [], form);
 
   for (let attempt = 0; attempt < 5; attempt++) {
     const trackingCode = generateTrackingCode();
@@ -206,18 +270,49 @@ export async function submitGrievance(tenantSlug: string, input: SubmitGrievance
           citizenEmail: input.citizenEmail ?? null,
           description: input.description,
           events: { create: { fromStatus: null, toStatus: "OPEN", note: null } },
+          attachments: attachmentIds.length ? { create: attachmentIds.map((mediaId) => ({ mediaId })) } : undefined,
         },
       });
       await writeAudit(
         actorFromContext(null, client),
-        { action: "grievance.submit", entityType: "Grievance", entityId: created.id, tenantId: tenant.id, unitId: tenant.unitId, after: { trackingCode, category: input.category } },
+        { action: "grievance.submit", entityType: "Grievance", entityId: created.id, tenantId: tenant.id, unitId: tenant.unitId, after: { trackingCode, category: input.category, attachments: attachmentIds.length } },
         tx,
       );
       return created;
     });
+    // The notification carries the tracking code and category only, never the citizen's details.
+    if (form.recipientEmail) {
+      await sendMail({
+        to: form.recipientEmail,
+        subject: `${tenant.slug}: new complaint ${row.trackingCode}`,
+        text: `A new complaint was submitted.
+Tracking code: ${row.trackingCode}
+Category: ${input.category}
+Attachments: ${attachmentIds.length}
+
+Open the admin panel to review it.`,
+      });
+    }
     return { trackingCode: row.trackingCode, status: row.status, createdAt: row.createdAt.toISOString() };
   }
   throw Errors.conflict("Could not allocate a tracking code, please retry");
+}
+
+/** Public view of the complaint form: what the page needs to adapt. The recipient address is never exposed. */
+export async function getPublicComplaintForm(tenantSlug: string) {
+  const tenant = await getPublicTenantBySlug(tenantSlug);
+  const data = (await publishedSectionData(tenant.id, "grievance", "complaint-form")) as Record<string, unknown> | null;
+  const form = await complaintFormSettings(tenant.id);
+  return {
+    captchaEnabled: form.captchaEnabled,
+    allowFileUpload: form.allowFileUpload,
+    maxFileSizeMb: form.maxFileSizeMb,
+    allowedFileTypes: form.allowedFileTypes,
+    heading: data?.heading ?? null,
+    description: data?.description ?? null,
+    successMessage: data?.successMessage ?? null,
+    submitButtonText: data?.submitButtonText ?? null,
+  };
 }
 
 /** Status by tracking code — no citizen contact details, no internal notes, no staff identities. */
