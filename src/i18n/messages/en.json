@@ -361,7 +361,12 @@
       "outcomeEn": "Outcome (English)",
       "outcomeMr": "Outcome (Marathi)",
       "coverImage": "Cover image",
-      "pickWebsiteFirst": "Choose the website first to upload a cover image."
+      "pickWebsiteFirst": "Choose the website first to upload a cover image.",
+      "projectName": "Project name",
+      "managementTitle": "Key project management",
+      "managementDesc": "Manage completed, ongoing and upcoming projects of this website.",
+      "showingFirst": "Showing the first {n} projects.",
+      "viewAll": "View all projects"
     },
     "grievancesUi": {
       "subtitle": "Citizen complaints filed on the public websites. Assign, work and close them with a note the citizen can see.",
