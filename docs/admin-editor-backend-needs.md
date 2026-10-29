@@ -53,8 +53,22 @@ published here the placeholder is replaced automatically (published data always 
 Backend notes: documents need a **PDF media kind** (max 10 MB, PDF only) and the public site must never
 expose files from unpublished sections. Money amounts should be stored as numbers/decimal strings, not free text.
 
+## Citizen Services & Form (`services`, Figma 375:20013)
+
+| section key | content |
+| --- | --- |
+| `banner` | shared, above |
+| `service-links` (the "Right to Service" certificate grid, shown as the 4-row table under the banner in Figma) | `items[]: { icon, title: bilingual, description: bilingual, href, visible }` |
+| `service-categories` | `items[]: { icon, title, description, features[]: bilingual (max ~4), buttonText, buttonLink, accentColour }` (reorderable) |
+| `qr-codes` | `items[]: { title, description, serviceIcon, buttonText, linkUrl }` — **the QR image should be generated from `linkUrl` (server-side or on render), not uploaded**; the public page currently shows a Figma picture with fake codes |
+| `top-stats` | shared; Figma adds a `background` colour per item for this page |
+| `help` ("Need Help?") | `{ heading, subtitle, imageId, contact: { phone, email, hours }[] (add more), faqs[]: { question, answer } }` |
+
+Also in this Figma: a footer action bar ("Discard changes", "Preview section", "Save draft", "Publish section").
+The frontend already has per-section Save draft / Discard / workflow buttons; no backend change needed for that.
+
 ## Pages still to be reviewed
 
-Citizen Services, Grievance, Our Village, Employment, Education, Environment,
+ Grievance, Our Village, Employment, Education, Environment,
 Announcements & Circulars, Gallery, Contact — this file is extended as each frame is reviewed.
 Key Projects and Schemes already work through their own list + workflow (cards in the page editor).
