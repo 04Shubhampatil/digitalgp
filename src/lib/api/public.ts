@@ -59,3 +59,8 @@ export function submitGrievance(slug: string, body: SubmitGrievanceInput) {
 export function trackGrievance(slug: string, trackingCode: string) {
   return apiFetch<PublicGrievanceStatusDto>(`/public/${encodeURIComponent(slug)}/grievances/${encodeURIComponent(trackingCode.trim().toUpperCase())}`);
 }
+
+/** Contact-page forms (POST /public/:slug/feedback and /public/:slug/volunteers). */
+export function submitContactForm(slug: string, kind: "feedback" | "volunteers", body: Record<string, string | null>) {
+  return apiFetch<{ message: string }>(`/public/${encodeURIComponent(slug)}/${kind}`, { method: "POST", body });
+}
