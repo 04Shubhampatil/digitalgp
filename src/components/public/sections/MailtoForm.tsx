@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { isApiError } from "@/lib/api/client";
 import { submitContactForm } from "@/lib/api/public";
+import { Turnstile } from "@/components/public/Turnstile";
 
 export interface MailtoField {
   name: string;
@@ -34,6 +35,7 @@ export function MailtoForm({ to, subject, fields, submitLabel, hint, columns = 2
   const [done, setDone] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
 
   function openMail(fd: FormData) {
     const body = fields.map((f) => `${f.label}: ${String(fd.get(f.name) ?? "").trim()}`).join("\n");
@@ -50,6 +52,7 @@ export function MailtoForm({ to, subject, fields, submitLabel, hint, columns = 2
     setBusy(true);
     try {
       const body: Record<string, string | null> = { website: String(fd.get("website") ?? "") };
+      if (token) body.turnstileToken = token;
       for (const f of fields) {
         const v = String(fd.get(f.name) ?? "").trim();
         if (v) body[api.map?.[f.name] ?? f.name] = v;
@@ -95,6 +98,7 @@ export function MailtoForm({ to, subject, fields, submitLabel, hint, columns = 2
           )}
         </label>
       ))}
+      {api && <Turnstile onToken={setToken} />}
       {api && <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden className="hidden" />}
       <div className="flex flex-col gap-2 sm:col-span-full">
         {error && (

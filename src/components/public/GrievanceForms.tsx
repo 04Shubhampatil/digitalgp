@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import type { PublicGrievanceReceiptDto, PublicGrievanceStatusDto } from "@/types/api";
@@ -13,7 +13,9 @@ import { StatusPill } from "@/components/ui/StatusPill";
 import { Textarea } from "@/components/ui/Textarea";
 import type { UiLocale } from "@/i18n/config";
 import { isApiError } from "@/lib/api/client";
-import { submitGrievance, trackGrievance } from "@/lib/api/public";
+import { getGrievanceFormSettings, submitGrievance, trackGrievance } from "@/lib/api/public";
+import { pickText } from "@/i18n/text";
+import { Turnstile, TURNSTILE_SITE_KEY } from "./Turnstile";
 import { formatDateTime } from "@/lib/format";
 
 const CATEGORIES = ["water", "roads", "sanitation", "electricity", "health", "education", "certificates", "tax", "other"] as const;
@@ -34,6 +36,21 @@ export function GrievanceSubmitForm({ slug }: { slug: string }) {
   const locale = useLocale() as UiLocale;
   const [receipt, setReceipt] = useState<PublicGrievanceReceiptDto | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [captchaOn, setCaptchaOn] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+  const [successText, setSuccessText] = useState("");
+  const [submitText, setSubmitText] = useState("");
+  // The office's settings for this form (CAPTCHA, texts). Defaults apply if they cannot be loaded.
+  useEffect(() => {
+    getGrievanceFormSettings(slug)
+      .then((s) => {
+        setCaptchaOn(s.captchaEnabled);
+        setSuccessText(pickText(s.successMessage ?? undefined, locale));
+        setSubmitText(pickText(s.submitButtonText ?? undefined, locale));
+      })
+      .catch(() => undefined);
+  }, [slug, locale]);
+  const captchaBlocked = captchaOn && !TURNSTILE_SITE_KEY;
   const {
     register,
     handleSubmit,
@@ -43,8 +60,10 @@ export function GrievanceSubmitForm({ slug }: { slug: string }) {
 
   async function onSubmit(values: SubmitValues) {
     setFormError(null);
+    if (captchaOn && !token) return setFormError(t("captchaRequired"));
     try {
       const r = await submitGrievance(slug, {
+        turnstileToken: token ?? undefined,
         category: values.category,
         citizenName: values.citizenName,
         citizenPhone: values.citizenPhone || null,
@@ -67,6 +86,7 @@ export function GrievanceSubmitForm({ slug }: { slug: string }) {
       <div className="rounded-card border border-line bg-success-soft p-6">
         <p className="text-sm font-semibold text-success">{t("submitted")}</p>
         <p className="mt-2 text-2xl font-bold tracking-wide text-ink">{receipt.trackingCode}</p>
+        {successText && <p className="mt-2 text-sm text-ink">{successText}</p>}
         <p className="mt-2 text-sm text-muted">{t("keepCode")}</p>
         <p className="mt-1 text-xs text-muted">{formatDateTime(receipt.createdAt, locale)}</p>
       </div>
@@ -82,14 +102,20 @@ export function GrievanceSubmitForm({ slug }: { slug: string }) {
       <div className="sm:col-span-2">
         <Textarea label={t("description")} rows={5} hint={t("descriptionHint")} error={errors.description?.message} {...register("description")} />
       </div>
+      {captchaOn && <Turnstile onToken={setToken} />}
+      {captchaBlocked && (
+        <p role="alert" className="rounded-input bg-danger-soft px-4 py-3 text-sm text-danger sm:col-span-2">
+          {t("captchaUnavailable")}
+        </p>
+      )}
       {formError && (
         <p role="alert" className="rounded-input bg-danger-soft px-4 py-3 text-sm text-danger sm:col-span-2">
           {formError}
         </p>
       )}
       <div className="sm:col-span-2">
-        <Button type="submit" size="lg" loading={isSubmitting}>
-          {t("submit")}
+        <Button type="submit" size="lg" loading={isSubmitting} disabled={captchaBlocked}>
+          {submitText || t("submit")}
         </Button>
       </div>
     </form>
