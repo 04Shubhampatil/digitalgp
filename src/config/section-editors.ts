@@ -36,6 +36,8 @@ export interface ItemsSpec {
   min: number;
   max: number;
   fields: FieldSpec[];
+  /** A nested list inside every row (e.g. ward-details: wards → items). One level only. */
+  children?: ItemsSpec;
 }
 
 export interface GroupSpec {
@@ -124,6 +126,26 @@ const home: SectionEditorSpec[] = [
     },
   },
   {
+    key: "ward-details",
+    labelKey: "wardDetails",
+    descriptionKey: "wardDetailsDesc",
+    fields: [bilingual("heading", "heading")],
+    items: {
+      name: "wards",
+      labelKey: "ward",
+      min: 1,
+      max: 50,
+      fields: [bilingual("name", "wardName", { required: true })],
+      children: {
+        name: "items",
+        labelKey: "wardItem",
+        min: 1,
+        max: 12,
+        fields: [bilingual("label", "label", { required: true }), { name: "valueText", type: "text", labelKey: "valueText", max: 60, required: true }],
+      },
+    },
+  },
+  {
     key: "leaders",
     labelKey: "leaders",
     descriptionKey: "leadersDesc",
@@ -157,7 +179,7 @@ const about: SectionEditorSpec[] = [
     labelKey: "overview",
     fields: [bilingual("heading", "heading", { required: true }), bilingualLong("body", "body", { required: true }), { name: "imageId", type: "image", labelKey: "image" }],
   },
-  { key: "history", labelKey: "history", fields: [bilingual("heading", "heading"), bilingualLong("body", "body", { required: true })] },
+  { key: "history", labelKey: "history", descriptionKey: "historyDesc", fields: [bilingual("heading", "heading"), bilingualLong("body", "body", { required: true })] },
   {
     key: "geography",
     labelKey: "geography",
@@ -174,24 +196,27 @@ const about: SectionEditorSpec[] = [
   {
     key: "members",
     labelKey: "members",
+    descriptionKey: "membersDesc",
     fields: [bilingual("heading", "heading")],
     items: {
       name: "items",
       labelKey: "member",
       min: 1,
       max: 50,
+      // Figma "Local Administrators" table order: photo, name, designation, ward / area, contact.
       fields: [
+        { name: "photoId", type: "image", labelKey: "photo" },
         bilingual("name", "name", { required: true }),
         bilingual("designation", "designation", { required: true }),
         { name: "wardNo", type: "text", labelKey: "wardNo", max: 20 },
         { name: "phone", type: "phone", labelKey: "phone" },
-        { name: "photoId", type: "image", labelKey: "photo" },
       ],
     },
   },
   {
     key: "office",
     labelKey: "office",
+    descriptionKey: "officeDesc",
     fields: [
       bilingualLong("address", "address", { required: true }),
       bilingual("hours", "hours"),

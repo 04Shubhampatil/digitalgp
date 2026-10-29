@@ -7,11 +7,13 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string;
   leading?: ReactNode;
   trailing?: ReactNode;
+  /** Table-cell size (40px high); `label` then becomes the accessible name only. */
+  compact?: boolean;
 }
 
 /** Labelled text input matching the Figma login/admin fields (52px, 8px radius, #d6e0d9 border). */
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { label, hint, error, leading, trailing, className, id, ...rest },
+  { label, hint, error, leading, trailing, compact, className, id, ...rest },
   ref,
 ) {
   const autoId = useId();
@@ -21,13 +23,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
-        <label htmlFor={inputId} className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+        <label htmlFor={inputId} className={cn("text-[11px] font-semibold uppercase tracking-wide text-muted", compact && "sr-only")}>
           {label}
         </label>
       )}
       <div
         className={cn(
-          "flex h-13 items-center gap-2 rounded-input border bg-surface px-4 transition-colors",
+          "flex items-center gap-2 rounded-input border bg-surface transition-colors",
+          compact ? "h-10 px-3" : "h-13 px-4",
           "focus-within:border-primary",
           error ? "border-danger" : "border-line",
         )}
@@ -39,7 +42,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
           className={cn(
-            "h-full w-full min-w-0 bg-transparent text-[15px] text-ink-strong outline-none placeholder:text-placeholder",
+            "h-full w-full min-w-0 bg-transparent text-ink-strong outline-none placeholder:text-placeholder",
+            compact ? "text-[13px]" : "text-[15px]",
             className,
           )}
           {...rest}

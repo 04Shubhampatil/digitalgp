@@ -8,7 +8,11 @@ import { Textarea } from "@/components/ui/Textarea";
 import type { FormRecord } from "@/lib/section-data";
 import { MediaField } from "./MediaField";
 
-/** Renders one spec field at `path` (dotted) inside a react-hook-form `control`. */
+/**
+ * Renders one spec field at `path` (dotted) inside a react-hook-form `control`.
+ * `compact` is the table-cell variant used by item rows: no visible label (the column header
+ * names it), 40px inputs, English and Marathi stacked.
+ */
 export function FieldInput({
   spec,
   path,
@@ -16,6 +20,7 @@ export function FieldInput({
   tenantId,
   error,
   disabled,
+  compact,
 }: {
   spec: FieldSpec;
   path: string;
@@ -23,26 +28,54 @@ export function FieldInput({
   tenantId: string;
   error?: string;
   disabled?: boolean;
+  compact?: boolean;
 }) {
   const t = useTranslations("editor");
   const label = t(`fields.${spec.labelKey}`) + (spec.required ? " *" : "");
 
   if (spec.type === "bilingual" || spec.type === "bilingualLong") {
-    const Comp = spec.type === "bilingual" ? Input : Textarea;
-    return (
-      <div className="grid gap-3 sm:grid-cols-2">
+    const long = spec.type === "bilingualLong";
+    const cell = (lang: "en" | "mr") => {
+      const name = `${path}.${lang}`;
+      const text = `${label} · ${lang === "en" ? "English" : "मराठी"}`;
+      return (
         <Controller
+          key={lang}
           control={control}
-          name={`${path}.en`}
-          render={({ field }) => <Comp label={`${label} · English`} value={String(field.value ?? "")} onChange={field.onChange} maxLength={spec.max} disabled={disabled} error={error} />}
+          name={name}
+          render={({ field }) =>
+            long ? (
+              <Textarea
+                label={compact ? undefined : text}
+                aria-label={text}
+                rows={compact ? 2 : 4}
+                className={compact ? "px-3 py-2 text-[13px]" : undefined}
+                lang={lang === "mr" ? "mr" : undefined}
+                value={String(field.value ?? "")}
+                onChange={field.onChange}
+                maxLength={spec.max}
+                disabled={disabled}
+                error={lang === "en" ? error : undefined}
+              />
+            ) : (
+              <Input
+                compact={compact}
+                label={text}
+                aria-label={compact ? text : undefined}
+                placeholder={compact ? (lang === "en" ? "English" : "मराठी") : undefined}
+                lang={lang === "mr" ? "mr" : undefined}
+                value={String(field.value ?? "")}
+                onChange={field.onChange}
+                maxLength={spec.max}
+                disabled={disabled}
+                error={lang === "en" ? error : undefined}
+              />
+            )
+          }
         />
-        <Controller
-          control={control}
-          name={`${path}.mr`}
-          render={({ field }) => <Comp label={`${label} · मराठी`} lang="mr" value={String(field.value ?? "")} onChange={field.onChange} maxLength={spec.max} disabled={disabled} />}
-        />
-      </div>
-    );
+      );
+    };
+    return <div className={compact ? "grid gap-2" : "grid gap-3 sm:grid-cols-2"}>{cell("en")}{cell("mr")}</div>;
   }
 
   if (spec.type === "image") {
@@ -50,7 +83,7 @@ export function FieldInput({
       <Controller
         control={control}
         name={path}
-        render={({ field }) => <MediaField label={label} value={String(field.value ?? "")} onChange={field.onChange} tenantId={tenantId} error={error} disabled={disabled} />}
+        render={({ field }) => <MediaField label={label} value={String(field.value ?? "")} onChange={field.onChange} tenantId={tenantId} error={error} disabled={disabled} compact={compact} />}
       />
     );
   }
@@ -62,6 +95,7 @@ export function FieldInput({
       name={path}
       render={({ field }) => (
         <Input
+          compact={compact}
           label={label}
           type={inputType}
           inputMode={spec.type === "integer" ? "numeric" : spec.type === "number" ? "decimal" : undefined}

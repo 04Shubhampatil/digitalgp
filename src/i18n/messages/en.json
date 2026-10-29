@@ -167,7 +167,10 @@
         "completed": "Completed",
         "inProgress": "In Progress",
         "notStarted": "Not Started"
-      }
+      },
+      "contactCardTitle": "Contact information",
+      "contactCardDesc": "Address, phone, email, hours and social links shown on the Contact page and footer.",
+      "editContact": "Edit contact details"
     },
     "users": {
       "title": "Users & Roles",
@@ -254,7 +257,11 @@
       "websites": "{count} websites",
       "locked": "This item is {status} and cannot be edited.",
       "attachment": "Attachment",
-      "attachmentHint": "Image or PDF (optional, up to 10 MB)"
+      "attachmentHint": "Image or PDF (optional, up to 10 MB)",
+      "managementTitle": "Latest announcements",
+      "managementDesc": "Add, edit and manage the announcements shown on this website.",
+      "showingFirst": "Showing the latest {n} announcements.",
+      "viewAll": "View all announcements"
     },
     "schemes": "Schemes",
     "projects": "Projects",
@@ -351,7 +358,13 @@
       "processEn": "How to apply (English)",
       "processMr": "How to apply (Marathi)",
       "aggregateHint": "Aggregate numbers only — never individual beneficiary details.",
-      "details": "Details"
+      "details": "Details",
+      "schemeName": "Scheme name",
+      "amountDisbursed": "Amount disbursed",
+      "managementTitle": "Featured schemes",
+      "managementDesc": "Manage central, state and district level schemes shown on this website.",
+      "showingFirst": "Showing the first {n} schemes.",
+      "viewAll": "View all schemes"
     },
     "projectsUi": {
       "subtitle": "Development works of a Gram Panchayat: upcoming, ongoing and completed.",
@@ -361,7 +374,12 @@
       "outcomeEn": "Outcome (English)",
       "outcomeMr": "Outcome (Marathi)",
       "coverImage": "Cover image",
-      "pickWebsiteFirst": "Choose the website first to upload a cover image."
+      "pickWebsiteFirst": "Choose the website first to upload a cover image.",
+      "projectName": "Project name",
+      "managementTitle": "Key project management",
+      "managementDesc": "Manage completed, ongoing and upcoming projects of this website.",
+      "showingFirst": "Showing the first {n} projects.",
+      "viewAll": "View all projects"
     },
     "grievancesUi": {
       "subtitle": "Citizen complaints filed on the public websites. Assign, work and close them with a note the citizen can see.",
@@ -385,7 +403,11 @@
       "website": "Website",
       "upload": "Upload files",
       "hint": "Uploading to: {name}. JPG, PNG, WebP, GIF, MP4, WebM or PDF, up to 10 MB each.",
-      "deleteConfirm": "Delete “{name}”? Pages that use it will show no image."
+      "deleteConfirm": "Delete “{name}”? Pages that use it will show no image.",
+      "websiteTitle": "Media library",
+      "websiteDesc": "Photos, videos and PDFs uploaded for this website.",
+      "showingFirst": "Showing the latest {n} files.",
+      "viewAll": "Open the full media library"
     },
     "auditUi": {
       "subtitle": "Who did what, and when. Operators see only their own actions.",
@@ -602,7 +624,7 @@
     "seoTitle": "SEO title",
     "seoDescription": "SEO description",
     "shareImage": "Share image",
-    "noSections": "No sections are registered for this page yet. The backend section registry (src/config/sections.ts) decides what a page can contain.",
+    "noSections": "Section editing for this page is not available yet. The public page shows its design content until sections are published here.",
     "unknownSections": "Sections without an editor yet",
     "noContent": "No content yet",
     "showSection": "Show this section",
@@ -628,13 +650,18 @@
       "quickLinks": "Citizen services links",
       "quickLinksDesc": "Quick links to certificates, taxes and forms.",
       "overview": "Overview",
-      "history": "Village history",
+      "history": "History & vision",
       "geography": "Geography & demographics",
-      "members": "Panchayat members",
-      "office": "Office information",
+      "members": "Local administrators",
+      "office": "Office details",
       "sarpanchMessage": "Message from the Sarpanch",
       "monthlyMetrics": "Village indicators (monthly)",
-      "villageProgress": "Village development progress"
+      "villageProgress": "Village development progress",
+      "wardDetails": "Ward details",
+      "wardDetailsDesc": "Ward-wise development progress shown on the home page.",
+      "membersDesc": "Sarpanch, Deputy Sarpanch and elected ward members.",
+      "historyDesc": "Founding story, geographical overview, mission and vision statements.",
+      "officeDesc": "Physical address, office hours, phone, email and map link."
     },
     "fields": {
       "title": "Title",
@@ -674,7 +701,18 @@
       "change": "Change",
       "progressItem": "Progress item",
       "valueText": "Value (text or %)",
-      "subheading": "Subheading"
+      "subheading": "Subheading",
+      "ward": "Ward",
+      "wardName": "Ward name",
+      "wardItem": "Indicator"
+    },
+    "order": "Order",
+    "addNew": "Add New {name}",
+    "itemOne": {
+      "stat": "Statistic",
+      "leader": "Leader",
+      "member": "Member",
+      "link": "Link"
     }
   }
 }

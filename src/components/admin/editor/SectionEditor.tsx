@@ -1,6 +1,26 @@
 "use client";
 
-import { ArrowDown, ArrowUp, ChevronDown, Plus, Trash2 } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  BarChart3,
+  ChevronDown,
+  Cloud,
+  Gauge,
+  ImageIcon,
+  Info,
+  LayoutList,
+  Link2,
+  Map as MapIcon,
+  Megaphone,
+  MessageSquare,
+  Plus,
+  Trash2,
+  TrendingUp,
+  Trophy,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -16,6 +36,43 @@ import { isApiError } from "@/lib/api/client";
 import { cn } from "@/lib/cn";
 import { emptyItem, requiredErrors, toApiData, toFormValues, type FormRecord } from "@/lib/section-data";
 import { FieldInput } from "./FieldInput";
+import { NestedItems } from "./NestedItems";
+
+/** Header icon per section (Figma tints each card header with a green icon tile). */
+const SECTION_ICONS: Record<string, LucideIcon> = {
+  hero: ImageIcon,
+  "quick-stats": BarChart3,
+  welcome: Info,
+  "about-cards": Info,
+  leaders: Users,
+  "quick-links": Link2,
+  "sarpanch-message": MessageSquare,
+  "monthly-metrics": TrendingUp,
+  "village-progress": Gauge,
+  "ward-details": MapIcon,
+  achievements: Trophy,
+  weather: Cloud,
+  "whats-new": Megaphone,
+};
+
+/** Switch used for "Show this section" (Figma toggle). */
+function Switch({ checked, onChange, disabled, label }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean; label: string }) {
+  return (
+    <label className="flex items-center gap-2 text-xs font-semibold text-ink">
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        disabled={disabled}
+        onClick={() => onChange(!checked)}
+        className={cn("relative h-6 w-11 rounded-full transition-colors disabled:opacity-50", checked ? "bg-primary" : "bg-track")}
+      >
+        <span className={cn("absolute top-0.5 left-0.5 size-5 rounded-full bg-white shadow transition-transform", checked && "translate-x-5")} />
+      </button>
+      {label}
+    </label>
+  );
+}
 
 export interface SectionEditorProps {
   tenantId: string;
@@ -110,25 +167,44 @@ export function SectionEditor({ tenantId, pageKey, spec, section, capabilities, 
     });
 
   const itemsName = spec.items?.name ?? "items";
+  const one = (key: string) => (t.has(`itemOne.${key}`) ? t(`itemOne.${key}`) : t(`fields.${key}`));
+  const SectionIcon = SECTION_ICONS[spec.key] ?? LayoutList;
+  // Item rows render as a table: ordinal, one column per field (images wider), row actions.
+  const itemFields = spec.items?.fields ?? [];
+  const columns = `2rem ${itemFields.map((f) => (f.type === "image" ? "minmax(10rem,11rem)" : f.type === "bilingual" || f.type === "bilingualLong" ? "minmax(10rem,1.6fr)" : "minmax(5.5rem,1fr)")).join(" ")} 6.5rem`;
 
   return (
     <section className="rounded-card border border-line bg-surface">
       <header className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
-        <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex items-center gap-2 text-left">
-          <ChevronDown className={cn("size-4 text-muted transition-transform", open && "rotate-180")} aria-hidden />
+        <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex items-center gap-3 text-left">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-input bg-success-soft text-primary">
+            <SectionIcon className="size-5" aria-hidden />
+          </span>
           <span>
             <span className="block text-[17px] font-bold text-ink">{t(`sections.${spec.labelKey}`)}</span>
             {spec.descriptionKey && <span className="block text-xs text-muted">{t(`sections.${spec.descriptionKey}`)}</span>}
           </span>
+          <ChevronDown className={cn("size-4 text-muted transition-transform", open && "rotate-180")} aria-hidden />
         </button>
         <div className="flex flex-wrap items-center gap-3">
           {published && <StatusPill status="PUBLISHED" label={`${ta("contentStatus.PUBLISHED")} v${published.version}`} />}
           {draft && <StatusPill status={draft.status} label={`${ta("contentStatus." + draft.status)} v${draft.version}`} />}
           {!draft && !published && <span className="text-xs text-muted">{t("noContent")}</span>}
-          <label className="flex items-center gap-2 text-xs font-semibold text-ink">
-            <input type="checkbox" className="size-4 accent-primary" checked={isVisible} disabled={!canEdit} onChange={(e) => setIsVisible(e.target.checked)} />
-            {t("showSection")}
-          </label>
+          {spec.items && canEdit && (
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={items.fields.length >= spec.items.max}
+              onClick={() => {
+                setOpen(true);
+                items.append(emptyItem(spec) as never);
+              }}
+            >
+              <Plus className="size-4" aria-hidden /> {t("addNew", { name: one(spec.items.labelKey) })}
+            </Button>
+          )}
+          <Switch checked={isVisible} onChange={setIsVisible} disabled={!canEdit} label={t("showSection")} />
         </div>
       </header>
 
@@ -159,46 +235,60 @@ export function SectionEditor({ tenantId, pageKey, spec, section, capabilities, 
               </div>
             ))}
 
-            {spec.items && (
-              <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-xs font-semibold tracking-wide text-muted uppercase">
-                    {t(`fields.${spec.items.labelKey}`)} ({items.fields.length}/{spec.items.max})
-                  </p>
-                  <Button type="button" size="sm" variant="secondary" disabled={items.fields.length >= spec.items.max} onClick={() => items.append(emptyItem(spec) as never)}>
-                    <Plus className="size-4" aria-hidden /> {t("addItem")}
-                  </Button>
-                </div>
-                {fieldErrors[itemsName] && (
-                  <p role="alert" className="mb-2 text-xs text-danger">
-                    {fieldErrors[itemsName]}
-                  </p>
-                )}
-                <ol className="grid gap-3">
-                  {items.fields.map((row, i) => (
-                    <li key={row.id} className="rounded-input border border-line bg-canvas p-4">
-                      <div className="mb-3 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-muted">#{i + 1}</span>
-                        <div className="flex items-center gap-1">
-                          <button type="button" aria-label={t("moveUp")} disabled={i === 0} onClick={() => items.move(i, i - 1)} className="rounded p-1 text-muted hover:bg-surface disabled:opacity-40">
+            {spec.items?.children && <NestedItems control={control} tenantId={tenantId} spec={spec.items} errors={fieldErrors} canEdit={canEdit} rows={items} />}
+
+            {spec.items && !spec.items.children && (
+              <div className="overflow-x-auto">
+                <div className="min-w-[44rem]">
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="text-xs font-semibold tracking-wide text-muted uppercase">
+                      {t(`fields.${spec.items.labelKey}`)} ({items.fields.length}/{spec.items.max})
+                    </p>
+                  </div>
+                  {fieldErrors[itemsName] && (
+                    <p role="alert" className="mb-2 text-xs text-danger">
+                      {fieldErrors[itemsName]}
+                    </p>
+                  )}
+                  <div role="row" className="grid items-center gap-3 rounded-input bg-surface-soft px-3 py-2 text-[11px] font-semibold tracking-wide text-muted uppercase" style={{ gridTemplateColumns: columns }}>
+                    <span>{t("order")}</span>
+                    {itemFields.map((f) => (
+                      <span key={f.name}>{t(`fields.${f.labelKey}`)}</span>
+                    ))}
+                    <span className="text-right">{tc("actions")}</span>
+                  </div>
+                  <ol>
+                    {items.fields.map((row, i) => (
+                      <li key={row.id} role="row" className="grid items-start gap-3 border-b border-line px-3 py-3 last:border-b-0" style={{ gridTemplateColumns: columns }}>
+                        <span className="pt-2.5 text-sm font-semibold text-muted">{i + 1}</span>
+                        {itemFields.map((f) => (
+                          <FieldInput key={f.name} compact spec={f} path={`${itemsName}.${i}.${f.name}`} control={control} tenantId={tenantId} error={fieldErrors[`${itemsName}.${i}.${f.name}`]} />
+                        ))}
+                        <div className="flex items-center justify-end gap-1 pt-1.5">
+                          <button type="button" aria-label={t("moveUp")} disabled={i === 0} onClick={() => items.move(i, i - 1)} className="rounded p-1 text-muted hover:bg-surface-soft disabled:opacity-40">
                             <ArrowUp className="size-4" aria-hidden />
                           </button>
-                          <button type="button" aria-label={t("moveDown")} disabled={i === items.fields.length - 1} onClick={() => items.move(i, i + 1)} className="rounded p-1 text-muted hover:bg-surface disabled:opacity-40">
+                          <button type="button" aria-label={t("moveDown")} disabled={i === items.fields.length - 1} onClick={() => items.move(i, i + 1)} className="rounded p-1 text-muted hover:bg-surface-soft disabled:opacity-40">
                             <ArrowDown className="size-4" aria-hidden />
                           </button>
                           <button type="button" aria-label={tc("delete")} onClick={() => items.remove(i)} className="rounded p-1 text-danger hover:bg-danger-soft">
                             <Trash2 className="size-4" aria-hidden />
                           </button>
                         </div>
-                      </div>
-                      <div className="grid gap-3">
-                        {spec.items!.fields.map((f) => (
-                          <FieldInput key={f.name} spec={f} path={`${itemsName}.${i}.${f.name}`} control={control} tenantId={tenantId} error={fieldErrors[`${itemsName}.${i}.${f.name}`]} />
-                        ))}
-                      </div>
-                    </li>
-                  ))}
-                </ol>
+                      </li>
+                    ))}
+                  </ol>
+                  {canEdit && (
+                    <button
+                      type="button"
+                      disabled={items.fields.length >= spec.items.max}
+                      onClick={() => items.append(emptyItem(spec) as never)}
+                      className="mt-3 flex w-full items-center justify-center gap-2 rounded-input border border-dashed border-primary/40 py-3 text-sm font-semibold text-primary hover:bg-success-soft disabled:opacity-40"
+                    >
+                      <Plus className="size-4" aria-hidden /> {t("addNew", { name: one(spec.items.labelKey) })}
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </fieldset>

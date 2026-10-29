@@ -15,6 +15,7 @@ export function MediaField({
   tenantId,
   error,
   disabled,
+  compact,
 }: {
   label: string;
   value: string;
@@ -22,6 +23,8 @@ export function MediaField({
   tenantId: string;
   error?: string;
   disabled?: boolean;
+  /** Table-cell variant: 40px thumbnail with an icon button, no hint text. */
+  compact?: boolean;
 }) {
   const t = useTranslations("editor");
   const tc = useTranslations("common");
@@ -42,6 +45,37 @@ export function MediaField({
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
     }
+  }
+
+  if (compact) {
+    return (
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-2">
+          {value ? (
+            // eslint-disable-next-line @next/next/no-img-element -- admin-only media served by the backend
+            <img src={adminMediaUrl(value)} alt="" className="size-10 shrink-0 rounded-full object-cover" />
+          ) : (
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-table text-muted">
+              <ImagePlus className="size-5" aria-hidden />
+            </span>
+          )}
+          <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" aria-label={label} className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
+          <Button type="button" size="sm" variant="secondary" loading={uploading} disabled={disabled} onClick={() => inputRef.current?.click()}>
+            {value ? t("replaceImage") : t("uploadImage")}
+          </Button>
+          {value && (
+            <button type="button" aria-label={tc("delete")} disabled={disabled || uploading} onClick={() => onChange("")} className="rounded p-1 text-danger hover:bg-danger-soft disabled:opacity-40">
+              <Trash2 className="size-4" aria-hidden />
+            </button>
+          )}
+        </div>
+        {(uploadError || error) && (
+          <p role="alert" className="text-xs text-danger">
+            {uploadError ?? error}
+          </p>
+        )}
+      </div>
+    );
   }
 
   return (
