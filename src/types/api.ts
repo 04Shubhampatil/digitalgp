@@ -404,3 +404,23 @@ export interface PublicTenantDto {
   defaultLocale: Locale;
   settings: TenantSettingsDto;
 }
+
+// ---------------------------------------------------------------------------
+// Contact-page form submissions (admin only; never returned publicly)
+// ---------------------------------------------------------------------------
+
+export interface FormSubmissionDto {
+  id: string;
+  kind: "FEEDBACK" | "VOLUNTEER";
+  name: string;
+  email: string | null;
+  phone: string | null;
+  category: string | null;
+  message: string | null;
+  createdAt: string;
+}
+
+export interface FormSubmissionSummaryDto {
+  feedback: { total: number; last30Days: number };
+  volunteer: { total: number; last30Days: number };
+}
