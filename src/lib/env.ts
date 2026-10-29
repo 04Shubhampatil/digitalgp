@@ -11,6 +11,10 @@ const envSchema = z.object({
   SESSION_COOKIE_NAME: z.string().min(1).default("dgp_session"),
   /** Directory for uploaded media on the VPS disk (git-ignored). */
   UPLOADS_DIR: z.string().min(1).default("uploads"),
+  /** Cloudflare Turnstile secret for public forms. Unset = CAPTCHA disabled (honeypot + timing only). */
+  TURNSTILE_SECRET_KEY: z.string().min(1).optional(),
+  /** How long contact-form submissions are kept before the purge job deletes them. */
+  FORM_SUBMISSION_RETENTION_MONTHS: z.coerce.number().int().min(1).max(60).default(12),
 });
 
 export type Env = z.infer<typeof envSchema>;
