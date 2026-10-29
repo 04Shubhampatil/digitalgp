@@ -85,8 +85,25 @@ Important: the Monthly Performance Report numbers (totals, resolution rate, tren
 **computed from the real grievance records** by a public read-only stats endpoint, not typed in by an admin.
 Typed-in figures would drift from the data and could mislead citizens. The editor then only needs labels and colours.
 
+## Our Village — Culture Management (`culture`, Figma 375:19200)
+
+| section key | content |
+| --- | --- |
+| `banner` | shared, above |
+| `village-intro` (left information card) | `{ iconId, title, description, buttonLabel, buttonLink }` |
+| `heritage-cards` (temples) | `items[]: { title, description, imageId }` reorderable |
+| `culture-cards` ("Culture, Tradition & Our Way of Life") | `{ enabled, items[]: { title, description, imageId } }` (4 in Figma) |
+| `homestay` | `{ heading, description, buttonLabel, buttonLink, imageId, features[]: { icon, title } }` |
+| `training-programs` | `items[]: { title, shortDescription, thumbnailImageId, ctaText, ctaLink, order, status: active|inactive, featured }` |
+| `leader-cards` | `items[]: { photoId, name, designation, description }` |
+| `fpo-gallery-voice` | `{ enabled, fpo: { iconId, title, description, points[] }, gallery: { title, description, imageIds[] }, voice: { title, description, videoId } }` — needs a **video media kind** (MP4, size limit) |
+| `success-stories` | `items[]: { imageId, title, description, buttonText, buttonLink, order }` |
+
+Every `*Id` field is a Media id and must be ownership-checked (same rule as `MEDIA_REF_PATTERN`).
+The public Our Village page today shows Figma pictures for most of these blocks; they become real content as sections are published.
+
 ## Pages still to be reviewed
 
-Our Village, Employment, Education, Environment,
+Employment, Education, Environment,
 Announcements & Circulars, Gallery, Contact — this file is extended as each frame is reviewed.
 Key Projects and Schemes already work through their own list + workflow (cards in the page editor).
