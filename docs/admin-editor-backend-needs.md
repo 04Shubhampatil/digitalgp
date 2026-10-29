@@ -217,3 +217,20 @@ needs, keep it tenant-scoped, never return it from public endpoints, and add a r
 All 16 admin frames have now been reviewed. Home and About are fully editable; Key Projects, Schemes,
 Announcements, Gallery and Contact have working cards in the page editor; the remaining pages wait for the
 sections listed above.
+
+## Public rendering of the new sections (frontend)
+
+Every section in `src/config/sections-pages.ts` now has a public renderer (`src/components/public/sections/cms/`).
+
+- **Placeholder vs published:** a page shows its Figma placeholder content until any of its backend sections is
+  published; from then on it shows only published content (never a mix of sample and real data). The announcements
+  page keeps a live list of the real announcements from the announcements module.
+- **Safeguards in the renderers:** the student spotlight is never shown unless `guardianConsent.confirmed` is true;
+  videos are embedded only from YouTube / Vimeo; map embeds only from Google Maps / OpenStreetMap, in a sandboxed
+  iframe; market prices show their update time and a warning once older than 7 days.
+- **Open points for the team:**
+  - **QR codes:** shown as link cards. Generating the QR image needs a QR library (new dependency, to be agreed).
+  - **Monthly performance report:** not shown yet, because the figures must come from a stats endpoint over real complaints.
+  - **Budget visualizer:** totals use the entered bar values (`valueType: dynamic`); `auto` fields need a rule for how to calculate them. The schema holds one bar chart, so the tabs are names only.
+  - **Forms:** complaint and tracking forms use the real endpoints; feedback and volunteer forms open the visitor's mail app until public submit endpoints exist.
+  - **Weather and calendar:** manual entry only (no provider fetch); the calendar ignores `eventsToShow`.

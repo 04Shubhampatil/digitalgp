@@ -9,6 +9,60 @@ import { AchievementsSection, WhatsNewSection } from "./HomeFeedSections";
 import { SchemeLevelsSection, SchemeShowcaseSection } from "./PageKit3";
 import { ActionCardsSection, AnnounceCategoriesSection, AnnounceFeedSection, DeadlinesDownloadsSection, HelpCardSection, RtsGridSection, ServiceStripSection } from "./PageKit4";
 import { AboutCardsSection } from "./AboutCardsSection";
+import { AssistanceItemsSection, BannerSection, CmsSuccessStoriesSection, LocalOpportunitiesSection, SchemeCardsSection, SupportCardsSection, TopStatsSection, TrainingProgramsSection } from "./cms/common";
+import {
+  BudgetVisualizerSection,
+  DocumentsSection,
+  ExpenditureSection,
+  IncomeSourcesSection,
+  InfraMapSection,
+  LatestAnnouncementsCard,
+  MapFiltersSection,
+  MarketPricesSection,
+  StatusCardsSection,
+  SustainabilityInitiativesSection,
+  TreeAdoptionSection,
+  UpcomingEventsCard,
+  WeatherUpdateSection,
+} from "./cms/data";
+import {
+  CmsContactCardsSection,
+  ComplaintFormSection,
+  EscalationMatrixSection,
+  FeedbackFormSection,
+  HelpSection,
+  OfficeLocationSection,
+  PartnersSection,
+  QrCodesSection,
+  ServiceCategoriesSection,
+  ServiceLinksSection,
+  TrackComplaintSection,
+  VolunteerCategoriesSection,
+  VolunteerRegistrationSection,
+} from "./cms/forms";
+import {
+  AnnouncementCategoriesSection,
+  CalendarSection,
+  CultureCardsSection,
+  DeadlineCardsSection,
+  DownloadFormsSection,
+  FpoGalleryVoiceSection,
+  HeritageCardsSection,
+  HomestaySection,
+  JobPortalsSection,
+  LeaderCardsSection,
+  LiveAnnouncementsSection,
+  MiniDocumentarySection,
+  PhotoGallerySection,
+  PressCoverageSection,
+  SkillDirectorySection,
+  StudentSpotlightSection,
+  ThenAndNowSection,
+  VideoGallerySection,
+  VillageIntroSection,
+  YouthPostsSection,
+  YouthSpeakTabsSection,
+} from "./cms/pages";
 import { GeographySection, HistorySection, MembersSection, OfficeSection } from "./AboutSections";
 import { HeroSection } from "./HeroSection";
 import { MonthlyMetricsSection, SarpanchMessageSection, VillageProgressSection, WardDetailsSection, WeatherSection, WelcomeVideoSection } from "./HomeExtras";
@@ -25,6 +79,8 @@ export interface SectionProps {
   locale: UiLocale;
   /** Published section JSON; shape is defined by the backend registry (src/config/sections.ts). */
   data: Record<string, unknown>;
+  /** Data of the other published sections of the same page, by section key (e.g. form categories). */
+  siblings?: Record<string, Record<string, unknown>>;
 }
 
 /**
@@ -45,7 +101,8 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
   "impact-grid": ImpactGridSection,
   "dev-timeline": DevTimelineSection,
   "financial-overview": FinancialOverviewSection,
-  "success-stories": SuccessStoriesSection,
+  // Figma placeholder blocks that share a name with a backend section key keep their own renderer key.
+  "stories-figma": SuccessStoriesSection,
   "cta-banner": CtaBannerSection,
   "facility-grid": FacilityGridSection,
   "image-crops": ImageCropsSection,
@@ -59,7 +116,7 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
   "scheme-levels": SchemeLevelsSection,
   "scheme-showcase": SchemeShowcaseSection,
   callout: CalloutSection,
-  "contact-cards": ContactCardsSection,
+  "contact-cards-figma": ContactCardsSection,
   "contact-feedback": ContactFeedbackSection,
   "volunteer-form": VolunteerFormSection,
   "grievance-register": GrievanceRegisterSection,
@@ -85,6 +142,63 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
   leaders: LeadersSection,
   notices: NoticesSection,
   "quick-links": QuickLinksSection,
+  // backend sections of the other pages (src/config/sections-pages.ts)
+  banner: BannerSection,
+  "top-stats": TopStatsSection,
+  "green-scoreboard": TopStatsSection,
+  "support-cards": SupportCardsSection,
+  "local-opportunities": LocalOpportunitiesSection,
+  "assistance-items": AssistanceItemsSection,
+  "success-stories": CmsSuccessStoriesSection,
+  "training-programs": TrainingProgramsSection,
+  "scheme-cards": SchemeCardsSection,
+  "infra-map": InfraMapSection,
+  "map-filters": MapFiltersSection,
+  "status-cards": StatusCardsSection,
+  "latest-announcements": LatestAnnouncementsCard,
+  "upcoming-events": UpcomingEventsCard,
+  "income-sources": IncomeSourcesSection,
+  expenditure: ExpenditureSection,
+  "budget-visualizer": BudgetVisualizerSection,
+  documents: DocumentsSection,
+  "tree-adoption": TreeAdoptionSection,
+  "sustainability-initiatives": SustainabilityInitiativesSection,
+  "market-prices": MarketPricesSection,
+  "weather-update": WeatherUpdateSection,
+  "service-links": ServiceLinksSection,
+  "service-categories": ServiceCategoriesSection,
+  "qr-codes": QrCodesSection,
+  help: HelpSection,
+  "complaint-form": ComplaintFormSection,
+  "track-complaint": TrackComplaintSection,
+  "escalation-matrix": EscalationMatrixSection,
+  "contact-cards": CmsContactCardsSection,
+  "office-location": OfficeLocationSection,
+  "feedback-form": FeedbackFormSection,
+  partners: PartnersSection,
+  "volunteer-categories": VolunteerCategoriesSection,
+  "volunteer-registration": VolunteerRegistrationSection,
+  "village-intro": VillageIntroSection,
+  "heritage-cards": HeritageCardsSection,
+  "culture-cards": CultureCardsSection,
+  homestay: HomestaySection,
+  "leader-cards": LeaderCardsSection,
+  "fpo-gallery-voice": FpoGalleryVoiceSection,
+  "skill-directory": SkillDirectorySection,
+  "job-portals": JobPortalsSection,
+  "student-spotlight": StudentSpotlightSection,
+  "youth-speak-tabs": YouthSpeakTabsSection,
+  "youth-posts": YouthPostsSection,
+  "announcement-categories": AnnouncementCategoriesSection,
+  "live-announcements": LiveAnnouncementsSection,
+  calendar: CalendarSection,
+  "deadline-cards": DeadlineCardsSection,
+  "download-forms": DownloadFormsSection,
+  "photo-gallery": PhotoGallerySection,
+  "video-gallery": VideoGallerySection,
+  "press-coverage": PressCoverageSection,
+  "then-and-now": ThenAndNowSection,
+  "mini-documentary": MiniDocumentarySection,
   // about page
   overview: WelcomeSection,
   history: HistorySection,
@@ -101,6 +215,7 @@ const ROW_GROUPS: { keys: string[]; cols: string }[] = [
   { keys: ["achievements", "whats-new"], cols: "lg:grid-cols-2" },
   { keys: ["weather", "sarpanch-message"], cols: "lg:grid-cols-2" },
   { keys: ["welcome-video", "village-progress"], cols: "lg:grid-cols-2" },
+  { keys: ["latest-announcements", "upcoming-events"], cols: "lg:grid-cols-2" },
 ];
 const GROUPED = new Set(ROW_GROUPS.flatMap((g) => g.keys));
 
@@ -108,6 +223,7 @@ export function renderSections(page: PublicPageDto, slug: string, locale: UiLoca
   const sorted = page.sections.slice().sort((a, b) => a.sortOrder - b.sortOrder);
   const out: React.ReactNode[] = [];
   const done = new Set<string>();
+  const siblings = Object.fromEntries(sorted.map((s) => [s.sectionKey, s.data]));
   for (const s of sorted) {
     if (done.has(s.sectionKey)) continue;
     const Section = RENDERERS[s.sectionKey];
@@ -122,14 +238,14 @@ export function renderSections(page: PublicPageDto, slug: string, locale: UiLoca
           <div className={`mx-auto grid max-w-[1440px] gap-5 px-4 sm:px-8 ${grp.cols} lg:gap-[20px] lg:px-[60px] [&>*:only-child]:lg:col-span-full`}>
             {members.map((m) => {
               const Card = RENDERERS[m.sectionKey]!;
-              return <Card key={m.sectionKey} slug={slug} locale={locale} data={m.data} tenantName={tenantName} />;
+              return <Card key={m.sectionKey} slug={slug} locale={locale} data={m.data} tenantName={tenantName} siblings={siblings} />;
             })}
           </div>
         </section>,
       );
       continue;
     }
-    out.push(<Section key={`${s.sectionKey}-${s.sortOrder}`} slug={slug} locale={locale} data={s.data} tenantName={tenantName} />);
+    out.push(<Section key={`${s.sectionKey}-${s.sortOrder}`} slug={slug} locale={locale} data={s.data} tenantName={tenantName} siblings={siblings} />);
   }
   return out;
 }
