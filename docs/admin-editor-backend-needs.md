@@ -136,8 +136,22 @@ stored with the section, plus who confirmed and when) before such a section can 
 reviewer should see it. The same applies to any section that shows an identifiable minor (success stories, gallery).
 YouTube/Reel `url` fields must be validated to the provider's domain and embedded without arbitrary scripts.
 
+## Environment & Sustainability (`environment`, Figma 375:19294)
+
+| section key | content |
+| --- | --- |
+| `banner`, `top-stats` | shared, above |
+| `green-scoreboard` | `items[]: { icon, title, value, description, visible }` (same shape as `top-stats`) |
+| `tree-adoption` | `{ enabled, title, description, bullets[], illustrationId, buttonText, buttonLink, stats[]: { icon, title, value, subText } }` |
+| `sustainability-initiatives` | `items[]: { imageId, title, description, active }` reorderable, paginated in the editor (9 in Figma) |
+| `market-prices` | `{ title, lastUpdatedAt, marketName, currency, rows[]: { commodity, unit, minPrice, maxPrice, modalPrice }, note, buttonText, buttonLink }` — prices are numbers; the public page must show `lastUpdatedAt` and should hide or flag the table when it is stale (e.g. older than 7 days) |
+| `weather-update` | `{ title, location, current: { temperature, humidity, wind, feelsLike, condition }, forecast[]: { date, icon, maxTemp, minTemp } }` |
+
+Weather note: typing the forecast by hand goes stale quickly. Prefer a server-side fetch from a weather
+provider (cached, with the location from the tenant) and keep the manual fields only as an override or
+fallback. The Home page already has a manual `weather` placeholder card with the same problem.
+
 ## Pages still to be reviewed
 
-Environment,
 Announcements & Circulars, Gallery, Contact — this file is extended as each frame is reviewed.
 Key Projects and Schemes already work through their own list + workflow (cards in the page editor).
