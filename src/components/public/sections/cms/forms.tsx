@@ -346,7 +346,7 @@ export async function OfficeLocationSection({ locale, data }: SectionProps) {
 }
 
 /** `feedback-form` (card in a two-column row with `office-location`): opens the visitor's mail app (no feedback endpoint yet). */
-export async function FeedbackFormSection({ locale, data }: SectionProps) {
+export async function FeedbackFormSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
   const d = data as { enabled?: boolean; showOnWebsite?: boolean; heading?: B; description?: B; recipientEmail?: string; submitButtonText?: B };
   if (d.enabled === false || d.showOnWebsite === false || !d.recipientEmail) return null;
@@ -359,9 +359,10 @@ export async function FeedbackFormSection({ locale, data }: SectionProps) {
         subject={tx(d.heading, locale) || t("feedback")}
         submitLabel={tx(d.submitButtonText, locale) || t("send")}
         hint={t("mailHint")}
+        api={{ slug, kind: "feedback" }}
         fields={[
           { name: "name", label: t("yourName"), required: true },
-          { name: "email", label: t("yourEmail"), type: "email", required: true },
+          { name: "email", label: t("yourEmail"), type: "email" },
           { name: "message", label: t("yourMessage"), type: "textarea", span: 4, required: true },
         ]}
       />
@@ -424,7 +425,7 @@ export async function VolunteerCategoriesSection({ locale, data }: SectionProps)
 }
 
 /** `volunteer-registration`: opens the visitor's mail app; the category list comes from `volunteer-categories`. */
-export async function VolunteerRegistrationSection({ locale, data, siblings }: SectionProps) {
+export async function VolunteerRegistrationSection({ slug, locale, data, siblings }: SectionProps) {
   const t = await getTranslations("public.cms");
   const d = data as { enabled?: boolean; showOnWebsite?: boolean; heading?: B; description?: B; deadline?: string; recipientEmail?: string; submitButtonText?: B };
   if (d.enabled === false || d.showOnWebsite === false || !d.recipientEmail) return null;
@@ -440,11 +441,12 @@ export async function VolunteerRegistrationSection({ locale, data, siblings }: S
           subject={tx(d.heading, locale) || t("volunteer")}
           submitLabel={tx(d.submitButtonText, locale) || t("send")}
           hint={t("mailHint")}
+          api={{ slug, kind: "volunteers", map: { area: "category" } }}
           fields={[
             { name: "name", label: t("yourName"), required: true },
-            { name: "phone", label: t("yourPhone"), type: "tel" },
+            { name: "phone", label: t("yourPhone"), type: "tel", required: true },
             { name: "email", label: t("yourEmail"), type: "email", required: true },
-            ...(categories.length ? [{ name: "area", label: t("volunteerArea"), type: "select" as const, options: categories, placeholder: t("choose") }] : []),
+            ...(categories.length ? [{ name: "area", label: t("volunteerArea"), type: "select" as const, options: categories, placeholder: t("choose"), required: true }] : []),
             { name: "message", label: t("yourMessage"), type: "textarea", span: 4 },
           ]}
         />
