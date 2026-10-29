@@ -512,6 +512,7 @@ model Media {
   pageShareImages      Page[]
   announcementAttachments Announcement[]
   projectCovers        Project[]
+  grievanceAttachments GrievanceAttachment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -539,6 +540,7 @@ model Grievance {
   resolutionNote String?
   resolvedAt     DateTime?
   events         GrievanceEvent[]
+  attachments    GrievanceAttachment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -611,4 +613,16 @@ model FormSubmission {
   createdAt DateTime           @default(now())
 
   @@index([tenantId, kind, createdAt])
+}
+
+/// Files a citizen attached to a complaint (only when the complaint form allows uploads).
+model GrievanceAttachment {
+  grievanceId String
+  grievance   Grievance @relation(fields: [grievanceId], references: [id], onDelete: Cascade)
+  mediaId     String
+  media       Media     @relation(fields: [mediaId], references: [id], onDelete: Restrict)
+  createdAt   DateTime  @default(now())
+
+  @@id([grievanceId, mediaId])
+  @@index([mediaId])
 }
