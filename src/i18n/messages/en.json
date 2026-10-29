@@ -613,7 +613,7 @@
     "seoTitle": "SEO title",
     "seoDescription": "SEO description",
     "shareImage": "Share image",
-    "noSections": "No sections are registered for this page yet. The backend section registry (src/config/sections.ts) decides what a page can contain.",
+    "noSections": "Section editing for this page is not available yet. The public page shows its design content until sections are published here.",
     "unknownSections": "Sections without an editor yet",
     "noContent": "No content yet",
     "showSection": "Show this section",

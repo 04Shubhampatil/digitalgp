@@ -1,0 +1,47 @@
+# Admin page editors — what the Figma needs from the backend
+
+Source: the Figma admin frames (file `qBVt7yv0KG41onObVWfnP1`). The frontend editor
+(`src/components/admin/editor/*`, specs in `src/config/section-editors.ts`) renders whatever the backend
+registry (`src/config/sections.ts`) defines. Today the registry has **Home** and **About** only; every
+other page shows "editing not available yet". To build a Figma editor the backend first needs the section
+(zod schema + draft/publish already generic), then the frontend adds an editor spec and public renderer.
+
+Owner: backend (Shubham). Frontend adds specs as soon as a section key + schema exists.
+
+## Shared sections (appear on almost every page)
+
+### `banner` (Figma "Banner Layout / Content / Image / Text position / Overlay / Appearance")
+| field | type |
+| --- | --- |
+| `layout` | `full-background` \| `image-right` \| `image-left` \| `framed-image` |
+| `heading`, `supportingText` | bilingual |
+| `description` | bilingual long |
+| `ctas` (max 2) | `{ label: bilingual, linkType: "page"\|"external", href, openInNewTab: boolean }[]` |
+| `imageId` | media id |
+| `textPosition` | `{ horizontal: left\|center\|right, vertical: top\|middle\|bottom }` |
+| `overlay` | `{ enabled: boolean, colour: hex, intensity: 0-100, gradient: "left-right"\|… }` |
+| `appearance` | `{ height: px, contentWidth: small\|medium\|large, cornerRadius: px, textColour: hex }` |
+
+### `top-stats` ("Top Statistics")
+`items[]: { icon, title: bilingual, value, unit?/description?: bilingual, visible: boolean }` (max ~8).
+Home already has `quick-stats` (label, value, icon): add `visible` and `unit` there instead of a new key if preferred.
+
+## Village Infrastructure (`infrastructure`, Figma 375:18637)
+
+| section key | content |
+| --- | --- |
+| `banner`, `top-stats` | shared, above |
+| `infra-map` | `{ zoom, mapType: satellite\|roadmap, showZoomControls, showLegend, enableWardClick, showWardBoundary, fullscreenControl, height, mapImageId, markers[] }` |
+| `map-filters` | `items[]: { icon, name: bilingual, colour: hex, visible }` (the legend) |
+| `status-cards` | `items[]: { icon, title, smallLabel, primaryValue, statusText, bottomLabel, bottomValue, buttonText, buttonLink, theme: blue\|orange\|green }` (reorderable) |
+| `latest-announcements` | `{ enabled, heading, buttonText, buttonLink, items[]: { icon, title, date } }` |
+| `upcoming-events` | `{ enabled, heading, buttonText, buttonLink, items[]: { icon, title, date } }` |
+
+The public site renders these from Figma placeholders in `src/content/figma-pages*.ts`; once a section is
+published here the placeholder is replaced automatically (published data always wins).
+
+## Pages still to be reviewed
+
+Finance & Budget, Citizen Services, Grievance, Our Village, Employment, Education, Environment,
+Announcements & Circulars, Gallery, Contact — this file is extended as each frame is reviewed.
+Key Projects and Schemes already work through their own list + workflow (cards in the page editor).
