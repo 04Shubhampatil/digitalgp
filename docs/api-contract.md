@@ -338,3 +338,44 @@ Rules enforced by the schemas:
 
 Not part of these schemas yet (need other endpoints): computed grievance statistics, public complaint
 and feedback forms, live weather, and server-generated QR images.
+
+## Contact-page forms (feedback and volunteers)
+
+Public submit endpoints. A form is open only while its Contact-page section is published with `enabled: true`
+and `showOnWebsite: true`; otherwise the endpoint returns `404 NOT_FOUND`.
+
+### POST /public/:tenantSlug/feedback
+Request (`feedbackSchema`, strict):
+```json
+{ "name": "2–120 chars", "email": "optional email", "phone": "optional +91…", "message": "10–2000 chars", "website": "", "turnstileToken": "optional" }
+```
+- `website` is a honeypot: it must be empty. A filled value gets a success response but nothing is stored or sent.
+- Rate limit: 5 submissions per hour per IP (`RATE_LIMITED`, 429).
+- CAPTCHA: Cloudflare Turnstile when `TURNSTILE_SECRET_KEY` is set (then `turnstileToken` is required). Without the key, only the honeypot and the rate limit apply.
+- Response `201`: `{ "data": { "message": "<successMessage>" } }`. Nothing about the stored record is returned.
+- Notifications: the record is stored; email goes to `recipientEmail` and `notificationEmail` (when set), and the `autoReply` text goes to the visitor when an email was given.
+
+### POST /public/:tenantSlug/volunteers
+Request (`volunteerSchema`, strict):
+```json
+{ "name": "2–120 chars", "email": "email (required)", "phone": "+91… (required)", "category": "must match a published volunteer category (en or mr)", "message": "optional, ≤2000", "website": "", "turnstileToken": "optional" }
+```
+- Refused with `400 BAD_REQUEST` after `deadline` (YYYY-MM-DD, UTC).
+- Category not in the published `volunteer-categories` list → `400 VALIDATION_ERROR` on `category`.
+- Same honeypot, rate limit (5/hour/IP) and CAPTCHA rules as feedback.
+- Response `201`: `{ "data": { "message": "<successMessage>" } }`.
+
+### Admin: GET /form-submissions?tenantId=&kind=FEEDBACK|VOLUNTEER&limit&cursor
+Auth required; capability `content:review` on the website's scope (GP admins and above). Paginated.
+Item shape (`FormSubmissionDto`): `{ id, kind, name, email, phone, category, message, createdAt }`. No IP address is stored or returned.
+
+### Admin: GET /form-submissions/:submissionId
+Same permissions. Another website's submission returns `404`.
+
+### Admin: GET /form-submissions/summary?tenantId=
+Same permissions. `{ "data": { "feedback": { "total", "last30Days" }, "volunteer": { "total", "last30Days" } } }`.
+
+### Retention
+Submissions older than `FORM_SUBMISSION_RETENTION_MONTHS` (default 12, env) are deleted by
+`npm run forms:purge` (`scripts/purge-form-submissions.ts`). Schedule it daily (cron or a Windows task).
+Only the fields the form asks for are stored.
