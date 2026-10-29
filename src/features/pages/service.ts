@@ -100,14 +100,16 @@ function requireDefinition(pageKey: string, sectionKey: string): SectionDefiniti
   return def;
 }
 
-/** Collect every `<x>ImageId` / `<x>PhotoId` / `<x>MediaId` value anywhere in the data. */
+/** Collect every media id held under a `...Id` / `...Ids` field anywhere in the data. */
 function collectMediaRefs(value: unknown, out: Set<string>): void {
   if (Array.isArray(value)) {
     for (const v of value) collectMediaRefs(v, out);
   } else if (value && typeof value === "object") {
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
       if (MEDIA_REF_PATTERN.test(k) && typeof v === "string") out.add(v);
-      else collectMediaRefs(v, out);
+      else if (MEDIA_REF_PATTERN.test(k) && Array.isArray(v)) {
+        for (const id of v) if (typeof id === "string") out.add(id);
+      } else collectMediaRefs(v, out);
     }
   }
 }
@@ -275,7 +277,7 @@ export async function transitionSection(
 ): Promise<PageSectionDto> {
   const tenant = await getTenantForActor(ctx, tenantId);
   assertCan(ctx, transitionCapability(action), { unitPath: tenant.unitPath, moduleKey: MODULE });
-  requireDefinition(pageKey, sectionKey);
+  const definition = requireDefinition(pageKey, sectionKey);
   const page = await loadPage(tenant.id, pageKey);
   const row = await loadSection(db, page.id, sectionKey);
   if (!row) throw Errors.notFound("Section");
@@ -291,6 +293,13 @@ export async function transitionSection(
     } else {
       const draft = row.draft;
       if (!draft) throw Errors.notFound("Draft");
+      if (action === "submit" && definition.submitCheck) {
+        try {
+          definition.submitCheck(draft.data);
+        } catch (err) {
+          throw Errors.badRequest(err instanceof Error ? err.message : "This section cannot be submitted yet");
+        }
+      }
       const to = nextStatus(draft.status, action, note);
       const data: Prisma.SectionRevisionUncheckedUpdateInput = { status: to };
       switch (action) {

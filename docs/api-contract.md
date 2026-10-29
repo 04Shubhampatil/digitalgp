@@ -306,3 +306,35 @@ Tenant resolution for server-rendered pages: `resolvePublicTenant(host, pathname
 
 Pages other than `home` and `about` currently have no registered sections (`sections: []`); add
 definitions in `src/config/sections.ts` to enable them — no migration needed.
+
+## Page sections — admin editor registry
+
+Section keys per public page, as registered in `src/config/sections.ts` (Home, About) and
+`src/config/sections-pages.ts` (all other pages). Every key is written with
+`PUT /content/:tenantId/pages/:pageKey/sections/:sectionKey/draft` and validated against its schema.
+Full field lists: `docs/admin-editor-backend-needs.md`.
+
+| Page | Section keys |
+| --- | --- |
+| infrastructure | banner, top-stats, infra-map, map-filters, status-cards, latest-announcements, upcoming-events |
+| finance | banner, top-stats, income-sources, expenditure, budget-visualizer, documents |
+| services | banner, service-links, service-categories, qr-codes, top-stats, help |
+| grievance | banner, complaint-form, support-cards, track-complaint, escalation-matrix, monthly-report |
+| culture | banner, village-intro, heritage-cards, culture-cards, homestay, training-programs, leader-cards, fpo-gallery-voice, success-stories |
+| employment | banner, support-cards, local-opportunities, skill-directory, assistance-items, training-programs, job-portals, success-stories |
+| education | banner, support-cards, student-spotlight, youth-speak-tabs, youth-posts, scheme-cards, success-stories |
+| environment | banner, top-stats, green-scoreboard, tree-adoption, sustainability-initiatives, market-prices, weather-update |
+| announcements | banner, top-stats, announcement-categories, calendar, deadline-cards, download-forms, support-cards |
+| gallery | banner, photo-gallery, video-gallery, press-coverage, then-and-now, mini-documentary |
+| contact | banner, contact-cards, office-location, feedback-form, partners, volunteer-categories, volunteer-registration |
+
+Rules enforced by the schemas:
+- Links are `https://` (job portals, press, QR codes, social links); CTA hrefs also allow site paths and `mailto:`/`tel:`.
+- Videos: YouTube or Vimeo only. Social reels: YouTube, Instagram or Facebook. Maps: Google Maps or OpenStreetMap embeds only.
+- Money amounts are decimal strings (`12500.00`); market prices must satisfy min ≤ modal ≤ max.
+- Media fields (`*Id`, `*Ids`, including `fileId`, `iconId`, `logoId`, `videoId`, `thumbnailId`) must belong to the website or an ancestor unit.
+- Submitting a Student Spotlight for review requires `guardianConsent.confirmed = true`
+  (`confirmedBy`, `confirmedAt`); the check runs on `submit` only, so drafts can be saved without it.
+
+Not part of these schemas yet (need other endpoints): computed grievance statistics, public complaint
+and feedback forms, live weather, and server-generated QR images.

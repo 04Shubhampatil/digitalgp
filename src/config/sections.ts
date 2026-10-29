@@ -1,30 +1,18 @@
 import { z } from "zod";
 import type { PageKey } from "@/config/pages";
+import { PAGE_SECTIONS } from "@/config/sections-pages";
+import { bilingualLongSchema, bilingualSchema, href, mediaId, phone, text, type SectionDefinition } from "@/config/section-primitives";
 
 /**
  * Section registry: which sections each public page is made of and the zod schema that
- * `SectionRevision.data` must satisfy. The frontend renders by `sectionKey`; the backend validates
- * every draft write against the schema here. Add pages/sections by extending this file — the
- * database needs no migration (`Section.sectionKey` + JSON data).
+ * `SectionRevision.data` must satisfy. Home and About are defined here; every other page is in
+ * sections-pages.ts. Shared primitives live in section-primitives.ts.
  *
  * Conventions: all human text is bilingual `{ en?, mr? }`; media references are `<something>Id`
  * fields holding a Media id (ownership is verified on write, see src/features/pages/service.ts).
  */
 
-const text = (max: number) => z.string().trim().max(max);
-export const bilingualSchema = z.object({ en: text(200).optional(), mr: text(200).optional() }).strict();
-export const bilingualLongSchema = z.object({ en: text(20_000).optional(), mr: text(20_000).optional() }).strict();
-const mediaId = z.string().trim().min(10).max(40).regex(/^[a-z0-9]+$/, "Invalid media id");
-const href = z.string().trim().max(2000).regex(/^(https?:\/\/|\/|mailto:|tel:)/, "Links must be absolute URLs, site-relative paths, mailto: or tel:");
-const phone = z.string().trim().regex(/^\+?[0-9]{10,15}$/).optional();
-
-export interface SectionDefinition {
-  key: string;
-  /** Zod schema for `SectionRevision.data`. Unknown keys are rejected. */
-  schema: z.ZodType;
-  /** Default ordering on first save. */
-  sortOrder: number;
-}
+export { MEDIA_REF_PATTERN, bilingualLongSchema, bilingualSchema, type SectionDefinition } from "@/config/section-primitives";
 
 const home: SectionDefinition[] = [
   {
@@ -123,7 +111,7 @@ const home: SectionDefinition[] = [
       .object({
         heading: bilingualSchema.optional(),
         items: z
-          .array(z.object({ name: bilingualSchema, designation: bilingualSchema, photoId: mediaId.optional(), phone }).strict())
+          .array(z.object({ name: bilingualSchema, designation: bilingualSchema, photoId: mediaId.optional(), phone: phone.optional() }).strict())
           .min(1)
           .max(20),
       })
@@ -171,7 +159,7 @@ const about: SectionDefinition[] = [
       .object({
         heading: bilingualSchema.optional(),
         items: z
-          .array(z.object({ name: bilingualSchema, designation: bilingualSchema, wardNo: text(20).optional(), phone, photoId: mediaId.optional() }).strict())
+          .array(z.object({ name: bilingualSchema, designation: bilingualSchema, wardNo: text(20).optional(), phone: phone.optional(), photoId: mediaId.optional() }).strict())
           .min(1)
           .max(50),
       })
@@ -184,7 +172,7 @@ const about: SectionDefinition[] = [
       .object({
         address: bilingualLongSchema,
         hours: bilingualSchema.optional(),
-        phone,
+        phone: phone.optional(),
         email: z.email().max(254).optional(),
         mapUrl: href.optional(),
       })
@@ -192,7 +180,7 @@ const about: SectionDefinition[] = [
   },
 ];
 
-export const SECTION_REGISTRY: Partial<Record<PageKey, readonly SectionDefinition[]>> = { home, about };
+export const SECTION_REGISTRY: Partial<Record<PageKey, readonly SectionDefinition[]>> = { home, about, ...PAGE_SECTIONS };
 
 export function sectionsForPage(pageKey: PageKey): readonly SectionDefinition[] {
   return SECTION_REGISTRY[pageKey] ?? [];
@@ -202,5 +190,3 @@ export function findSection(pageKey: PageKey, sectionKey: string): SectionDefini
   return sectionsForPage(pageKey).find((s) => s.key === sectionKey);
 }
 
-/** Keys of fields that reference Media ids, used for ownership verification on write. */
-export const MEDIA_REF_PATTERN = /(image|photo|media)Id$/i;
