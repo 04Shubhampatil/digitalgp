@@ -9,6 +9,7 @@ import { SECTION_EDITORS, editorSpec } from "@/config/section-editors";
 import { PageSettingsForm } from "@/components/admin/editor/PageSettingsForm";
 import { SectionEditor } from "@/components/admin/editor/SectionEditor";
 import { ProjectsManager } from "@/components/admin/websites/ProjectsManager";
+import { SchemesManager } from "@/components/admin/websites/SchemesManager";
 import { PageHeader } from "@/components/ui/Card";
 import { content, tenants } from "@/lib/api/admin";
 import { isApiError } from "@/lib/api/client";
@@ -21,10 +22,10 @@ export const metadata: Metadata = { title: "Page editor" };
  * Per-page CMS editor (Figma "1. Home Admin" … "15. Contact"): one collapsible card per
  * registered section, each with its own draft / review / publish lifecycle.
  */
-export default async function PageEditor({ params, searchParams }: { params: Promise<{ tenantId: string; pageKey: string }>; searchParams: Promise<{ stage?: string }> }) {
+export default async function PageEditor({ params, searchParams }: { params: Promise<{ tenantId: string; pageKey: string }>; searchParams: Promise<{ stage?: string; level?: string }> }) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
-  const [{ tenantId, pageKey }, { stage }, t, ta, cookie] = await Promise.all([params, searchParams, getTranslations("editor"), getTranslations("admin"), cookieHeader()]);
+  const [{ tenantId, pageKey }, { stage, level }, t, ta, cookie] = await Promise.all([params, searchParams, getTranslations("editor"), getTranslations("admin"), cookieHeader()]);
   if (!isPageKey(pageKey)) notFound();
 
   let tenant;
@@ -58,10 +59,12 @@ export default async function PageEditor({ params, searchParams }: { params: Pro
       />
 
       <div className="grid gap-4">
-        {/* Key Projects has no registered sections: its content is the project list (own workflow). */}
+        {/* Key Projects and Schemes have no registered sections: their content is a list with its own workflow. */}
         {pageKey === "projects" && <ProjectsManager user={user} tenantId={tenantId} basePath={`/admin/websites/${tenantId}/pages/projects`} stage={stage} />}
 
-        {specs.length === 0 && pageKey !== "projects" && <p className="rounded-card border border-line bg-surface p-5 text-sm text-muted">{t("noSections")}</p>}
+        {pageKey === "schemes" && <SchemesManager user={user} tenantId={tenantId} basePath={`/admin/websites/${tenantId}/pages/schemes`} level={level} />}
+
+        {specs.length === 0 && pageKey !== "projects" && pageKey !== "schemes" && <p className="rounded-card border border-line bg-surface p-5 text-sm text-muted">{t("noSections")}</p>}
 
         {ordered.map((section) => {
           const spec = editorSpec(pageKey, section.sectionKey);

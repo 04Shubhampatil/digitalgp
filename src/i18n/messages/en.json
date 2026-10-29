@@ -351,7 +351,13 @@
       "processEn": "How to apply (English)",
       "processMr": "How to apply (Marathi)",
       "aggregateHint": "Aggregate numbers only — never individual beneficiary details.",
-      "details": "Details"
+      "details": "Details",
+      "schemeName": "Scheme name",
+      "amountDisbursed": "Amount disbursed",
+      "managementTitle": "Featured schemes",
+      "managementDesc": "Manage central, state and district level schemes shown on this website.",
+      "showingFirst": "Showing the first {n} schemes.",
+      "viewAll": "View all schemes"
     },
     "projectsUi": {
       "subtitle": "Development works of a Gram Panchayat: upcoming, ongoing and completed.",
