@@ -8,6 +8,7 @@ import type { ClientInfo } from "@/lib/http";
 import { sendMail } from "@/lib/mailer";
 import { assertCan } from "@/lib/permissions";
 import { consumeRateLimit } from "@/lib/rate-limit";
+import { publishedSectionData as publishedSection } from "@/lib/published-section";
 import { getPublicTenantBySlug, getTenantForActor } from "@/lib/tenant";
 import { paginate } from "@/lib/validation";
 import type { FormSubmissionDto, FormSubmissionSummaryDto } from "@/types/api";
@@ -45,16 +46,6 @@ type VolunteerSettings = {
   recipientEmail?: string;
   successMessage?: Bilingual;
 };
-
-/** Published data of one section, or null when the section is missing or hidden. */
-async function publishedSection(tenantId: string, pageKey: string, sectionKey: string): Promise<Record<string, unknown> | null> {
-  const section = await db.section.findFirst({
-    where: { tenantId, sectionKey, page: { pageKey } },
-    include: { published: true },
-  });
-  if (!section || !section.isVisible || !section.published) return null;
-  return section.published.data as Record<string, unknown>;
-}
 
 function localized(value: Bilingual | undefined): string {
   return value?.en ?? value?.mr ?? "Thank you. Your message has been received.";
