@@ -118,8 +118,26 @@ The public Our Village page today shows Figma pictures for most of these blocks;
 Reuse suggestion: define the repeating shapes once (`icon-card-list`, `image-card-list`, `success-stories`) and
 register them on several pages instead of one section per page.
 
+## Education & Youth Corner (`education`, Figma 375:20423)
+
+| section key | content |
+| --- | --- |
+| `banner` | shared, above |
+| `support-cards` | shared icon-card list (see Employment) |
+| `student-spotlight` | `{ photoId, name, classAndSchool, achievements, quote, buttonText, buttonLink, achievementCards[]: { icon, title, value } }` |
+| `youth-speak-tabs` | `items[]: { name, active }` reorderable (All, Blogs, Videos, YouTube, Reels, Creative Ideas) |
+| `youth-posts` | per tab: `items[]: { tabKey, type: blog|youtube|reel|idea, title, coverImageId, url }` with post counts derived from the items; "Manage posts" is a list editor per tab |
+| `scheme-cards` | `items[]: { icon, title, description, buttonText, buttonLink, active }` reorderable |
+| `success-stories` | shared (see Employment) |
+
+**Privacy (needs a decision before building):** the student spotlight publishes a child's photo, name, class
+and school. The backend should require an explicit **guardian consent confirmation** (a required checkbox
+stored with the section, plus who confirmed and when) before such a section can be submitted for review, and the
+reviewer should see it. The same applies to any section that shows an identifiable minor (success stories, gallery).
+YouTube/Reel `url` fields must be validated to the provider's domain and embedded without arbitrary scripts.
+
 ## Pages still to be reviewed
 
-Education, Environment,
+Environment,
 Announcements & Circulars, Gallery, Contact — this file is extended as each frame is reviewed.
 Key Projects and Schemes already work through their own list + workflow (cards in the page editor).
