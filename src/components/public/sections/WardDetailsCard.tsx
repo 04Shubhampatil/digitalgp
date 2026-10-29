@@ -31,17 +31,52 @@ function percentOf(r: WardRow): number {
   return m ? Math.max(0, Math.min(100, (Number(m[1]) / Number(m[2])) * 100)) : 0;
 }
 
-/** Ward map image + "Ward Details" card with ward selector (Figma 375:12497). */
-export function WardDetailsCard({ heading, wards, mapSrc, viewAll }: { heading: string; wards: WardView[]; mapSrc: string; viewAll?: { label: string; href: string } }) {
+const WARD_COLOURS = ["#2f9e3f", "#e0a010", "#1a62e0", "#7b2cbf", "#d9480f", "#0b7285", "#c2255c", "#5c940d"];
+
+/**
+ * Schematic ward map: one block per ward in the data (names and count follow the backend), with a
+ * legend. Clicking a block selects the ward. It is not a survey map; real ward boundaries need map data.
+ */
+function WardMap({ wards, active, onSelect }: { wards: WardView[]; active: number; onSelect: (i: number) => void }) {
+  const cols = Math.min(wards.length, wards.length > 6 ? 4 : wards.length > 2 ? 3 : 2);
+  return (
+    <div className="relative h-[249px] overflow-hidden rounded-[10px] border border-[#414141] bg-[#1d3b24] p-3">
+      <div className="grid h-full gap-2" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridAutoRows: wards.length <= cols ? "minmax(0, 140px)" : "1fr", alignContent: "center" }}>
+        {wards.map((w, i) => {
+          const c = WARD_COLOURS[i % WARD_COLOURS.length]!;
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => onSelect(i)}
+              aria-pressed={i === active}
+              className="flex items-center justify-center rounded-[14px] px-2 text-center text-[12px] font-semibold text-white transition-opacity"
+              style={{ backgroundColor: c, opacity: i === active ? 1 : 0.55, outline: i === active ? "2px solid white" : "none" }}
+            >
+              {w.name}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** Ward map + "Ward Details" card with ward selector (Figma 375:12497). */
+export function WardDetailsCard({ heading, wards, mapSrc, viewAll }: { heading: string; wards: WardView[]; mapSrc?: string; viewAll?: { label: string; href: string } }) {
   const [idx, setIdx] = useState(0);
   const ward = wards[idx] ?? wards[0];
   if (!ward) return null;
   return (
     <div className="rounded-[10px] border border-[#414141]/20 bg-white px-3 py-2">
-      <div className="relative h-[249px] overflow-hidden rounded-[10px] border border-[#414141]">
-        {/* eslint-disable-next-line @next/next/no-img-element -- static design asset */}
-        <img src={mapSrc} alt="" className="absolute -top-[0.4%] -left-[0.38%] h-[185.9%] w-[100.9%] max-w-none" loading="lazy" />
-      </div>
+      {mapSrc ? (
+        <div className="relative h-[249px] overflow-hidden rounded-[10px] border border-[#414141]">
+          {/* eslint-disable-next-line @next/next/no-img-element -- ward map image supplied by the Gram Panchayat */}
+          <img src={mapSrc} alt="" className="h-full w-full object-cover" loading="lazy" />
+        </div>
+      ) : (
+        <WardMap wards={wards} active={idx} onSelect={setIdx} />
+      )}
       <div className="relative mt-0 overflow-hidden rounded-[10px] border border-[#414141]/20 bg-white px-3 pt-2 pb-4">
         <div className="flex items-center justify-between">
           <h3 className="text-[14px] leading-6 font-semibold text-[#135130]">{heading}</h3>

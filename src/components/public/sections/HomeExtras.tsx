@@ -225,8 +225,6 @@ export function MonthlyMetricsSection({ locale, data }: SectionProps) {
 }
 
 /** Ward map placeholder from the design; swap via `mapImageUrl` once a ward map is uploaded. */
-const FIGMA_WARD_MAP = "/images/figma/ward-map.png";
-
 /** `ward-details`: ward map + ward selector with per-ward progress rows (Figma 375:12497). */
 export async function WardDetailsSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public");
@@ -246,7 +244,7 @@ export async function WardDetailsSection({ slug, locale, data }: SectionProps) {
     <WardDetailsCard
       heading={pickText(d.heading, locale) || t("wardDetails")}
       wards={wards}
-      mapSrc={d.mapImageUrl ?? FIGMA_WARD_MAP}
+      mapSrc={d.mapImageUrl}
       viewAll={va?.href && pickText(va.label, locale) ? { label: pickText(va.label, locale), href: resolveHref(va.href, slug) } : undefined}
     />
   );
