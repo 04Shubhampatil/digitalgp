@@ -4,6 +4,8 @@ import type {
   AnnouncementDto,
   AuditLogDto,
   ContentStatus,
+  FormSubmissionDto,
+  FormSubmissionSummaryDto,
   GrievanceDto,
   GrievanceStatus,
   MediaDto,
@@ -244,4 +246,10 @@ export const GRIEVANCE_NEXT: Record<GrievanceStatus, ("IN_PROGRESS" | "RESOLVED"
 // ---------------------------------------------------------------- audit
 export const audit = {
   list: (query: ListQuery, o: Opts = {}) => apiFetchPage<AuditLogDto>("/audit-logs", { query, ...o }),
+};
+
+// --------------------------------------------------------------- contact-page form submissions
+export const formSubmissions = {
+  list: (query: ListQuery, o: Opts = {}) => apiFetchPage<FormSubmissionDto>("/form-submissions", { query, ...o }),
+  summary: (tenantId: string, o: Opts = {}) => apiFetch<FormSubmissionSummaryDto>("/form-submissions/summary", { query: { tenantId }, ...o }),
 };

@@ -44,7 +44,24 @@ export function listPublicProjects(slug: string, query: Record<string, QueryValu
   return apiFetchPage<PublicProjectDto>(`/public/${encodeURIComponent(slug)}/projects`, { query });
 }
 
+export interface GrievanceFormSettings {
+  captchaEnabled: boolean;
+  allowFileUpload: boolean;
+  maxFileSizeMb: number;
+  allowedFileTypes: string[];
+  heading: { en?: string; mr?: string } | null;
+  description: { en?: string; mr?: string } | null;
+  successMessage: { en?: string; mr?: string } | null;
+  submitButtonText: { en?: string; mr?: string } | null;
+}
+
+/** GET /public/:slug/grievance-form — what the complaint form must adapt to (CAPTCHA, uploads). */
+export function getGrievanceFormSettings(slug: string) {
+  return apiFetch<GrievanceFormSettings>(`/public/${encodeURIComponent(slug)}/grievance-form`);
+}
+
 export interface SubmitGrievanceInput {
+  turnstileToken?: string;
   category: string;
   citizenName: string;
   citizenPhone?: string | null;
