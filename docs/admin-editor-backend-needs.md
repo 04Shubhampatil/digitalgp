@@ -50,7 +50,7 @@ published here the placeholder is replaced automatically (published data always 
 | `budget-visualizer` | `{ enabled, heading, subtitle, backgroundColour, tabs[]: { name, enabled }, overviewCard: { title, fields[]: { label, valueType: dynamic\|auto, prefixSuffix, colour } }, barChart[]: { label, value, colour }, downloadReport: { enabled, buttonText, fileId, icon } }` |
 | `documents` | `{ heading, subtitle, description?, backgroundColour, items[]: { title, fileId, buttonText } }` — file size is derived from the upload |
 
-Backend notes: documents need a **PDF media kind** (max 10 MB, PDF only) and the public site must never
+Backend notes: PDF uploads already exist (media kind `DOCUMENT`, max 10 MB). The public site must never
 expose files from unpublished sections. Money amounts should be stored as numbers/decimal strings, not free text.
 
 ## Citizen Services & Form (`services`, Figma 375:20013)
@@ -96,7 +96,7 @@ Typed-in figures would drift from the data and could mislead citizens. The edito
 | `homestay` | `{ heading, description, buttonLabel, buttonLink, imageId, features[]: { icon, title } }` |
 | `training-programs` | `items[]: { title, shortDescription, thumbnailImageId, ctaText, ctaLink, order, status: active|inactive, featured }` |
 | `leader-cards` | `items[]: { photoId, name, designation, description }` |
-| `fpo-gallery-voice` | `{ enabled, fpo: { iconId, title, description, points[] }, gallery: { title, description, imageIds[] }, voice: { title, description, videoId } }` — needs a **video media kind** (MP4, size limit) |
+| `fpo-gallery-voice` | `{ enabled, fpo: { iconId, title, description, points[] }, gallery: { title, description, imageIds[] }, voice: { title, description, videoId } }` — uses video uploads (`VIDEO` kind exists for MP4/WebM, but the cap is **10 MB**; the Figma allows 500 MB, so decide: raise the limit with streaming/storage planning, or link YouTube/Vimeo instead) |
 | `success-stories` | `items[]: { imageId, title, description, buttonText, buttonLink, order }` |
 
 Every `*Id` field is a Media id and must be ownership-checked (same rule as `MEDIA_REF_PATTERN`).
@@ -165,13 +165,33 @@ Still needed from the backend (new sections for this page):
 | `announcement-categories` | `items[]: { label, icon }` — the category tiles under the banner. Better: derive them from the `category` values that announcements actually use |
 | `calendar` | `{ title, defaultMonthView: current|custom, defaultMonth, eventsToShow (1-10), visible, events[]: { date, title, colour, startTime, endTime } }` |
 | `deadline-cards` | `items[]: { icon, date, title, subtitle }` reorderable |
-| `download-forms` | `items[]: { icon, name, description?, fileId }` — needs the **PDF media kind** (see Finance); size is derived from the file |
+| `download-forms` | `items[]: { icon, name, description?, fileId }` — uses PDF uploads (`DOCUMENT` kind, 10 MB); size is derived from the file |
 | `support-cards` | shared icon-card list |
 
 Suggestion: calendar events and deadlines could be a single "dated item" model so one entry can appear in both
 the calendar and the deadline strip.
 
+## Gallery & Media (`gallery`, Figma 375:19248)
+
+Done in the frontend: a "Media library" card in the page editor with this website's uploads (upload / delete,
+JPG, PNG, WebP, GIF, MP4, WebM, PDF up to 10 MB), reusing the existing media module.
+
+Still needed from the backend (new sections):
+
+| section key | content |
+| --- | --- |
+| `banner` | shared, above |
+| `photo-gallery` | `{ categories[]: { name, order }, photos[]: { imageId, title, categoryKey, date, order } }` — captions and categories are what turn the media library into a gallery |
+| `video-gallery` | `items[]: { thumbnailId, title, videoUrl, date, duration, order }` — prefer YouTube/Vimeo links (validate the domain); uploads are capped at 10 MB |
+| `press-coverage` | `items[]: { logoId, mediaName, title, date, url, order }` — external `url` must be https and opened with `rel="noopener noreferrer"` |
+| `then-and-now` | `{ heading, autoPlay, transitionMs, comparisons[]: { beforeImageId, afterImageId, heading, order } }` |
+| `mini-documentary` | `{ heading, title, description, source: upload|link, videoId?, videoUrl?, publishedDate, playback: { autoplay, controls, muted, loop }, autoThumbnail }` |
+
+Decision needed: Figma shows video upload up to **500 MB**, the backend caps every upload at **10 MB**. Either
+raise the cap for videos (with storage/streaming planning) or support external video links only.
+Photos of identifiable people (especially children) should follow the guardian-consent rule from Education.
+
 ## Pages still to be reviewed
 
-Gallery, Contact — this file is extended as each frame is reviewed.
+Contact — this file is extended as each frame is reviewed.
 Key Projects and Schemes already work through their own list + workflow (cards in the page editor).

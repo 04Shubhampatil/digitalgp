@@ -9,6 +9,7 @@ import { SECTION_EDITORS, editorSpec } from "@/config/section-editors";
 import { PageSettingsForm } from "@/components/admin/editor/PageSettingsForm";
 import { SectionEditor } from "@/components/admin/editor/SectionEditor";
 import { AnnouncementsManager } from "@/components/admin/websites/AnnouncementsManager";
+import { GalleryManager } from "@/components/admin/websites/GalleryManager";
 import { ProjectsManager } from "@/components/admin/websites/ProjectsManager";
 import { SchemesManager } from "@/components/admin/websites/SchemesManager";
 import { PageHeader } from "@/components/ui/Card";
@@ -60,14 +61,16 @@ export default async function PageEditor({ params, searchParams }: { params: Pro
       />
 
       <div className="grid gap-4">
-        {/* Key Projects, Schemes and Announcements have no registered sections: their content is a list with its own workflow. */}
+        {/* Key Projects, Schemes, Announcements and Gallery have no registered sections: their content is a list with its own workflow. */}
         {pageKey === "projects" && <ProjectsManager user={user} tenantId={tenantId} basePath={`/admin/websites/${tenantId}/pages/projects`} stage={stage} />}
 
         {pageKey === "schemes" && <SchemesManager user={user} tenantId={tenantId} basePath={`/admin/websites/${tenantId}/pages/schemes`} level={level} />}
 
         {pageKey === "announcements" && <AnnouncementsManager user={user} tenantId={tenantId} />}
 
-        {specs.length === 0 && !["projects", "schemes", "announcements"].includes(pageKey) && <p className="rounded-card border border-line bg-surface p-5 text-sm text-muted">{t("noSections")}</p>}
+        {pageKey === "gallery" && <GalleryManager user={user} tenantId={tenantId} />}
+
+        {specs.length === 0 && !["projects", "schemes", "announcements", "gallery"].includes(pageKey) && <p className="rounded-card border border-line bg-surface p-5 text-sm text-muted">{t("noSections")}</p>}
 
         {ordered.map((section) => {
           const spec = editorSpec(pageKey, section.sectionKey);

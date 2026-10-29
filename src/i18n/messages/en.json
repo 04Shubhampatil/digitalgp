@@ -400,7 +400,11 @@
       "website": "Website",
       "upload": "Upload files",
       "hint": "Uploading to: {name}. JPG, PNG, WebP, GIF, MP4, WebM or PDF, up to 10 MB each.",
-      "deleteConfirm": "Delete “{name}”? Pages that use it will show no image."
+      "deleteConfirm": "Delete “{name}”? Pages that use it will show no image.",
+      "websiteTitle": "Media library",
+      "websiteDesc": "Photos, videos and PDFs uploaded for this website.",
+      "showingFirst": "Showing the latest {n} files.",
+      "viewAll": "Open the full media library"
     },
     "auditUi": {
       "subtitle": "Who did what, and when. Operators see only their own actions.",
