@@ -93,6 +93,32 @@ export const mapEmbedUrl = z
     "Use a Google Maps or OpenStreetMap embed link",
   );
 
+// ---------------------------------------------------------------------------
+// GeoJSON geometry for ward maps (Polygon / MultiPolygon only, bounded size, WGS84 ranges)
+// ---------------------------------------------------------------------------
+
+/** Maximum coordinate pairs in one ward geometry; keeps section JSON and map rendering small. */
+export const GEOMETRY_MAX_POSITIONS = 2000;
+
+const position = z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]);
+/** A ring: ≥ 4 positions, first equals last (closed). */
+const ring = z
+  .array(position)
+  .min(4)
+  .refine((r) => r[0]![0] === r[r.length - 1]![0] && r[0]![1] === r[r.length - 1]![1], "Each ring must be closed (first and last position equal)");
+const polygonCoords = z.array(ring).min(1).max(20);
+const countPositions = (coords: number[][][]) => coords.reduce((n, r) => n + r.length, 0);
+
+export const geometrySchema = z
+  .discriminatedUnion("type", [
+    z.object({ type: z.literal("Polygon"), coordinates: polygonCoords }).strict(),
+    z.object({ type: z.literal("MultiPolygon"), coordinates: z.array(polygonCoords).min(1).max(50) }).strict(),
+  ])
+  .refine(
+    (g) => (g.type === "Polygon" ? countPositions(g.coordinates) : g.coordinates.reduce((n, p) => n + countPositions(p), 0)) <= GEOMETRY_MAX_POSITIONS,
+    `A ward geometry may hold at most ${GEOMETRY_MAX_POSITIONS} coordinate pairs`,
+  );
+
 /** Repeated list of bilingual items: `items: [{...}]` with a sane upper bound. */
 export const itemList = <T extends z.ZodType>(item: T, max: number) => z.array(item).max(max);
 

@@ -79,7 +79,7 @@ async function findInScope(ctx: AuthContext, id: string): Promise<ProjectRow> {
 /** A cover image must belong to the same tenant (or be shared from an ancestor) and not be deleted. */
 async function validateCoverImage(tenantId: string, tenantPath: string, coverImageId: string) {
   const media = await db.media.findFirst({
-    where: { id: coverImageId, deletedAt: null, kind: "IMAGE" },
+    where: { id: coverImageId, deletedAt: null, kind: "IMAGE", source: "ADMIN" },
     select: { tenantId: true, ownerUnit: { select: { path: true } } },
   });
   if (!media) throw Errors.badRequest("Cover image not found");

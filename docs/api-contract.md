@@ -250,7 +250,7 @@ admin. Reads: roles with `grievance:manage` (GP admin and above) or operators gr
 | Method | Path                               | Capability | Body / query | Response |
 |--------|------------------------------------|------------|--------------|----------|
 | GET    | `/grievances`                      | read (see above) | `?tenantId&status&category&assignedToId&q&limit&cursor` | paginated `GrievanceDto` |
-| GET    | `/grievances/:id`                  | read       | –            | `GrievanceDto` (with `events`) |
+| GET    | `/grievances/:id`                  | read       | –            | `GrievanceDto` (with `events` and `attachments[]: { id, originalName, sizeBytes, mimeType, kind, uploadedAt }`; bytes via `GET /media/:id/file`) |
 | POST   | `/grievances/:id/assign`           | `grievance:manage` | `{ assignedToId: userId \| null }` — must be an active user whose assignment covers the website (`400` otherwise) | `GrievanceDto` |
 | POST   | `/grievances/:id/status`           | `grievance:manage` | `{ status: "IN_PROGRESS" \| "RESOLVED" \| "REJECTED", note? }` — `note` required when closing and is shown to the citizen | `GrievanceDto`; `409 INVALID_TRANSITION` |
 
@@ -280,6 +280,38 @@ the published one, so a new draft never changes the live page until it is publis
 
 `archive` is not available for sections — use `unpublish` and discard the draft.
 
+## Scheme ward coverage
+
+Beneficiary **household counts per ward** for a scheme on one website (`SchemeWardCoverage`: `tenantId`,
+`schemeId`, `wardNo`, `households`; unique per tenant+scheme+ward). Aggregates only — no beneficiary
+records. `wardNo` matches `wardNo` of the Home `ward-details` section so the Schemes page can draw a
+coverage map. Shared schemes (owned by a taluka/block/district) can carry separate coverage on each website
+they are targeted at.
+
+| Method | Path | Capability | Body | Response |
+|--------|------|------------|------|----------|
+| GET    | `/content/:tenantId/scheme-coverage/:schemeId` | in scope | – | `SchemeWardCoverageDto` `{ schemeId, tenantId, wards: [{ wardNo, households }], totalHouseholds, updatedAt }` |
+| PUT    | `/content/:tenantId/scheme-coverage/:schemeId` | `content:edit` (+ module `schemes`) | `{ wards: [{ wardNo: 1–20 chars, households: int >= 0 }] }` (<= 200, unique `wardNo`) — **replaces** the whole list; `[]` clears it | `SchemeWardCoverageDto`; audit `scheme.coverage_update` |
+| DELETE | `/content/:tenantId/scheme-coverage/:schemeId` | as PUT | – | `204` |
+
+The scheme must be visible to the website (its own, or shared and targeted at it/an ancestor); otherwise `404`.
+
+## Public statistics
+
+Numbers only — no record, name, code or note is ever returned. Each endpoint is memoised in-process for
+60 s per website and answers with `Cache-Control: public, max-age=60, s-maxage=60`. Figures with no data
+source yet are `null` (never `0`) so the frontend can keep showing sample values for them.
+
+| Path | Response (`data`) |
+|------|--------------------|
+| `GET /public/:tenantSlug/stats/grievances` | `PublicGrievanceStatsDto`: `total`, `resolved`, `rejected`, `pending` (OPEN + IN_PROGRESS), `resolutionRate` (% resolved of total, 1 decimal, `null` when no grievances), `lastMonth { received, resolved }`, `monthBefore { ... }`, `receivedChangePercent` (last vs before, `null` when before = 0), `monthly[12]` `{ month: "YYYY-MM", received, resolved, pending }` (oldest first, current month last; `pending` = received that month and still open), `byCategory[] { category, total, resolved, sharePercent }` (desc by total), `generatedAt` |
+| `GET /public/:tenantSlug/stats/schemes` | `PublicSchemeStatsDto`: `totalSchemes` (published + visible), `totalBeneficiaries` (sum of `beneficiaryCount`, `null` when none set), `amountDisbursedTotal` (decimal string), `amountDisbursedThisFinancialYear` (**always `null` for now** — schemes store a cumulative amount without a date), `householdsCovered` (per-ward maximum across schemes from the coverage table, `null` without coverage data), `totalHouseholds` (from the published About > `geography.households`, else `null`), `coveragePercent` (covered / total x 100, `null` when either is unknown), `financialYear` ("2026-27", April–March), `generatedAt` |
+| `GET /public/:tenantSlug/stats/services` | `PublicServiceStatsDto`: `grievancesReceivedThisMonth`, `grievancesResolvedThisMonth`, `certificatesIssuedThisMonth: null`, `taxCollectedThisMonth: null`, `citizenSatisfactionRate: null` (no data sources yet), `month: "YYYY-MM"`, `generatedAt` |
+
+Missing inputs for the `null` figures: a certificate/Right-to-Service issuance log, tax collection entries,
+a citizen rating captured at resolution, and a dated disbursement record per scheme (for "this financial
+year"). Add those models and the figures light up without API changes.
+
 ## Audit logs
 
 `GET /audit-logs?tenantId&unitId&actorId&action&entityType&from&to&limit&cursor` → paginated `AuditLogDto`.
@@ -292,6 +324,9 @@ Roles with `audit:read` see events inside their scope; everyone sees their own a
 | GET    | `/public/:tenantSlug`                  | –     | `PublicTenantDto`; `404` if not published |
 | GET    | `/public/:tenantSlug/announcements`    | `?page=<pageKey>&priority&category&limit&cursor` | paginated `PublicAnnouncementDto` — own published items + shared items targeted at the GP or any ancestor; honours `publishAt`/`expiresAt` |
 | GET    | `/public/:tenantSlug/schemes`          | `?level&limit&cursor` | paginated `PublicSchemeDto` — own published + shared targeted schemes |
+| GET    | `/public/:tenantSlug/schemes/coverage` | `?schemeId=` (optional) | `PublicSchemeCoverageDto` `{ schemeId, wards: [{ wardNo, households }], totalHouseholds }`; without `schemeId`: per-ward maximum across all published schemes (`schemeId: null`); unpublished/foreign scheme -> `404`; cached 60 s |
+| GET    | `/public/:tenantSlug/stats/{grievances,schemes,services}` | – | see **Public statistics** |
+| POST   | `/public/:tenantSlug/grievance-attachments` | multipart | see **Complaint form settings** |
 | GET    | `/public/:tenantSlug/projects`         | `?stage&year&limit&cursor` | paginated `PublicProjectDto` |
 | GET    | `/public/:tenantSlug/media/:mediaId`   | –     | file bytes (`public, max-age=3600`, `nosniff`) — only the website's own media or shared media of an ancestor unit; `404` otherwise |
 | GET    | `/public/:tenantSlug/pages/:pageKey`   | –     | `PublicPageDto` — SEO fields + visible, published sections ordered by `sortOrder`; `404` when the page is disabled or the website unpublished |
@@ -335,6 +370,17 @@ Rules enforced by the schemas:
 - Media fields (`*Id`, `*Ids`, including `fileId`, `iconId`, `logoId`, `videoId`, `thumbnailId`) must belong to the website or an ancestor unit.
 - Submitting a Student Spotlight for review requires `guardianConsent.confirmed = true`
   (`confirmedBy`, `confirmedAt`); the check runs on `submit` only, so drafts can be saved without it.
+- Home `ward-details` wards: `{ wardNo?, name, colour?, geometry?, mapImageId?, items[] }`. `wardNo` (<= 20 chars,
+  unique within the section) links a ward to scheme coverage and markers. `colour` is a hex `#RRGGBB`.
+  `geometry` is GeoJSON `Polygon` or `MultiPolygon` (WGS84 `[lng, lat]`, lng -180..180, lat -90..90, every ring
+  closed with >= 4 positions, <= 20 rings per polygon, <= 50 polygons, <= 2000 coordinate pairs in total);
+  `mapImageId` is an uploaded picture as the alternative. Both may be present; the frontend prefers `geometry`.
+- Contact `volunteer-categories` items: `{ title, description?, iconId?, order }`; `partners` items:
+  `{ logoId?, title, description?, partnerLogoIds[] }`.
+
+Cache refresh: publishing or unpublishing a section and changing page settings call `revalidateTag` for
+`tenant:<slug>` and `page:<slug>:<pageKey>` (src/lib/revalidate.ts), so the public pages update immediately
+instead of waiting for the 60 s time-based revalidation.
 
 Not part of these schemas yet (need other endpoints): computed grievance statistics, public complaint
 and feedback forms, live weather, and server-generated QR images.
@@ -390,10 +436,26 @@ Public. Returns what the form needs to adapt. The recipient address is never ret
 `{ "data": { "captchaEnabled", "allowFileUpload", "maxFileSizeMb", "allowedFileTypes": ["pdf","jpg","jpeg","png","webp"], "heading", "description", "successMessage", "submitButtonText" } }`
 
 ### POST /public/:tenantSlug/grievances (request additions)
-- `attachmentIds`: optional array (max 5) of media ids. Allowed only when `allowFileUpload` is true (otherwise `400 BAD_REQUEST`).
-  Each file must belong to this website, not be deleted, be at most `maxFileSizeMb` MB, and have a MIME type matching `allowedFileTypes`. Violations return `400 VALIDATION_ERROR` with `details[].path = "attachmentIds"`. Duplicates are refused.
+- `attachmentIds`: optional array (max 5) of ids returned by `POST /public/:tenantSlug/grievance-attachments` (below). Allowed only when `allowFileUpload` is true (otherwise `400 BAD_REQUEST`).
+  Each id must have been uploaded through that endpoint **for this website**, be unexpired and not yet attached to another complaint, and still satisfy the form's current `maxFileSizeMb` / `allowedFileTypes`. Violations return `400 VALIDATION_ERROR` with `details[].path = "attachmentIds"`. Duplicates are refused. Library media (admin uploads) can never be attached.
 - `turnstileToken`: required when `captchaEnabled` is true. If `TURNSTILE_SECRET_KEY` is not configured, the submit fails closed with `503` (`INTERNAL_ERROR`), so the form cannot be used without the key.
 - When a `recipientEmail` is set, a notification is sent with the tracking code, category and attachment count only. No citizen details are included.
 
-Storage: attachments are linked in `GrievanceAttachment` (grievance id, media id). Removing a complaint removes its links; a media file in use cannot be deleted (`RESTRICT`).
-Known gap: there is no public upload endpoint yet, so citizens can attach only files that already exist for this website. A public upload endpoint is a separate item.
+### POST /public/:tenantSlug/grievance-attachments — citizen file upload
+`multipart/form-data`, one file per request: `file` (required), `website` (honeypot — must be empty), `turnstileToken` (required when `captchaEnabled`).
+
+| Rule | Behaviour |
+|------|-----------|
+| Form must be published with `allowFileUpload: true` (and the website published) | otherwise `404 NOT_FOUND` |
+| Size | `<= maxFileSizeMb` from the section (hard cap 10 MB) -> `400 BAD_REQUEST` `{ maxBytes }` |
+| Type | detected from the **file signature** (declared `Content-Type` and extension are ignored); must map to `allowedFileTypes` (`pdf`->`application/pdf`, `jpg`/`jpeg`->`image/jpeg`, `png`, `webp`) -> `400 BAD_REQUEST` `{ allowed }` |
+| Honeypot | a filled `website` returns a plausible `{ id }` but stores nothing; the id can never be attached |
+| CAPTCHA | same as submit: required when `captchaEnabled`; `503` while no secret is configured |
+| Rate limit | 10 uploads / hour / IP -> `429 RATE_LIMITED` |
+| Pending cap | at most `GRIEVANCE_UPLOAD_MAX_PENDING` (default 200) unattached uploads per website -> `429` |
+| Response | `201 { "data": { "id": "<mediaId>" } }` — **no URL**; the file is never publicly readable |
+
+Storage: a `Media` row with `source = PUBLIC_GRIEVANCE`, `uploadedById = null`, key `<tenantId>/grievance/<id>.<ext>`, and `expiresAt = now + GRIEVANCE_UPLOAD_TTL_HOURS` (default 24). Such rows are excluded from the media library (`GET /media`), from the public media route (`GET /public/:slug/media/:id` -> `404`) and from page-section / project media references. Audit: `grievance.attachment_upload` (no personal data).
+
+Full flow: upload each file -> collect ids -> `POST /public/:slug/grievances` with `attachmentIds` -> attaching links the files (`GrievanceAttachment`) and clears `expiresAt`. Staff see them on `GET /grievances/:id` (`attachments[]`) and download with `GET /media/:id/file` (scope-checked). Unattached uploads past `expiresAt` are deleted (row + bytes) by `npm run forms:purge` (`purgeExpiredGrievanceUploads`); schedule it daily.
+

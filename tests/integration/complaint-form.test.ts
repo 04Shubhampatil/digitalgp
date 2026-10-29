@@ -44,19 +44,20 @@ const complaint = (attachmentIds?: string[]) => ({
   ...(attachmentIds ? { attachmentIds } : {}),
 });
 
-/** A stored media file of the given website (or another one). */
+/** A pending citizen upload of the given website (as created by POST /public/:slug/grievance-attachments). */
 async function makeFile(tenantId: string, unitId: string, mimeType: string, sizeBytes: number) {
-  const uploader = await createUser();
   return db.media.create({
     data: {
       tenantId,
       ownerUnitId: unitId,
       kind: "DOCUMENT",
-      storageKey: `${tenantId}/${Math.random().toString(36).slice(2)}.bin`,
+      storageKey: `${tenantId}/grievance/${Math.random().toString(36).slice(2)}.bin`,
       originalName: "evidence",
       mimeType,
       sizeBytes,
-      uploadedById: uploader.id,
+      uploadedById: null,
+      source: "PUBLIC_GRIEVANCE",
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000),
     },
   });
 }
@@ -70,6 +71,9 @@ describe("complaint form settings enforced on submit", () => {
     const receipt = await submitGrievance("gp-a", complaint([file.id]), client);
     const row = await db.grievance.findUniqueOrThrow({ where: { trackingCode: receipt.trackingCode }, include: { attachments: true } });
     expect(row.attachments.map((a) => a.mediaId)).toEqual([file.id]);
+    // Attaching stops the expiry clock; the same file cannot be attached to a second complaint.
+    expect((await db.media.findUniqueOrThrow({ where: { id: file.id } })).expiresAt).toBeNull();
+    await expectCode(submitGrievance("gp-a", complaint([file.id]), client), "VALIDATION_ERROR");
 
     const note = sent.find((m) => m.to === "grievance@gp-a.example");
     expect(note?.text).toContain(receipt.trackingCode);
@@ -103,6 +107,18 @@ describe("complaint form settings enforced on submit", () => {
     await publishComplaintForm(w.tenantA.id, form);
     const other = await makeFile(w.tenantB.id, w.gpB.id, "application/pdf", 1024);
     await expectCode(submitGrievance("gp-a", complaint([other.id]), client), "VALIDATION_ERROR");
+  });
+
+  it("refuses library media, expired uploads and unknown ids", async () => {
+    const w = await buildWorld();
+    await publishComplaintForm(w.tenantA.id, form);
+    const library = await makeFile(w.tenantA.id, w.gpA.id, "application/pdf", 1024);
+    await db.media.update({ where: { id: library.id }, data: { source: "ADMIN", expiresAt: null } });
+    await expectCode(submitGrievance("gp-a", complaint([library.id]), client), "VALIDATION_ERROR");
+    const expired = await makeFile(w.tenantA.id, w.gpA.id, "application/pdf", 1024);
+    await db.media.update({ where: { id: expired.id }, data: { expiresAt: new Date(Date.now() - 1000) } });
+    await expectCode(submitGrievance("gp-a", complaint([expired.id]), client), "VALIDATION_ERROR");
+    await expectCode(submitGrievance("gp-a", complaint(["cjld2cjxh0000qzrmn831i7rn"]), client), "VALIDATION_ERROR");
   });
 
   it("refuses the same file twice", async () => {

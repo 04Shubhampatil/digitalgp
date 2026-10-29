@@ -15,6 +15,10 @@ const envSchema = z.object({
   TURNSTILE_SECRET_KEY: z.string().min(1).optional(),
   /** How long contact-form submissions are kept before the purge job deletes them. */
   FORM_SUBMISSION_RETENTION_MONTHS: z.coerce.number().int().min(1).max(60).default(12),
+  /** How long a citizen's complaint attachment may stay unattached before the purge job deletes it. */
+  GRIEVANCE_UPLOAD_TTL_HOURS: z.coerce.number().int().min(1).max(168).default(24),
+  /** Cap on unattached complaint uploads per website (bounds disk use from abusive clients). */
+  GRIEVANCE_UPLOAD_MAX_PENDING: z.coerce.number().int().min(1).max(10_000).default(200),
 });
 
 export type Env = z.infer<typeof envSchema>;
