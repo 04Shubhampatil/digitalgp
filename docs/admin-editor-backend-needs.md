@@ -67,8 +67,26 @@ expose files from unpublished sections. Money amounts should be stored as number
 Also in this Figma: a footer action bar ("Discard changes", "Preview section", "Save draft", "Publish section").
 The frontend already has per-section Save draft / Discard / workflow buttons; no backend change needed for that.
 
+## Grievance & Feedback (`grievance`, Figma 375:18975)
+
+Grievances themselves already have their own module (`/admin/grievances`, public submit endpoint). The
+page editor in Figma configures how the public page looks and behaves:
+
+| section key | content |
+| --- | --- |
+| `banner` | shared, above |
+| `complaint-form` | `{ heading, description, successMessage, submitButtonText, recipientEmail, captchaEnabled, allowFileUpload, maxFileSizeMb, allowedFileTypes[] }` — `recipientEmail`, upload limits and CAPTCHA must be **enforced by the grievance submit endpoint**, not just stored |
+| `support-cards` | `items[]: { icon, title, description, contactOrAction, visible }` (helpline, WhatsApp, suggestion box, feedback form) |
+| `track-complaint` | `{ heading, description, searchLabel, placeholder, buttonText, noResultMessage, errorMessage }` — needs a public "track by complaint ID" lookup that returns status only (no personal data) |
+| `escalation-matrix` | `steps[]: { title, description }` (5 in Figma) + `statusSummary[]: { label, colour }` |
+| `monthly-report` | headline cards (total, resolved, pending, resolution rate with change vs last month), `monthlyTrend[]` (received / resolved / pending per month) and `categoryShare[]` (category, %, colour) |
+
+Important: the Monthly Performance Report numbers (totals, resolution rate, trend, category split) should be
+**computed from the real grievance records** by a public read-only stats endpoint, not typed in by an admin.
+Typed-in figures would drift from the data and could mislead citizens. The editor then only needs labels and colours.
+
 ## Pages still to be reviewed
 
- Grievance, Our Village, Employment, Education, Environment,
+Our Village, Employment, Education, Environment,
 Announcements & Circulars, Gallery, Contact — this file is extended as each frame is reviewed.
 Key Projects and Schemes already work through their own list + workflow (cards in the page editor).
