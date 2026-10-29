@@ -40,8 +40,21 @@ Home already has `quick-stats` (label, value, icon): add `visible` and `unit` th
 The public site renders these from Figma placeholders in `src/content/figma-pages*.ts`; once a section is
 published here the placeholder is replaced automatically (published data always wins).
 
+## Finance & Budget (`finance`, Figma 375:18786)
+
+| section key | content |
+| --- | --- |
+| `banner`, `top-stats` | shared, above |
+| `income-sources` | `{ enabled, heading, subtitle, categories[]: { name: bilingual, amount, percentage }, supportCard?: { enabled, icon, title, description, buttonText, buttonLink } }` — percentages should total 100 (the editor shows a running total) |
+| `expenditure` | `{ heading, subtitle, backgroundColour, categories[]: { name, amount, percentage, colour }, sideCard?: { enabled, icon, title, description, buttonText, buttonLink } }` |
+| `budget-visualizer` | `{ enabled, heading, subtitle, backgroundColour, tabs[]: { name, enabled }, overviewCard: { title, fields[]: { label, valueType: dynamic\|auto, prefixSuffix, colour } }, barChart[]: { label, value, colour }, downloadReport: { enabled, buttonText, fileId, icon } }` |
+| `documents` | `{ heading, subtitle, description?, backgroundColour, items[]: { title, fileId, buttonText } }` — file size is derived from the upload |
+
+Backend notes: documents need a **PDF media kind** (max 10 MB, PDF only) and the public site must never
+expose files from unpublished sections. Money amounts should be stored as numbers/decimal strings, not free text.
+
 ## Pages still to be reviewed
 
-Finance & Budget, Citizen Services, Grievance, Our Village, Employment, Education, Environment,
+Citizen Services, Grievance, Our Village, Employment, Education, Environment,
 Announcements & Circulars, Gallery, Contact — this file is extended as each frame is reviewed.
 Key Projects and Schemes already work through their own list + workflow (cards in the page editor).
