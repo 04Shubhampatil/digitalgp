@@ -102,8 +102,24 @@ Typed-in figures would drift from the data and could mislead citizens. The edito
 Every `*Id` field is a Media id and must be ownership-checked (same rule as `MEDIA_REF_PATTERN`).
 The public Our Village page today shows Figma pictures for most of these blocks; they become real content as sections are published.
 
+## Employment & Skills (`employment`, Figma 375:17415)
+
+| section key | content |
+| --- | --- |
+| `banner` | shared, above |
+| `support-cards` | `items[]: { icon, title, description, contactOrAction, visible }` — same shape as Grievance support cards, so one shared section type can serve both |
+| `local-opportunities` | same shape as `support-cards` (a second card list on this page) |
+| `skill-directory` ("Village Talent Directory") | `items[]: { icon, skillName, availableCount, link, active }` reorderable. `availableCount` should come from real directory entries if a talent directory exists; if it is typed in, label it as approximate |
+| `assistance-items` (farmer assistance) | `items[]: { icon, title, link, active }` reorderable |
+| `training-programs` | `items[]: { imageId, title, description, buttonText, buttonLink, order, active }` — same shape as the Our Village training list |
+| `job-portals` | `items[]: { logoId, name, description, websiteUrl, order, active }` — `websiteUrl` must be validated as https and rendered with `rel="noopener noreferrer"` |
+| `success-stories` | `items[]: { imageId, title, description, buttonText, buttonLink, order }` — same shape as Our Village |
+
+Reuse suggestion: define the repeating shapes once (`icon-card-list`, `image-card-list`, `success-stories`) and
+register them on several pages instead of one section per page.
+
 ## Pages still to be reviewed
 
-Employment, Education, Environment,
+Education, Environment,
 Announcements & Circulars, Gallery, Contact — this file is extended as each frame is reviewed.
 Key Projects and Schemes already work through their own list + workflow (cards in the page editor).
