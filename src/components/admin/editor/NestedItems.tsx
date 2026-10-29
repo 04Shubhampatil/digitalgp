@@ -58,7 +58,7 @@ function ChildRows({ control, tenantId, parent, base, errors, canEdit }: { contr
             onClick={() => rows.append(emptyRow({ ...child, children: undefined }) as never)}
             className="mt-2 flex w-full items-center justify-center gap-2 rounded-input border border-dashed border-primary/40 py-2 text-sm font-semibold text-primary hover:bg-success-soft disabled:opacity-40"
           >
-            <Plus className="size-4" aria-hidden /> {t("addNew", { name: t(`fields.${child.labelKey}`) })}
+            <Plus className="size-4" aria-hidden /> {t("addNew", { name: t.has(`itemOne.${child.labelKey}`) ? t(`itemOne.${child.labelKey}`) : t(`fields.${child.labelKey}`) })}
           </button>
         )}
       </div>

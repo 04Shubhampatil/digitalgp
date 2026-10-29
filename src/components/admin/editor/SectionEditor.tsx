@@ -167,10 +167,11 @@ export function SectionEditor({ tenantId, pageKey, spec, section, capabilities, 
     });
 
   const itemsName = spec.items?.name ?? "items";
+  const one = (key: string) => (t.has(`itemOne.${key}`) ? t(`itemOne.${key}`) : t(`fields.${key}`));
   const SectionIcon = SECTION_ICONS[spec.key] ?? LayoutList;
   // Item rows render as a table: ordinal, one column per field (images wider), row actions.
   const itemFields = spec.items?.fields ?? [];
-  const columns = `2rem ${itemFields.map((f) => (f.type === "image" ? "minmax(11rem,14rem)" : f.type === "bilingual" || f.type === "bilingualLong" ? "minmax(12rem,1.6fr)" : "minmax(7rem,1fr)")).join(" ")} 6.5rem`;
+  const columns = `2rem ${itemFields.map((f) => (f.type === "image" ? "minmax(10rem,11rem)" : f.type === "bilingual" || f.type === "bilingualLong" ? "minmax(10rem,1.6fr)" : "minmax(5.5rem,1fr)")).join(" ")} 6.5rem`;
 
   return (
     <section className="rounded-card border border-line bg-surface">
@@ -200,7 +201,7 @@ export function SectionEditor({ tenantId, pageKey, spec, section, capabilities, 
                 items.append(emptyItem(spec) as never);
               }}
             >
-              <Plus className="size-4" aria-hidden /> {t("addNew", { name: t(`fields.${spec.items.labelKey}`) })}
+              <Plus className="size-4" aria-hidden /> {t("addNew", { name: one(spec.items.labelKey) })}
             </Button>
           )}
           <Switch checked={isVisible} onChange={setIsVisible} disabled={!canEdit} label={t("showSection")} />
@@ -284,7 +285,7 @@ export function SectionEditor({ tenantId, pageKey, spec, section, capabilities, 
                       onClick={() => items.append(emptyItem(spec) as never)}
                       className="mt-3 flex w-full items-center justify-center gap-2 rounded-input border border-dashed border-primary/40 py-3 text-sm font-semibold text-primary hover:bg-success-soft disabled:opacity-40"
                     >
-                      <Plus className="size-4" aria-hidden /> {t("addNew", { name: t(`fields.${spec.items.labelKey}`) })}
+                      <Plus className="size-4" aria-hidden /> {t("addNew", { name: one(spec.items.labelKey) })}
                     </button>
                   )}
                 </div>

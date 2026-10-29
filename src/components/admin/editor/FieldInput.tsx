@@ -83,7 +83,7 @@ export function FieldInput({
       <Controller
         control={control}
         name={path}
-        render={({ field }) => <MediaField label={label} value={String(field.value ?? "")} onChange={field.onChange} tenantId={tenantId} error={error} disabled={disabled} />}
+        render={({ field }) => <MediaField label={label} value={String(field.value ?? "")} onChange={field.onChange} tenantId={tenantId} error={error} disabled={disabled} compact={compact} />}
       />
     );
   }

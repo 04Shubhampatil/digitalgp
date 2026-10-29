@@ -628,15 +628,18 @@
       "quickLinks": "Citizen services links",
       "quickLinksDesc": "Quick links to certificates, taxes and forms.",
       "overview": "Overview",
-      "history": "Village history",
+      "history": "History & vision",
       "geography": "Geography & demographics",
-      "members": "Panchayat members",
-      "office": "Office information",
+      "members": "Local administrators",
+      "office": "Office details",
       "sarpanchMessage": "Message from the Sarpanch",
       "monthlyMetrics": "Village indicators (monthly)",
       "villageProgress": "Village development progress",
       "wardDetails": "Ward details",
-      "wardDetailsDesc": "Ward-wise development progress shown on the home page."
+      "wardDetailsDesc": "Ward-wise development progress shown on the home page.",
+      "membersDesc": "Sarpanch, Deputy Sarpanch and elected ward members.",
+      "historyDesc": "Founding story, geographical overview, mission and vision statements.",
+      "officeDesc": "Physical address, office hours, phone, email and map link."
     },
     "fields": {
       "title": "Title",
@@ -682,6 +685,12 @@
       "wardItem": "Indicator"
     },
     "order": "Order",
-    "addNew": "Add New {name}"
+    "addNew": "Add New {name}",
+    "itemOne": {
+      "stat": "Statistic",
+      "leader": "Leader",
+      "member": "Member",
+      "link": "Link"
+    }
   }
 }
