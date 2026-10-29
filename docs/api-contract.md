@@ -379,3 +379,21 @@ Same permissions. `{ "data": { "feedback": { "total", "last30Days" }, "volunteer
 Submissions older than `FORM_SUBMISSION_RETENTION_MONTHS` (default 12, env) are deleted by
 `npm run forms:purge` (`scripts/purge-form-submissions.ts`). Schedule it daily (cron or a Windows task).
 Only the fields the form asks for are stored.
+
+## Complaint form settings (grievance submit)
+
+The published "complaint-form" section (page `grievance`) is enforced by `POST /public/:tenantSlug/grievances`.
+When the section is missing or unpublished, the form works with safe defaults: no CAPTCHA, no uploads, no notification.
+
+### GET /public/:tenantSlug/grievance-form
+Public. Returns what the form needs to adapt. The recipient address is never returned.
+`{ "data": { "captchaEnabled", "allowFileUpload", "maxFileSizeMb", "allowedFileTypes": ["pdf","jpg","jpeg","png","webp"], "heading", "description", "successMessage", "submitButtonText" } }`
+
+### POST /public/:tenantSlug/grievances (request additions)
+- `attachmentIds`: optional array (max 5) of media ids. Allowed only when `allowFileUpload` is true (otherwise `400 BAD_REQUEST`).
+  Each file must belong to this website, not be deleted, be at most `maxFileSizeMb` MB, and have a MIME type matching `allowedFileTypes`. Violations return `400 VALIDATION_ERROR` with `details[].path = "attachmentIds"`. Duplicates are refused.
+- `turnstileToken`: required when `captchaEnabled` is true. If `TURNSTILE_SECRET_KEY` is not configured, the submit fails closed with `503` (`INTERNAL_ERROR`), so the form cannot be used without the key.
+- When a `recipientEmail` is set, a notification is sent with the tracking code, category and attachment count only. No citizen details are included.
+
+Storage: attachments are linked in `GrievanceAttachment` (grievance id, media id). Removing a complaint removes its links; a media file in use cannot be deleted (`RESTRICT`).
+Known gap: there is no public upload endpoint yet, so citizens can attach only files that already exist for this website. A public upload endpoint is a separate item.
