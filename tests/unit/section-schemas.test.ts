@@ -104,6 +104,30 @@ describe("admin-editor section registry", () => {
     ).not.toThrow();
   });
 
+  it("ward-details accepts ward numbers, colours and bounded GeoJSON polygons", () => {
+    const ring = [[73.8, 18.5], [73.9, 18.5], [73.9, 18.6], [73.8, 18.6], [73.8, 18.5]];
+    const ward = (extra: object) => ({ wards: [{ name: { en: "Ward 1" }, items: [{ label: { en: "Houses" }, valueText: "120" }], ...extra }] });
+    expect(parses("home", "ward-details", ward({}))).toBe(true);
+    expect(parses("home", "ward-details", ward({ wardNo: "1", colour: "#1F7A4D", geometry: { type: "Polygon", coordinates: [ring] } }))).toBe(true);
+    expect(parses("home", "ward-details", ward({ wardNo: "1", geometry: { type: "MultiPolygon", coordinates: [[ring], [ring]] }, mapImageId: MEDIA }))).toBe(true);
+    expect(parses("home", "ward-details", ward({ colour: "green" }))).toBe(false);
+    expect(parses("home", "ward-details", ward({ geometry: { type: "Point", coordinates: [73.8, 18.5] } }))).toBe(false);
+    expect(parses("home", "ward-details", ward({ geometry: { type: "Polygon", coordinates: [ring.slice(0, 4)] } }))).toBe(false); // not closed
+    expect(parses("home", "ward-details", ward({ geometry: { type: "Polygon", coordinates: [[[200, 18.5], [73.9, 18.5], [73.9, 18.6], [200, 18.5]]] } }))).toBe(false); // out of range
+    const huge = Array.from({ length: 2001 }, (_, i) => [73.8 + (i % 7) * 0.001, 18.5 + (i % 5) * 0.001]);
+    huge.push(huge[0]!);
+    expect(parses("home", "ward-details", ward({ geometry: { type: "Polygon", coordinates: [huge] } }))).toBe(false);
+    const dup = { wards: [ward({ wardNo: "1" }).wards[0], ward({ wardNo: "1" }).wards[0]] };
+    expect(parses("home", "ward-details", dup)).toBe(false);
+  });
+
+  it("volunteer categories may carry a description and an icon", () => {
+    expect(parses("contact", "volunteer-categories", { items: [{ title: { en: "Youth" }, order: 1 }] })).toBe(true);
+    expect(parses("contact", "volunteer-categories", { items: [{ title: { en: "Youth" }, description: { en: "Train", mr: "प्रशिक्षण" }, iconId: MEDIA, order: 1 }] })).toBe(true);
+    expect(parses("contact", "volunteer-categories", { items: [{ title: { en: "Youth" }, iconId: "../x", order: 1 }] })).toBe(false);
+    expect(parses("contact", "partners", { items: [{ logoId: MEDIA, title: { en: "NGO" }, description: { en: "Partner" }, partnerLogoIds: [MEDIA] }] })).toBe(true);
+  });
+
   it("media ownership covers the document's id fields, including lists", () => {
     for (const name of ["imageId", "photoId", "fileId", "iconId", "logoId", "videoId", "thumbnailId", "coverImageId", "imageIds", "partnerLogoIds"]) {
       expect(MEDIA_REF_PATTERN.test(name)).toBe(true);

@@ -880,7 +880,9 @@ const contact: SectionDefinition[] = [
   {
     key: "volunteer-categories",
     sortOrder: 50,
-    schema: strict({ items: sectionList(strict({ title: bilingualSchema, order }), 30) }),
+    // `description` and `iconId` let the Contact page show cards instead of chips; matching of a
+    // volunteer application's `category` stays on `title` (en or mr).
+    schema: strict({ items: sectionList(strict({ title: bilingualSchema, description: bilingualSchema.optional(), iconId: mediaId.optional(), order }), 30) }),
   },
   {
     key: "volunteer-registration",

@@ -279,7 +279,8 @@ export interface MediaDto {
   height: number | null;
   altEn: string | null;
   altMr: string | null;
-  uploadedById: string;
+  /** Null for citizen complaint uploads. */
+  uploadedById: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -292,6 +293,16 @@ export interface GrievanceEventDto {
   toStatus: GrievanceStatus;
   note: string | null;
   createdAt: string;
+}
+
+/** A citizen-uploaded file on a complaint (staff only; bytes via `GET /media/:id/file`). */
+export interface GrievanceAttachmentDto {
+  id: string;
+  originalName: string;
+  sizeBytes: number;
+  mimeType: string;
+  kind: MediaKind;
+  uploadedAt: string;
 }
 
 /** Admin view — includes citizen contact details; never returned publicly. */
@@ -310,6 +321,7 @@ export interface GrievanceDto {
   resolutionNote: string | null;
   resolvedAt: string | null;
   events: GrievanceEventDto[];
+  attachments: GrievanceAttachmentDto[];
   createdAt: string;
   updatedAt: string;
 }
@@ -380,6 +392,87 @@ export interface PublicPageDto {
   pageKey: string;
   seo: { titleEn: string | null; titleMr: string | null; descriptionEn: string | null; descriptionMr: string | null; shareImageId: string | null };
   sections: { sectionKey: string; sortOrder: number; data: Record<string, unknown>; publishedAt: string | null }[];
+}
+
+// ---------------------------------------------------------------------------
+// Scheme ward coverage (aggregate household counts per ward — no personal data)
+// ---------------------------------------------------------------------------
+
+export interface SchemeWardCoverageDto {
+  schemeId: string;
+  tenantId: string;
+  wards: { wardNo: string; households: number }[];
+  totalHouseholds: number;
+  updatedAt: string | null;
+}
+
+/** GET /public/:slug/schemes/coverage?schemeId= */
+export interface PublicSchemeCoverageDto {
+  /** Null when no schemeId was given (totals across all published schemes). */
+  schemeId: string | null;
+  wards: { wardNo: string; households: number }[];
+  totalHouseholds: number;
+}
+
+// ---------------------------------------------------------------------------
+// Public statistics (numbers only; cached ~60 s)
+// ---------------------------------------------------------------------------
+
+export interface MonthlyGrievanceCount {
+  /** First day of the month, YYYY-MM. */
+  month: string;
+  received: number;
+  resolved: number;
+  /** Received in that month and still open or in progress now. */
+  pending: number;
+}
+
+export interface PublicGrievanceStatsDto {
+  total: number;
+  resolved: number;
+  rejected: number;
+  /** OPEN + IN_PROGRESS. */
+  pending: number;
+  /** resolved / total, as a percentage with one decimal; null when there are no grievances. */
+  resolutionRate: number | null;
+  lastMonth: { received: number; resolved: number };
+  monthBefore: { received: number; resolved: number };
+  /** Percentage change in received grievances, last month vs the month before; null when the month before had none. */
+  receivedChangePercent: number | null;
+  monthly: MonthlyGrievanceCount[];
+  byCategory: { category: string; total: number; resolved: number; sharePercent: number }[];
+  generatedAt: string;
+}
+
+export interface PublicSchemeStatsDto {
+  totalSchemes: number;
+  /** Sum of `beneficiaryCount` over published schemes (null when no scheme has a figure). */
+  totalBeneficiaries: number | null;
+  /** Sum of `amountDisbursed` over published schemes as a decimal string; not split by financial year. */
+  amountDisbursedTotal: string | null;
+  /** Not available yet: schemes carry a cumulative figure without a disbursement date. */
+  amountDisbursedThisFinancialYear: string | null;
+  /** Households reached by at least one scheme (per-ward maximum of the coverage table). */
+  householdsCovered: number | null;
+  /** From the published About › geography section. */
+  totalHouseholds: number | null;
+  /** householdsCovered / totalHouseholds × 100 (one decimal); null when either is unknown. */
+  coveragePercent: number | null;
+  financialYear: string;
+  generatedAt: string;
+}
+
+export interface PublicServiceStatsDto {
+  /** No data source yet. */
+  certificatesIssuedThisMonth: number | null;
+  grievancesResolvedThisMonth: number;
+  grievancesReceivedThisMonth: number;
+  /** No data source yet. */
+  taxCollectedThisMonth: string | null;
+  /** No data source yet. */
+  citizenSatisfactionRate: number | null;
+  month: string;
+  generatedAt: string;
 }
 
 export interface AuditLogDto {

@@ -51,6 +51,8 @@ Check `http://localhost:3000/api/health`.
 | `SEED_SUPER_ADMIN_EMAIL` / `SEED_SUPER_ADMIN_PASSWORD` | Seed only |
 | `TEST_DATABASE_URL`        | Optional; tests default to `<DATABASE_URL database>_test` |
 | `UPLOADS_DIR`              | Optional, default `uploads` — media files on disk (git-ignored); back it up with the database |
+| `GRIEVANCE_UPLOAD_TTL_HOURS` | Optional, default `24` — how long a citizen's complaint attachment may stay unattached before `npm run forms:purge` deletes it |
+| `GRIEVANCE_UPLOAD_MAX_PENDING` | Optional, default `200` — cap on unattached complaint uploads per website |
 
 Never commit `.env`. `.env.example` documents every variable.
 

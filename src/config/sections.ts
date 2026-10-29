@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { PageKey } from "@/config/pages";
 import { PAGE_SECTIONS } from "@/config/sections-pages";
-import { bilingualLongSchema, bilingualSchema, href, mediaId, phone, text, type SectionDefinition } from "@/config/section-primitives";
+import { bilingualLongSchema, bilingualSchema, colour, geometrySchema, href, mediaId, phone, text, type SectionDefinition } from "@/config/section-primitives";
 
 /**
  * Section registry: which sections each public page is made of and the zod schema that
@@ -87,6 +87,9 @@ const home: SectionDefinition[] = [
   {
     key: "ward-details",
     sortOrder: 40,
+    // Each ward may carry map data: a GeoJSON Polygon/MultiPolygon (`geometry`, preferred — drawn by the
+    // frontend map) and/or an uploaded picture (`mapImageId`). `wardNo` links the ward to other data
+    // (scheme coverage, markers); it must be unique within the section.
     schema: z
       .object({
         heading: bilingualSchema.optional(),
@@ -94,13 +97,21 @@ const home: SectionDefinition[] = [
           .array(
             z
               .object({
+                wardNo: text(20).min(1).optional(),
                 name: bilingualSchema,
+                colour: colour.optional(),
+                geometry: geometrySchema.optional(),
+                mapImageId: mediaId.optional(),
                 items: z.array(z.object({ label: bilingualSchema, valueText: text(60) }).strict()).min(1).max(12),
               })
               .strict(),
           )
           .min(1)
-          .max(50),
+          .max(50)
+          .refine((wards) => {
+            const nos = wards.map((w) => w.wardNo).filter((n): n is string => !!n);
+            return new Set(nos).size === nos.length;
+          }, "Ward numbers must be unique"),
       })
       .strict(),
   },

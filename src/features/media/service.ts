@@ -63,6 +63,7 @@ export async function listMedia(ctx: AuthContext, query: ListMediaQuery) {
   const rows = await db.media.findMany({
     where: {
       deletedAt: null,
+      source: "ADMIN", // citizen complaint uploads are not library items
       ownerUnit: unitPathScopeFilter(ctx),
       ...(query.tenantId ? { tenantId: query.tenantId } : {}),
       ...(query.ownerUnitId ? { ownerUnitId: query.ownerUnitId } : {}),
@@ -193,7 +194,8 @@ export async function getMediaFile(ctx: AuthContext, id: string): Promise<MediaF
  */
 export async function getPublicMediaFile(tenantSlug: string, id: string): Promise<MediaFile> {
   const tenant = await getPublicTenantBySlug(tenantSlug);
-  const row = await db.media.findFirst({ where: { id, deletedAt: null }, include: mediaInclude });
+  // Complaint attachments (PUBLIC_GRIEVANCE) are staff-only and never served here.
+  const row = await db.media.findFirst({ where: { id, deletedAt: null, source: "ADMIN" }, include: mediaInclude });
   if (!row) throw Errors.notFound("Media");
   const visible = row.tenantId === tenant.id || (row.tenantId === null && tenant.unitPath.startsWith(row.ownerUnit.path));
   if (!visible) throw Errors.notFound("Media");

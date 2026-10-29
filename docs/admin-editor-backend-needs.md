@@ -75,15 +75,16 @@ page editor in Figma configures how the public page looks and behaves:
 | section key | content |
 | --- | --- |
 | `banner` | shared, above |
-| `complaint-form` | `{ heading, description, successMessage, submitButtonText, recipientEmail, captchaEnabled, allowFileUpload, maxFileSizeMb, allowedFileTypes[] }` — `recipientEmail`, upload limits and CAPTCHA must be **enforced by the grievance submit endpoint**, not just stored |
+| `complaint-form` | `{ heading, description, successMessage, submitButtonText, recipientEmail, captchaEnabled, allowFileUpload, maxFileSizeMb, allowedFileTypes[] }` — enforced by `POST /public/:slug/grievances` **and** by the citizen upload endpoint `POST /public/:slug/grievance-attachments` (signature-checked type, size, honeypot, CAPTCHA, rate limit; returns `{ id }` only; unattached files expire — see `docs/api-contract.md`) |
 | `support-cards` | `items[]: { icon, title, description, contactOrAction, visible }` (helpline, WhatsApp, suggestion box, feedback form) |
 | `track-complaint` | `{ heading, description, searchLabel, placeholder, buttonText, noResultMessage, errorMessage }` — needs a public "track by complaint ID" lookup that returns status only (no personal data) |
 | `escalation-matrix` | `steps[]: { title, description }` (5 in Figma) + `statusSummary[]: { label, colour }` |
 | `monthly-report` | headline cards (total, resolved, pending, resolution rate with change vs last month), `monthlyTrend[]` (received / resolved / pending per month) and `categoryShare[]` (category, %, colour) |
 
-Important: the Monthly Performance Report numbers (totals, resolution rate, trend, category split) should be
-**computed from the real grievance records** by a public read-only stats endpoint, not typed in by an admin.
-Typed-in figures would drift from the data and could mislead citizens. The editor then only needs labels and colours.
+Done (backend): the Monthly Performance Report numbers come from `GET /public/:slug/stats/grievances`
+(totals, resolution rate, last month vs the month before, 12-month trend, category split — cached 60 s).
+The `monthly-report` section stores labels and colours only. Related: `GET /public/:slug/stats/schemes`
+and `GET /public/:slug/stats/services` (figures without a data source are `null`).
 
 ## Our Village — Culture Management (`culture`, Figma 375:19200)
 
@@ -205,12 +206,21 @@ Still needed from the backend (new sections / endpoints):
 | `contact-cards` | `items[]: { iconId, title, details, socialLinks[] }` — beyond the four settings fields |
 | `office-location` | `{ title, address, mapEmbedUrl }` — `mapEmbedUrl` must be restricted to Google Maps embed URLs (or OpenStreetMap) and rendered in a sandboxed iframe |
 | `feedback-form` | `{ enabled, heading, description, recipientEmail, notificationEmail, successMessage, autoReply, submitButtonText, showOnWebsite }` + a **public submit endpoint** (validation, rate limit, CAPTCHA, spam protection) and a responses list in the admin (the "View feedback responses" button with a count) |
-| `partners` | `items[]: { logoId, title, description, partnerLogoIds[] }` |
-| `volunteer-categories` | `items[]: { title, order }` |
+| `partners` | `items[]: { logoId?, title, description?, partnerLogoIds[] }` — confirmed as registered |
+| `volunteer-categories` | `items[]: { title, description?: bilingual, iconId?: media, order }` — `description`/`iconId` added so the Contact page can show cards; volunteer applications still match `category` on `title` (en or mr) |
 | `volunteer-registration` | `{ enabled, heading, description, deadline?, recipientEmail, successMessage, submitButtonText, showOnWebsite }` + a public submit endpoint and an applications list ("View volunteer applications") |
 
 Privacy: feedback and volunteer forms collect personal data (names, phone, email). Store only what the form
 needs, keep it tenant-scoped, never return it from public endpoints, and add a retention rule.
+
+## Home — `ward-details` map data (added)
+
+Each ward now accepts `wardNo` (unique in the section; add this field to the editor — it links the ward to
+scheme coverage and map markers), `colour` (hex), and map data as **GeoJSON** `geometry` (`Polygon` /
+`MultiPolygon`, WGS84 `[lng, lat]`, <= 2000 coordinate pairs, rings closed) **or** `mapImageId` (uploaded
+picture). GeoJSON is the primary choice because the frontend already draws the ward map from data; the image
+is a fallback for websites without boundary data. Scheme coverage per ward: `PUT /content/:tenantId/scheme-coverage/:schemeId`
+with `{ wards: [{ wardNo, households }] }`; public read `GET /public/:slug/schemes/coverage?schemeId=`.
 
 ## Status of the admin editors
 
@@ -230,7 +240,7 @@ Every section in `src/config/sections-pages.ts` now has a public renderer (`src/
   iframe; market prices show their update time and a warning once older than 7 days.
 - **Open points for the team:**
   - **QR codes:** generated on the page from the link by a small built-in encoder (`src/lib/qr.ts`, byte mode, level M, links up to 213 bytes; verified against the reference `qrcode` package). No dependency was added; longer links show no QR.
-  - **Monthly performance report:** not shown yet, because the figures must come from a stats endpoint over real complaints.
+  - **Monthly performance report:** the stats endpoint now exists (`/public/:slug/stats/grievances`); wire the renderer to it.
   - **Budget visualizer:** bar values are shown as ₹ lakh. The overview card is computed from the page's own sections: `dynamic` fields are total income then total expenditure, `auto` fields are the surplus (or the utilisation % when the suffix is `%`). The schema holds one bar chart, so the tabs are names only.
-  - **Forms:** complaint and tracking forms use the real endpoints; feedback and volunteer forms open the visitor's mail app until public submit endpoints exist.
+  - **Forms:** complaint, tracking, feedback and volunteer forms all have real endpoints; complaint attachments upload through `/public/:slug/grievance-attachments` and are listed for staff on `GET /grievances/:id`.
   - **Weather and calendar:** manual entry only (no provider fetch); the calendar ignores `eventsToShow`.
