@@ -75,7 +75,7 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       },
     },
     {
-      sectionKey: "contact-cards",
+      sectionKey: "contact-cards-figma",
       sortOrder: 10,
       data: {
         heading: t("Contact Information"),

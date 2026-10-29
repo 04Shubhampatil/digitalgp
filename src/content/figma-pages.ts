@@ -150,7 +150,7 @@ export const FIGMA_PAGE_SECTIONS: Partial<Record<PageKey, FallbackSection[]>> = 
       },
     },
     {
-      sectionKey: "success-stories",
+      sectionKey: "stories-figma",
       sortOrder: 50,
       data: {
         title: t("Success Stories"),

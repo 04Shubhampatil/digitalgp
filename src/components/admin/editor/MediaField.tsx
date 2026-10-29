@@ -1,6 +1,6 @@
 "use client";
 
-import { ImagePlus, Trash2 } from "lucide-react";
+import { FileText, ImagePlus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
@@ -16,6 +16,7 @@ export function MediaField({
   error,
   disabled,
   compact,
+  anyFile,
 }: {
   label: string;
   value: string;
@@ -25,16 +26,22 @@ export function MediaField({
   disabled?: boolean;
   /** Table-cell variant: 40px thumbnail with an icon button, no hint text. */
   compact?: boolean;
+  /** Accept PDFs and videos as well as images (file fields such as report PDFs). */
+  anyFile?: boolean;
 }) {
   const t = useTranslations("editor");
   const tc = useTranslations("common");
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  // A non-image file (PDF / video) cannot be drawn as <img>: fall back to a file icon.
+  const [notImage, setNotImage] = useState(false);
+  const accept = anyFile ? "image/jpeg,image/png,image/webp,image/gif,application/pdf,video/mp4,video/webm" : "image/jpeg,image/png,image/webp,image/gif";
 
   async function onFile(file: File | undefined) {
     if (!file) return;
     setUploadError(null);
+    setNotImage(false);
     setUploading(true);
     try {
       const dto = await media.upload(file, { tenantId });
@@ -51,15 +58,19 @@ export function MediaField({
     return (
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
-          {value ? (
+          {value && !notImage ? (
             // eslint-disable-next-line @next/next/no-img-element -- admin-only media served by the backend
-            <img src={adminMediaUrl(value)} alt="" className="size-10 shrink-0 rounded-full object-cover" />
+            <img src={adminMediaUrl(value)} alt="" onError={() => setNotImage(true)} className="size-10 shrink-0 rounded-full object-cover" />
+          ) : value ? (
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-success-soft text-primary">
+              <FileText className="size-5" aria-hidden />
+            </span>
           ) : (
             <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-table text-muted">
               <ImagePlus className="size-5" aria-hidden />
             </span>
           )}
-          <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" aria-label={label} className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
+          <input ref={inputRef} type="file" accept={accept} aria-label={label} className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
           <Button type="button" size="sm" variant="secondary" loading={uploading} disabled={disabled} onClick={() => inputRef.current?.click()}>
             {value ? t("replaceImage") : t("uploadImage")}
           </Button>
@@ -82,9 +93,13 @@ export function MediaField({
     <div className="flex flex-col gap-1.5">
       <span className="text-[11px] font-semibold tracking-wide text-muted uppercase">{label}</span>
       <div className="flex items-center gap-4 rounded-input border border-dashed border-line bg-surface p-3">
-        {value ? (
+        {value && !notImage ? (
           // eslint-disable-next-line @next/next/no-img-element -- admin-only media served by the backend
-          <img src={adminMediaUrl(value)} alt="" className="size-20 shrink-0 rounded-[6px] object-cover" />
+          <img src={adminMediaUrl(value)} alt="" onError={() => setNotImage(true)} className="size-20 shrink-0 rounded-[6px] object-cover" />
+        ) : value ? (
+          <span className="flex size-20 shrink-0 items-center justify-center rounded-[6px] bg-success-soft text-primary">
+            <FileText className="size-8" aria-hidden />
+          </span>
         ) : (
           <span className="flex size-20 shrink-0 items-center justify-center rounded-[6px] bg-surface-table text-muted">
             <ImagePlus className="size-6" aria-hidden />
@@ -93,7 +108,7 @@ export function MediaField({
         <div className="flex flex-col gap-2">
           <p className="text-xs text-muted">{t("mediaHint")}</p>
           <div className="flex items-center gap-2">
-            <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
+            <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
             <Button type="button" size="sm" variant="secondary" loading={uploading} disabled={disabled} onClick={() => inputRef.current?.click()}>
               {value ? t("replaceImage") : t("uploadImage")}
             </Button>

@@ -1,77 +1,106 @@
 "use client";
 
 import {
-  ArrowDown,
-  ArrowUp,
   BarChart3,
+  BookOpen,
+  Calendar,
   ChevronDown,
   Cloud,
+  Coins,
+  FileText,
   Gauge,
+  HelpCircle,
+  Home,
   ImageIcon,
   Info,
   LayoutList,
+  Leaf,
   Link2,
   Map as MapIcon,
   Megaphone,
   MessageSquare,
+  Newspaper,
   Plus,
-  Trash2,
+  QrCode,
   TrendingUp,
   Trophy,
   Users,
+  Video,
   type LucideIcon,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useRef, useState, useTransition } from "react";
+import { useForm } from "react-hook-form";
 import type { ContentStatus, PageSectionDto } from "@/types/api";
-import type { SectionEditorSpec } from "@/config/section-editors";
+import type { FieldSpec, SectionEditorSpec } from "@/config/section-editors";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { StatusPill } from "@/components/ui/StatusPill";
+import { Switch } from "@/components/ui/Switch";
 import { Textarea } from "@/components/ui/Textarea";
 import { EDITABLE_STATUSES, SECTION_ACTIONS, WORKFLOW_ACTIONS, sections, type SectionAction } from "@/lib/api/admin";
 import { isApiError } from "@/lib/api/client";
 import { cn } from "@/lib/cn";
-import { emptyItem, requiredErrors, toApiData, toFormValues, type FormRecord } from "@/lib/section-data";
+import { requiredErrors, toApiData, toFormValues, type FormRecord } from "@/lib/section-data";
 import { FieldInput } from "./FieldInput";
-import { NestedItems } from "./NestedItems";
+import { ListBlock } from "./ListBlock";
 
 /** Header icon per section (Figma tints each card header with a green icon tile). */
 const SECTION_ICONS: Record<string, LucideIcon> = {
   hero: ImageIcon,
+  banner: ImageIcon,
   "quick-stats": BarChart3,
+  "top-stats": BarChart3,
+  "green-scoreboard": Trophy,
   welcome: Info,
   "about-cards": Info,
+  "village-intro": Info,
   leaders: Users,
+  "leader-cards": Users,
   "quick-links": Link2,
+  "service-links": Link2,
   "sarpanch-message": MessageSquare,
+  "feedback-form": MessageSquare,
+  "complaint-form": MessageSquare,
   "monthly-metrics": TrendingUp,
+  "monthly-report": TrendingUp,
   "village-progress": Gauge,
+  "status-cards": Gauge,
   "ward-details": MapIcon,
+  "infra-map": MapIcon,
+  "office-location": MapIcon,
   achievements: Trophy,
   weather: Cloud,
+  "weather-update": Cloud,
   "whats-new": Megaphone,
+  "latest-announcements": Megaphone,
+  "announcement-categories": Megaphone,
+  "income-sources": Coins,
+  expenditure: Coins,
+  "budget-visualizer": BarChart3,
+  documents: FileText,
+  "download-forms": FileText,
+  "qr-codes": QrCode,
+  help: HelpCircle,
+  calendar: Calendar,
+  "upcoming-events": Calendar,
+  "deadline-cards": Calendar,
+  "tree-adoption": Leaf,
+  "sustainability-initiatives": Leaf,
+  "video-gallery": Video,
+  "mini-documentary": Video,
+  "photo-gallery": ImageIcon,
+  "press-coverage": Newspaper,
+  "training-programs": BookOpen,
+  "youth-speak-tabs": BookOpen,
+  "student-spotlight": BookOpen,
+  homestay: Home,
 };
 
-/** Switch used for "Show this section" (Figma toggle). */
-function Switch({ checked, onChange, disabled, label }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean; label: string }) {
-  return (
-    <label className="flex items-center gap-2 text-xs font-semibold text-ink">
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        disabled={disabled}
-        onClick={() => onChange(!checked)}
-        className={cn("relative h-6 w-11 rounded-full transition-colors disabled:opacity-50", checked ? "bg-primary" : "bg-track")}
-      >
-        <span className={cn("absolute top-0.5 left-0.5 size-5 rounded-full bg-white shadow transition-transform", checked && "translate-x-5")} />
-      </button>
-      {label}
-    </label>
-  );
+/** Fields that need the full row of the form grid. */
+function isWide(f: FieldSpec): boolean {
+  return f.wide === true || ["bilingual", "bilingualLong", "bilingualList", "imageList", "image", "file", "multiSelect"].includes(f.type) || (f.type === "select" && f.segmented === true);
 }
 
 export interface SectionEditorProps {
@@ -109,7 +138,11 @@ export function SectionEditor({ tenantId, pageKey, spec, section, capabilities, 
 
   const form = useForm<FormRecord>({ defaultValues: toFormValues(spec, working?.data) });
   const { control, handleSubmit, formState } = form;
-  const items = useFieldArray({ control, name: (spec.items?.name ?? "items") as never });
+  // The header "Add New" button appends to the primary list, which registers its append function here.
+  const appendPrimary = useRef<(() => void) | null>(null);
+  const registerAppend = (fn: () => void) => {
+    appendPrimary.current = fn;
+  };
 
   const actions = SECTION_ACTIONS.filter((a) => {
     if (!draft) return false;
@@ -166,12 +199,8 @@ export function SectionEditor({ tenantId, pageKey, spec, section, capabilities, 
       }
     });
 
-  const itemsName = spec.items?.name ?? "items";
   const one = (key: string) => (t.has(`itemOne.${key}`) ? t(`itemOne.${key}`) : t(`fields.${key}`));
   const SectionIcon = SECTION_ICONS[spec.key] ?? LayoutList;
-  // Item rows render as a table: ordinal, one column per field (images wider), row actions.
-  const itemFields = spec.items?.fields ?? [];
-  const columns = `2rem ${itemFields.map((f) => (f.type === "image" ? "minmax(10rem,11rem)" : f.type === "bilingual" || f.type === "bilingualLong" ? "minmax(10rem,1.6fr)" : "minmax(5.5rem,1fr)")).join(" ")} 6.5rem`;
 
   return (
     <section className="rounded-card border border-line bg-surface">
@@ -195,11 +224,8 @@ export function SectionEditor({ tenantId, pageKey, spec, section, capabilities, 
               type="button"
               size="sm"
               variant="secondary"
-              disabled={items.fields.length >= spec.items.max}
-              onClick={() => {
-                setOpen(true);
-                items.append(emptyItem(spec) as never);
-              }}
+              disabled={!open}
+              onClick={() => appendPrimary.current?.()}
             >
               <Plus className="size-4" aria-hidden /> {t("addNew", { name: one(spec.items.labelKey) })}
             </Button>
@@ -220,77 +246,35 @@ export function SectionEditor({ tenantId, pageKey, spec, section, capabilities, 
             <p className="mb-4 text-sm text-muted">{ta("announcements.locked", { status: ta(`contentStatus.${status}`) })}</p>
           )}
 
-          <fieldset disabled={!canEdit || pending} className="grid gap-4">
-            {spec.fields.map((f) => (
-              <FieldInput key={f.name} spec={f} path={f.name} control={control} tenantId={tenantId} error={fieldErrors[f.name]} />
-            ))}
+          <fieldset disabled={!canEdit || pending} className="grid gap-5">
+            <div className="grid gap-4 sm:grid-cols-2">
+              {spec.fields.map((f) => (
+                <div key={f.name} className={cn(isWide(f) && "sm:col-span-2")}>
+                  <FieldInput spec={f} path={f.name} control={control} tenantId={tenantId} error={fieldErrors[f.name]} />
+                </div>
+              ))}
+            </div>
             {spec.groups?.map((g) => (
               <div key={g.name} className="rounded-input border border-line p-4">
                 <p className="mb-3 text-xs font-semibold tracking-wide text-muted uppercase">{t(`fields.${g.labelKey}`)}</p>
-                <div className="grid gap-3">
+                <div className="grid gap-3 sm:grid-cols-2">
                   {g.fields.map((f) => (
-                    <FieldInput key={f.name} spec={f} path={`${g.name}.${f.name}`} control={control} tenantId={tenantId} error={fieldErrors[`${g.name}.${f.name}`]} />
+                    <div key={f.name} className={cn(isWide(f) && "sm:col-span-2")}>
+                      <FieldInput spec={f} path={`${g.name}.${f.name}`} control={control} tenantId={tenantId} error={fieldErrors[`${g.name}.${f.name}`]} />
+                    </div>
                   ))}
                 </div>
+                {g.lists?.map((l) => (
+                  <div key={l.name} className="mt-4">
+                    <ListBlock control={control} tenantId={tenantId} spec={l} path={`${g.name}.${l.name}`} errors={fieldErrors} canEdit={canEdit} />
+                  </div>
+                ))}
               </div>
             ))}
-
-            {spec.items?.children && <NestedItems control={control} tenantId={tenantId} spec={spec.items} errors={fieldErrors} canEdit={canEdit} rows={items} />}
-
-            {spec.items && !spec.items.children && (
-              <div className="overflow-x-auto">
-                <div className="min-w-[44rem]">
-                  <div className="mb-2 flex items-center justify-between">
-                    <p className="text-xs font-semibold tracking-wide text-muted uppercase">
-                      {t(`fields.${spec.items.labelKey}`)} ({items.fields.length}/{spec.items.max})
-                    </p>
-                  </div>
-                  {fieldErrors[itemsName] && (
-                    <p role="alert" className="mb-2 text-xs text-danger">
-                      {fieldErrors[itemsName]}
-                    </p>
-                  )}
-                  <div role="row" className="grid items-center gap-3 rounded-input bg-surface-soft px-3 py-2 text-[11px] font-semibold tracking-wide text-muted uppercase" style={{ gridTemplateColumns: columns }}>
-                    <span>{t("order")}</span>
-                    {itemFields.map((f) => (
-                      <span key={f.name}>{t(`fields.${f.labelKey}`)}</span>
-                    ))}
-                    <span className="text-right">{tc("actions")}</span>
-                  </div>
-                  <ol>
-                    {items.fields.map((row, i) => (
-                      <li key={row.id} role="row" className="grid items-start gap-3 border-b border-line px-3 py-3 last:border-b-0" style={{ gridTemplateColumns: columns }}>
-                        <span className="pt-2.5 text-sm font-semibold text-muted">{i + 1}</span>
-                        {itemFields.map((f) => (
-                          <FieldInput key={f.name} compact spec={f} path={`${itemsName}.${i}.${f.name}`} control={control} tenantId={tenantId} error={fieldErrors[`${itemsName}.${i}.${f.name}`]} />
-                        ))}
-                        <div className="flex items-center justify-end gap-1 pt-1.5">
-                          <button type="button" aria-label={t("moveUp")} disabled={i === 0} onClick={() => items.move(i, i - 1)} className="rounded p-1 text-muted hover:bg-surface-soft disabled:opacity-40">
-                            <ArrowUp className="size-4" aria-hidden />
-                          </button>
-                          <button type="button" aria-label={t("moveDown")} disabled={i === items.fields.length - 1} onClick={() => items.move(i, i + 1)} className="rounded p-1 text-muted hover:bg-surface-soft disabled:opacity-40">
-                            <ArrowDown className="size-4" aria-hidden />
-                          </button>
-                          <button type="button" aria-label={tc("delete")} onClick={() => items.remove(i)} className="rounded p-1 text-danger hover:bg-danger-soft">
-                            <Trash2 className="size-4" aria-hidden />
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
-                  {canEdit && (
-                    <button
-                      type="button"
-                      disabled={items.fields.length >= spec.items.max}
-                      onClick={() => items.append(emptyItem(spec) as never)}
-                      className="mt-3 flex w-full items-center justify-center gap-2 rounded-input border border-dashed border-primary/40 py-3 text-sm font-semibold text-primary hover:bg-success-soft disabled:opacity-40"
-                    >
-                      <Plus className="size-4" aria-hidden /> {t("addNew", { name: one(spec.items.labelKey) })}
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
+            {spec.items && <ListBlock control={control} tenantId={tenantId} spec={spec.items} path={spec.items.name} errors={fieldErrors} canEdit={canEdit} onAppend={registerAppend} />}
+            {spec.lists?.map((l) => (
+              <ListBlock key={l.name} control={control} tenantId={tenantId} spec={l} path={l.name} errors={fieldErrors} canEdit={canEdit} />
+            ))}
           </fieldset>
 
           {message && (

@@ -1,4 +1,5 @@
 import type { PageKey } from "@/config/pages";
+import { PAGE_EDITORS } from "@/config/section-editors-pages";
 
 /**
  * Frontend editor specs for the backend section registry (src/config/sections.ts).
@@ -17,7 +18,18 @@ export type FieldType =
   | "href"
   | "phone"
   | "email"
-  | "image"; // Media id (IMAGE kind) — shows preview + upload
+  | "image" // Media id (IMAGE kind) — shows preview + upload
+  | "file" // Media id of any kind (PDF / video / image) — upload + filename
+  | "boolean" // switch
+  | "select" // one of `options`
+  | "multiSelect" // several of `options` (string[])
+  | "colour" // #RRGGBB
+  | "date" // YYYY-MM-DD
+  | "time" // HH:MM
+  | "datetime" // ISO date-time (edited as a local date + time)
+  | "month" // YYYY-MM
+  | "bilingualList" // [{ en?, mr? }] (bullets, features…)
+  | "imageList"; // Media ids (string[])
 
 export interface FieldSpec {
   name: string;
@@ -25,9 +37,17 @@ export interface FieldSpec {
   /** i18n key under `editor.fields.*` */
   labelKey: string;
   required?: boolean;
-  /** For `bilingual`/`text`: max characters (backend `text(n)`). */
+  /** For `bilingual`/`text`: max characters (backend `text(n)`). For lists: max entries. */
   max?: number;
   placeholder?: string;
+  /** `select` / `multiSelect`: allowed values (labels come from `editor.options.<value>`, else the value). */
+  options?: readonly string[];
+  /** Value used for a new row / empty section (a required `select` defaults to its first option). */
+  default?: string | number | boolean;
+  /** `select`: render as a segmented control instead of a dropdown. */
+  segmented?: boolean;
+  /** Input width hint inside a form row. */
+  wide?: boolean;
 }
 
 export interface ItemsSpec {
@@ -45,6 +65,10 @@ export interface GroupSpec {
   name: string;
   labelKey: string;
   fields: FieldSpec[];
+  /** The backend schema makes this object optional: it is omitted while it holds no real values. */
+  optional?: boolean;
+  /** Lists inside this object (e.g. budget overview card → fields). */
+  lists?: ItemsSpec[];
 }
 
 export interface SectionEditorSpec {
@@ -54,6 +78,8 @@ export interface SectionEditorSpec {
   fields: FieldSpec[];
   groups?: GroupSpec[];
   items?: ItemsSpec;
+  /** More top-level lists besides `items` (e.g. escalation steps + status summary). */
+  lists?: ItemsSpec[];
 }
 
 const bilingual = (name: string, labelKey: string, extra: Partial<FieldSpec> = {}): FieldSpec => ({ name, type: "bilingual", labelKey, max: 200, ...extra });
@@ -227,7 +253,7 @@ const about: SectionEditorSpec[] = [
   },
 ];
 
-export const SECTION_EDITORS: Partial<Record<PageKey, readonly SectionEditorSpec[]>> = { home, about };
+export const SECTION_EDITORS: Partial<Record<PageKey, readonly SectionEditorSpec[]>> = { home, about, ...PAGE_EDITORS };
 
 export function editorSpec(pageKey: string, sectionKey: string): SectionEditorSpec | undefined {
   return (SECTION_EDITORS[pageKey as PageKey] ?? []).find((s) => s.key === sectionKey);

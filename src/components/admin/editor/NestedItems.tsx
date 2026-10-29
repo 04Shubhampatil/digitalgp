@@ -74,14 +74,14 @@ export interface RowOps {
 }
 
 /** A list whose rows each hold a nested list (ward-details: wards → indicators). One card per row. */
-export function NestedItems({ control, tenantId, spec, errors, canEdit, rows }: { control: Control<FormRecord>; tenantId: string; spec: ItemsSpec; errors: Record<string, string>; canEdit: boolean; rows: RowOps }) {
+export function NestedItems({ control, tenantId, spec, path, errors, canEdit, rows }: { control: Control<FormRecord>; tenantId: string; spec: ItemsSpec; path: string; errors: Record<string, string>; canEdit: boolean; rows: RowOps }) {
   const t = useTranslations("editor");
   const tc = useTranslations("common");
   return (
     <div className="grid gap-4">
-      {errors[spec.name] && (
+      {errors[path] && (
         <p role="alert" className="text-xs text-danger">
-          {errors[spec.name]}
+          {errors[path]}
         </p>
       )}
       {rows.fields.map((row, i) => (
@@ -93,7 +93,7 @@ export function NestedItems({ control, tenantId, spec, errors, canEdit, rows }: 
               </p>
               <div className="grid gap-3">
                 {spec.fields.map((f) => (
-                  <FieldInput key={f.name} spec={f} path={`${spec.name}.${i}.${f.name}`} control={control} tenantId={tenantId} error={errors[`${spec.name}.${i}.${f.name}`]} />
+                  <FieldInput key={f.name} spec={f} path={`${path}.${i}.${f.name}`} control={control} tenantId={tenantId} error={errors[`${path}.${i}.${f.name}`]} />
                 ))}
               </div>
             </div>
@@ -109,7 +109,7 @@ export function NestedItems({ control, tenantId, spec, errors, canEdit, rows }: 
               </button>
             </div>
           </div>
-          <ChildRows control={control} tenantId={tenantId} parent={spec} base={`${spec.name}.${i}`} errors={errors} canEdit={canEdit} />
+          <ChildRows control={control} tenantId={tenantId} parent={spec} base={`${path}.${i}`} errors={errors} canEdit={canEdit} />
         </div>
       ))}
     </div>

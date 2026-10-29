@@ -5,6 +5,7 @@ import { FIGMA_HOME_SECTIONS } from "./figma-home";
 import { FIGMA_PAGE_SECTIONS } from "./figma-pages";
 import { FIGMA_PAGE_SECTIONS_B } from "./figma-pages-b";
 import { FIGMA_PAGE_SECTIONS_C } from "./figma-pages-c";
+import { PAGE_SECTIONS } from "@/config/sections-pages";
 import { FIGMA_PAGE_SECTIONS_D } from "./figma-pages-d";
 
 /** A section as the public site receives it, before backend data exists. */
@@ -85,14 +86,33 @@ function fillLabels(sectionKey: string, data: Obj, fallback: Obj): Obj {
   return data;
 }
 
+/**
+ * Blocks added in "published content" mode: real data that is not an editable section (e.g. the
+ * announcements module's live list). They carry no placeholder values.
+ */
+const LIVE_EXTRAS: Partial<Record<PageKey, FallbackSection[]>> = {
+  announcements: [{ sectionKey: "live-announcements", sortOrder: 15, data: {} }],
+};
+
+/**
+ * Pages whose sections are managed in the admin (sections-pages.ts). While nothing of the page is
+ * published the Figma placeholder page is shown; as soon as one section is published the page shows
+ * only published content (no placeholders mixed in), so a half-finished page never shows sample data.
+ */
+function hasPublishedCms(pageKey: PageKey, published: { sectionKey: string }[]): boolean {
+  const keys = new Set((PAGE_SECTIONS[pageKey] ?? []).map((s) => s.key));
+  return keys.size > 0 && published.some((s) => keys.has(s.sectionKey));
+}
+
 export function withFallback(pageKey: PageKey, page: PublicPageDto | null): PublicPageDto {
-  const fallbacks = FALLBACK_SECTIONS[pageKey] ?? [];
+  const cms = hasPublishedCms(pageKey, page?.sections ?? []);
+  const fallbacks = cms ? (LIVE_EXTRAS[pageKey] ?? []) : (FALLBACK_SECTIONS[pageKey] ?? []);
   const published = (page?.sections ?? []).map((s) => {
     const f = fallbacks.find((x) => x.sectionKey === s.sectionKey);
     return f ? { ...s, data: fillLabels(s.sectionKey, s.data as Obj, f.data) } : s;
   });
   const have = new Set(published.map((s) => s.sectionKey));
-  const extra = (FALLBACK_SECTIONS[pageKey] ?? [])
+  const extra = fallbacks
     .filter((s) => !have.has(s.sectionKey) && !(s.skipIfPresent ?? []).some((k) => have.has(k)))
     .map((s) => ({ sectionKey: s.sectionKey, sortOrder: s.sortOrder, data: s.data, publishedAt: null }));
   const order = (s: { sectionKey: string; sortOrder: number }) => (pageKey === "home" ? (HOME_ORDER[s.sectionKey] ?? s.sortOrder) : s.sortOrder);
