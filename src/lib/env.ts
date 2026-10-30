@@ -19,6 +19,11 @@ const envSchema = z.object({
   GRIEVANCE_UPLOAD_TTL_HOURS: z.coerce.number().int().min(1).max(168).default(24),
   /** Cap on unattached complaint uploads per website (bounds disk use from abusive clients). */
   GRIEVANCE_UPLOAD_MAX_PENDING: z.coerce.number().int().min(1).max(10_000).default(200),
+  /** Weather provider API key (OpenWeatherMap-compatible). Unset = public weather falls back to the manual section. Never commit. */
+  WEATHER_API_KEY: z.string().min(1).optional(),
+  WEATHER_API_BASE_URL: z.string().url().default("https://api.openweathermap.org/data/2.5"),
+  /** How long a fetched forecast is reused before the provider is called again. */
+  WEATHER_CACHE_MINUTES: z.coerce.number().int().min(1).max(180).default(15),
 });
 
 export type Env = z.infer<typeof envSchema>;

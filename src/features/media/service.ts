@@ -1,3 +1,4 @@
+import { collectMediaIds } from "@/features/media/references";
 import { randomBytes } from "node:crypto";
 import type { Prisma } from "@/generated/prisma/client";
 import { actorFromContext, writeAudit } from "@/lib/audit";
@@ -206,4 +207,25 @@ async function openFile(row: MediaRow): Promise<MediaFile> {
   const stored = await getStorage().get(row.storageKey);
   if (!stored) throw Errors.notFound("Media file");
   return { ...stored, mimeType: row.mimeType, filename: row.originalName, kind: row.kind };
+}
+
+/**
+ * Public metadata of a file, only when a published section or a published announcement
+ * references it (so unreferenced admin files are not disclosed). No storage path or uploader.
+ */
+export async function getPublicMediaMeta(tenantSlug: string, id: string): Promise<{ id: string; kind: string; mimeType: string; sizeBytes: number }> {
+  const tenant = await getPublicTenantBySlug(tenantSlug);
+  const row = await db.media.findFirst({ where: { id, deletedAt: null, source: "ADMIN" }, include: mediaInclude });
+  if (!row) throw Errors.notFound("Media");
+  const visible = row.tenantId === tenant.id || (row.tenantId === null && tenant.unitPath.startsWith(row.ownerUnit.path));
+  if (!visible) throw Errors.notFound("Media");
+
+  const [sections, announcements] = await Promise.all([
+    db.section.findMany({ where: { tenantId: tenant.id, published: { isNot: null } }, select: { published: { select: { data: true } } } }),
+    db.announcement.findMany({ where: { tenantId: tenant.id, status: "PUBLISHED", deletedAt: null, attachmentId: { not: null } }, select: { attachmentId: true } }),
+  ]);
+  const referenced = new Set<string>(announcements.map((a) => a.attachmentId!));
+  for (const s of sections) collectMediaIds(s.published?.data).forEach((v) => referenced.add(v));
+  if (!referenced.has(id)) throw Errors.notFound("Media");
+  return { id: row.id, kind: row.kind, mimeType: row.mimeType, sizeBytes: row.sizeBytes };
 }

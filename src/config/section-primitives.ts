@@ -162,7 +162,11 @@ export const bannerSchema = z
             href,
             openInNewTab: z.boolean(),
           })
-          .strict(),
+          .strict()
+          .refine((cta) => cta.linkType !== "external" || /^https:\/\//.test(cta.href) || cta.href.startsWith("mailto:") || cta.href.startsWith("tel:"), {
+            message: "External links must use https://",
+            path: ["href"],
+          }),
       )
       .max(2)
       .optional(),

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { PageKey } from "@/config/pages";
 import { PAGE_SECTIONS } from "@/config/sections-pages";
+import { ABOUT_EXTRA_SECTIONS, HOME_EXTRA_SECTIONS, PROJECTS_SECTIONS, SCHEMES_SECTIONS } from "@/config/sections-extra";
 import { bilingualLongSchema, bilingualSchema, colour, geometrySchema, href, mediaId, phone, text, type SectionDefinition } from "@/config/section-primitives";
 
 /**
@@ -191,7 +192,13 @@ const about: SectionDefinition[] = [
   },
 ];
 
-export const SECTION_REGISTRY: Partial<Record<PageKey, readonly SectionDefinition[]>> = { home, about, ...PAGE_SECTIONS };
+export const SECTION_REGISTRY: Partial<Record<PageKey, readonly SectionDefinition[]>> = {
+  home: [...home, ...HOME_EXTRA_SECTIONS],
+  about: [...about, ...ABOUT_EXTRA_SECTIONS],
+  projects: PROJECTS_SECTIONS,
+  schemes: SCHEMES_SECTIONS,
+  ...PAGE_SECTIONS,
+};
 
 export function sectionsForPage(pageKey: PageKey): readonly SectionDefinition[] {
   return SECTION_REGISTRY[pageKey] ?? [];

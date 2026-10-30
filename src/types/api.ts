@@ -441,6 +441,8 @@ export interface PublicGrievanceStatsDto {
   receivedChangePercent: number | null;
   monthly: MonthlyGrievanceCount[];
   byCategory: { category: string; total: number; resolved: number; sharePercent: number }[];
+  /** Counts per status, for the escalation summary. */
+  byStatus: { OPEN: number; IN_PROGRESS: number; RESOLVED: number; REJECTED: number };
   generatedAt: string;
 }
 

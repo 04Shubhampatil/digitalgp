@@ -7,6 +7,7 @@ import type { ClientInfo } from "@/lib/http";
 import { assertCan, assertInScope, unitPathScopeFilter } from "@/lib/permissions";
 import { getPublicTenantBySlug, getTenantForActor, getUnitForActor } from "@/lib/tenant";
 import { paginate } from "@/lib/validation";
+import { revalidateWebsitesUnder } from "@/lib/revalidate";
 import type { AnnouncementDto, PublicAnnouncementDto } from "@/types/api";
 import { assertEditable, nextStatus, transitionCapability, type WorkflowAction } from "@/features/content/workflow";
 import type {
@@ -259,6 +260,7 @@ export async function transitionAnnouncement(
     );
     return row;
   });
+  if (action === "publish" || action === "unpublish" || action === "archive") await revalidateWebsitesUnder(before.ownerUnit.path);
   return toAnnouncementDto(updated);
 }
 

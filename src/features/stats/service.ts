@@ -54,6 +54,10 @@ async function computeGrievanceStats(tenant: ResolvedTenant, now: Date): Promise
   const lastMonth = months[months.length - 2]!;
   const monthBefore = months[months.length - 3]!;
 
+  // Per-status counts for the escalation summary, from the same grouped query.
+  const byStatus = { OPEN: 0, IN_PROGRESS: 0, RESOLVED: 0, REJECTED: 0 };
+  for (const row of categories) byStatus[row.status] += row._count._all;
+
   const byCat = new Map<string, { total: number; resolved: number }>();
   for (const row of categories) {
     const entry = byCat.get(row.category) ?? { total: 0, resolved: 0 };
@@ -75,6 +79,7 @@ async function computeGrievanceStats(tenant: ResolvedTenant, now: Date): Promise
     byCategory: [...byCat]
       .map(([category, c]) => ({ category, total: c.total, resolved: c.resolved, sharePercent: pct(c.total, total) ?? 0 }))
       .sort((a, b) => b.total - a.total || a.category.localeCompare(b.category)),
+    byStatus,
     generatedAt: now.toISOString(),
   };
 }

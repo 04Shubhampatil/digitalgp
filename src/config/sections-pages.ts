@@ -47,7 +47,17 @@ const strict = <T extends z.ZodRawShape>(shape: T) => z.object(shape).strict();
 // Shared sections
 // ---------------------------------------------------------------------------
 
-const topStats = strict({ items: sectionList(topStatItem, 8) });
+/** Top statistics. `variant` "strip" renders the compact band over a hero (Finance); "tiles" is the default grid. */
+const topStatsSchema = (max: number) =>
+  strict({
+    heading: bilingualSchema.optional(),
+    subheading: bilingualSchema.optional(),
+    variant: z.enum(["tiles", "strip"]).optional(),
+    items: sectionList(topStatItem, max),
+  });
+const topStats = topStatsSchema(8);
+/** Infrastructure shows up to 15 facility tiles ("Public Facilities Overview"). */
+const facilityStats = topStatsSchema(15);
 
 const supportCards = strict({ items: sectionList(supportCardItem, 12) });
 
@@ -89,7 +99,7 @@ const iconCardList = (max: number) => strict({ items: sectionList(strict({ icon:
 
 const infrastructure: SectionDefinition[] = [
   { key: "banner", sortOrder: 0, schema: bannerSchema },
-  { key: "top-stats", sortOrder: 5, schema: topStats },
+  { key: "top-stats", sortOrder: 5, schema: facilityStats },
   {
     key: "infra-map",
     sortOrder: 10,
@@ -214,7 +224,7 @@ const finance: SectionDefinition[] = [
       heading: bilingualSchema,
       subtitle: bilingualSchema.optional(),
       backgroundColour: colour,
-      tabs: sectionList(strict({ name: bilingualSchema, enabled: z.boolean() }), 10),
+      tabs: sectionList(strict({ tabKey: text(40), name: bilingualSchema, enabled: z.boolean() }), 10),
       overviewCard: strict({
         title: bilingualSchema,
         fields: sectionList(
@@ -227,7 +237,25 @@ const finance: SectionDefinition[] = [
           10,
         ),
       }),
-      barChart: sectionList(strict({ label: bilingualSchema, value: amount, colour }), 24),
+      // One dataset per tab (tabKey); every series has one value per label.
+      charts: sectionList(
+        strict({
+          tabKey: text(40),
+          type: z.enum(["bar", "line"]),
+          labels: z.array(text(60)).min(1).max(24),
+          series: sectionList(
+            strict({ name: bilingualSchema, colour, values: z.array(z.number().min(0).max(1_000_000_000_000)).min(1).max(24) }),
+            6,
+          ),
+        }).superRefine((chart, ctx) => {
+          chart.series.forEach((serie, i) => {
+            if (serie.values.length !== chart.labels.length) {
+              ctx.addIssue({ code: "custom", path: ["series", i, "values"], message: "Each series needs one value per label" });
+            }
+          });
+        }),
+        6,
+      ),
       downloadReport: strict({
         enabled: z.boolean(),
         buttonText: bilingualSchema,

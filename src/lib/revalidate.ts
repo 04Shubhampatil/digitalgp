@@ -1,4 +1,5 @@
 import { revalidateTag } from "next/cache";
+import { db } from "@/lib/db";
 
 /**
  * Refresh the public site's cached fetches after content changes. The frontend tags its public
@@ -21,3 +22,12 @@ export function revalidatePublicTags(tags: string[]): void {
 
 export const tenantTag = (slug: string) => `tenant:${slug}`;
 export const pageTag = (slug: string, pageKey: string) => `page:${slug}:${pageKey}`;
+
+/**
+ * Revalidate every website under a unit path. Shared content (owned by a taluka or district) reaches
+ * all websites below it, so each of them is refreshed. Call after publish, unpublish or archive.
+ */
+export async function revalidateWebsitesUnder(unitPath: string): Promise<void> {
+  const tenants = await db.tenant.findMany({ where: { unit: { path: { startsWith: unitPath } } }, select: { slug: true } });
+  revalidatePublicTags(tenants.map((t) => tenantTag(t.slug)));
+}

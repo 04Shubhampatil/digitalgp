@@ -459,3 +459,45 @@ Storage: a `Media` row with `source = PUBLIC_GRIEVANCE`, `uploadedById = null`, 
 
 Full flow: upload each file -> collect ids -> `POST /public/:slug/grievances` with `attachmentIds` -> attaching links the files (`GrievanceAttachment`) and clears `expiresAt`. Staff see them on `GET /grievances/:id` (`attachments[]`) and download with `GET /media/:id/file` (scope-checked). Unattached uploads past `expiresAt` are deleted (row + bytes) by `npm run forms:purge` (`purgeExpiredGrievanceUploads`); schedule it daily.
 
+
+## Remaining backend items (added)
+
+### Grievance statistics (item 3)
+`GET /public/:tenantSlug/stats/grievances` now also returns `byStatus`: `{ OPEN, IN_PROGRESS, RESOLVED, REJECTED }` counts for the escalation summary. Existing fields are unchanged.
+
+### Cache refresh on publish (item 4)
+Publishing, unpublishing or archiving announcements, schemes and projects revalidates the cached public tags of every website under the content's owner area (`revalidateWebsitesUnder`). Page sections were already covered.
+
+### Infrastructure statistics (item 5)
+`top-stats` accepts optional `heading`, `subheading` and `variant` (`"tiles"` | `"strip"`). The Infrastructure page allows up to 15 items; other pages keep 8. Finance uses `variant: "strip"` for the compact band over the hero.
+
+### Budget visualizer (item 6)
+- `tabs[]` items now carry `tabKey`.
+- `barChart` is replaced by `charts[]`: `{ tabKey, type: "bar" | "line", labels[] (1–24), series[] (max 6: { name, colour, values[] }) }`. Every series has one value per label.
+- Overview rule (documented, also computed by the API):
+  `GET /public/:tenantSlug/finance/summary` returns `{ totalIncome, totalExpenditure, surplus, utilisationPercent, generatedAt }` from the **published** Income and Expenditure categories. Amounts are summed in paise, so totals are exact. A "dynamic" overview field shows total income or expenditure; an "auto" field shows the surplus, or utilisation % when its suffix is "%".
+
+### Public media metadata (item 7)
+`GET /public/:tenantSlug/media/:mediaId/meta` returns `{ id, kind, mimeType, sizeBytes }` only when a published section or a published announcement references the file. Unreferenced files return 404. No storage path or uploader is returned.
+
+### Weather (item 9)
+`GET /public/:tenantSlug/weather` returns `{ source: "live" | "manual", location, current, forecast[] (up to 5 days), fetchedAt }`.
+- Live data comes from an OpenWeatherMap-compatible API when `WEATHER_API_KEY` is set and the website has `settings.weather.location` (e.g. `"Khed,IN"`). Results are cached per website for `WEATHER_CACHE_MINUTES` (default 15).
+- Otherwise, or if the provider fails, the manual `weather` section published on Home is returned with `source: "manual"`.
+- The API key is never returned or logged.
+- Env: `WEATHER_API_KEY` (optional, never commit), `WEATHER_API_BASE_URL`, `WEATHER_CACHE_MINUTES`.
+
+### New section keys (item 10)
+| Page | Keys |
+| --- | --- |
+| projects | banner, top-stats, before-after-gallery, village-resolution-tracker, impact-dashboard, financial-overview, success-stories, development-suggestions |
+| schemes | banner, category-strip, coverage-map, statistics, success-stories, quick-actions |
+| home (added) | banner, weather (manual fallback), whats-new, achievements, about-cards, notice-categories, notices |
+| about (added) | banner, leaders-profile-grid, roles-cards, emergency-services |
+
+Shared rules still apply: https-only external links (banner external CTAs included), media ids checked for ownership, enums and bounds on every field.
+
+### Not implemented (need a decision)
+- **Video size limit (item 8):** the 10 MB cap stays. External YouTube/Vimeo links are supported for the mini-documentary and video gallery. A higher cap for video needs a storage and streaming decision with the frontend owner.
+- **Skill directory (item 11):** counts stay as typed, approximate values (`countIsApproximate`). A real talent directory would need its own module.
+- **Seed content for new sections (item 11):** needs JSON fixtures from the frontend owner.

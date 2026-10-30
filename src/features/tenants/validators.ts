@@ -19,6 +19,8 @@ export const tenantSettingsSchema = z
     social: z.object({ facebook: url.optional(), instagram: url.optional(), youtube: url.optional() }).strict().optional(),
     branding: z.object({ logoMediaId: idSchema.optional(), tagline: bilingual.optional() }).strict().optional(),
     seo: z.object({ title: bilingual.optional(), description: bilingual.optional() }).strict().optional(),
+    /** Place name sent to the weather provider, e.g. "Khed,IN". */
+    weather: z.object({ location: z.string().trim().min(2).max(120) }).strict().optional(),
   })
   .strict();
 export type TenantSettings = z.infer<typeof tenantSettingsSchema>;
