@@ -145,3 +145,110 @@ export function ThenNowClient({ comparisons, beforeLabel, afterLabel }: { compar
     </div>
   );
 }
+
+export interface BudgetChartData {
+  tabKey: string;
+  type: "bar" | "line";
+  labels: string[];
+  series: { name: string; colour: string; values: number[] }[];
+}
+
+function niceTop(max: number, ticks = 4): number {
+  const raw = Math.max(max, 1) / ticks;
+  const pow = 10 ** Math.floor(Math.log10(raw));
+  const step = ([1, 2, 5, 10].find((m) => m * pow >= raw) ?? 10) * pow;
+  return step * Math.ceil(Math.max(max, 1) / step);
+}
+
+/** Tabbed bar / line chart for the budget section. Values are in rupees; one unit (Cr / lakh) per chart. */
+export function BudgetChartClient({ tabs, charts, crLabel, lakhLabel, emptyLabel, plain = false }: { tabs: { key: string; name: string }[]; charts: BudgetChartData[]; crLabel: string; lakhLabel: string; emptyLabel: string; /** Plain counts instead of rupee amounts. */ plain?: boolean }) {
+  const first = tabs.find((t) => charts.some((c) => c.tabKey === t.key))?.key ?? tabs[0]?.key ?? charts[0]?.tabKey ?? "";
+  const [active, setActive] = useState(first);
+  const chart = charts.find((c) => c.tabKey === active) ?? (tabs.length === 0 ? charts[0] : undefined);
+  const W = 640;
+  const H = 260;
+  const L = 56;
+  const B = 30;
+  const T = 12;
+
+  let body: React.ReactNode = <p className="py-16 text-center text-[13px] text-[#414141]">{emptyLabel}</p>;
+  if (chart && chart.labels.length > 0) {
+    const maxVal = Math.max(...chart.series.flatMap((s) => s.values), 1);
+    const top = niceTop(maxVal);
+    const div = plain ? 1 : top >= 1e7 ? 1e7 : top >= 1e5 ? 1e5 : 1;
+    const suffix = div === 1e7 ? crLabel : div === 1e5 ? lakhLabel : "";
+    const fmt = (v: number) => `${plain ? "" : "₹"}${div === 1 ? v.toLocaleString("en-IN") : +(v / div).toFixed(2)}${suffix ? " " + suffix : ""}`;
+    const n = chart.labels.length;
+    const plotW = W - L - 8;
+    const plotH = H - B - T;
+    const slot = plotW / n;
+    const y = (v: number) => T + plotH - (v / top) * plotH;
+    const x = (i: number) => L + slot * i + slot / 2;
+    const barW = Math.min(36, (slot * 0.7) / chart.series.length);
+    body = (
+      <div>
+        <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img">
+          {[0, 1, 2, 3, 4].map((i) => {
+            const v = (top / 4) * i;
+            return (
+              <g key={i}>
+                <line x1={L} x2={W - 8} y1={y(v)} y2={y(v)} stroke="#00000018" />
+                <text x={L - 6} y={y(v) + 4} textAnchor="end" fontSize="10" fill="#414141">
+                  {fmt(v)}
+                </text>
+              </g>
+            );
+          })}
+          {chart.labels.map((l, i) => (
+            <text key={i} x={x(i)} y={H - 10} textAnchor="middle" fontSize="10" fill="#414141">
+              {l}
+            </text>
+          ))}
+          {chart.type === "bar"
+            ? chart.series.map((s, si) =>
+                s.values.map((v, i) => (
+                  <rect key={`${si}-${i}`} x={x(i) - (barW * chart.series.length) / 2 + si * barW} y={y(v)} width={barW - 2} height={Math.max(plotH - (y(v) - T), 0)} rx="3" fill={s.colour}>
+                    <title>{`${s.name}: ${fmt(v)}`}</title>
+                  </rect>
+                )),
+              )
+            : chart.series.map((s, si) => (
+                <g key={si}>
+                  <polyline fill="none" stroke={s.colour} strokeWidth="2.5" points={s.values.map((v, i) => `${x(i)},${y(v)}`).join(" ")} />
+                  {s.values.map((v, i) => (
+                    <circle key={i} cx={x(i)} cy={y(v)} r="3.5" fill={s.colour}>
+                      <title>{`${s.name}: ${fmt(v)}`}</title>
+                    </circle>
+                  ))}
+                </g>
+              ))}
+        </svg>
+        {chart.series.length > 1 && (
+          <ul className="mt-2 flex flex-wrap justify-center gap-4 text-[12px] text-black">
+            {chart.series.map((s, i) => (
+              <li key={i} className="flex items-center gap-1.5">
+                <span aria-hidden className="size-3 rounded-sm" style={{ backgroundColor: s.colour }} />
+                {s.name}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {tabs.length > 0 && (
+        <div role="tablist" className="mb-4 flex flex-wrap gap-2">
+          {tabs.map((tab) => (
+            <button key={tab.key} type="button" role="tab" aria-selected={active === tab.key} onClick={() => setActive(tab.key)} className={chip(active === tab.key)}>
+              {tab.name}
+            </button>
+          ))}
+        </div>
+      )}
+      {body}
+    </div>
+  );
+}

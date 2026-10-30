@@ -139,13 +139,32 @@ interface StatItem {
 
 /** `top-stats` / `green-scoreboard`: statistic cards (icon, value + unit, title, description). */
 export function TopStatsSection({ locale, data }: SectionProps) {
-  const items = list<StatItem>((data as { items?: unknown }).items).filter((i) => i.visible !== false);
+  const d = data as { items?: unknown; heading?: B; subheading?: B; variant?: "tiles" | "strip" };
+  const items = list<StatItem>(d.items).filter((i) => i.visible !== false);
   if (items.length === 0) return null;
+  const strip = d.variant === "strip";
   return (
-    <Band tone="cream">
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
+    <Band tone="cream" heading={tx(d.heading, locale) || undefined} subheading={tx(d.subheading, locale) || undefined}>
+      <ul className={strip ? "grid divide-black/10 overflow-hidden rounded-[10px] bg-white shadow-[0_0_10px_rgba(0,0,0,0.08)] sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(150px,1fr))] lg:divide-x" : "grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]"}>
         {items.map((s, i) => {
           const fg = readableText(s.background);
+          if (strip) {
+            return (
+              <li key={i} className="flex items-center gap-3 px-4 py-3" style={s.background ? { backgroundColor: s.background, color: fg } : undefined}>
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#135130]/10 text-[#135130]">
+                  <Icon name={s.icon} className="size-5" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[18px] leading-6 font-semibold text-[#135130]">
+                    {s.value}
+                    {tx(s.unit, locale) && <span className="ml-1 text-[12px] font-medium text-[#414141]">{tx(s.unit, locale)}</span>}
+                  </span>
+                  <span className="block text-[12px] font-medium text-black">{tx(s.title, locale)}</span>
+                  {tx(s.description, locale) && <span className="block text-[11px] text-[#414141]">{tx(s.description, locale)}</span>}
+                </span>
+              </li>
+            );
+          }
           return (
             <li key={i} className={`${cardClass} flex flex-col items-center text-center`} style={s.background ? { backgroundColor: s.background, color: fg } : undefined}>
               <span className={`flex size-12 shrink-0 items-center justify-center rounded-full ${fg ? "bg-current/10" : "bg-[#135130]/10 text-[#135130]"}`}>

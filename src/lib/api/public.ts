@@ -6,6 +6,9 @@ import type {
   PublicProjectDto,
   PublicSchemeDto,
   PublicTenantDto,
+  PublicGrievanceStatsDto,
+  PublicSchemeStatsDto,
+  PublicServiceStatsDto,
 } from "@/types/api";
 import { API_BASE, apiFetch, apiFetchPage, type QueryValue } from "./client";
 
@@ -91,3 +94,15 @@ export function trackGrievance(slug: string, trackingCode: string) {
 export function submitContactForm(slug: string, kind: "feedback" | "volunteers", body: Record<string, string | null>) {
   return apiFetch<{ message: string }>(`/public/${encodeURIComponent(slug)}/${kind}`, { method: "POST", body });
 }
+
+async function publicStats<T>(slug: string, kind: "grievances" | "schemes" | "services"): Promise<T | null> {
+  try {
+    return await apiFetch<T>(`/public/${encodeURIComponent(slug)}/stats/${kind}`, { next: { revalidate: 60, tags: [`tenant:${slug}`] } });
+  } catch {
+    return null;
+  }
+}
+/** Computed statistics (numbers only). Null when the endpoint fails; individual figures can be null too. */
+export const getGrievanceStats = (slug: string) => publicStats<PublicGrievanceStatsDto>(slug, "grievances");
+export const getSchemeStats = (slug: string) => publicStats<PublicSchemeStatsDto>(slug, "schemes");
+export const getServiceStats = (slug: string) => publicStats<PublicServiceStatsDto>(slug, "services");

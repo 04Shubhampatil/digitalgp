@@ -65,17 +65,31 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
         ],
       },
     },
-    // The ward-wise coverage map in the design needs beneficiary counts per ward; it is added once the
-    // backend provides them. These totals are sample figures until real ones are published.
     {
-      sectionKey: "top-stats",
+      sectionKey: "coverage-map",
+      sortOrder: 25,
+      data: {
+        heading: b("Scheme Coverage Map", "योजना व्याप्ती नकाशा"),
+        wards: [
+          { wardNo: "1", households: 210, beneficiaries: 540 },
+          { wardNo: "2", households: 96, beneficiaries: 240 },
+          { wardNo: "3", households: 28, beneficiaries: 70 },
+          { wardNo: "4", households: 54, beneficiaries: 130 },
+          { wardNo: "5", households: 150, beneficiaries: 380 },
+        ],
+      },
+    },
+    // These totals are live where the backend can compute them and sample figures otherwise.
+    {
+      sectionKey: "live-stats",
       sortOrder: 30,
       data: {
+        source: "schemes",
         items: [
-          { icon: "building", title: b("Total Schemes", "एकूण योजना"), value: "106", description: b("All Government Schemes", "सर्व शासकीय योजना"), background: "#E8F1EA", visible: true },
-          { icon: "users", title: b("Total Beneficiaries", "एकूण लाभार्थी"), value: "2,845", description: b("In Savardari Village", "सावरदरी गावात"), background: "#E8F1EA", visible: true },
-          { icon: "rupee", title: b("Total Amount Disbursed", "एकूण वितरित रक्कम"), value: "₹ 8.45 Cr", description: b("This Financial Year", "या आर्थिक वर्षात"), background: "#E8F1EA", visible: true },
-          { icon: "shield", title: b("Coverage", "व्याप्ती"), value: "87%", description: b("Households Covered", "कुटुंबे समाविष्ट"), background: "#E8F1EA", visible: true },
+          { live: "totalSchemes", icon: "building", title: b("Total Schemes", "एकूण योजना"), value: "106", description: b("All Government Schemes", "सर्व शासकीय योजना"), background: "#E8F1EA", visible: true },
+          { live: "totalBeneficiaries", icon: "users", title: b("Total Beneficiaries", "एकूण लाभार्थी"), value: "2,845", description: b("In Savardari Village", "सावरदरी गावात"), background: "#E8F1EA", visible: true },
+          { live: "amountDisbursedThisFinancialYear", format: "money", icon: "rupee", title: b("Total Amount Disbursed", "एकूण वितरित रक्कम"), value: "₹ 8.45 Cr", description: b("This Financial Year", "या आर्थिक वर्षात"), background: "#E8F1EA", visible: true },
+          { live: "coveragePercent", format: "percent", icon: "shield", title: b("Coverage", "व्याप्ती"), value: "87%", description: b("Households Covered", "कुटुंबे समाविष्ट"), background: "#E8F1EA", visible: true },
         ],
       },
     },
@@ -170,15 +184,14 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       },
     },
     {
-      // The design shows each volunteer area as a card with a description; the backend only stores the name.
       sectionKey: "volunteer-categories",
       sortOrder: 40,
       data: {
         items: [
-          { title: b("Youth Volunteers", "युवा स्वयंसेवक"), order: 1 },
-          { title: b("NGOs", "स्वयंसेवी संस्था"), order: 2 },
-          { title: b("Social Organizations", "सामाजिक संस्था"), order: 3 },
-          { title: b("Citizen Volunteers", "नागरिक स्वयंसेवक"), order: 4 },
+          { title: b("Youth Volunteers", "युवा स्वयंसेवक"), description: b("Energetic youth can contribute in education, cleanliness, and awareness drives.", "उत्साही युवक शिक्षण, स्वच्छता आणि जनजागृती मोहिमांमध्ये योगदान देऊ शकतात."), order: 1 },
+          { title: b("NGOs", "स्वयंसेवी संस्था"), description: b("NGOs can partner with us for community development programs.", "स्वयंसेवी संस्था सामुदायिक विकास कार्यक्रमांसाठी आमच्यासोबत भागीदार होऊ शकतात."), order: 2 },
+          { title: b("Social Organizations", "सामाजिक संस्था"), description: b("Work together on social welfare, health, and rural development initiatives.", "सामाजिक कल्याण, आरोग्य आणि ग्रामीण विकास उपक्रमांमध्ये एकत्र काम करा."), order: 3 },
+          { title: b("Citizen Volunteers", "नागरिक स्वयंसेवक"), description: b("Every citizen can play a role in building a better and stronger Savardari.", "चांगली आणि मजबूत सावरदरी घडवण्यात प्रत्येक नागरिक भूमिका बजावू शकतो."), order: 4 },
         ],
       },
     },
@@ -245,8 +258,12 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
         ],
       },
     },
-    // The design also shows monthly complaint numbers and charts. They are only shown once real figures
-    // come from the complaints database, so they are not part of the placeholder.
+    // Figures come from the complaints database (GET /public/:slug/stats/grievances).
+    {
+      sectionKey: "monthly-report",
+      sortOrder: 50,
+      data: { heading: b("Monthly Performance Report", "मासिक कामगिरी अहवाल") },
+    },
     {
       sectionKey: "escalation-matrix",
       sortOrder: 40,

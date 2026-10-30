@@ -1,6 +1,8 @@
 import type { PublicPageDto } from "@/types/api";
 import type { UiLocale } from "@/i18n/config";
 import { AboutEmergencySection, AboutHeroSection, AboutHistorySection, AboutRolesSection, AboutStructureSection, AboutVisionSection } from "./AboutFigma";
+import { LiveStatsSection } from "./cms/extra";
+import { BeforeAfterGallerySection, CategoryStripSection, CoverageMapSection, DevelopmentSuggestionsSection, EmergencyServicesSection, FinancialItemsView, ImpactDashboardSection, LeadersProfileGridSection, MonthlyReportSection, QuickActionsSection, ResolutionTrackerSection, RolesCardsSection } from "./cms/extra";
 import { BeforeAfterSection, CtaBannerSection, DevTimelineSection, FinancialOverviewSection, ImpactGridSection, FacilityGridSection, ImageCropsSection, ProgressTrackerSection, ProjectShowcaseSection, SuccessStoriesSection } from "./PageKit";
 import { LinkCardsSection, MediaCardsSection, StatCardsSection, TileGridSection, VideoFeatureSection } from "./PageKit2";
 import { CalloutSection, GrievanceRegisterSection, GrievanceTrackSection } from "./GrievanceSections";
@@ -101,7 +103,20 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
   "progress-tracker": ProgressTrackerSection,
   "impact-grid": ImpactGridSection,
   "dev-timeline": DevTimelineSection,
-  "financial-overview": FinancialOverviewSection,
+  "financial-overview": (p) => (Array.isArray((p.data as { items?: unknown }).items) ? <FinancialItemsView locale={p.locale} data={p.data as Record<string, unknown>} /> : <FinancialOverviewSection {...p} />),
+  "live-stats": LiveStatsSection,
+  statistics: (p) => <TopStatsSection {...p} data={{ ...(p.data as object), variant: "strip" }} />,
+  "category-strip": CategoryStripSection,
+  "quick-actions": QuickActionsSection,
+  "coverage-map": CoverageMapSection,
+  "before-after-gallery": BeforeAfterGallerySection,
+  "village-resolution-tracker": ResolutionTrackerSection,
+  "impact-dashboard": ImpactDashboardSection,
+  "development-suggestions": DevelopmentSuggestionsSection,
+  "monthly-report": MonthlyReportSection,
+  "leaders-profile-grid": LeadersProfileGridSection,
+  "roles-cards": RolesCardsSection,
+  "emergency-services": EmergencyServicesSection,
   // Figma placeholder blocks that share a name with a backend section key keep their own renderer key.
   "stories-figma": SuccessStoriesSection,
   "cta-banner": CtaBannerSection,
