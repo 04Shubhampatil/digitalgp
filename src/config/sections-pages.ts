@@ -224,7 +224,8 @@ const finance: SectionDefinition[] = [
       heading: bilingualSchema,
       subtitle: bilingualSchema.optional(),
       backgroundColour: colour,
-      tabs: sectionList(strict({ tabKey: text(40), name: bilingualSchema, enabled: z.boolean() }), 10),
+      // tabKey links a tab to its chart; optional so older editor data (no key) stays valid.
+      tabs: sectionList(strict({ tabKey: text(40).optional(), name: bilingualSchema, enabled: z.boolean() }), 10),
       overviewCard: strict({
         title: bilingualSchema,
         fields: sectionList(
@@ -237,6 +238,8 @@ const finance: SectionDefinition[] = [
           10,
         ),
       }),
+      /** Legacy single series (kept so existing drafts stay valid); prefer `charts`. */
+      barChart: sectionList(strict({ label: bilingualSchema, value: amount, colour }), 24).optional(),
       // One dataset per tab (tabKey); every series has one value per label.
       charts: sectionList(
         strict({
@@ -255,7 +258,7 @@ const finance: SectionDefinition[] = [
           });
         }),
         6,
-      ),
+      ).optional(),
       downloadReport: strict({
         enabled: z.boolean(),
         buttonText: bilingualSchema,

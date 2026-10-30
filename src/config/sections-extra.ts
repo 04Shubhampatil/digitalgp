@@ -248,7 +248,8 @@ export const HOME_EXTRA_SECTIONS: SectionDefinition[] = [
 // ---------------------------------------------------------------------------
 
 export const ABOUT_EXTRA_SECTIONS: SectionDefinition[] = [
-  { key: "banner", sortOrder: 0, schema: bannerSchema },
+  // Sorted before the existing About sections (overview is 0) so the banner is always first.
+  { key: "banner", sortOrder: -1, schema: bannerSchema },
   {
     key: "leaders-profile-grid",
     sortOrder: 25,

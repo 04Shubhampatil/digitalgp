@@ -193,8 +193,9 @@ const about: SectionDefinition[] = [
 ];
 
 export const SECTION_REGISTRY: Partial<Record<PageKey, readonly SectionDefinition[]>> = {
-  home: [...home, ...HOME_EXTRA_SECTIONS],
-  about: [...about, ...ABOUT_EXTRA_SECTIONS],
+  // Sorted by sortOrder so the registry order matches how the page returns its sections.
+  home: [...home, ...HOME_EXTRA_SECTIONS].sort((a, b) => a.sortOrder - b.sortOrder),
+  about: [...about, ...ABOUT_EXTRA_SECTIONS].sort((a, b) => a.sortOrder - b.sortOrder),
   projects: PROJECTS_SECTIONS,
   schemes: SCHEMES_SECTIONS,
   ...PAGE_SECTIONS,
