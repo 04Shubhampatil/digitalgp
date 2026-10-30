@@ -30,7 +30,7 @@ function loadScript(): Promise<void> {
 }
 
 /** Cloudflare Turnstile check; calls `onToken` with a token, or with null when it expires or fails. */
-export function Turnstile({ onToken }: { onToken: (token: string | null) => void }) {
+export function Turnstile({ onToken, resetKey = 0 }: { onToken: (token: string | null) => void; /** Change it to get a new token (tokens can be used once). */ resetKey?: number }) {
   const box = useRef<HTMLDivElement>(null);
   const cb = useRef(onToken);
   useEffect(() => {
@@ -56,7 +56,7 @@ export function Turnstile({ onToken }: { onToken: (token: string | null) => void
       cancelled = true;
       if (id && window.turnstile) window.turnstile.remove(id);
     };
-  }, []);
+  }, [resetKey]);
 
   if (!TURNSTILE_SITE_KEY) return null;
   return <div ref={box} className="sm:col-span-full" />;

@@ -406,20 +406,43 @@ export async function PartnersSection({ slug, locale, data }: SectionProps) {
   );
 }
 
-/** `volunteer-categories`: the areas volunteers can join (also offered in the registration form). */
-export async function VolunteerCategoriesSection({ locale, data }: SectionProps) {
+/** `volunteer-categories`: the areas volunteers can join (also offered in the registration form); cards when they have descriptions. */
+export async function VolunteerCategoriesSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
-  const items = list<{ title?: B; order?: number }>((data as { items?: unknown }).items).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const items = list<{ title?: B; description?: B; iconId?: string; order?: number }>((data as { items?: unknown }).items).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   if (items.length === 0) return null;
+  const cards = items.some((c) => tx(c.description, locale) || c.iconId);
   return (
     <Band heading={t("volunteerAreas")} tone="cream">
-      <ul className="flex flex-wrap gap-2">
-        {items.map((c, i) => (
-          <li key={i} className="rounded-full border border-[#135130] bg-white px-4 py-2 text-[13px] font-medium text-[#135130]">
-            {tx(c.title, locale)}
-          </li>
-        ))}
-      </ul>
+      {cards ? (
+        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {items.map((c, i) => {
+            const icon = mediaUrl(slug, c.iconId);
+            return (
+              <li key={i} className={`${cardClass} flex flex-col items-center text-center`}>
+                {icon ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- website media served by the backend
+                  <img src={icon} alt="" loading="lazy" className="size-16 rounded-full object-cover" />
+                ) : (
+                  <span className="flex size-16 items-center justify-center rounded-full bg-[#135130]/10 text-[#135130]">
+                    <Icon name="users" className="size-8" />
+                  </span>
+                )}
+                <p className="mt-3 text-[16px] font-semibold text-black">{tx(c.title, locale)}</p>
+                {tx(c.description, locale) && <p className="mt-1 text-[13px] leading-5 text-[#414141]">{tx(c.description, locale)}</p>}
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <ul className="flex flex-wrap gap-2">
+          {items.map((c, i) => (
+            <li key={i} className="rounded-full border border-[#135130] bg-white px-4 py-2 text-[13px] font-medium text-[#135130]">
+              {tx(c.title, locale)}
+            </li>
+          ))}
+        </ul>
+      )}
     </Band>
   );
 }

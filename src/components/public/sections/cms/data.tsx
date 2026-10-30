@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { resolveHref } from "@/lib/href";
 import type { SectionProps } from "../index";
+import { BudgetChartClient, type BudgetChartData } from "./client";
 import { Band, Icon, LinkButton, cardClass, externalProps, list, mediaUrl, plain, readableText, tx, type B } from "./kit";
 
 const inr = (n: number | string) => Number(n).toLocaleString("en-IN");
@@ -226,14 +227,6 @@ export function formatMoney(rupees: number, locale: SectionProps["locale"], unit
 /** The unit that suits a block's biggest figure, so every amount in it is shown the same way. */
 const blockUnit = (biggest: number): "cr" | "lakh" | "auto" => (biggest >= 1e7 ? "cr" : biggest >= 1e5 ? "lakh" : "auto");
 
-/** Round upper bound and step for a chart axis (1, 2 or 5 × a power of ten). */
-function niceScale(max: number, ticks = 4): { top: number; step: number } {
-  const raw = Math.max(max, 1) / ticks;
-  const pow = 10 ** Math.floor(Math.log10(raw));
-  const step = ([1, 2, 5, 10].find((m) => m * pow >= raw) ?? 10) * pow;
-  return { top: step * Math.ceil(Math.max(max, 1) / step), step };
-}
-
 const sumAmount = (cats: Category[]) => cats.reduce((s, c) => s + (Number(c.amount) || 0), 0);
 
 function InfoCardBlock({ slug, locale, card }: { slug: string; locale: SectionProps["locale"]; card?: InfoCard }) {
@@ -360,15 +353,28 @@ export async function BudgetVisualizerSection({ slug, locale, data, siblings }: 
     heading?: B;
     subtitle?: B;
     backgroundColour?: string;
-    tabs?: { name?: B; enabled?: boolean }[];
+    tabs?: { tabKey?: string; name?: B; enabled?: boolean }[];
     overviewCard?: { title?: B; fields?: { label?: B; valueType?: "dynamic" | "auto"; prefixSuffix?: string; colour?: string }[] };
     barChart?: { label?: B; value?: string; colour?: string }[];
+    charts?: { tabKey?: string; type?: "bar" | "line"; labels?: string[]; series?: { name?: B; colour?: string; values?: number[] }[] }[];
     downloadReport?: { enabled?: boolean; buttonText?: B; fileId?: string };
   };
   const bars = list<{ label?: B; value?: string; colour?: string }>(d.barChart);
-  if (d.enabled === false || bars.length === 0) return null;
-  const max = Math.max(...bars.map((b) => Number(b.value) || 0), 1);
-  const tabs = list<{ name?: B; enabled?: boolean }>(d.tabs).filter((x) => x.enabled !== false);
+  const tabs = list<{ tabKey?: string; name?: B; enabled?: boolean }>(d.tabs).filter((x) => x.enabled !== false);
+  // One chart per tab (`charts`). The older single bar series (values in ₹ lakh) becomes one bar chart.
+  const charts: BudgetChartData[] = list<NonNullable<typeof d.charts>[number]>(d.charts)
+    .filter((c) => c.tabKey)
+    .map((c) => ({
+      tabKey: c.tabKey!,
+      type: c.type === "line" ? "line" : "bar",
+      labels: list<string>(c.labels),
+      series: list<{ name?: B; colour?: string; values?: number[] }>(c.series).map((s) => ({ name: tx(s.name, locale), colour: s.colour ?? "#135130", values: list<number>(s.values).map(Number) })),
+    }));
+  if (charts.length === 0 && bars.length > 0) {
+    charts.push({ tabKey: "legacy", type: "bar", labels: bars.map((b) => tx(b.label, locale)), series: [{ name: "", colour: "#135130", values: bars.map((b) => (Number(b.value) || 0) * 1e5) }] });
+  }
+  if (d.enabled === false || charts.length === 0) return null;
+  const chartTabs = tabs.filter((x) => x.tabKey).map((x) => ({ key: x.tabKey!, name: tx(x.name, locale) }));
   const income = sumAmount(list<Category>((siblings?.["income-sources"] as { categories?: unknown } | undefined)?.categories));
   const spent = sumAmount(list<Category>((siblings?.["expenditure"] as { categories?: unknown } | undefined)?.categories));
   const known = income > 0 && spent > 0;
@@ -384,8 +390,6 @@ export async function BudgetVisualizerSection({ slug, locale, data, siblings }: 
     return { ...f, value };
   });
   const file = mediaUrl(slug, d.downloadReport?.enabled === false ? undefined : d.downloadReport?.fileId);
-  const scale = niceScale(max);
-  const ticks = [0, 1, 2, 3, 4].map((i) => (scale.top / 4) * i);
   return (
     <section className="py-10" style={{ backgroundColor: d.backgroundColour || "#ffffff", color: readableText(d.backgroundColour) }}>
       <div className="mx-auto max-w-[1440px] px-4 text-center sm:px-8 lg:px-[60px]">
@@ -393,37 +397,7 @@ export async function BudgetVisualizerSection({ slug, locale, data, siblings }: 
         {tx(d.subtitle, locale) && <p className="mt-1 text-[14px] opacity-80">{tx(d.subtitle, locale)}</p>}
         <div className="mt-6 grid gap-6 text-left text-black lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)]">
           <div className={cardClass}>
-            {tabs.length > 0 && (
-              <div className="mb-4 flex flex-wrap gap-2">
-                {tabs.map((tab, i) => (
-                  <span key={i} className={`rounded-[8px] border px-4 py-2 text-[13px] font-medium ${i === 0 ? "border-[#135130] bg-[#135130] text-white" : "border-black/20 text-black"}`}>
-                    {tx(tab.name, locale)}
-                  </span>
-                ))}
-              </div>
-            )}
-            <div className="flex gap-3">
-              <ul aria-hidden className="flex h-64 flex-col-reverse justify-between pb-6 text-right text-[11px] text-[#414141]">
-                {ticks.map((v) => (
-                  <li key={v}>₹{v}L</li>
-                ))}
-              </ul>
-              <ul className="flex h-64 flex-1 items-end justify-around gap-2 border-b border-l border-black/20 px-2">
-                {bars.map((b, i) => (
-                  <li key={i} className="flex h-full flex-1 flex-col items-center justify-end">
-                    <span className="mb-1 text-[11px] font-semibold text-black">₹{b.value}L</span>
-                    <span className="block w-full max-w-12 rounded-t-[4px]" style={{ height: `${((Number(b.value) || 0) / scale.top) * 78}%`, backgroundColor: b.colour ?? "#135130" }} />
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <ul className="mt-2 flex justify-around gap-2 pl-12 text-center text-[11px] text-[#414141]">
-              {bars.map((b, i) => (
-                <li key={i} className="flex-1">
-                  {tx(b.label, locale)}
-                </li>
-              ))}
-            </ul>
+            <BudgetChartClient tabs={chartTabs} charts={charts} crLabel={locale === "mr" ? "कोटी" : "Cr"} lakhLabel={locale === "mr" ? "लाख" : "L"} emptyLabel={t("noChart")} />
           </div>
           <div className={`${cardClass} flex flex-col`}>
             <p className="text-[16px] font-semibold text-black">{tx(d.overviewCard?.title, locale)}</p>

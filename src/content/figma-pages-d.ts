@@ -147,14 +147,15 @@ export const FIGMA_PAGE_SECTIONS_D: Partial<Record<PageKey, FallbackSection[]>> 
       },
     },
     {
-      sectionKey: "top-stats",
+      sectionKey: "live-stats",
       sortOrder: 30,
       data: {
+        source: "services",
         items: [
-          { icon: "file", title: b("Certificates Issued This Month", "या महिन्यात दिलेले दाखले"), value: "500+", background: "#E8F1EA", visible: true },
-          { icon: "info", title: b("Grievances Resolved This Month", "या महिन्यात निराकरण झालेल्या तक्रारी"), value: "250+", background: "#E8F1EA", visible: true },
-          { icon: "rupee", title: b("Tax Collection This Month", "या महिन्यातील कर संकलन"), value: "₹12.5L+", background: "#E8F1EA", visible: true },
-          { icon: "shield", title: b("Citizen Satisfaction Rate", "नागरिक समाधान दर"), value: "98%", background: "#E8F1EA", visible: true },
+          { live: "certificatesIssuedThisMonth", icon: "file", title: b("Certificates Issued This Month", "या महिन्यात दिलेले दाखले"), value: "500+", background: "#E8F1EA", visible: true },
+          { live: "grievancesResolvedThisMonth", icon: "info", title: b("Grievances Resolved This Month", "या महिन्यात निराकरण झालेल्या तक्रारी"), value: "250+", background: "#E8F1EA", visible: true },
+          { live: "taxCollectedThisMonth", format: "money", icon: "rupee", title: b("Tax Collection This Month", "या महिन्यातील कर संकलन"), value: "₹12.5L+", background: "#E8F1EA", visible: true },
+          { live: "citizenSatisfactionRate", format: "percent", icon: "shield", title: b("Citizen Satisfaction Rate", "नागरिक समाधान दर"), value: "98%", background: "#E8F1EA", visible: true },
         ],
       },
     },

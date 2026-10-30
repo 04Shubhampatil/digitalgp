@@ -3,6 +3,8 @@ import { getTranslations } from "next-intl/server";
 import { FigmaIcon } from "@/components/ui/FigmaIcon";
 import { pickText, type Bilingual } from "@/i18n/text";
 import { publicMediaUrl } from "@/lib/api/public";
+import type { WardGeometry } from "@/lib/geo";
+import { mediaUrl } from "./cms/kit";
 import { resolveHref } from "@/lib/href";
 import type { SectionProps } from "./index";
 import { WardDetailsCard } from "./WardDetailsCard";
@@ -232,10 +234,14 @@ export async function WardDetailsSection({ slug, locale, data }: SectionProps) {
     heading?: Bilingual;
     mapImageUrl?: string;
     viewAll?: { label?: Bilingual; href?: string };
-    wards?: { name?: Bilingual; items?: { label?: Bilingual; valueText?: string; percent?: number }[] }[];
+    wards?: { name?: Bilingual; wardNo?: string; colour?: string; geometry?: WardGeometry; mapImageId?: string; items?: { label?: Bilingual; valueText?: string; percent?: number }[] }[];
   };
   const wards = (d.wards ?? []).map((w) => ({
     name: pickText(w.name, locale),
+    wardNo: w.wardNo,
+    colour: w.colour,
+    geometry: w.geometry,
+    mapImage: w.mapImageId ? mediaUrl(slug, w.mapImageId) : undefined,
     items: (w.items ?? []).map((it) => ({ label: pickText(it.label, locale), valueText: it.valueText ?? "", percent: it.percent })),
   }));
   if (wards.length === 0) return null;

@@ -189,9 +189,9 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
         subtitle: b("Explore our budget data through interactive charts and graphs", "आकृत्या आणि आलेखांद्वारे अंदाजपत्रकाची माहिती पहा"),
         backgroundColour: "#FFFFFF",
         tabs: [
-          { name: b("Expenditure by Sector", "क्षेत्रानुसार खर्च"), enabled: true },
-          { name: b("Income vs Expenditure", "उत्पन्न विरुद्ध खर्च"), enabled: true },
-          { name: b("Yearly Budget Trend", "वार्षिक अंदाजपत्रक कल"), enabled: true },
+          { tabKey: "sector", name: b("Expenditure by Sector", "क्षेत्रानुसार खर्च"), enabled: true },
+          { tabKey: "income-expense", name: b("Income vs Expenditure", "उत्पन्न विरुद्ध खर्च"), enabled: true },
+          { tabKey: "trend", name: b("Yearly Budget Trend", "वार्षिक अंदाजपत्रक कल"), enabled: true },
         ],
         overviewCard: {
           title: b("Budget Overview (FY 2024-25)", "अंदाजपत्रक आढावा (आ.व. २०२४-२५)"),
@@ -202,14 +202,31 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
             { label: b("Budget Utilization", "अंदाजपत्रक वापर"), valueType: "auto", prefixSuffix: "%", colour: "#2563EB" },
           ],
         },
-        barChart: [
-          { label: b("Infrastructure", "पायाभूत सुविधा"), value: "72", colour: "#16A34A" },
-          { label: b("Sanitation", "स्वच्छता"), value: "48", colour: "#2563EB" },
-          { label: b("Education", "शिक्षण"), value: "36", colour: "#F97316" },
-          { label: b("Water Supply", "पाणी पुरवठा"), value: "24", colour: "#7C3AED" },
-          { label: b("Health", "आरोग्य"), value: "24", colour: "#14B8A6" },
-          { label: b("Agriculture", "शेती"), value: "19", colour: "#EAB308" },
-          { label: b("Others", "इतर"), value: "17", colour: "#6B7280" },
+        charts: [
+          {
+            tabKey: "sector",
+            type: "bar",
+            labels: ["Infrastructure", "Sanitation", "Education", "Water Supply", "Health", "Agriculture", "Others"],
+            series: [{ name: b("Expenditure", "खर्च"), colour: "#16A34A", values: [7200000, 4800000, 3600000, 2400000, 2400000, 1900000, 1700000] }],
+          },
+          {
+            tabKey: "income-expense",
+            type: "bar",
+            labels: ["Q1", "Q2", "Q3", "Q4"],
+            series: [
+              { name: b("Income", "उत्पन्न"), colour: "#135130", values: [6200000, 7100000, 6800000, 8400000] },
+              { name: b("Expenditure", "खर्च"), colour: "#DC2626", values: [5400000, 6600000, 6100000, 7700000] },
+            ],
+          },
+          {
+            tabKey: "trend",
+            type: "line",
+            labels: ["2020-21", "2021-22", "2022-23", "2023-24", "2024-25"],
+            series: [
+              { name: b("Income", "उत्पन्न"), colour: "#135130", values: [19000000, 21500000, 24000000, 26500000, 28500000] },
+              { name: b("Expenditure", "खर्च"), colour: "#DC2626", values: [17500000, 19800000, 22300000, 24100000, 25800000] },
+            ],
+          },
         ],
         downloadReport: { enabled: false, buttonText: b("Download Budget Report", "अंदाजपत्रक अहवाल डाउनलोड"), icon: "download" },
       },

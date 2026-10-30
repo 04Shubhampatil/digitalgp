@@ -13,7 +13,7 @@ import { StatusPill } from "@/components/ui/StatusPill";
 import { Textarea } from "@/components/ui/Textarea";
 import type { UiLocale } from "@/i18n/config";
 import { isApiError } from "@/lib/api/client";
-import { getGrievanceFormSettings, submitGrievance, trackGrievance } from "@/lib/api/public";
+import { getGrievanceFormSettings, submitGrievance, trackGrievance, uploadGrievanceAttachment } from "@/lib/api/public";
 import { pickText } from "@/i18n/text";
 import { Turnstile, TURNSTILE_SITE_KEY } from "./Turnstile";
 import { formatDateTime } from "@/lib/format";
@@ -29,6 +29,24 @@ const submitSchema = z.object({
 });
 type SubmitValues = z.infer<typeof submitSchema>;
 
+/** Holds the newest single-use CAPTCHA token; `take()` waits for one when none is ready. */
+class TokenBox {
+  private token: string | null = null;
+  private waiters: ((tok: string) => void)[] = [];
+  set(tok: string | null) {
+    this.token = tok;
+    if (tok) this.waiters.splice(0).forEach((w) => w(tok));
+  }
+  has() {
+    return this.token !== null;
+  }
+  async take(): Promise<string> {
+    const tok = this.token ?? (await new Promise<string>((resolve) => this.waiters.push(resolve)));
+    this.token = null;
+    return tok;
+  }
+}
+
 /** Figma "Register Your Complaint" → POST /public/:slug/grievances; shows the tracking code once. */
 export function GrievanceSubmitForm({ slug }: { slug: string }) {
   const t = useTranslations("public.grievanceForm");
@@ -37,7 +55,21 @@ export function GrievanceSubmitForm({ slug }: { slug: string }) {
   const [receipt, setReceipt] = useState<PublicGrievanceReceiptDto | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [captchaOn, setCaptchaOn] = useState(false);
-  const [token, setToken] = useState<string | null>(null);
+  const [uploads, setUploads] = useState<{ on: boolean; maxMb: number; types: string[] }>({ on: false, maxMb: 10, types: [] });
+  const [files, setFiles] = useState<File[]>([]);
+  // Turnstile tokens work once: keep the latest one in a ref and remount the widget after each use.
+  const [tk] = useState(() => new TokenBox());
+  const [resetKey, setResetKey] = useState(0);
+  function onToken(tok: string | null) {
+    tk.set(tok);
+  }
+  /** A fresh CAPTCHA token (waits for the widget when needed); null when CAPTCHA is off. */
+  async function takeToken(): Promise<string | undefined> {
+    if (!captchaOn) return undefined;
+    const tok = await tk.take();
+    setResetKey((k) => k + 1);
+    return tok;
+  }
   const [successText, setSuccessText] = useState("");
   const [submitText, setSubmitText] = useState("");
   // The office's settings for this form (CAPTCHA, texts). Defaults apply if they cannot be loaded.
@@ -45,6 +77,7 @@ export function GrievanceSubmitForm({ slug }: { slug: string }) {
     getGrievanceFormSettings(slug)
       .then((s) => {
         setCaptchaOn(s.captchaEnabled);
+        setUploads({ on: s.allowFileUpload, maxMb: s.maxFileSizeMb, types: s.allowedFileTypes });
         setSuccessText(pickText(s.successMessage ?? undefined, locale));
         setSubmitText(pickText(s.submitButtonText ?? undefined, locale));
       })
@@ -58,12 +91,30 @@ export function GrievanceSubmitForm({ slug }: { slug: string }) {
     formState: { errors, isSubmitting },
   } = useForm<SubmitValues>({ resolver: zodResolver(submitSchema), defaultValues: { category: "water", citizenName: "", citizenPhone: "", citizenEmail: "", description: "" } });
 
+  const MAX_FILES = 5;
+  /** Adds the chosen files after checking count, size and type; returns an error text or null. */
+  function pickFiles(picked: File[]): string | null {
+    const next = [...files];
+    for (const f of picked) {
+      const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
+      if (!uploads.types.includes(ext)) return t("fileTypeNotAllowed", { name: f.name });
+      if (f.size > uploads.maxMb * 1024 * 1024) return t("fileTooLarge", { name: f.name, size: uploads.maxMb });
+      if (next.length >= MAX_FILES) return t("tooManyFiles", { max: MAX_FILES });
+      next.push(f);
+    }
+    setFiles(next);
+    return null;
+  }
+
   async function onSubmit(values: SubmitValues) {
     setFormError(null);
-    if (captchaOn && !token) return setFormError(t("captchaRequired"));
+    if (captchaOn && !tk.has() && files.length === 0) return setFormError(t("captchaRequired"));
     try {
+      const attachmentIds: string[] = [];
+      for (const f of files) attachmentIds.push((await uploadGrievanceAttachment(slug, f, await takeToken())).id);
       const r = await submitGrievance(slug, {
-        turnstileToken: token ?? undefined,
+        attachmentIds: attachmentIds.length ? attachmentIds : undefined,
+        turnstileToken: await takeToken(),
         category: values.category,
         citizenName: values.citizenName,
         citizenPhone: values.citizenPhone || null,
@@ -102,7 +153,40 @@ export function GrievanceSubmitForm({ slug }: { slug: string }) {
       <div className="sm:col-span-2">
         <Textarea label={t("description")} rows={5} hint={t("descriptionHint")} error={errors.description?.message} {...register("description")} />
       </div>
-      {captchaOn && <Turnstile onToken={setToken} />}
+      {uploads.on && (
+        <div className="sm:col-span-2">
+          <label className="mb-1.5 block text-sm font-medium text-ink" htmlFor="grievance-files">
+            {t("attachments")} ({tc("optional")})
+          </label>
+          <input
+            id="grievance-files"
+            type="file"
+            multiple
+            accept={uploads.types.map((x) => "." + x).join(",")}
+            onChange={(e) => {
+              const picked = Array.from(e.target.files ?? []);
+              e.target.value = "";
+              const err = pickFiles(picked);
+              setFormError(err);
+            }}
+            className="block w-full text-sm text-muted file:mr-3 file:rounded-button file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
+          />
+          <p className="mt-1 text-xs text-muted">{t("attachHint", { max: MAX_FILES, size: uploads.maxMb, types: uploads.types.join(", ").toUpperCase() })}</p>
+          {files.length > 0 && (
+            <ul className="mt-2 space-y-1">
+              {files.map((f, i) => (
+                <li key={i} className="flex items-center justify-between rounded-input bg-surface-select px-3 py-1.5 text-sm text-ink">
+                  <span className="truncate">{f.name}</span>
+                  <button type="button" onClick={() => setFiles((cur) => cur.filter((_, j) => j !== i))} className="ml-3 text-xs font-semibold text-danger">
+                    {t("removeFile")}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+      {captchaOn && <Turnstile onToken={onToken} resetKey={resetKey} />}
       {captchaBlocked && (
         <p role="alert" className="rounded-input bg-danger-soft px-4 py-3 text-sm text-danger sm:col-span-2">
           {t("captchaUnavailable")}
