@@ -3,6 +3,7 @@
 import { ArrowRight, ChevronDown, ClipboardList, Droplets, Layers, Lightbulb, Route, TreePine, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { projectGeometries, type WardGeometry } from "@/lib/geo";
 
 export interface WardRow {
   label: string;
@@ -13,6 +14,11 @@ export interface WardRow {
 export interface WardView {
   name: string;
   items: WardRow[];
+  wardNo?: string;
+  colour?: string;
+  geometry?: WardGeometry;
+  /** Picture of this ward's map (fallback when there is no boundary data). */
+  mapImage?: string;
 }
 
 /** Row icon + bar colour in the Figma order (roads … ongoing projects). */
@@ -38,6 +44,32 @@ const WARD_COLOURS = ["#2f9e3f", "#e0a010", "#1a62e0", "#7b2cbf", "#d9480f", "#0
  * legend. Clicking a block selects the ward. It is not a survey map; real ward boundaries need map data.
  */
 function WardMap({ wards, active, onSelect }: { wards: WardView[]; active: number; onSelect: (i: number) => void }) {
+  const projected = projectGeometries(
+    wards.map((x) => x.geometry),
+    600,
+    420,
+  );
+  if (projected && projected.shapes.some(Boolean)) {
+    return (
+      <div className="relative overflow-hidden rounded-[10px] border border-[#414141] bg-[#1d3b24]">
+        <svg viewBox="0 0 600 420" role="group" aria-label="Ward map" className="block h-auto max-h-[300px] w-full">
+          {wards.map((x, i) => {
+            const s = projected.shapes[i];
+            if (!s) return null;
+            const c = x.colour ?? WARD_COLOURS[i % WARD_COLOURS.length]!;
+            return (
+              <g key={i} onClick={() => onSelect(i)} className="cursor-pointer">
+                <path d={s.d} fill={c} fillOpacity={i === active ? 0.95 : 0.6} stroke="#ffffff" strokeWidth={i === active ? 3 : 1.5} fillRule="evenodd" role="button" tabIndex={0} aria-label={x.name} aria-pressed={i === active} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onSelect(i)} />
+                <text x={s.label[0]} y={s.label[1]} textAnchor="middle" dominantBaseline="middle" fontSize="15" fontWeight="600" fill="#ffffff" stroke="#00000066" strokeWidth="0.6" pointerEvents="none">
+                  {x.name}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+    );
+  }
   const cols = Math.min(wards.length, wards.length > 6 ? 4 : wards.length > 2 ? 3 : 2);
   return (
     <div className="relative h-[249px] overflow-hidden rounded-[10px] border border-[#414141] bg-[#1d3b24] p-3">
@@ -69,10 +101,10 @@ export function WardDetailsCard({ heading, wards, mapSrc, viewAll }: { heading: 
   if (!ward) return null;
   return (
     <div className="rounded-[10px] border border-[#414141]/20 bg-white px-3 py-2">
-      {mapSrc ? (
+      {mapSrc || ward.mapImage ? (
         <div className="relative h-[249px] overflow-hidden rounded-[10px] border border-[#414141]">
           {/* eslint-disable-next-line @next/next/no-img-element -- ward map image supplied by the Gram Panchayat */}
-          <img src={mapSrc} alt="" className="h-full w-full object-cover" loading="lazy" />
+          <img src={ward.mapImage ?? mapSrc} alt="" className="h-full w-full object-cover" loading="lazy" />
         </div>
       ) : (
         <WardMap wards={wards} active={idx} onSelect={setIdx} />

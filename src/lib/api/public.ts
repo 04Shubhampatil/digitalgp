@@ -60,7 +60,17 @@ export function getGrievanceFormSettings(slug: string) {
   return apiFetch<GrievanceFormSettings>(`/public/${encodeURIComponent(slug)}/grievance-form`);
 }
 
+/** POST /public/:slug/grievance-attachments — one file; returns only its id. */
+export function uploadGrievanceAttachment(slug: string, file: File, turnstileToken?: string) {
+  const body = new FormData();
+  body.set("file", file);
+  body.set("website", "");
+  if (turnstileToken) body.set("turnstileToken", turnstileToken);
+  return apiFetch<{ id: string }>(`/public/${encodeURIComponent(slug)}/grievance-attachments`, { method: "POST", body });
+}
+
 export interface SubmitGrievanceInput {
+  attachmentIds?: string[];
   turnstileToken?: string;
   category: string;
   citizenName: string;
