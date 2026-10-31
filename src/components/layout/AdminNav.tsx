@@ -2,7 +2,9 @@
 
 import { CircleHelp } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useTransition } from "react";
+import { logout } from "@/lib/api/auth";
 import { cn } from "@/lib/cn";
 
 export interface NavItem {
@@ -12,6 +14,8 @@ export interface NavItem {
   show?: boolean;
   /** Active only on this exact path (e.g. a dashboard whose sub-pages are separate items). */
   exact?: boolean;
+  /** Signs the user out instead of navigating. */
+  action?: "logout";
 }
 export interface NavGroup {
   label?: string;
@@ -20,6 +24,17 @@ export interface NavGroup {
 
 export function AdminNav({ groups }: { groups: NavGroup[] }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const signOut = () =>
+    start(async () => {
+      try {
+        await logout();
+      } finally {
+        router.replace("/login");
+        router.refresh();
+      }
+    });
   return (
     <nav aria-label="Admin" className="flex-1 overflow-y-auto px-2.5 py-3">
       {groups.map((group, gi) => {
@@ -32,6 +47,21 @@ export function AdminNav({ groups }: { groups: NavGroup[] }) {
             )}
             <ul>
               {items.map((item) => {
+                if (item.action === "logout") {
+                  return (
+                    <li key="logout">
+                      <button
+                        type="button"
+                        onClick={signOut}
+                        disabled={pending}
+                        className="flex w-full items-center gap-2.5 rounded-[4px] border-l-[3px] border-transparent py-1.5 pr-3 pl-[15px] text-left font-brand-sub text-[11px] leading-4 text-cream/80 transition-colors hover:bg-cream/10 hover:text-cream disabled:opacity-50"
+                      >
+                        <CircleHelp aria-hidden className="size-3" />
+                        {item.label}
+                      </button>
+                    </li>
+                  );
+                }
                 const active = pathname === item.href || (!item.exact && pathname.startsWith(`${item.href}/`));
                 return (
                   <li key={item.href}>

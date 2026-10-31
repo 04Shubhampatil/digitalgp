@@ -477,7 +477,11 @@
       "quickAnnounce": "Publish to one or many websites",
       "quickGrievances": "Open citizen complaints",
       "recentWebsites": "Recently updated websites",
-      "recentActivity": "Recent activity"
+      "recentActivity": "Recent activity",
+      "editGp": "Edit a GP Website",
+      "pendingUpdates": "Pending Updates",
+      "gpOverview": "Gram Panchayat Overview",
+      "openCms": "Open CMS"
     },
     "settingsUi": {
       "title": "Website settings",
@@ -519,6 +523,13 @@
       "taluka": "Taluka",
       "gramPanchayat": "Gram Panchayat",
       "search": "Search pages"
+    },
+    "nav": {
+      "gpWebsites": "GP Websites",
+      "blockAdmins": "Block Admins",
+      "assignedWebsites": "Assigned GP Websites",
+      "publishAnnouncement": "Publish Announcement",
+      "logOut": "Log Out"
     }
   },
   "public": {

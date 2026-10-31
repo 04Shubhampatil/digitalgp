@@ -477,7 +477,11 @@
       "quickAnnounce": "एक किंवा अनेक संकेतस्थळांवर प्रकाशित करा",
       "quickGrievances": "खुल्या नागरिक तक्रारी",
       "recentWebsites": "नुकतीच अद्ययावत संकेतस्थळे",
-      "recentActivity": "अलीकडील घडामोडी"
+      "recentActivity": "अलीकडील घडामोडी",
+      "editGp": "ग्रामपंचायत संकेतस्थळ संपादित करा",
+      "pendingUpdates": "प्रलंबित अद्यतने",
+      "gpOverview": "ग्रामपंचायत आढावा",
+      "openCms": "सीएमएस उघडा"
     },
     "settingsUi": {
       "title": "संकेतस्थळ सेटिंग्ज",
@@ -519,6 +523,13 @@
       "taluka": "तालुका",
       "gramPanchayat": "ग्रामपंचायत",
       "search": "पृष्ठे शोधा"
+    },
+    "nav": {
+      "gpWebsites": "ग्रामपंचायत संकेतस्थळे",
+      "blockAdmins": "ब्लॉक ॲडमिन",
+      "assignedWebsites": "नेमलेली ग्रामपंचायत संकेतस्थळे",
+      "publishAnnouncement": "सूचना प्रकाशित करा",
+      "logOut": "बाहेर पडा"
     }
   },
   "public": {
