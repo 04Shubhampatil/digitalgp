@@ -106,3 +106,20 @@ async function publicStats<T>(slug: string, kind: "grievances" | "schemes" | "se
 export const getGrievanceStats = (slug: string) => publicStats<PublicGrievanceStatsDto>(slug, "grievances");
 export const getSchemeStats = (slug: string) => publicStats<PublicSchemeStatsDto>(slug, "schemes");
 export const getServiceStats = (slug: string) => publicStats<PublicServiceStatsDto>(slug, "services");
+
+export interface PublicWeatherDto {
+  source: "live" | "manual";
+  location?: string | { en?: string; mr?: string } | null;
+  current?: { temperature?: string; humidity?: string; wind?: string; feelsLike?: string; condition?: string | { en?: string; mr?: string } } | null;
+  forecast?: { date?: string; icon?: string; maxTemp?: string; minTemp?: string }[];
+  fetchedAt?: string;
+}
+
+/** GET /public/:slug/weather — live data when a provider is configured, else the manual Home section. Null when unavailable. */
+export async function getPublicWeather(slug: string): Promise<PublicWeatherDto | null> {
+  try {
+    return await apiFetch<PublicWeatherDto>(`/public/${encodeURIComponent(slug)}/weather`, { next: { revalidate: 300, tags: [`tenant:${slug}`] } });
+  } catch {
+    return null;
+  }
+}

@@ -100,7 +100,7 @@ const SECTION_ICONS: Record<string, LucideIcon> = {
 
 /** Fields that need the full row of the form grid. */
 function isWide(f: FieldSpec): boolean {
-  return f.wide === true || ["bilingual", "bilingualLong", "bilingualList", "imageList", "image", "file", "multiSelect"].includes(f.type) || (f.type === "select" && f.segmented === true);
+  return f.wide === true || ["bilingual", "bilingualLong", "bilingualList", "imageList", "image", "file", "multiSelect", "json"].includes(f.type) || (f.type === "select" && f.segmented === true);
 }
 
 export interface SectionEditorProps {

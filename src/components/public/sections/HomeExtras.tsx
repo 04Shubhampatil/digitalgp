@@ -2,7 +2,7 @@ import { ArrowUp, Play } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { FigmaIcon } from "@/components/ui/FigmaIcon";
 import { pickText, type Bilingual } from "@/i18n/text";
-import { publicMediaUrl } from "@/lib/api/public";
+import { getPublicWeather, publicMediaUrl, type PublicWeatherDto } from "@/lib/api/public";
 import type { WardGeometry } from "@/lib/geo";
 import { mediaUrl } from "./cms/kit";
 import { resolveHref } from "@/lib/href";
@@ -21,12 +21,42 @@ function HeadingRule() {
 }
 
 /**
+ * Weather card data. The backend's `weather` section stores `current` and `forecast`; the live endpoint
+ * returns the same shape (or that manual section). The earlier design placeholder used flat fields.
+ */
+function normaliseWeather(data: unknown, live: PublicWeatherDto | null, locale: SectionProps["locale"]): Record<string, unknown> {
+  const own = (data ?? {}) as Record<string, unknown> & { current?: PublicWeatherDto["current"]; location?: unknown };
+  const src: { location?: unknown; current?: PublicWeatherDto["current"]; forecast?: PublicWeatherDto["forecast"] } = live?.current ? live : own.current ? (own as { current: PublicWeatherDto["current"]; location?: unknown }) : {};
+  if (!src.current) return own;
+  const c = src.current;
+  const withUnit = (v: string | undefined, unit: string) => (v ? (/[°%]|km|mm/.test(v) ? v : `${v}${unit}`) : undefined);
+  const text = (v: unknown) => (typeof v === "string" ? { en: v, mr: v } : v);
+  const days = (src.forecast ?? []).slice(0, 5).map((f) => ({
+    day: f.date ? new Date(`${f.date}T00:00:00`).toLocaleDateString(locale === "mr" ? "mr-IN" : "en-IN", { weekday: "short" }) : "",
+    max: f.maxTemp,
+    min: f.minTemp,
+  }));
+  return {
+    title: own.title,
+    location: text(src.location ?? own.location),
+    temperature: (c.temperature ?? "").replace(/\s*°\s*C?$/i, ""),
+    condition: text(c.condition),
+    feelsLike: withUnit(c.feelsLike, "°C"),
+    humidity: withUnit(c.humidity, "%"),
+    wind: c.wind,
+    date: new Date().toLocaleDateString(locale === "mr" ? "mr-IN" : "en-IN", { day: "numeric", month: "short", year: "numeric" }),
+    days,
+  };
+}
+
+/**
  * `weather`: today's weather card (Figma 375:12414). Frontend-only placeholder — the backend has
  * no weather section; values here come from the design until a weather source is wired in.
  */
-export async function WeatherSection({ locale, data }: SectionProps) {
+export async function WeatherSection({ slug, locale, data }: SectionProps) {
   const tw = await getTranslations("public.weatherLabels");
-  const d = data as {
+  const live = await getPublicWeather(slug);
+  const d = normaliseWeather(data, live, locale) as {
     title?: Bilingual;
     location?: Bilingual;
     temperature?: string;
@@ -38,6 +68,7 @@ export async function WeatherSection({ locale, data }: SectionProps) {
     sunrise?: string;
     sunset?: string;
     date?: string;
+    days?: { day?: string; max?: string; min?: string }[];
   };
   if (!d.temperature) return null;
   const stat = (label: string, value?: string) =>
@@ -67,9 +98,18 @@ export async function WeatherSection({ locale, data }: SectionProps) {
           </div>
         </div>
       </div>
+      {d.days && d.days.length > 0 && (
+        <ul className="flex flex-wrap gap-x-5 gap-y-1 border-t border-white/30 pt-3 text-[11px]">
+          {d.days.map((f, i) => (
+            <li key={i}>
+              {f.day} <strong className="font-bold">{f.max}°</strong>/{f.min}°
+            </li>
+          ))}
+        </ul>
+      )}
       <div className="flex flex-wrap justify-between gap-2 border-t border-white/30 pt-4 text-[12px]">
-        <span>{tw("sunrise")}: {d.sunrise}</span>
-        <span>{tw("sunset")}: {d.sunset}</span>
+        {d.sunrise && <span>{tw("sunrise")}: {d.sunrise}</span>}
+        {d.sunset && <span>{tw("sunset")}: {d.sunset}</span>}
         <span>{d.date}</span>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import type { PageKey } from "@/config/pages";
-import { PAGE_EDITORS } from "@/config/section-editors-pages";
+import { EXTRA_EDITORS, PAGE_EDITORS } from "@/config/section-editors-pages";
 
 /**
  * Frontend editor specs for the backend section registry (src/config/sections.ts).
@@ -29,7 +29,8 @@ export type FieldType =
   | "datetime" // ISO date-time (edited as a local date + time)
   | "month" // YYYY-MM
   | "bilingualList" // [{ en?, mr? }] (bullets, features…)
-  | "imageList"; // Media ids (string[])
+  | "imageList" // Media ids (string[])
+  | "json"; // structured data edited as JSON text (GeoJSON, chart datasets)
 
 export interface FieldSpec {
   name: string;
@@ -161,7 +162,14 @@ const home: SectionEditorSpec[] = [
       labelKey: "ward",
       min: 1,
       max: 50,
-      fields: [bilingual("name", "wardName", { required: true })],
+      fields: [
+        bilingual("name", "wardName", { required: true }),
+        { name: "wardNo", type: "text", labelKey: "wardNo", max: 20 },
+        { name: "colour", type: "colour", labelKey: "colour" },
+        { name: "mapImageId", type: "image", labelKey: "mapImage" },
+        // GeoJSON Polygon / MultiPolygon in WGS84 [lng, lat]; the public map draws it from this.
+        { name: "geometry", type: "json", labelKey: "geometry" },
+      ],
       children: {
         name: "items",
         labelKey: "wardItem",
@@ -253,7 +261,13 @@ const about: SectionEditorSpec[] = [
   },
 ];
 
-export const SECTION_EDITORS: Partial<Record<PageKey, readonly SectionEditorSpec[]>> = { home, about, ...PAGE_EDITORS };
+export const SECTION_EDITORS: Partial<Record<PageKey, readonly SectionEditorSpec[]>> = {
+  home: [...home, ...(EXTRA_EDITORS.home ?? [])],
+  about: [...about, ...(EXTRA_EDITORS.about ?? [])],
+  ...PAGE_EDITORS,
+  projects: EXTRA_EDITORS.projects,
+  schemes: EXTRA_EDITORS.schemes,
+};
 
 export function editorSpec(pageKey: string, sectionKey: string): SectionEditorSpec | undefined {
   return (SECTION_EDITORS[pageKey as PageKey] ?? []).find((s) => s.key === sectionKey);

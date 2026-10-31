@@ -6,6 +6,7 @@ import { FIGMA_PAGE_SECTIONS } from "./figma-pages";
 import { FIGMA_PAGE_SECTIONS_B } from "./figma-pages-b";
 import { FIGMA_PAGE_SECTIONS_C } from "./figma-pages-c";
 import { PAGE_SECTIONS } from "@/config/sections-pages";
+import { PROJECTS_SECTIONS, SCHEMES_SECTIONS } from "@/config/sections-extra";
 import { FIGMA_PAGE_SECTIONS_D } from "./figma-pages-d";
 
 /** A section as the public site receives it, before backend data exists. */
@@ -95,18 +96,39 @@ const LIVE_EXTRAS: Partial<Record<PageKey, FallbackSection[]>> = {
 };
 
 /**
+ * Blocks that show real records from other modules (projects, schemes) and stay visible in published mode.
+ * Only their headings and labels come from the placeholder; the sample rows are dropped.
+ */
+const LIVE_BLOCKS: Partial<Record<PageKey, string[]>> = {
+  projects: ["project-showcase"],
+  schemes: ["scheme-levels", "scheme-showcase"],
+};
+
+function liveBlocks(pageKey: PageKey): FallbackSection[] {
+  const keep = LIVE_BLOCKS[pageKey] ?? [];
+  return (FALLBACK_SECTIONS[pageKey] ?? [])
+    .filter((x) => keep.includes(x.sectionKey))
+    .map((x) => {
+      const items = (x.data.items as Obj[] | undefined) ?? [];
+      return { ...x, data: { ...x.data, items: x.sectionKey === "scheme-levels" ? items.map((i) => ({ ...i, count: 0 })) : [] } };
+    });
+}
+
+/**
  * Pages whose sections are managed in the admin (sections-pages.ts). While nothing of the page is
  * published the Figma placeholder page is shown; as soon as one section is published the page shows
  * only published content (no placeholders mixed in), so a half-finished page never shows sample data.
  */
 function hasPublishedCms(pageKey: PageKey, published: { sectionKey: string }[]): boolean {
-  const keys = new Set((PAGE_SECTIONS[pageKey] ?? []).map((s) => s.key));
+  // Projects and Schemes are defined in sections-extra; every other page in sections-pages.
+  const defs = pageKey === "projects" ? PROJECTS_SECTIONS : pageKey === "schemes" ? SCHEMES_SECTIONS : (PAGE_SECTIONS[pageKey] ?? []);
+  const keys = new Set(defs.map((s) => s.key));
   return keys.size > 0 && published.some((s) => keys.has(s.sectionKey));
 }
 
 export function withFallback(pageKey: PageKey, page: PublicPageDto | null): PublicPageDto {
   const cms = hasPublishedCms(pageKey, page?.sections ?? []);
-  const fallbacks = cms ? (LIVE_EXTRAS[pageKey] ?? []) : (FALLBACK_SECTIONS[pageKey] ?? []);
+  const fallbacks = cms ? [...(LIVE_EXTRAS[pageKey] ?? []), ...liveBlocks(pageKey)] : (FALLBACK_SECTIONS[pageKey] ?? []);
   const published = (page?.sections ?? []).map((s) => {
     const f = fallbacks.find((x) => x.sectionKey === s.sectionKey);
     return f ? { ...s, data: fillLabels(s.sectionKey, s.data as Obj, f.data) } : s;

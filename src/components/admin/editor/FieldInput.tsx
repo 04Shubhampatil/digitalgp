@@ -252,6 +252,18 @@ export function FieldInput({
     );
   }
 
+  if (spec.type === "json") {
+    return (
+      <Controller
+        control={control}
+        name={path}
+        render={({ field }) => (
+          <Textarea label={label} rows={10} spellCheck={false} className="font-mono text-xs" hint={t("jsonHint")} value={String(field.value ?? "")} onChange={field.onChange} disabled={disabled} error={error} />
+        )}
+      />
+    );
+  }
+
   if (spec.type === "imageList") {
     return (
       <Controller
