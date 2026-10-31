@@ -33,6 +33,10 @@ function sample(f: FieldSpec): unknown {
       return "2026-01";
     case "datetime":
       return "2026-01-02T10:30";
+    case "json":
+      return f.name === "geometry"
+        ? JSON.stringify({ type: "Polygon", coordinates: [[[73.8, 18.5], [73.9, 18.5], [73.9, 18.6], [73.8, 18.5]]] })
+        : JSON.stringify([{ tabKey: "sector", type: "bar", labels: ["A"], series: [{ name: { en: "Spend" }, colour: "#112233", values: [1] }] }]);
     case "email":
       return "office@example.in";
     case "phone":
@@ -45,6 +49,7 @@ function sample(f: FieldSpec): unknown {
       return f.name === "videoUrl" ? "https://www.youtube.com/watch?v=abc123" : "https://example.com/page";
     default:
       if (f.name === "pinCode") return "411001";
+      if (f.name === "number") return "112";
       if (f.name === "mapEmbedUrl") return "https://www.google.com/maps/embed?pb=abc";
       if (f.name === "videoUrl") return "https://www.youtube.com/watch?v=abc123";
       if (f.name === "amount" || f.name === "value") return "12.50";

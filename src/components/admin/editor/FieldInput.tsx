@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/Switch";
 import { Textarea } from "@/components/ui/Textarea";
 import { cn } from "@/lib/cn";
 import type { FormRecord } from "@/lib/section-data";
+import { Icon } from "@/components/public/sections/cms/kit";
 import { MediaField } from "./MediaField";
 
 type Bilingual = { en?: string; mr?: string };
@@ -252,6 +253,18 @@ export function FieldInput({
     );
   }
 
+  if (spec.type === "json") {
+    return (
+      <Controller
+        control={control}
+        name={path}
+        render={({ field }) => (
+          <Textarea label={label} rows={10} spellCheck={false} className="font-mono text-xs" hint={t("jsonHint")} value={String(field.value ?? "")} onChange={field.onChange} disabled={disabled} error={error} />
+        )}
+      />
+    );
+  }
+
   if (spec.type === "imageList") {
     return (
       <Controller
@@ -308,6 +321,7 @@ export function FieldInput({
         <Input
           compact={compact}
           label={label}
+          leading={spec.type === "text" && /icon/i.test(spec.name) ? <Icon name={String(field.value ?? "")} className="size-4 text-primary" /> : undefined}
           type={inputType}
           inputMode={spec.type === "integer" ? "numeric" : spec.type === "number" ? "decimal" : undefined}
           step={spec.type === "number" ? "any" : spec.type === "integer" ? 1 : undefined}

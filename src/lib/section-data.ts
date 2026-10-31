@@ -95,6 +95,9 @@ function fillFields(fields: FieldSpec[], src: Record<string, unknown>, dst: Form
       case "datetime":
         dst[f.name] = typeof raw === "string" ? isoToLocal(raw) : "";
         break;
+      case "json":
+        dst[f.name] = raw === undefined || raw === null ? "" : JSON.stringify(raw, null, 2);
+        break;
       default:
         dst[f.name] = raw === undefined || raw === null ? emptyField(f) : String(raw);
     }
@@ -155,6 +158,15 @@ function cleanField(f: FieldSpec, raw: unknown): unknown {
       if (!s) return undefined;
       const d = new Date(s);
       return Number.isNaN(d.getTime()) ? s : d.toISOString();
+    }
+    case "json": {
+      const s = typeof raw === "string" ? raw.trim() : "";
+      if (!s) return undefined;
+      try {
+        return JSON.parse(s);
+      } catch {
+        return s; // sent as text so the backend reports the problem
+      }
     }
     default: {
       const s = typeof raw === "string" ? raw.trim() : raw;

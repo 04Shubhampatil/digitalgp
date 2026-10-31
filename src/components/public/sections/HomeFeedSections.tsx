@@ -10,8 +10,14 @@ type B = Bilingual | undefined;
 /** `achievements`: "Top Five Achievements of the Ward" (Figma 375:13333). */
 export async function AchievementsSection({ locale, data }: SectionProps) {
   const t = await getTranslations("public");
-  const d = data as { heading?: B; wards?: B[]; items?: { title?: B; body?: B; completed?: B; ward?: B }[] };
-  const items = (d.items ?? []).map((a) => ({ title: pickText(a.title, locale), body: pickText(a.body, locale), completed: pickText(a.completed, locale), ward: pickText(a.ward, locale) || undefined }));
+  // Published data: { title, description, completedOn, rank }; the design placeholder used { body, completed, ward }.
+  const d = data as { heading?: B; wards?: B[]; items?: { title?: B; body?: B; description?: B; completed?: B; completedOn?: string; ward?: B }[] };
+  const items = (d.items ?? []).map((a) => ({
+    title: pickText(a.title, locale),
+    body: pickText(a.body ?? a.description, locale),
+    completed: a.completedOn ?? pickText(a.completed, locale),
+    ward: pickText(a.ward, locale) || undefined,
+  }));
   if (items.length === 0) return null;
   return <AchievementsCard heading={pickText(d.heading, locale)} selectLabel={t("selectWard")} allLabel={t("allWards")} wards={(d.wards ?? []).map((w) => pickText(w, locale))} items={items} />;
 }
@@ -25,7 +31,7 @@ const CHIP: Record<string, string> = {
 /** `whats-new`: "What's New This Week?" list with thumbnails and status chips (Figma 375:13391). */
 export async function WhatsNewSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public");
-  const d = data as { heading?: B; viewAll?: { label?: B; href?: string }; items?: { title?: B; date?: B; status?: "completed" | "event" | "ongoing"; imageUrl?: string }[] };
+  const d = data as { heading?: B; viewAll?: { label?: B; href?: string }; items?: { title?: B; date?: B | string; status?: string; imageUrl?: string; href?: string }[] };
   const items = d.items ?? [];
   if (items.length === 0) return null;
   return (
@@ -48,8 +54,10 @@ export async function WhatsNewSection({ slug, locale, data }: SectionProps) {
             <div>
               <p className="text-[16px] leading-[24px] font-semibold text-black">{pickText(n.title, locale)}</p>
               <p className="mt-2 flex items-center gap-4 text-[12px] text-black">
-                {pickText(n.date, locale)}
-                {n.status && <span className={`rounded-full px-3 py-1 text-[12px] ${CHIP[n.status]}`}>{t(`status.${n.status}`)}</span>}
+                {typeof n.date === "string" ? n.date : pickText(n.date, locale)}
+                {n.status && (
+                  <span className={`rounded-full px-3 py-1 text-[12px] ${CHIP[n.status] ?? "bg-[#ececec] text-[#414141]"}`}>{n.status in CHIP ? t(`status.${n.status}`) : n.status}</span>
+                )}
               </p>
             </div>
           </li>

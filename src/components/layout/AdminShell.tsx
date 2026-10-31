@@ -1,9 +1,14 @@
 import { getTranslations } from "next-intl/server";
-import Link from "next/link";
 import type { CurrentUserDto } from "@/types/api";
 import { Emblem } from "@/components/ui/Emblem";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
+import type { AdminUnitLevel } from "@/types/api";
+import { hierarchy } from "@/lib/api/admin";
+import { cookieHeader } from "@/lib/api/server";
+import { getLocale } from "next-intl/server";
 import { hasCapability, primaryRole } from "@/lib/session";
+import { ChevronDown } from "lucide-react";
+import { AdminSearch } from "./AdminSearch";
 import { AdminNav, type NavGroup } from "./AdminNav";
 import { LogoutButton } from "./LogoutButton";
 
@@ -68,6 +73,25 @@ export async function AdminShell({ user, children }: { user: CurrentUserDto; chi
     },
   ];
 
+  // District / Taluka / Gram Panchayat of the user's first active assignment (names from the hierarchy).
+  const locale = await getLocale();
+  const scope: Partial<Record<AdminUnitLevel, string>> = {};
+  const first = active[0];
+  if (first) {
+    try {
+      const { unit, ancestors } = await hierarchy.get(first.unitId, { cookie: await cookieHeader() });
+      for (const u of [...ancestors, unit]) scope[u.level] = locale === "mr" ? u.nameMr || u.nameEn : u.nameEn;
+    } catch {
+      scope[first.unitLevel] = locale === "mr" ? first.unitNameMr || first.unitNameEn : first.unitNameEn;
+    }
+  }
+  const scopeBoxes: { label: string; value: string | undefined }[] = [
+    { label: t("topbar.district"), value: scope.DISTRICT },
+    { label: t("topbar.taluka"), value: scope.TALUKA },
+    { label: t("topbar.gramPanchayat"), value: scope.GRAM_PANCHAYAT },
+  ];
+  const searchEntries = groups.flatMap((g) => g.items.filter((i) => i.show !== false).map((i) => ({ href: i.href, label: i.label })));
+
   return (
     <div className="flex min-h-dvh">
       <aside className="sticky top-0 flex h-dvh w-[263px] shrink-0 flex-col bg-primary-deep text-cream">
@@ -97,18 +121,27 @@ export async function AdminShell({ user, children }: { user: CurrentUserDto; chi
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-[72px] items-center justify-between gap-4 border-b border-line bg-canvas px-5">
-          <div className="flex items-center gap-3 text-sm text-muted">
-            {/* Scope selectors (District / Taluka / GP) land with the hierarchy screen. */}
-            <Link href="/admin/dashboard" className="font-semibold text-ink">
-              {t("dashboard")}
-            </Link>
+        <header className="flex h-[64px] items-center justify-between gap-4 border-b border-line bg-canvas px-5">
+          <div className="flex items-center gap-3">
+            {scopeBoxes.map((b) => (
+              <div key={b.label} title={b.label} className="hidden h-9 min-w-[110px] items-center justify-between gap-2 rounded-[4px] border border-line-strong bg-surface px-3 text-xs text-ink md:flex">
+                <span className="truncate">{b.value ?? b.label}</span>
+                <ChevronDown aria-hidden className="size-3.5 shrink-0 text-muted" />
+              </div>
+            ))}
+            <AdminSearch entries={searchEntries} placeholder={t("topbar.search")} />
           </div>
           <div className="flex items-center gap-4">
             <LanguageSwitcher />
-            <div className="text-right">
-              <p className="text-xs font-semibold text-ink">{user.user.name}</p>
-              <p className="font-brand-sub text-[10px] text-primary-alt">{role ? t(`role.${role}`) : ""}</p>
+            <div className="flex items-center gap-2">
+              <span aria-hidden className="flex size-8 items-center justify-center rounded-full bg-primary font-brand-sub text-xs font-semibold text-white">
+                {user.user.name.charAt(0).toUpperCase()}
+              </span>
+              <div className="hidden text-left sm:block">
+                <p className="text-xs font-semibold text-ink">{user.user.name}</p>
+                <p className="font-brand-sub text-[10px] text-primary-alt">{role ? t(`role.${role}`) : ""}</p>
+              </div>
+              <ChevronDown aria-hidden className="size-3.5 text-muted" />
             </div>
           </div>
         </header>

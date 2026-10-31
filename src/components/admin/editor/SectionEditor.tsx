@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import type { ContentStatus, PageSectionDto } from "@/types/api";
 import type { FieldSpec, SectionEditorSpec } from "@/config/section-editors";
@@ -44,7 +44,9 @@ import { isApiError } from "@/lib/api/client";
 import { cn } from "@/lib/cn";
 import { requiredErrors, toApiData, toFormValues, type FormRecord } from "@/lib/section-data";
 import { FieldInput } from "./FieldInput";
+import { BannerFields } from "./BannerFields";
 import { ListBlock } from "./ListBlock";
+import { SAVED_EVENT, SAVE_ALL_EVENT } from "./PageEditorHeader";
 
 /** Header icon per section (Figma tints each card header with a green icon tile). */
 const SECTION_ICONS: Record<string, LucideIcon> = {
@@ -100,7 +102,7 @@ const SECTION_ICONS: Record<string, LucideIcon> = {
 
 /** Fields that need the full row of the form grid. */
 function isWide(f: FieldSpec): boolean {
-  return f.wide === true || ["bilingual", "bilingualLong", "bilingualList", "imageList", "image", "file", "multiSelect"].includes(f.type) || (f.type === "select" && f.segmented === true);
+  return f.wide === true || ["bilingual", "bilingualLong", "bilingualList", "imageList", "image", "file", "multiSelect", "json"].includes(f.type) || (f.type === "select" && f.segmented === true);
 }
 
 export interface SectionEditorProps {
@@ -152,10 +154,12 @@ export function SectionEditor({ tenantId, pageKey, spec, section, capabilities, 
   // `unpublish` acts on the published revision, not the draft.
   const canUnpublish = !!published && !draft && capabilities.includes("content:publish");
 
-  function onSave(values: FormRecord) {
+  function onSave(values: FormRecord, fromHeader = false) {
+    const announce = (ok: boolean) => fromHeader && window.dispatchEvent(new CustomEvent(SAVED_EVENT, { detail: { ok } }));
     const missing = requiredErrors(spec, values);
     if (Object.keys(missing).length) {
       setFieldErrors(Object.fromEntries(Object.entries(missing).map(([k]) => [k, tc("required")])));
+      announce(false);
       return;
     }
     setFieldErrors({});
@@ -165,14 +169,33 @@ export function SectionEditor({ tenantId, pageKey, spec, section, capabilities, 
         await sections.saveDraft(tenantId, pageKey, spec.key, { data: toApiData(spec, values), isVisible });
         setMessage({ kind: "ok", text: t("savedDraft") });
         router.refresh();
+        announce(true);
       } catch (err) {
         if (isApiError(err, "VALIDATION_ERROR")) {
           setFieldErrors(Object.fromEntries(err.issues.map((i) => [i.path.replace(/^data\./, ""), i.message])));
           setMessage({ kind: "error", text: err.message });
         } else setMessage({ kind: "error", text: err instanceof Error ? err.message : tc("errorGeneric") });
+        announce(false);
       }
     });
   }
+
+  // The page's "Save Changes" button asks every editor with unsaved edits to save its draft.
+  const dirty = formState.isDirty;
+  const saveAll = useRef<() => void>(() => {});
+  useEffect(() => {
+    saveAll.current = () => void handleSubmit((v) => onSave(v, true))();
+  });
+  useEffect(() => {
+    const onEvent = (ev: Event) => {
+      if (!canEdit || !dirty) return;
+      const counter = (ev as CustomEvent<{ count: number }>).detail;
+      if (counter) counter.count += 1;
+      queueMicrotask(() => saveAll.current());
+    };
+    window.addEventListener(SAVE_ALL_EVENT, onEvent);
+    return () => window.removeEventListener(SAVE_ALL_EVENT, onEvent);
+  }, [canEdit, dirty]);
 
   const discard = () =>
     start(async () => {
@@ -235,7 +258,7 @@ export function SectionEditor({ tenantId, pageKey, spec, section, capabilities, 
       </header>
 
       {open && (
-        <form onSubmit={handleSubmit(onSave)} noValidate className="border-t border-line px-5 py-5">
+        <form onSubmit={handleSubmit((v) => onSave(v))} noValidate className="border-t border-line px-5 py-5">
           {draft?.reviewNote && (
             <p className="mb-4 rounded-input bg-warning-soft px-4 py-3 text-sm text-ink">
               <span className="font-semibold">{ta("announcements.reviewNote")}: </span>
@@ -247,34 +270,40 @@ export function SectionEditor({ tenantId, pageKey, spec, section, capabilities, 
           )}
 
           <fieldset disabled={!canEdit || pending} className="grid gap-5">
-            <div className="grid gap-4 sm:grid-cols-2">
-              {spec.fields.map((f) => (
-                <div key={f.name} className={cn(isWide(f) && "sm:col-span-2")}>
-                  <FieldInput spec={f} path={f.name} control={control} tenantId={tenantId} error={fieldErrors[f.name]} />
-                </div>
-              ))}
-            </div>
-            {spec.groups?.map((g) => (
-              <div key={g.name} className="rounded-input border border-line p-4">
-                <p className="mb-3 text-xs font-semibold tracking-wide text-muted uppercase">{t(`fields.${g.labelKey}`)}</p>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {g.fields.map((f) => (
+            {spec.key === "banner" ? (
+              <BannerFields spec={spec} control={control} tenantId={tenantId} errors={fieldErrors} canEdit={canEdit} />
+            ) : (
+              <>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {spec.fields.map((f) => (
                     <div key={f.name} className={cn(isWide(f) && "sm:col-span-2")}>
-                      <FieldInput spec={f} path={`${g.name}.${f.name}`} control={control} tenantId={tenantId} error={fieldErrors[`${g.name}.${f.name}`]} />
+                      <FieldInput spec={f} path={f.name} control={control} tenantId={tenantId} error={fieldErrors[f.name]} />
                     </div>
                   ))}
                 </div>
-                {g.lists?.map((l) => (
-                  <div key={l.name} className="mt-4">
-                    <ListBlock control={control} tenantId={tenantId} spec={l} path={`${g.name}.${l.name}`} errors={fieldErrors} canEdit={canEdit} />
+                {spec.groups?.map((g) => (
+                  <div key={g.name} className="rounded-input border border-line p-4">
+                    <p className="mb-3 text-xs font-semibold tracking-wide text-muted uppercase">{t(`fields.${g.labelKey}`)}</p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {g.fields.map((f) => (
+                        <div key={f.name} className={cn(isWide(f) && "sm:col-span-2")}>
+                          <FieldInput spec={f} path={`${g.name}.${f.name}`} control={control} tenantId={tenantId} error={fieldErrors[`${g.name}.${f.name}`]} />
+                        </div>
+                      ))}
+                    </div>
+                    {g.lists?.map((l) => (
+                      <div key={l.name} className="mt-4">
+                        <ListBlock control={control} tenantId={tenantId} spec={l} path={`${g.name}.${l.name}`} errors={fieldErrors} canEdit={canEdit} />
+                      </div>
+                    ))}
                   </div>
                 ))}
-              </div>
-            ))}
-            {spec.items && <ListBlock control={control} tenantId={tenantId} spec={spec.items} path={spec.items.name} errors={fieldErrors} canEdit={canEdit} onAppend={registerAppend} />}
-            {spec.lists?.map((l) => (
-              <ListBlock key={l.name} control={control} tenantId={tenantId} spec={l} path={l.name} errors={fieldErrors} canEdit={canEdit} />
-            ))}
+                {spec.items && <ListBlock control={control} tenantId={tenantId} spec={spec.items} path={spec.items.name} errors={fieldErrors} canEdit={canEdit} onAppend={registerAppend} />}
+                {spec.lists?.map((l) => (
+                  <ListBlock key={l.name} control={control} tenantId={tenantId} spec={l} path={l.name} errors={fieldErrors} canEdit={canEdit} />
+                ))}
+              </>
+            )}
           </fieldset>
 
           {message && (

@@ -69,6 +69,7 @@ const banner = section("banner", "banner", {
 });
 
 const topStats = section("top-stats", "topStats", {
+  fields: [bi("heading", "heading"), bi("subheading", "subheading"), sel("variant", "variant", ["tiles", "strip"])],
   items: list("items", "topStat", 8, [icon(), bi("title", "title", { required: true }), txt("value", "value", 40, { required: true }), bi("unit", "unit"), bi("description", "description"), colour("background", "backgroundColour"), on("visible", "visible", { default: true })]),
 });
 
@@ -103,7 +104,7 @@ const supportCardBlock = (name: string, labelKey: string) =>
 // ---------------------------------------------------------------- Village Infrastructure
 const infrastructure: SectionEditorSpec[] = [
   banner,
-  topStats,
+  { ...topStats, items: { ...topStats.items!, max: 15 } },
   section("infra-map", "infraMap", {
     fields: [
       int("zoom", "zoom", { required: true, default: 13 }),
@@ -156,14 +157,21 @@ const finance: SectionEditorSpec[] = [
     items: list("categories", "category", 20, [bi("name", "name", { required: true }), txt("amount", "amount", 15, { required: true, placeholder: "12500.00" }), num("percentage", "percentage", { required: true }), colour("colour", "colour", { required: true })]),
   }),
   section("budget-visualizer", "budgetVisualizer", {
-    fields: [on("enabled", "enabled", { default: true }), bi("heading", "heading", { required: true }), bi("subtitle", "subtitle"), colour("backgroundColour", "backgroundColour", { required: true, default: "#FFFFFF" })],
+    fields: [
+      on("enabled", "enabled", { default: true }),
+      bi("heading", "heading", { required: true }),
+      bi("subtitle", "subtitle"),
+      colour("backgroundColour", "backgroundColour", { required: true, default: "#FFFFFF" }),
+      // One dataset per tab: [{ tabKey, type: "bar" | "line", labels: [..], series: [{ name: {en, mr}, colour, values: [..] }] }]
+      { name: "charts", type: "json", labelKey: "charts" },
+    ],
     groups: [
       group("overviewCard", "overviewCard", [bi("title", "title", { required: true })], {
         lists: [list("fields", "overviewField", 10, [bi("label", "label", { required: true }), sel("valueType", "valueType", ["dynamic", "auto"], { required: true }), txt("prefixSuffix", "prefixSuffix", 20), colour("colour", "colour", { required: true })])],
       }),
       group("downloadReport", "downloadReport", [on("enabled", "enabled", { default: true }), bi("buttonText", "buttonText", { required: true }), file("fileId", "reportFile"), icon("icon", { required: true, default: "download" })]),
     ],
-    items: list("tabs", "tab", 10, [bi("name", "name", { required: true }), on("enabled", "enabled", { default: true })]),
+    items: list("tabs", "tab", 10, [txt("tabKey", "tabKey", 40), bi("name", "name", { required: true }), on("enabled", "enabled", { default: true })]),
     lists: [list("barChart", "barValue", 24, [bi("label", "label", { required: true }), txt("value", "value", 15, { required: true, placeholder: "72" }), colour("colour", "colour", { required: true })])],
   }),
   section("documents", "documents", {
@@ -383,7 +391,7 @@ const contact: SectionEditorSpec[] = [
   section("partners", "partners", {
     items: list("items", "partner", 50, [img("logoId", "logo"), bi("title", "title", { required: true }), bi("description", "description"), imgs("partnerLogoIds", "partnerLogos", 30)]),
   }),
-  section("volunteer-categories", "volunteerCategories", { items: list("items", "volunteerCategory", 30, [bi("title", "title", { required: true }), int("order", "displayOrder", { required: true, default: 0 })]) }),
+  section("volunteer-categories", "volunteerCategories", { items: list("items", "volunteerCategory", 30, [bi("title", "title", { required: true }), bi("description", "description"), img("iconId", "icon"), int("order", "displayOrder", { required: true, default: 0 })]) }),
   section("volunteer-registration", "volunteerRegistration", {
     fields: [
       on("enabled", "enabled", { default: true }),
@@ -397,6 +405,77 @@ const contact: SectionEditorSpec[] = [
     ],
   }),
 ];
+
+// ---------------------------------------------------------------- Home / About extras and Projects / Schemes
+// Mirror src/config/sections-extra.ts.
+const successStoriesSpec = successStories;
+
+export const EXTRA_EDITORS: Partial<Record<PageKey, SectionEditorSpec[]>> = {
+  home: [
+    banner,
+    section("about-cards", "aboutCards", { items: list("items", "aboutCard", 8, [icon(), bi("title", "title", { required: true }), bi("description", "description"), bi("buttonText", "buttonText"), link("buttonLink", "buttonLink")]) }),
+    section("weather", "weather", {
+      fields: [txt("location", "location", 120)],
+      groups: [group("current", "currentWeather", [txt("temperature", "temperature", 20, { required: true }), txt("humidity", "humidity", 20, { required: true }), txt("wind", "wind", 40, { required: true }), txt("feelsLike", "feelsLike", 20, { required: true }), txt("condition", "condition", 120, { required: true })])],
+      items: list("forecast", "forecastDay", 7, [date("date", "date", { required: true }), icon("icon", { required: true }), txt("maxTemp", "maxTemp", 20, { required: true }), txt("minTemp", "minTemp", 20, { required: true })]),
+    }),
+    section("whats-new", "whatsNew", { fields: [bi("heading", "heading")], items: list("items", "whatsNewItem", 12, [bi("title", "title", { required: true }), txt("date", "dateText", 60, { required: true }), txt("status", "status", 40, { required: true }), link("href")]) }),
+    section("achievements", "achievements", {
+      fields: [bi("heading", "heading")],
+      items: list("items", "achievementItem", 10, [bi("title", "title", { required: true }), bi("description", "description"), txt("completedOn", "completedOn", 60, { required: true }), int("rank", "rank")]),
+    }),
+    section("notice-categories", "noticeCategories", { items: list("items", "noticeCategory", 12, [txt("key", "keyName", 40, { required: true }), bi("label", "label", { required: true }), icon("icon", { required: true })]) }),
+    section("notices", "notices", {
+      items: list("items", "noticeItem", 20, [bi("title", "title", { required: true }), txt("category", "category", 60, { required: true }), date("publishedAt", "publishedAt", { required: true }), file("fileId", "pdfFile"), link("buttonLink", "buttonLink"), on("active", "active", { default: true })]),
+    }),
+  ],
+  about: [
+    banner,
+    section("leaders-profile-grid", "leadersProfileGrid", {
+      fields: [bi("heading", "heading")],
+      items: list("items", "leader", 30, [img("photoId", "photo"), bi("name", "name", { required: true }), bi("designation", "designation", { required: true }), bi("bio", "bio"), tel("phone"), txt("wardNo", "wardNo", 20)]),
+    }),
+    section("roles-cards", "rolesCards", { fields: [bi("heading", "heading")], items: list("items", "roleCard", 12, [icon("icon", { required: true }), bi("title", "title", { required: true }), bullets("responsibilities", "responsibilities", 6)]) }),
+    section("emergency-services", "emergencyServices", {
+      fields: [bi("heading", "heading")],
+      items: list("items", "emergencyService", 20, [bi("title", "title", { required: true }), txt("number", "emergencyNumber", 20, { required: true }), sel("category", "category", ["health", "police", "fire", "disaster", "utility", "other"], { required: true }), icon("icon", { required: true }), on("active", "active", { default: true })]),
+    }),
+  ],
+  projects: [
+    banner,
+    topStats,
+    section("before-after-gallery", "beforeAfterGallery", {
+      items: list("items", "comparison", 20, [img("beforeImageId", "beforeImage", { required: true }), img("afterImageId", "afterImage", { required: true }), bi("title", "title", { required: true }), bi("description", "description"), int("order", "displayOrder", { required: true, default: 0 })]),
+    }),
+    section("village-resolution-tracker", "villageResolutionTracker", {
+      fields: [bi("heading", "heading")],
+      items: list("items", "resolutionItem", 30, [bi("title", "title", { required: true }), sel("status", "status", ["open", "in-progress", "resolved"], { required: true }), date("date"), txt("wardNo", "wardNo", 20), bi("updateNote", "updateNote")]),
+    }),
+    section("impact-dashboard", "impactDashboard", {
+      fields: [bi("heading", "heading")],
+      items: list("items", "impactItem", 12, [icon("icon", { required: true }), bi("title", "title", { required: true }), txt("value", "value", 40, { required: true }), bi("description", "description"), sel("theme", "theme", ["blue", "orange", "green", "purple"], { required: true })]),
+    }),
+    section("financial-overview", "financialOverview", {
+      fields: [bi("heading", "heading", { required: true }), bi("subtitle", "subtitle"), txt("currency", "currency", 10, { default: "INR" }), bl("note", "note", { max: 2000 })],
+      items: list("items", "financialItem", 12, [bi("label", "label", { required: true }), txt("amount", "amount", 15, { required: true, placeholder: "12500.00" }), colour("colour", "colour", { required: true })]),
+    }),
+    successStoriesSpec,
+    section("development-suggestions", "developmentSuggestions", { fields: [bi("heading", "heading", { required: true }), bi("description", "description"), img("imageId", "image"), bi("buttonText", "buttonText"), link("buttonLink", "buttonLink")] }),
+  ],
+  schemes: [
+    banner,
+    section("category-strip", "categoryStrip", { items: list("items", "categoryStripItem", 12, [icon("icon", { required: true }), bi("label", "label", { required: true }), txt("key", "keyName", 40, { required: true }), on("active", "active", { default: true })]) }),
+    section("coverage-map", "coverageMap", {
+      fields: [bi("heading", "heading"), img("mapImageId", "mapImage")],
+      items: list("wards", "coverageWard", 60, [txt("wardNo", "wardNo", 20, { required: true }), int("households", "households", { required: true, default: 0 }), int("beneficiaries", "beneficiaries", { required: true, default: 0 }), colour("colour", "colour")]),
+    }),
+    section("statistics", "statistics", { items: list("items", "statisticItem", 12, [icon("icon", { required: true }), bi("title", "title", { required: true }), txt("value", "value", 40, { required: true }), bi("description", "description")]) }),
+    successStoriesSpec,
+    section("quick-actions", "quickActions", {
+      items: list("items", "quickAction", 12, [icon("icon", { required: true }), bi("title", "title", { required: true }), bi("description", "description"), bi("buttonText", "buttonText", { required: true }), link("buttonLink", "buttonLink", { required: true }), on("active", "active", { default: true })]),
+    }),
+  ],
+};
 
 export const PAGE_EDITORS: Partial<Record<PageKey, readonly SectionEditorSpec[]>> = {
   infrastructure,

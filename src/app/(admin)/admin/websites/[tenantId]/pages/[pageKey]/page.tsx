@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ArrowLeft, ExternalLink } from "lucide-react";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isPageKey } from "@/config/pages";
@@ -13,13 +13,30 @@ import { ContactManager } from "@/components/admin/websites/ContactManager";
 import { GalleryManager } from "@/components/admin/websites/GalleryManager";
 import { ProjectsManager } from "@/components/admin/websites/ProjectsManager";
 import { SchemesManager } from "@/components/admin/websites/SchemesManager";
-import { PageHeader } from "@/components/ui/Card";
+import { PageEditorHeader } from "@/components/admin/editor/PageEditorHeader";
 import { content, tenants } from "@/lib/api/admin";
 import { isApiError } from "@/lib/api/client";
 import { cookieHeader } from "@/lib/api/server";
 import { getCurrentUser, hasCapability } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Page editor" };
+
+/** Home editor order and side-by-side pairs, as in the design. Sections not listed follow in their usual order. */
+const HOME_BLOCKS: string[][] = [["banner"], ["quick-stats"], ["about-cards"], ["monthly-metrics"], ["ward-details"], ["whats-new"], ["achievements"], ["weather", "sarpanch-message"], ["notice-categories"], ["notices"]];
+
+function editorBlocks<T extends { sectionKey: string }>(pageKey: string, sections: T[]): T[][] {
+  if (pageKey !== "home") return sections.map((s) => [s]);
+  const byKey = new Map(sections.map((s) => [s.sectionKey, s]));
+  const used = new Set<string>();
+  const out: T[][] = [];
+  for (const keys of HOME_BLOCKS) {
+    const block = keys.map((k) => byKey.get(k)).filter((s): s is T => !!s);
+    block.forEach((s) => used.add(s.sectionKey));
+    if (block.length) out.push(block);
+  }
+  for (const s of sections) if (!used.has(s.sectionKey)) out.push([s]);
+  return out;
+}
 
 /**
  * Per-page CMS editor (Figma "1. Home Admin" … "15. Contact"): one collapsible card per
@@ -40,18 +57,34 @@ export default async function PageEditor({ params, searchParams }: { params: Pro
     throw err;
   }
 
+  const locale = await getLocale();
+  const anyPublished = page.sections.some((s) => s.published);
+  const edited = page.sections.flatMap((s) => [s.draft?.updatedAt, s.published?.updatedAt]).filter((x): x is string => !!x).sort().pop() ?? page.updatedAt;
+  const minutes = Math.round((new Date().getTime() - new Date(edited).getTime()) / 60000);
+  const lastEdited = new Intl.RelativeTimeFormat(locale === "mr" ? "mr-IN" : "en-IN", { numeric: "auto" }).format(
+    minutes < 60 ? -minutes : minutes < 1440 ? -Math.round(minutes / 60) : -Math.round(minutes / 1440),
+    minutes < 60 ? "minute" : minutes < 1440 ? "hour" : "day",
+  );
   const specs = SECTION_EDITORS[pageKey] ?? [];
   const ordered = page.sections.slice().sort((a, b) => a.sortOrder - b.sortOrder);
   const unknown = ordered.filter((s) => !editorSpec(pageKey, s.sectionKey));
+
+  const renderSection = (section: (typeof ordered)[number]) => {
+    const spec = editorSpec(pageKey, section.sectionKey);
+    if (!spec) return null;
+    return <SectionEditor key={section.sectionKey} tenantId={tenantId} pageKey={pageKey} spec={spec} section={section} capabilities={user.capabilities} defaultOpen />;
+  };
 
   return (
     <div className="mx-auto max-w-5xl">
       <Link href={`/admin/websites/${tenantId}`} className="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
         <ArrowLeft className="size-4" aria-hidden /> {tenant.nameEn}
       </Link>
-      <PageHeader
+      <PageEditorHeader
         title={ta(`pageNames.${pageKey}`)}
-        description={t("subtitle", { name: tenant.nameEn })}
+        description={t("subtitleLong", { name: tenant.nameEn })}
+        published={anyPublished}
+        lastEdited={`${t("lastEdited")} ${lastEdited}`}
         actions={
           tenant.status === "PUBLISHED" && page.isEnabled ? (
             <a href={pageHref(tenant.slug, pageKey)} target="_blank" rel="noopener" className="inline-flex h-9 items-center gap-1.5 rounded-button border border-line bg-surface px-3 text-sm font-semibold text-primary hover:bg-surface-soft">
@@ -75,11 +108,15 @@ export default async function PageEditor({ params, searchParams }: { params: Pro
 
         {specs.length === 0 && !["projects", "schemes", "announcements", "gallery", "contact"].includes(pageKey) && <p className="rounded-card border border-line bg-surface p-5 text-sm text-muted">{t("noSections")}</p>}
 
-        {ordered.map((section) => {
-          const spec = editorSpec(pageKey, section.sectionKey);
-          if (!spec) return null;
-          return <SectionEditor key={section.sectionKey} tenantId={tenantId} pageKey={pageKey} spec={spec} section={section} capabilities={user.capabilities} defaultOpen />;
-        })}
+        {editorBlocks(pageKey, ordered).map((block) =>
+          block.length === 1 ? (
+            renderSection(block[0]!)
+          ) : (
+            <div key={block.map((x) => x.sectionKey).join("+")} className="grid items-start gap-4 xl:grid-cols-2">
+              {block.map(renderSection)}
+            </div>
+          ),
+        )}
 
         {/* SEO / page-enabled settings sit below the sections (not part of the Figma section cards). */}
         <PageSettingsForm page={page} canUpdate={hasCapability(user, "tenant:update")} />
