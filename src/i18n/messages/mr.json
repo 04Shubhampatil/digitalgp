@@ -500,6 +500,12 @@
       "dynamic": "गतिमान सामग्री",
       "media": "माध्यम व संवाद",
       "settings": "सेटिंग्ज"
+    },
+    "topbar": {
+      "district": "जिल्हा",
+      "taluka": "तालुका",
+      "gramPanchayat": "ग्रामपंचायत",
+      "search": "पृष्ठे शोधा"
     }
   },
   "public": {
@@ -871,7 +877,10 @@
       "categoryStrip": "वर्ग पट्टी",
       "coverageMap": "योजना व्याप्ती नकाशा",
       "statistics": "आकडेवारी",
-      "quickActions": "जलद कृती"
+      "quickActions": "जलद कृती",
+      "bannerContent": "मजकूर",
+      "bannerImageSettings": "प्रतिमा सेटिंग्ज",
+      "bannerOverlay": "आच्छादन आणि वाचनीयता"
     },
     "fields": {
       "title": "शीर्षक",
@@ -1268,6 +1277,16 @@
     "addEntry": "नोंद जोडा",
     "removeEntry": "काढा",
     "addImage": "प्रतिमा जोडा",
-    "jsonHint": "वैध JSON चिकटवा. मसुदा जतन करताना बॅकएंड तपासेल."
+    "jsonHint": "वैध JSON चिकटवा. मसुदा जतन करताना बॅकएंड तपासेल.",
+    "saveChanges": "बदल जतन करा",
+    "statusPublished": "प्रकाशित",
+    "statusDraft": "प्रकाशित नाही",
+    "lastEdited": "शेवटचा बदल",
+    "allSaved": "सर्व बदल मसुदा म्हणून जतन केले.",
+    "saveFailed": "काही विभाग जतन करता आले नाहीत. चिन्हांकित फील्ड तपासा.",
+    "nothingToSave": "जतन न केलेले बदल नाहीत.",
+    "subtitleLong": "{name} साठी संस्थात्मक मजकूर व्यवस्थापन",
+    "addAnotherCta": "आणखी CTA जोडा",
+    "ctaLimit": "जास्तीत जास्त {n} CTA बटणे जोडा."
   }
 }

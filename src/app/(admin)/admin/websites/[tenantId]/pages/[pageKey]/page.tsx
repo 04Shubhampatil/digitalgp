@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ArrowLeft, ExternalLink } from "lucide-react";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isPageKey } from "@/config/pages";
@@ -13,7 +13,7 @@ import { ContactManager } from "@/components/admin/websites/ContactManager";
 import { GalleryManager } from "@/components/admin/websites/GalleryManager";
 import { ProjectsManager } from "@/components/admin/websites/ProjectsManager";
 import { SchemesManager } from "@/components/admin/websites/SchemesManager";
-import { PageHeader } from "@/components/ui/Card";
+import { PageEditorHeader } from "@/components/admin/editor/PageEditorHeader";
 import { content, tenants } from "@/lib/api/admin";
 import { isApiError } from "@/lib/api/client";
 import { cookieHeader } from "@/lib/api/server";
@@ -40,6 +40,14 @@ export default async function PageEditor({ params, searchParams }: { params: Pro
     throw err;
   }
 
+  const locale = await getLocale();
+  const anyPublished = page.sections.some((s) => s.published);
+  const edited = page.sections.flatMap((s) => [s.draft?.updatedAt, s.published?.updatedAt]).filter((x): x is string => !!x).sort().pop() ?? page.updatedAt;
+  const minutes = Math.round((new Date().getTime() - new Date(edited).getTime()) / 60000);
+  const lastEdited = new Intl.RelativeTimeFormat(locale === "mr" ? "mr-IN" : "en-IN", { numeric: "auto" }).format(
+    minutes < 60 ? -minutes : minutes < 1440 ? -Math.round(minutes / 60) : -Math.round(minutes / 1440),
+    minutes < 60 ? "minute" : minutes < 1440 ? "hour" : "day",
+  );
   const specs = SECTION_EDITORS[pageKey] ?? [];
   const ordered = page.sections.slice().sort((a, b) => a.sortOrder - b.sortOrder);
   const unknown = ordered.filter((s) => !editorSpec(pageKey, s.sectionKey));
@@ -49,9 +57,11 @@ export default async function PageEditor({ params, searchParams }: { params: Pro
       <Link href={`/admin/websites/${tenantId}`} className="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
         <ArrowLeft className="size-4" aria-hidden /> {tenant.nameEn}
       </Link>
-      <PageHeader
+      <PageEditorHeader
         title={ta(`pageNames.${pageKey}`)}
-        description={t("subtitle", { name: tenant.nameEn })}
+        description={t("subtitleLong", { name: tenant.nameEn })}
+        published={anyPublished}
+        lastEdited={`${t("lastEdited")} ${lastEdited}`}
         actions={
           tenant.status === "PUBLISHED" && page.isEnabled ? (
             <a href={pageHref(tenant.slug, pageKey)} target="_blank" rel="noopener" className="inline-flex h-9 items-center gap-1.5 rounded-button border border-line bg-surface px-3 text-sm font-semibold text-primary hover:bg-surface-soft">

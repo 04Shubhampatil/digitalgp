@@ -500,6 +500,12 @@
       "dynamic": "Dynamic content",
       "media": "Media & communication",
       "settings": "Settings"
+    },
+    "topbar": {
+      "district": "District",
+      "taluka": "Taluka",
+      "gramPanchayat": "Gram Panchayat",
+      "search": "Search pages"
     }
   },
   "public": {
@@ -871,7 +877,10 @@
       "categoryStrip": "Category strip",
       "coverageMap": "Scheme coverage map",
       "statistics": "Statistics",
-      "quickActions": "Quick actions"
+      "quickActions": "Quick actions",
+      "bannerContent": "Content",
+      "bannerImageSettings": "Image Settings",
+      "bannerOverlay": "Overlay & Readability"
     },
     "fields": {
       "title": "Title",
@@ -1268,6 +1277,16 @@
     "addEntry": "Add entry",
     "removeEntry": "Remove",
     "addImage": "Add image",
-    "jsonHint": "Paste valid JSON. The backend checks it when you save the draft."
+    "jsonHint": "Paste valid JSON. The backend checks it when you save the draft.",
+    "saveChanges": "Save Changes",
+    "statusPublished": "Published",
+    "statusDraft": "Not published",
+    "lastEdited": "Last edited",
+    "allSaved": "All changes saved as drafts.",
+    "saveFailed": "Some sections could not be saved. Check the highlighted fields.",
+    "nothingToSave": "There are no unsaved changes.",
+    "subtitleLong": "Managing institutional content for {name}",
+    "addAnotherCta": "Add Another CTA",
+    "ctaLimit": "Add up to {n} CTA buttons."
   }
 }
