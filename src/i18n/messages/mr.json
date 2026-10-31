@@ -116,7 +116,20 @@
       "breadcrumbRoot": "मूळ",
       "levelField": "स्तर",
       "slugHint": "लहान इंग्रजी अक्षरे, अंक व हायफन (URL मध्ये वापरले जाते).",
-      "editUnit": "घटक संपादित करा"
+      "editUnit": "घटक संपादित करा",
+      "overviewTitle": "जिल्हा व तालुका व्यवस्थापन",
+      "addTaluka": "तालुका जोडा",
+      "districts": "जिल्हे",
+      "talukas": "तालुके",
+      "gramPanchayats": "ग्रामपंचायती",
+      "activeDistricts": "सक्रिय जिल्हे",
+      "filterTitle": "प्रशासकीय नोंदी गाळा",
+      "allTalukas": "सर्व तालुके",
+      "search": "शोध",
+      "searchPlaceholder": "जिल्हा किंवा तालुका लिहा",
+      "applyFilters": "फिल्टर लागू करा",
+      "districtOverview": "जिल्हा आढावा",
+      "websitesCreated": "तयार केलेली संकेतस्थळे"
     },
     "websites": {
       "title": "ग्रा.पं. संकेतस्थळ व्यवस्थापन",

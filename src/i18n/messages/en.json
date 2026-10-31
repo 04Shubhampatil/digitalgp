@@ -116,7 +116,20 @@
       "breadcrumbRoot": "Root",
       "levelField": "Level",
       "slugHint": "Lowercase letters, numbers and hyphens (used in URLs).",
-      "editUnit": "Edit unit"
+      "editUnit": "Edit unit",
+      "overviewTitle": "District & Taluka Management",
+      "addTaluka": "Add Taluka",
+      "districts": "Districts",
+      "talukas": "Talukas",
+      "gramPanchayats": "Gram Panchayats",
+      "activeDistricts": "Active Districts",
+      "filterTitle": "Filter Administrative Records",
+      "allTalukas": "All Talukas",
+      "search": "Search",
+      "searchPlaceholder": "Enter district or taluka",
+      "applyFilters": "Apply Filters",
+      "districtOverview": "District Overview",
+      "websitesCreated": "Websites Created"
     },
     "websites": {
       "title": "GP Website Management",
