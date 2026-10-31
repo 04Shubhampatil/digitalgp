@@ -1,5 +1,5 @@
 import { ChevronDown } from "lucide-react";
-import { forwardRef, useId, type SelectHTMLAttributes } from "react";
+import { forwardRef, useId, type ReactNode, type SelectHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 
 export interface SelectOption {
@@ -16,11 +16,13 @@ export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement
   /** Placeholder option rendered with an empty value. */
   placeholder?: string;
   size?: "sm" | "md";
+  /** Small tile shown inside the field before the text (e.g. the chosen role's letter). */
+  leading?: ReactNode;
 }
 
 /** Native select styled like the Figma dropdowns (mint background, 10px radius). */
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
-  { label, hint, error, options, placeholder, size = "md", className, id, ...rest },
+  { label, hint, error, options, placeholder, size = "md", leading, className, id, ...rest },
   ref,
 ) {
   const autoId = useId();
@@ -33,12 +35,14 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
         </label>
       )}
       <div className="relative">
+        {leading && <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2">{leading}</span>}
         <select
           ref={ref}
           id={selectId}
           aria-invalid={error ? true : undefined}
           className={cn(
-            "w-full appearance-none rounded-card border bg-surface-select pr-9 pl-3 text-sm text-ink outline-none focus:border-primary",
+            "w-full appearance-none rounded-card border bg-surface-select pr-9 text-sm text-ink outline-none focus:border-primary",
+            leading ? "pl-12" : "pl-3",
             size === "sm" ? "h-9" : "h-11",
             error ? "border-danger" : "border-line-strong",
             className,

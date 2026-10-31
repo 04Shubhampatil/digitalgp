@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AtSign } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
@@ -44,8 +44,8 @@ export function ForgotPasswordForm() {
         <p role="status" className="rounded-input bg-success-soft px-4 py-3 text-sm text-success">
           {done}
         </p>
-        <Link href="/login" className="text-sm font-semibold text-primary hover:underline">
-          {t("backToLogin")}
+        <Link href="/login" className="flex items-center justify-center gap-1 text-sm font-semibold text-primary hover:underline">
+          <ChevronLeft className="size-3.5" aria-hidden /> {t("backToLogin")}
         </Link>
       </div>
     );
@@ -53,7 +53,7 @@ export function ForgotPasswordForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-5">
-      <Input label={t("email")} type="email" autoComplete="email" placeholder={t("emailPlaceholder")} leading={<AtSign className="size-4" aria-hidden />} error={errors.email?.message} {...register("email")} />
+      <Input label={t("email")} type="email" autoComplete="email" placeholder={t("emailPlaceholder")} error={errors.email?.message} {...register("email")} />
       {formError && (
         <p role="alert" className="rounded-input bg-danger-soft px-4 py-3 text-sm text-danger">
           {formError}
@@ -62,9 +62,10 @@ export function ForgotPasswordForm() {
       <Button type="submit" size="lg" loading={isSubmitting} className="w-full">
         {t("sendResetLink")}
       </Button>
-      <Link href="/login" className="text-center text-sm font-semibold text-primary hover:underline">
-        {t("backToLogin")}
+      <Link href="/login" className="flex items-center justify-center gap-1 text-sm font-semibold text-primary hover:underline">
+        <ChevronLeft className="size-3.5" aria-hidden /> {t("backToLogin")}
       </Link>
+      <p className="rounded-[8px] bg-success-soft px-5 py-8 text-center text-[13px] text-primary">{t("forgotNote")}</p>
     </form>
   );
 }

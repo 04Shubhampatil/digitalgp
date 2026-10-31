@@ -10,9 +10,9 @@ export const metadata: Metadata = { title: "Reset password" };
 export default async function ResetPasswordPage({ searchParams }: { searchParams: Promise<{ token?: string }> }) {
   const [{ token }, t] = await Promise.all([searchParams, getTranslations("auth")]);
   return (
-    <AuthSplitLayout>
-      <h1 className="font-inter text-3xl font-bold text-ink-strong">{t("resetTitle")}</h1>
-      <p className="mt-2 mb-8 text-[15px] text-muted">{t("resetHint")}</p>
+    <AuthSplitLayout variant="plain">
+      <h1 className="text-[28px] leading-9 font-bold text-ink-strong">{t("resetTitle")}</h1>
+      <p className="mt-2 mb-7 text-[14px] leading-5 text-muted">{t("resetHint")}</p>
       {token ? (
         <PasswordForm mode={{ kind: "reset", token }} />
       ) : (

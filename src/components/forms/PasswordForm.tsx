@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Lock } from "lucide-react";
+import { Lock, ChevronLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -87,8 +87,9 @@ export function PasswordForm({ mode }: { mode: PasswordFormMode }) {
       {mode.kind === "change" && (
         <Input label={t("currentPassword")} type="password" autoComplete="current-password" leading={<Lock className="size-4" aria-hidden />} error={errors.currentPassword?.message} {...register("currentPassword")} />
       )}
-      <Input label={t("newPassword")} type="password" autoComplete="new-password" hint={t("passwordPolicy")} leading={<Lock className="size-4" aria-hidden />} error={errors.newPassword?.message} {...register("newPassword")} />
-      <Input label={t("confirmPassword")} type="password" autoComplete="new-password" leading={<Lock className="size-4" aria-hidden />} error={errors.confirm?.message} {...register("confirm")} />
+      <Input label={t("newPassword")} type="password" autoComplete="new-password" placeholder={mode.kind === "reset" ? t("newPasswordPlaceholder") : undefined} hint={mode.kind === "reset" ? undefined : t("passwordPolicy")} leading={mode.kind === "reset" ? undefined : <Lock className="size-4" aria-hidden />} error={errors.newPassword?.message} {...register("newPassword")} />
+      <Input label={t("confirmPassword")} type="password" autoComplete="new-password" placeholder={mode.kind === "reset" ? t("confirmPasswordPlaceholder") : undefined} leading={mode.kind === "reset" ? undefined : <Lock className="size-4" aria-hidden />} error={errors.confirm?.message} {...register("confirm")} />
+      {mode.kind === "reset" && <p className="-mt-2 text-xs leading-4 text-muted">{t("passwordPolicy")}</p>}
       {formError && (
         <p role="alert" className="rounded-input bg-danger-soft px-4 py-3 text-sm text-danger">
           {formError}
@@ -97,6 +98,11 @@ export function PasswordForm({ mode }: { mode: PasswordFormMode }) {
       <Button type="submit" size="lg" loading={isSubmitting} className="w-full">
         {mode.kind === "reset" ? t("setPassword") : t("changePassword")}
       </Button>
+      {mode.kind === "reset" && (
+        <Link href="/login" className="flex items-center justify-center gap-1 text-sm font-semibold text-primary hover:underline">
+          <ChevronLeft className="size-3.5" aria-hidden /> {t("backToLogin")}
+        </Link>
+      )}
     </form>
   );
 }

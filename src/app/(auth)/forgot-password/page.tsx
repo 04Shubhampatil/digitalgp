@@ -8,9 +8,9 @@ export const metadata: Metadata = { title: "Forgot password" };
 export default async function ForgotPasswordPage() {
   const t = await getTranslations("auth");
   return (
-    <AuthSplitLayout>
-      <h1 className="font-inter text-3xl font-bold text-ink-strong">{t("forgotTitle")}</h1>
-      <p className="mt-2 mb-8 text-[15px] text-muted">{t("forgotHint")}</p>
+    <AuthSplitLayout variant="plain">
+      <h1 className="text-[28px] leading-9 font-bold text-ink-strong">{t("forgotTitle")}</h1>
+      <p className="mt-2 mb-7 text-[14px] leading-5 text-muted">{t("forgotHint")}</p>
       <ForgotPasswordForm />
     </AuthSplitLayout>
   );
