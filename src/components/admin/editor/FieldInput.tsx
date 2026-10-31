@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/Switch";
 import { Textarea } from "@/components/ui/Textarea";
 import { cn } from "@/lib/cn";
 import type { FormRecord } from "@/lib/section-data";
+import { Icon } from "@/components/public/sections/cms/kit";
 import { MediaField } from "./MediaField";
 
 type Bilingual = { en?: string; mr?: string };
@@ -320,6 +321,7 @@ export function FieldInput({
         <Input
           compact={compact}
           label={label}
+          leading={spec.type === "text" && /icon/i.test(spec.name) ? <Icon name={String(field.value ?? "")} className="size-4 text-primary" /> : undefined}
           type={inputType}
           inputMode={spec.type === "integer" ? "numeric" : spec.type === "number" ? "decimal" : undefined}
           step={spec.type === "number" ? "any" : spec.type === "integer" ? 1 : undefined}
