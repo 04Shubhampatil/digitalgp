@@ -173,7 +173,17 @@
       },
       "contactCardTitle": "Contact information",
       "contactCardDesc": "Address, phone, email, hours and social links shown on the Contact page and footer.",
-      "editContact": "Edit contact details"
+      "editContact": "Edit contact details",
+      "subtitleLong": "Create and manage Gram Panchayat websites across Maharashtra.",
+      "allGps": "All Gram Panchayats",
+      "talukaBlock": "Taluka / Block",
+      "allStatuses": "All statuses",
+      "searchGp": "Search GP",
+      "listTitle": "Gram Panchayat Websites",
+      "showing": "Showing {shown} of {total} Gram Panchayats",
+      "website": "Website",
+      "continueSetup": "Continue Setup",
+      "of": "of"
     },
     "users": {
       "title": "Users & Roles",

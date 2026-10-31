@@ -21,7 +21,7 @@ const formSchema = createTenantSchema.pick({ unitId: true, slug: true, nameEn: t
 type FormValues = z.input<typeof formSchema>;
 
 /** Figma "Create GP Website": pick the Gram Panchayat, confirm slug + names → POST /tenants. */
-export function CreateWebsiteDialog({ assignments }: { assignments: AssignmentDto[] }) {
+export function CreateWebsiteDialog({ assignments, unit, compact }: { assignments: AssignmentDto[]; /** Gram Panchayat chosen in the list: the picker is skipped. */ unit?: AdminUnitDto; /** Small button used inside table rows. */ compact?: boolean }) {
   const t = useTranslations("admin");
   const tc = useTranslations("common");
   const router = useRouter();
@@ -75,8 +75,14 @@ export function CreateWebsiteDialog({ assignments }: { assignments: AssignmentDt
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>
-        <Plus className="size-4" aria-hidden /> {t("websites.create")}
+      <Button
+        size={compact ? "sm" : undefined}
+        onClick={() => {
+          if (unit) onUnit(unit);
+          setOpen(true);
+        }}
+      >
+        {!compact && <Plus className="size-4" aria-hidden />} {t("websites.create")}
       </Button>
       <Dialog
         open={open}
@@ -95,10 +101,12 @@ export function CreateWebsiteDialog({ assignments }: { assignments: AssignmentDt
         }
       >
         <form id="create-website-form" onSubmit={handleSubmit(onSubmit)} noValidate className="grid gap-4">
-          <div>
-            <p className="mb-1.5 text-[11px] font-semibold tracking-wide text-muted uppercase">{t("websites.unitLabel")}</p>
-            {open && <UnitPicker assignments={assignments} targetLevel="GRAM_PANCHAYAT" onChange={onUnit} error={errors.unitId?.message} />}
-          </div>
+          {!unit && (
+            <div>
+              <p className="mb-1.5 text-[11px] font-semibold tracking-wide text-muted uppercase">{t("websites.unitLabel")}</p>
+              {open && <UnitPicker assignments={assignments} targetLevel="GRAM_PANCHAYAT" onChange={onUnit} error={errors.unitId?.message} />}
+            </div>
+          )}
           <div className="grid gap-4 sm:grid-cols-2">
             <Input label={t("hierarchy.nameEn")} error={errors.nameEn?.message} {...register("nameEn")} />
             <Input label={t("hierarchy.nameMr")} lang="mr" error={errors.nameMr?.message} {...register("nameMr")} />
