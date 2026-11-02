@@ -66,8 +66,12 @@ async function main(): Promise<void> {
 
   const source = new Client({ connectionString: sourceUrl, connectionTimeoutMillis: 20_000 });
   const target = new Client({ connectionString: targetUrl, connectionTimeoutMillis: 20_000 });
+  const log = (m: string) => console.error(`[copy] ${m}`);
+  log("connecting to source...");
   await source.connect();
+  log("connecting to target...");
   await target.connect();
+  log("connected.");
   try {
     // Every source table must be either copied or deliberately skipped.
     const unknown = (await tableNames(source)).filter((t) => !SKIPPED.has(t) && !TABLES.some((s) => s.name === t));
@@ -87,6 +91,7 @@ async function main(): Promise<void> {
       const orderBy = spec.orderBy ?? (spec.noId ? null : '"id"');
       const rows = (await source.query(`SELECT * FROM ${q(spec.name)}${orderBy ? ` ORDER BY ${orderBy}` : ""}`)).rows;
       counts[spec.name] = rows.length;
+      log(`${spec.name}: ${rows.length} rows`);
       if (rows.length === 0) continue;
       const jsonCols = await jsonColumns(target, spec.name);
       const columns = Object.keys(rows[0]);
@@ -119,6 +124,7 @@ async function main(): Promise<void> {
       await target.query(`UPDATE ${q(u.table)} SET ${sets} WHERE "id" = $${cols.length + 1}`, [...cols.map((c) => u.values[c]), u.id]);
     }
 
+    log(`linking ${deferredUpdates.length} deferred references...`);
     await target.query("COMMIT");
     for (const [t, n] of Object.entries(counts)) console.log(`${t.padEnd(22)} ${n}`);
     console.log("Copy complete.");
