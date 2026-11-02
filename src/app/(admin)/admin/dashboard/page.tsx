@@ -53,11 +53,18 @@ export default async function DashboardPage() {
     safe(audit.list({ limit: 8 }, { cookie })),
   ]);
 
+  // Block and taluka admins get the compact dashboard from the design.
+  const isBlock = role === "BLOCK_ADMIN" || role === "TALUKA_ADMIN";
   const total = all?.data.length ?? 0;
   const bar = (n: number) => (total ? Math.round((n / total) * 100) : 0);
   const recent = (all?.data ?? []).slice().sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 6);
 
-  const quick = [
+  const quick = isBlock
+    ? [
+        { href: "/admin/websites", label: t("dashboardUi.editGp"), hint: "", show: true },
+        { href: "/admin/announcements/new", label: t("nav.publishAnnouncement"), hint: "", show: true },
+      ]
+    : [
     { href: "/admin/websites", label: t("websites.create"), hint: t("dashboardUi.quickCreate"), show: hasCapability(user, "tenant:create") },
     { href: "/admin/users/new", label: t("users.create"), hint: t("dashboardUi.quickUser"), show: hasCapability(user, "user:manage") },
     { href: "/admin/hierarchy", label: t("hierarchy.title"), hint: t("dashboardUi.quickHierarchy"), show: hasCapability(user, "hierarchy:read") },
@@ -77,6 +84,19 @@ export default async function DashboardPage() {
     },
     { key: "status", header: tc("status"), cell: (tn) => <StatusPill status={tn.status} label={t(`tenantStatus.${tn.status}`)} /> },
     { key: "updated", header: t("websites.lastUpdated"), cell: (tn) => formatDate(tn.updatedAt, ui), className: "text-muted" },
+    ...(isBlock
+      ? [
+          {
+            key: "action",
+            header: tc("actions"),
+            cell: (tn: TenantDto) => (
+              <Link href={`/admin/websites/${tn.id}`} className="text-sm font-medium text-primary hover:underline">
+                {tn.status === "DRAFT" ? t("websites.continueSetup") : t("dashboardUi.openCms")}
+              </Link>
+            ),
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -84,10 +104,21 @@ export default async function DashboardPage() {
       <PageHeader title={role ? t(`dashboardUi.title.${role}`) : t("dashboard")} description={t("welcome", { name: user.user.name })} />
 
       <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {isBlock ? (
+          <>
+            <MetricCard label={t("nav.assignedWebsites")} value={countOf(all)} tone="info" />
+            <MetricCard label={t("tenantStatus.PUBLISHED")} value={countOf(published)} tone="success" />
+            <MetricCard label={t("tenantStatus.DRAFT")} value={countOf(draft)} tone="warning" />
+            <MetricCard label={t("dashboardUi.pendingUpdates")} value={countOf(pending)} tone="danger" />
+          </>
+        ) : (
+          <>
         <MetricCard label={t("websites.title")} value={countOf(all)} caption={`${countOf(published)} ${t("tenantStatus.PUBLISHED").toLowerCase()}`} tone="info" />
         {canUsers ? <MetricCard label={t("users.title")} value={countOf(staff)} tone="violet" /> : <MetricCard label={t("tenantStatus.DRAFT")} value={countOf(draft)} tone="warning" />}
         {canReview && <MetricCard label={t("dashboardUi.pendingReview")} value={countOf(pending)} caption={t("announcements.title")} tone="warning" />}
         {canGrievances && <MetricCard label={t("dashboardUi.openGrievances")} value={countOf(open)} tone="danger" />}
+          </>
+        )}
       </div>
 
       <div className="mb-5 grid gap-4 lg:grid-cols-3">
@@ -100,7 +131,9 @@ export default async function DashboardPage() {
                 ["DRAFT", draft?.data.length ?? 0, "bg-warning"],
                 ["SUSPENDED", suspended?.data.length ?? 0, "bg-danger"],
               ] as const
-            ).map(([status, n, color]) => (
+            )
+              .filter(([status]) => !isBlock || status !== "SUSPENDED")
+              .map(([status, n, color]) => (
               <div key={status} className="grid grid-cols-[110px_1fr_48px] items-center gap-4 text-sm">
                 <dt className="font-medium text-ink">{t(`tenantStatus.${status}`)}</dt>
                 <dd className="h-2 overflow-hidden rounded-full bg-track">
@@ -132,7 +165,7 @@ export default async function DashboardPage() {
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader
-            title={t("dashboardUi.recentWebsites")}
+            title={isBlock ? t("dashboardUi.gpOverview") : t("dashboardUi.recentWebsites")}
             actions={
               <Link href="/admin/websites" className="rounded-button border border-line px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-soft">
                 {tc("viewAll")}

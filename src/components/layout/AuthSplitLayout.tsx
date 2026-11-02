@@ -3,7 +3,7 @@ import { Emblem } from "@/components/ui/Emblem";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 
 /** Figma "Admin log in": dark-green brand panel (610px) + light form side. */
-export async function AuthSplitLayout({ children }: { children: React.ReactNode }) {
+export async function AuthSplitLayout({ children, variant = "full" }: { children: React.ReactNode; /** "plain" (forgot / reset password) has no language switch and no "Secure access" badge. */ variant?: "full" | "plain" }) {
   const t = await getTranslations();
   return (
     <div className="flex min-h-dvh bg-canvas-alt">
@@ -19,14 +19,18 @@ export async function AuthSplitLayout({ children }: { children: React.ReactNode 
       </aside>
 
       <main className="relative flex flex-1 flex-col items-center justify-center px-4 py-10">
-        <div className="absolute top-6 right-6">
-          <LanguageSwitcher />
-        </div>
+        {variant === "full" && (
+          <div className="absolute top-6 right-6">
+            <LanguageSwitcher />
+          </div>
+        )}
         <div className="w-full max-w-[520px] rounded-2xl border border-line bg-surface p-8 shadow-sm sm:p-12">{children}</div>
-        <span className="mt-8 inline-flex items-center gap-2 rounded-full bg-success-soft px-4 py-1.5 text-xs font-semibold text-primary">
-          <span aria-hidden className="size-2 rounded-full bg-accent" />
-          {t("auth.secureAccess")}
-        </span>
+        {variant === "full" && (
+          <span className="mt-8 inline-flex items-center gap-2 rounded-full bg-success-soft px-4 py-1.5 text-xs font-semibold text-primary">
+            <span aria-hidden className="size-2 rounded-full bg-accent" />
+            {t("auth.secureAccess")}
+          </span>
+        )}
       </main>
     </div>
   );

@@ -33,6 +33,7 @@ export function LoginForm({ redirectTo = "/admin/dashboard" }: { redirectTo?: st
 
   const {
     register,
+    watch,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
@@ -76,6 +77,13 @@ export function LoginForm({ redirectTo = "/admin/dashboard" }: { redirectTo?: st
         placeholder={t("roleNone")}
         options={ROLES.map((r) => ({ value: r, label: tRole(r) }))}
         error={errors.role?.message}
+        leading={
+          watch("role") ? (
+            <span aria-hidden className="flex size-6 items-center justify-center rounded-[4px] bg-success-soft text-xs font-semibold text-primary">
+              {tRole(watch("role") as (typeof ROLES)[number]).charAt(0).toUpperCase()}
+            </span>
+          ) : undefined
+        }
         {...register("role")}
       />
       <Input

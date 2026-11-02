@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 import type { CurrentUserDto } from "@/types/api";
 import { Emblem } from "@/components/ui/Emblem";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
@@ -38,7 +39,41 @@ export async function AdminShell({ user, children }: { user: CurrentUserDto; chi
       ]
     : [];
 
-  const groups: NavGroup[] = cmsGroups.length > 0 ? cmsGroups : [
+  // Sidebars from the design: Super Admin and Block / Taluka Admin each have a short list of their own screens.
+  const superGroups: NavGroup[] = [
+    { items: [{ href: "/admin/dashboard", label: t("dashboard"), exact: true }] },
+    {
+      label: t("management"),
+      items: [
+        { href: "/admin/hierarchy", label: t("hierarchy.title"), show: hasCapability(user, "hierarchy:read") },
+        { href: "/admin/websites", label: t("nav.gpWebsites"), show: hasCapability(user, "tenant:read") },
+        { href: "/admin/users", label: t("nav.blockAdmins"), show: hasCapability(user, "user:read") },
+        { href: "/admin/announcements", label: t("announcements.title"), show: hasCapability(user, "content:read") },
+      ],
+    },
+    {
+      label: t("administration"),
+      items: [
+        { href: "/admin/roles", label: t("roles"), show: hasCapability(user, "roles:manage") },
+        { href: "/admin/audit-logs", label: t("auditLogs"), show: hasCapability(user, "audit:read") || hasCapability(user, "audit:read-own") },
+        { href: "#", label: t("nav.logOut"), action: "logout" as const },
+      ],
+    },
+  ];
+  const blockGroups: NavGroup[] = [
+    { items: [{ href: "/admin/dashboard", label: t("dashboard"), exact: true }] },
+    {
+      label: t("management"),
+      items: [
+        { href: "/admin/websites", label: t("nav.assignedWebsites"), show: hasCapability(user, "tenant:read") },
+        { href: "/admin/announcements", label: t("nav.publishAnnouncement"), show: hasCapability(user, "content:read") },
+      ],
+    },
+    { label: t("settings"), items: [{ href: "#", label: t("nav.logOut"), action: "logout" as const }] },
+  ];
+  const roleGroups = role === "SUPER_ADMIN" ? superGroups : role === "BLOCK_ADMIN" || role === "TALUKA_ADMIN" ? blockGroups : null;
+
+  const groups: NavGroup[] = cmsGroups.length > 0 ? cmsGroups : roleGroups ?? [
     { items: [{ href: "/admin/dashboard", label: t("dashboard") }] },
     {
       label: t("management"),
@@ -133,7 +168,7 @@ export async function AdminShell({ user, children }: { user: CurrentUserDto; chi
           </div>
           <div className="flex items-center gap-4">
             <LanguageSwitcher />
-            <div className="flex items-center gap-2">
+            <Link href="/admin/profile" className="flex items-center gap-2 hover:opacity-80">
               <span aria-hidden className="flex size-8 items-center justify-center rounded-full bg-primary font-brand-sub text-xs font-semibold text-white">
                 {user.user.name.charAt(0).toUpperCase()}
               </span>
@@ -142,7 +177,7 @@ export async function AdminShell({ user, children }: { user: CurrentUserDto; chi
                 <p className="font-brand-sub text-[10px] text-primary-alt">{role ? t(`role.${role}`) : ""}</p>
               </div>
               <ChevronDown aria-hidden className="size-3.5 text-muted" />
-            </div>
+            </Link>
           </div>
         </header>
         <main className="flex-1 p-5">{children}</main>

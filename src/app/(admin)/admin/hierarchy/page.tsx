@@ -13,13 +13,15 @@ import { Card, CardHeader, MetricCard, PageHeader } from "@/components/ui/Card";
 import { StatusPill } from "@/components/ui/StatusPill";
 import type { UiLocale } from "@/i18n/config";
 import { pair, pickText } from "@/i18n/text";
-import { childLevels, hierarchy } from "@/lib/api/admin";
+import { HierarchyOverview } from "@/components/admin/hierarchy/HierarchyOverview";
+import { childLevels, hierarchy, users as usersApi } from "@/lib/api/admin";
+import { primaryRole } from "@/lib/session";
 import { cookieHeader } from "@/lib/api/server";
 import { getCurrentUser, hasCapability } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Districts & Talukas" };
 
-type Search = Promise<{ parentId?: string; q?: string; cursor?: string }>;
+type Search = Promise<{ parentId?: string; q?: string; cursor?: string; district?: string; taluka?: string }>;
 
 /**
  * Hierarchy browser (Figma 07 "District & Taluka Management"): drill down from the user's scope
@@ -28,7 +30,7 @@ type Search = Promise<{ parentId?: string; q?: string; cursor?: string }>;
 export default async function HierarchyPage({ searchParams }: { searchParams: Search }) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
-  const [{ parentId, q, cursor }, t, tc, locale, cookie] = await Promise.all([
+  const [{ parentId, q, cursor, district, taluka }, t, tc, locale, cookie] = await Promise.all([
     searchParams,
     getTranslations("admin"),
     getTranslations("common"),
@@ -37,6 +39,18 @@ export default async function HierarchyPage({ searchParams }: { searchParams: Se
   ]);
   const ui = locale as UiLocale;
   const canManage = hasCapability(user, "hierarchy:manage");
+
+  // Super admin landing view from the design: totals and one row per district.
+  if (!parentId && primaryRole(user) === "SUPER_ADMIN") {
+    const safe = <T,>(x: Promise<T>) => x.catch(() => null);
+    const [d, tk, g, u] = await Promise.all([
+      hierarchy.list({ level: "DISTRICT", limit: 100 }, { cookie }),
+      hierarchy.list({ level: "TALUKA", limit: 100 }, { cookie }),
+      hierarchy.list({ level: "GRAM_PANCHAYAT", limit: 100 }, { cookie }),
+      hasCapability(user, "user:read") ? safe(usersApi.list({ limit: 100 }, { cookie })) : Promise.resolve(null),
+    ]);
+    return <HierarchyOverview locale={ui} districts={d.data} talukas={tk.data} gps={g.data} users={u?.data ?? []} district={district} taluka={taluka} q={q} />;
+  }
 
   // Current node + breadcrumb, or the scope roots when no parent is chosen.
   let parent: AdminUnitDto | null = null;
