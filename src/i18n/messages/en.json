@@ -198,7 +198,11 @@
       "continueSetup": "Continue Setup",
       "of": "of",
       "assignedSubtitle": "Open and manage only the GP websites assigned to your profile.",
-      "applyFilters": "Apply Filters"
+      "applyFilters": "Apply Filters",
+      "createQuestion": "Create Gram Panchayat Website?",
+      "createTemplate": "A ready-to-edit website will be generated using the existing Smart Village CMS template.",
+      "templateUnlocked": "The complete 15-page CMS template will be unlocked",
+      "afterCreation": "After creation, the website will remain in Draft until its content is completed and published."
     },
     "users": {
       "title": "Users & Roles",

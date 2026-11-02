@@ -177,7 +177,7 @@ export default async function WebsitesPage({ searchParams }: { searchParams: Sea
                         {r.status === "DRAFT" ? t("websites.continueSetup") : t("websites.manage")}
                       </Link>
                     ) : canCreate ? (
-                      <CreateWebsiteDialog assignments={user.assignments} unit={r.unit} compact />
+                      <CreateWebsiteDialog assignments={user.assignments} unit={r.unit} area={[r.district, r.taluka].filter(Boolean).map((u) => name(u!)).join("/")} compact />
                     ) : (
                       <span className="text-xs text-muted">—</span>
                     )}

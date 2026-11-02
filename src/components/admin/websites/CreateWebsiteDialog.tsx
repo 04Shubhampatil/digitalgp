@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus } from "lucide-react";
+import { Check, House, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -21,7 +21,7 @@ const formSchema = createTenantSchema.pick({ unitId: true, slug: true, nameEn: t
 type FormValues = z.input<typeof formSchema>;
 
 /** Figma "Create GP Website": pick the Gram Panchayat, confirm slug + names → POST /tenants. */
-export function CreateWebsiteDialog({ assignments, unit, compact }: { assignments: AssignmentDto[]; /** Gram Panchayat chosen in the list: the picker is skipped. */ unit?: AdminUnitDto; /** Small button used inside table rows. */ compact?: boolean }) {
+export function CreateWebsiteDialog({ assignments, unit, area, compact }: { assignments: AssignmentDto[]; /** Gram Panchayat chosen in the list: the picker is skipped. */ unit?: AdminUnitDto; /** "District / Taluka" text shown for a chosen Gram Panchayat. */ area?: string; /** Small button used inside table rows. */ compact?: boolean }) {
   const t = useTranslations("admin");
   const tc = useTranslations("common");
   const router = useRouter();
@@ -87,7 +87,7 @@ export function CreateWebsiteDialog({ assignments, unit, compact }: { assignment
       <Dialog
         open={open}
         onClose={close}
-        title={t("websites.create")}
+        title={unit ? t("websites.createQuestion") : t("websites.create")}
         closeLabel={tc("close")}
         footer={
           <>
@@ -101,13 +101,35 @@ export function CreateWebsiteDialog({ assignments, unit, compact }: { assignment
         }
       >
         <form id="create-website-form" onSubmit={handleSubmit(onSubmit)} noValidate className="grid gap-4">
+          {unit && (
+            <div className="grid gap-4 text-center">
+              <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-success-soft text-primary">
+                <House className="size-6" aria-hidden />
+              </span>
+              <p className="text-sm text-muted">{t("websites.createTemplate")}</p>
+              <div className="grid gap-3 rounded-card border border-line bg-surface-soft p-4 text-left sm:grid-cols-2">
+                <div>
+                  <p className="mb-1 text-[11px] font-semibold tracking-wide text-muted uppercase">{t("websites.gp")}</p>
+                  <p className="rounded-card border border-line-strong bg-surface px-3 py-2.5 text-sm font-medium text-ink">{unit.nameEn}</p>
+                </div>
+                <div>
+                  <p className="mb-1 text-[11px] font-semibold tracking-wide text-muted uppercase">{t("websites.districtTaluka")}</p>
+                  <p className="rounded-card border border-line-strong bg-surface px-3 py-2.5 text-sm font-medium text-ink">{area || "—"}</p>
+                </div>
+                <p className="flex items-center gap-2 text-xs font-medium text-primary sm:col-span-2">
+                  <Check className="size-4" aria-hidden /> {t("websites.templateUnlocked")}
+                </p>
+              </div>
+              <p className="text-xs text-muted">{t("websites.afterCreation")}</p>
+            </div>
+          )}
           {!unit && (
             <div>
               <p className="mb-1.5 text-[11px] font-semibold tracking-wide text-muted uppercase">{t("websites.unitLabel")}</p>
               {open && <UnitPicker assignments={assignments} targetLevel="GRAM_PANCHAYAT" onChange={onUnit} error={errors.unitId?.message} />}
             </div>
           )}
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className={unit ? "hidden" : "grid gap-4 sm:grid-cols-2"}>
             <Input label={t("hierarchy.nameEn")} error={errors.nameEn?.message} {...register("nameEn")} />
             <Input label={t("hierarchy.nameMr")} lang="mr" error={errors.nameMr?.message} {...register("nameMr")} />
             <Input label={t("hierarchy.slug")} hint={t("websites.slugHint")} error={errors.slug?.message} {...register("slug")} />
