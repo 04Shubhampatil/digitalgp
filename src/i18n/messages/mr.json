@@ -229,7 +229,27 @@
       "userStatus": {
         "ACTIVE": "सक्रिय",
         "SUSPENDED": "निलंबित"
-      }
+      },
+      "pageTitle": "ब्लॉक ॲडमिन व्यवस्थापन",
+      "pageSubtitle": "प्रशासक तयार करा आणि त्यांचा तालुका व ग्रामपंचायत संकेतस्थळ प्रवेश व्यवस्थापित करा.",
+      "createBlockAdmin": "ब्लॉक ॲडमिन तयार करा",
+      "totalAdmins": "एकूण प्रशासक",
+      "pendingInvite": "निमंत्रण प्रलंबित",
+      "searchFilter": "शोध व फिल्टर",
+      "searchAdmin": "प्रशासक शोधा",
+      "search": "शोधा",
+      "overviewTitle": "ब्लॉक ॲडमिन आढावा",
+      "admin": "प्रशासक",
+      "assignedArea": "नेमलेले क्षेत्र",
+      "gpAccess": "ग्रामपंचायत प्रवेश",
+      "websitesCount": "{n} संकेतस्थळे",
+      "view": "पहा",
+      "never": "कधीही नाही",
+      "today": "आज",
+      "yesterday": "काल",
+      "showAllRoles": "सर्व भूमिका दाखवा",
+      "showBlockAdmins": "फक्त ब्लॉक ॲडमिन दाखवा",
+      "firstHundred": "पहिले 100 प्रशासक दाखवत आहे."
     },
     "announcements": {
       "title": "सूचना",

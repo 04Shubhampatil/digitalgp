@@ -229,7 +229,27 @@
       "userStatus": {
         "ACTIVE": "Active",
         "SUSPENDED": "Suspended"
-      }
+      },
+      "pageTitle": "Block Admin Management",
+      "pageSubtitle": "Create administrators and manage their taluka and GP website access.",
+      "createBlockAdmin": "Create Block Admin",
+      "totalAdmins": "Total Admins",
+      "pendingInvite": "Pending Invite",
+      "searchFilter": "Search & Filter",
+      "searchAdmin": "Search Admin",
+      "search": "Search",
+      "overviewTitle": "Block Admin Overview",
+      "admin": "Administrator",
+      "assignedArea": "Assigned Area",
+      "gpAccess": "GP Access",
+      "websitesCount": "{n} websites",
+      "view": "View",
+      "never": "Never",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "showAllRoles": "Show all roles",
+      "showBlockAdmins": "Show block admins only",
+      "firstHundred": "Showing the first 100 administrators."
     },
     "announcements": {
       "title": "Announcements",
