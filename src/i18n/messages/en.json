@@ -481,7 +481,18 @@
       "change": "Change",
       "view": "View",
       "from": "From",
-      "to": "To"
+      "to": "To",
+      "subtitleLong": "Track important actions performed by Super Admins and Block Admins.",
+      "filterTitle": "Filter Activity",
+      "user": "User",
+      "allUsers": "All users",
+      "actionType": "Action type",
+      "allActions": "All actions",
+      "dateRange": "Date range",
+      "clear": "Clear",
+      "overviewTitle": "User Overview",
+      "role": "Role",
+      "target": "Target"
     },
     "rolesUi": {
       "subtitle": "Review what each role can do across the platform.",

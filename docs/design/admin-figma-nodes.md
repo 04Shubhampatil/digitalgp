@@ -9,15 +9,15 @@ Status column: **done** = rebuilt to match; **todo** = not yet.
 | Block login | 375:20846 | todo |
 | Super admin dashboard | 375:20846 (this id is the block login; dashboard export is docs/design/figma/admin-pages/dashboard.png) | sidebar and top bar done; the dashboard body already follows the design |
 | GP website management | 375:21076 | done except the Block Admin column and Export (no backend support yet); 375:21231 and 375:21430 todo |
-| District and taluka management | 375:21620, 375:22361 | todo |
-| Block admin management | 375:21730 | todo |
+| District and taluka management | 375:21620 | done (overview for the super admin); 375:22361 todo |
+| Block admin management | 375:21730 | done (Active vs Pending Invite is derived from last login; GP Access counts websites under the assigned unit) |
 | Create block admin | 375:21832 | todo |
 | Assign district, taluka and GP access | 375:21903 | todo |
 | Block admin profile | 375:21997 | todo |
 | Roles and permissions | 375:22248 | todo |
 | Forgot password / reset password | 375:22080 / 375:22097 | done (password rule text follows the backend: 10+ characters, letters and numbers) |
 | Forgot password (block) / reset password (block) | 375:22116 / 375:22133 | todo |
-| Audit logs | 375:22152 | todo |
+| Audit logs | 375:22152 | done except Export Logs and the IP / Result column (not in the API) |
 | Admin publish | 375:22702, 375:22820 | todo |
 | Block publish | 375:22594, 375:22796 | todo |
 | Public announcements management | 375:22844 | todo |
