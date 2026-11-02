@@ -11,7 +11,7 @@ import { pair, pickText } from "@/i18n/text";
 import { hierarchy, tenants } from "@/lib/api/admin";
 import { cookieHeader } from "@/lib/api/server";
 import { formatDate } from "@/lib/format";
-import { getCurrentUser, hasCapability } from "@/lib/session";
+import { getCurrentUser, hasCapability, primaryRole } from "@/lib/session";
 
 export const metadata: Metadata = { title: "GP Websites" };
 
@@ -70,20 +70,23 @@ export default async function WebsitesPage({ searchParams }: { searchParams: Sea
     return s ? `/admin/websites?${s}` : "/admin/websites";
   };
   const canCreate = hasCapability(user, "tenant:create");
+  // Block and taluka admins see only their own websites, with a shorter filter card and no totals.
+  const role = primaryRole(user);
+  const assignedView = role === "BLOCK_ADMIN" || role === "TALUKA_ADMIN";
 
   return (
     <div className="mx-auto max-w-6xl">
-      <PageHeader title={t("websites.title")} description={t("websites.subtitleLong")} actions={canCreate ? <CreateWebsiteDialog assignments={user.assignments} /> : null} />
+      <PageHeader title={assignedView ? t("nav.assignedWebsites") : t("websites.title")} description={assignedView ? t("websites.assignedSubtitle") : t("websites.subtitleLong")} actions={canCreate ? <CreateWebsiteDialog assignments={user.assignments} /> : null} />
 
-      <div className="mb-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className={assignedView ? "hidden" : "mb-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"}>
         <MetricCard label={t("websites.allGps")} value={rows.length.toLocaleString()} tone="info" />
         <MetricCard label={t("tenantStatus.PUBLISHED")} value={count("PUBLISHED").toLocaleString()} tone="success" />
         <MetricCard label={t("tenantStatus.DRAFT")} value={count("DRAFT").toLocaleString()} tone="warning" />
         <MetricCard label={t("tenantStatus.NOT_CREATED")} value={count("NOT_CREATED").toLocaleString()} tone="danger" />
       </div>
 
-      <form method="get" action="/admin/websites" className="mb-5 grid gap-4 rounded-card border border-line bg-surface p-5 sm:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1.3fr_auto]">
-        <label>
+      <form method="get" action="/admin/websites" className={`mb-5 grid gap-4 rounded-card border border-line bg-surface p-5 sm:grid-cols-2 ${assignedView ? "xl:grid-cols-[1fr_1.6fr_auto]" : "xl:grid-cols-[1fr_1fr_1fr_1.3fr_auto]"}`}>
+        <label className={assignedView ? "hidden" : undefined}>
           <span className={labelCls}>{t("topbar.district")}</span>
           <select name="district" defaultValue={sp.district ?? ""} className={selectCls}>
             <option value="">{tc("all")}</option>
@@ -94,7 +97,7 @@ export default async function WebsitesPage({ searchParams }: { searchParams: Sea
             ))}
           </select>
         </label>
-        <label>
+        <label className={assignedView ? "hidden" : undefined}>
           <span className={labelCls}>{t("websites.talukaBlock")}</span>
           <select name="taluka" defaultValue={sp.taluka ?? ""} className={selectCls}>
             <option value="">{tc("all")}</option>
@@ -124,14 +127,14 @@ export default async function WebsitesPage({ searchParams }: { searchParams: Sea
         </label>
         <div className="flex items-end">
           <button type="submit" className="h-11 rounded-button bg-primary px-5 text-sm font-semibold text-white hover:bg-primary-hover">
-            {tc("apply")}
+            {assignedView ? t("websites.applyFilters") : tc("apply")}
           </button>
         </div>
       </form>
 
       <Card>
         <div className="px-5 pt-5 pb-3">
-          <h2 className="text-[19px] font-bold text-ink">{t("websites.listTitle")}</h2>
+          <h2 className="text-[19px] font-bold text-ink">{assignedView ? t("dashboardUi.gpOverview") : t("websites.listTitle")}</h2>
           <p className="mt-0.5 text-xs text-muted">{t("websites.showing", { shown: view.length, total: shown.length.toLocaleString() })}</p>
         </div>
         <div className="overflow-x-auto">

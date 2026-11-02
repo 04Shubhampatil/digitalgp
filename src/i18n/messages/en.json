@@ -196,7 +196,9 @@
       "showing": "Showing {shown} of {total} Gram Panchayats",
       "website": "Website",
       "continueSetup": "Continue Setup",
-      "of": "of"
+      "of": "of",
+      "assignedSubtitle": "Open and manage only the GP websites assigned to your profile.",
+      "applyFilters": "Apply Filters"
     },
     "users": {
       "title": "Users & Roles",
@@ -326,7 +328,16 @@
       "managementTitle": "Latest announcements",
       "managementDesc": "Add, edit and manage the announcements shown on this website.",
       "showingFirst": "Showing the latest {n} announcements.",
-      "viewAll": "View all announcements"
+      "viewAll": "View all announcements",
+      "totalAnnouncements": "Total Announcements",
+      "drafts": "Drafts",
+      "allUploaded": "All Uploaded Announcements",
+      "showingN": "Showing {n} announcements",
+      "publishTitle": "Publish Announcement",
+      "publishSubtitle": "Create once and publish across multiple Gram Panchayat websites.",
+      "selectTargets": "Select Publishing Targets",
+      "selectTargetsHint": "Choose one website or publish across all websites under an area.",
+      "saveDraft": "Save Draft"
     },
     "schemes": "Schemes",
     "projects": "Projects",

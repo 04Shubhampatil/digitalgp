@@ -7,7 +7,7 @@ import type { AnnouncementDto, AnnouncementPriority, ContentStatus } from "@/typ
 import { CursorPager } from "@/components/admin/CursorPager";
 import { DataTable, type Column } from "@/components/admin/DataTable";
 import { FilterBar, FilterSelect } from "@/components/admin/FilterBar";
-import { Card, CardHeader, PageHeader } from "@/components/ui/Card";
+import { Card, CardHeader, MetricCard, PageHeader } from "@/components/ui/Card";
 import { StatusPill } from "@/components/ui/StatusPill";
 import type { UiLocale } from "@/i18n/config";
 import { pair, pickText } from "@/i18n/text";
@@ -36,7 +36,15 @@ export default async function AnnouncementsPage({ searchParams }: { searchParams
   const ui = locale as UiLocale;
   const statusFilter = STATUSES.includes(status as ContentStatus) ? (status as ContentStatus) : undefined;
   const priorityFilter = PRIORITIES.includes(priority as AnnouncementPriority) ? (priority as AnnouncementPriority) : undefined;
-  const page = await announcements.list({ status: statusFilter, priority: priorityFilter, q, cursor, limit: 25 }, { cookie });
+  const [page, all] = await Promise.all([
+    announcements.list({ status: statusFilter, priority: priorityFilter, q, cursor, limit: 25 }, { cookie }),
+    announcements.list({ limit: 100 }, { cookie }).catch(() => null),
+  ]);
+  // Totals come from the first 100 announcements (no statistics endpoint): "100+" when there are more.
+  const cnt = (n: number) => `${n}${all?.page.nextCursor ? "+" : ""}`;
+  const nowMs = new Date().getTime();
+  const everything = all?.data ?? [];
+  const scheduled = everything.filter((x) => x.status !== "DRAFT" && x.publishAt && new Date(x.publishAt).getTime() > nowMs).length;
   const canCreate = hasCapability(user, "content:edit") || hasCapability(user, "content:share");
 
   const columns: Column<AnnouncementDto>[] = [
@@ -88,6 +96,12 @@ export default async function AnnouncementsPage({ searchParams }: { searchParams
           ) : null
         }
       />
+      <div className="mb-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <MetricCard label={t("announcements.totalAnnouncements")} value={all ? cnt(everything.length) : "—"} tone="info" />
+        <MetricCard label={t("contentStatus.PUBLISHED")} value={all ? cnt(everything.filter((x) => x.status === "PUBLISHED").length) : "—"} tone="success" />
+        <MetricCard label={t("announcements.drafts")} value={all ? cnt(everything.filter((x) => x.status === "DRAFT").length) : "—"} tone="warning" />
+        <MetricCard label={t("announcements.scheduled")} value={all ? cnt(scheduled) : "—"} tone="violet" />
+      </div>
       <div className="mb-5">
         <FilterBar action="/admin/announcements" applyLabel={tc("apply")} searchPlaceholder={t("announcements.searchPlaceholder")} searchValue={q}>
           <FilterSelect name="status" label={t("announcements.statusFilter")} value={statusFilter} allLabel={tc("all")} options={STATUSES.map((s) => ({ value: s, label: t(`contentStatus.${s}`) }))} />
@@ -95,7 +109,7 @@ export default async function AnnouncementsPage({ searchParams }: { searchParams
         </FilterBar>
       </div>
       <Card>
-        <CardHeader title={t("announcements.title")} />
+        <CardHeader title={t("announcements.allUploaded")} description={t("announcements.showingN", { n: page.data.length })} />
         <DataTable columns={columns} rows={page.data} rowKey={(a) => a.id} emptyMessage={tc("noResults")} />
         <CursorPager
           basePath="/admin/announcements"

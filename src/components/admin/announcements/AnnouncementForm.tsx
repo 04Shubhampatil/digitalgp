@@ -140,7 +140,8 @@ export function AnnouncementForm({ assignments, capabilities, existing }: Announ
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="grid gap-5">
       {!editing && (
         <section className="rounded-card border border-line bg-surface p-5">
-          <h2 className="mb-4 text-[17px] font-bold text-ink">{t("announcements.scopeKind")}</h2>
+          <h2 className="text-[17px] font-bold text-ink">{t("announcements.selectTargets")}</h2>
+          <p className="mt-0.5 mb-4 text-xs text-muted">{t("announcements.selectTargetsHint")}</p>
           <div className="grid gap-4">
             <div className="flex flex-wrap gap-4 text-sm">
               {canEditGp && (
@@ -250,7 +251,7 @@ export function AnnouncementForm({ assignments, capabilities, existing }: Announ
           {tc("cancel")}
         </Link>
         <Button type="submit" loading={formState.isSubmitting}>
-          {tc("save")}
+          {editing ? tc("save") : t("announcements.saveDraft")}
         </Button>
       </div>
     </form>

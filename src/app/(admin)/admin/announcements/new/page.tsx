@@ -14,7 +14,7 @@ export default async function NewAnnouncementPage() {
   const t = await getTranslations("admin");
   return (
     <div className="mx-auto max-w-4xl">
-      <PageHeader title={t("announcements.create")} />
+      <PageHeader title={t("announcements.publishTitle")} description={t("announcements.publishSubtitle")} />
       <AnnouncementForm assignments={user.assignments} capabilities={user.capabilities} />
     </div>
   );
