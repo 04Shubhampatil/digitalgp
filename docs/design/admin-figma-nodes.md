@@ -14,14 +14,14 @@ Status column: **done** = rebuilt to match; **partial** = layout follows the fra
 | Add new taluka (modal) | 375:22361 | todo: existing dialog works, layout not restyled |
 | Block admin management | 375:21730 | done (Active vs Pending Invite is derived from last login; GP Access counts websites under the assigned unit) |
 | Create block admin | 375:21832 | done: two columns with steps and security note |
-| Assign district, taluka and GP access | 375:21903 | partial: uses the existing assignment manager below the profile (`#access`) |
+| Assign district, taluka and GP access | 375:21903 | done: area (district, taluka / block) and the websites it covers, Save & Continue. Access is granted per area, so the website list is read-only (the backend has no per-website assignment). The assignment manager stays on the profile for other roles |
 | Block admin profile | 375:21997 | done: profile card, assigned access, recent activity |
 | Roles and permissions | 375:22248 | done: role list and matrix with Allowed / Not allowed / Own activity. Read-only: the matrix is fixed in backend code, so there is no Save Permission Settings |
 | Forgot password / reset password | 375:22080 / 375:22097 | done (password rule text follows the backend: 10+ characters, letters and numbers) |
 | Forgot password (block) / reset password (block) | 375:22116 / 375:22133 | done (plain layout variant) |
 | Audit logs | 375:22152 | partial: filter card and overview table. Export Logs and the IP / Result column are not in the API |
-| Admin publish | 375:22702, 375:22820 | partial: publish wording, "Select Publishing Targets", Save Draft; modal layout not restyled |
-| Block publish | 375:22594, 375:22796 | partial: same form as above |
+| Admin publish | 375:22702, 375:22820 | done: single card in the modal layout (type, priority, date, content, attachment, language, pages, publishing targets, Save Draft / Publish to N GPs) and the success card. Publish runs submit, approve and publish as far as the role allows |
+| Block publish | 375:22594, 375:22796 | done: same form and success card as above |
 | Public announcements management | 375:22844 | done: four totals and "All Uploaded Announcements" |
 | Block admin dashboard | 375:22396 | partial: metrics, status bars, quick actions, overview table (Pending Items and Updated By need backend data) |
 | Assigned GP websites | 375:22500 | done: shorter filter card, no totals |

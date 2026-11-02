@@ -129,9 +129,9 @@ export default async function UserDetailPage({ params }: { params: Promise<{ use
           </dl>
           {canManage && (
             <p className="mt-4 text-right">
-              <a href="#access" className="inline-flex h-10 items-center rounded-button border border-line-strong px-5 text-sm font-semibold text-primary hover:bg-surface-soft">
+              <Link href={role === "BLOCK_ADMIN" || role === "TALUKA_ADMIN" ? `/admin/users/${user.id}/access` : "#access"} className="inline-flex h-10 items-center rounded-button border border-line-strong px-5 text-sm font-semibold text-primary hover:bg-surface-soft">
                 {t("users.editAccess")}
-              </a>
+              </Link>
             </p>
           )}
         </section>

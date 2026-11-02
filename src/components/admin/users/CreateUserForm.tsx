@@ -43,12 +43,12 @@ export function CreateUserForm({ assignments }: { assignments: AssignmentDto[] }
   const tc = useTranslations("common");
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
-  const [result, setResult] = useState<{ userId: string; temporaryPassword: string | null } | null>(null);
+  const [result, setResult] = useState<{ userId: string; role: Role; temporaryPassword: string | null } | null>(null);
   const [copied, setCopied] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", email: "", phone: "", locale: "MR", password: "", role: "GP_ADMIN", unitId: "", modules: [] },
+    defaultValues: { name: "", email: "", phone: "", locale: "MR", password: "", role: "BLOCK_ADMIN", unitId: "", modules: [] },
   });
   const { register, handleSubmit, control, setValue, setError, formState } = form;
   const role = useWatch({ control, name: "role" });
@@ -69,7 +69,7 @@ export function CreateUserForm({ assignments }: { assignments: AssignmentDto[] }
         ...(values.password ? { password: values.password } : {}),
         assignment: { role: values.role, unitId: values.unitId, ...(isOperator ? { modules: values.modules } : {}) },
       });
-      setResult({ userId: res.user.id, temporaryPassword: res.temporaryPassword });
+      setResult({ userId: res.user.id, role: values.role, temporaryPassword: res.temporaryPassword });
     } catch (err) {
       if (isApiError(err, "VALIDATION_ERROR")) {
         for (const i of err.issues) {
@@ -84,9 +84,13 @@ export function CreateUserForm({ assignments }: { assignments: AssignmentDto[] }
   }
 
   function finish() {
-    const id = result?.userId;
+    // The dialog also fires onClose after it is dismissed here; only the first call may navigate.
+    if (!result) return;
+    const id = result.userId;
     setResult(null);
-    router.push(id ? `/admin/users/${id}` : "/admin/users");
+    // Block and taluka admins continue to the Assign Access step; other roles go to their profile.
+    const next = result.role === "BLOCK_ADMIN" || result.role === "TALUKA_ADMIN" ? `/admin/users/${id}/access` : `/admin/users/${id}`;
+    router.push(id ? next : "/admin/users");
     router.refresh();
   }
 
