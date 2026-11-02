@@ -249,7 +249,26 @@
       "yesterday": "Yesterday",
       "showAllRoles": "Show all roles",
       "showBlockAdmins": "Show block admins only",
-      "firstHundred": "Showing the first 100 administrators."
+      "firstHundred": "Showing the first 100 administrators.",
+      "profileTitle": "Block Admin Profile",
+      "profileSubtitle": "Review administrator details, assigned access and recent activity.",
+      "backToList": "Back to Block Admins",
+      "assignedAccess": "Assigned Access",
+      "talukaBlock": "Taluka / Block",
+      "gpWebsites": "GP Websites",
+      "assignedPublished": "{assigned} assigned • {published} published",
+      "permissions": "Permissions",
+      "editAccess": "Edit Profile & Access",
+      "recentActivity": "Recent Activity Overview",
+      "createSubtitle": "Add an administrator profile. Access can be assigned in the next step.",
+      "cancel": "Cancel",
+      "whatNext": "What happens next?",
+      "step1": "Admin profile is created",
+      "step2": "Select district and taluka",
+      "step3": "Choose GP website access",
+      "step4": "Invitation is sent",
+      "securityNote": "Security Note",
+      "securityText": "Block Admins cannot create new websites or access areas outside their assignment."
     },
     "announcements": {
       "title": "Announcements",
@@ -497,10 +516,41 @@
     "rolesUi": {
       "subtitle": "Review what each role can do across the platform.",
       "matrix": "Permission matrix",
-      "fixedNote": "Permissions are fixed per role for now (requirements open decision #9). Changes need a backend release.",
+      "fixedNote": "Permissions are fixed per role. Changes need a backend release.",
       "capability": "Capability",
       "allowed": "Allowed",
-      "notAllowed": "Not allowed"
+      "notAllowed": "Not allowed",
+      "subtitleLong": "Review role capabilities and control platform-level permissions.",
+      "platformRoles": "Platform Roles",
+      "permission": "Permission",
+      "ownActivity": "Own activity",
+      "cap": {
+        "hierarchy_read": "View districts and talukas",
+        "hierarchy_manage": "Manage all districts",
+        "tenant_read": "View GP websites",
+        "tenant_create": "Create GP websites",
+        "tenant_update": "Edit GP website settings",
+        "tenant_publish": "Publish or unpublish websites",
+        "user_read": "View administrators",
+        "user_manage": "Create and manage administrators",
+        "content_read": "View website content",
+        "content_edit": "Edit assigned GP content",
+        "content_submit": "Submit content for review",
+        "content_review": "Review and approve content",
+        "content_publish": "Publish website content",
+        "content_share": "Share content with many websites",
+        "media_manage": "Manage media library",
+        "grievance_manage": "Manage citizen grievances",
+        "audit_read": "View audit logs",
+        "roles_manage": "Manage roles & permissions"
+      },
+      "desc": {
+        "SUPER_ADMIN": "Full Maharashtra access",
+        "TALUKA_ADMIN": "Taluka-wide access",
+        "BLOCK_ADMIN": "Assigned taluka and GP access",
+        "GP_ADMIN": "One Gram Panchayat website",
+        "DATA_ENTRY_OPERATOR": "Enters content, cannot publish"
+      }
     },
     "dashboardUi": {
       "title": {
