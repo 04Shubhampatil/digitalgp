@@ -53,7 +53,11 @@ const HOME_ORDER: Record<string, number> = {
   "village-progress": 35,
   leaders: 45,
   notices: 50,
+  "home-gallery": 55,
 };
+
+/** Published sections the Figma home does not show (Our Leaders lives on the About page). */
+const HOME_HIDDEN = new Set(["leaders"]);
 
 /**
  * Merge published backend sections with Figma placeholders for the same page.
@@ -84,6 +88,12 @@ function fillLabels(sectionKey: string, data: Obj, fallback: Obj): Obj {
     };
   }
   if (sectionKey === "ward-details") return { ...data, viewAll: data.viewAll ?? fallback.viewAll };
+  if (sectionKey === "village-progress") {
+    // An indicator the editor listed without a value shows the design's value for that label until one is entered.
+    const base = new Map(((fallback.items as Obj[] | undefined) ?? []).map((i) => [labelOf(i.label), i]));
+    const items = ((data.items as Obj[] | undefined) ?? []).map((i) => (i.valueText ? i : { ...i, valueText: base.get(labelOf(i.label))?.valueText }));
+    return { ...data, items };
+  }
   return data;
 }
 
@@ -126,10 +136,53 @@ function hasPublishedCms(pageKey: PageKey, published: { sectionKey: string }[]):
   return keys.size > 0 && published.some((s) => keys.has(s.sectionKey));
 }
 
+/**
+ * About page: the backend publishes the legacy keys (overview, history, geography, members, office), which have no
+ * Figma layout of their own. Their text is merged into the design's About sections instead of rendering beside them.
+ */
+const ABOUT_LEGACY = new Set(["overview", "history", "geography", "members", "office"]);
+function mergeAbout(fallback: FallbackSection, legacy: Map<string, Obj>): Obj {
+  const d = fallback.data;
+  if (fallback.sectionKey === "about-hero") {
+    const o = legacy.get("overview");
+    return o?.body ? { ...d, body: o.body } : d;
+  }
+  if (fallback.sectionKey === "about-history") {
+    const h = legacy.get("history");
+    return h?.body ? { ...d, body: h.body } : d;
+  }
+  if (fallback.sectionKey === "about-structure") {
+    const office = legacy.get("office") ?? {};
+    const people = ((legacy.get("members")?.items as Obj[] | undefined) ?? []) as { name?: Obj; designation?: Obj }[];
+    const members = ((d.members as Obj[] | undefined) ?? []).map((m) => {
+      const hit = people.find((p) => labelOf(p.designation) === labelOf(m.role));
+      return hit?.name ? { ...m, title: hit.name } : m;
+    });
+    const base = (d.office as Obj | undefined) ?? {};
+    const keep = (k: string) => (office[k] ? { [k]: office[k] } : {});
+    return { ...d, members, office: { ...base, ...keep("address"), ...keep("hours"), ...keep("phone"), ...keep("email") } };
+  }
+  return d;
+}
+
 export function withFallback(pageKey: PageKey, page: PublicPageDto | null): PublicPageDto {
+  if (pageKey === "about" && page) {
+    const legacy = new Map(page.sections.filter((s) => ABOUT_LEGACY.has(s.sectionKey)).map((s) => [s.sectionKey, s.data as Obj]));
+    if (legacy.size > 0) {
+      const rest = { ...page, sections: page.sections.filter((s) => !ABOUT_LEGACY.has(s.sectionKey)) };
+      const designed = (FALLBACK_SECTIONS.about ?? []).map((f) => ({ ...f, skipIfPresent: undefined, data: mergeAbout(f, legacy) }));
+      return withSections(pageKey, rest, designed);
+    }
+  }
+  return withSections(pageKey, page, null);
+}
+
+function withSections(pageKey: PageKey, page: PublicPageDto | null, override: FallbackSection[] | null): PublicPageDto {
   const cms = hasPublishedCms(pageKey, page?.sections ?? []);
-  const fallbacks = cms ? [...(LIVE_EXTRAS[pageKey] ?? []), ...liveBlocks(pageKey)] : (FALLBACK_SECTIONS[pageKey] ?? []);
-  const published = (page?.sections ?? []).map((s) => {
+  const fallbacks = (override ?? (cms ? [...(LIVE_EXTRAS[pageKey] ?? []), ...liveBlocks(pageKey)] : (FALLBACK_SECTIONS[pageKey] ?? []))).filter((s) => pageKey !== "home" || !HOME_HIDDEN.has(s.sectionKey));
+  const published = (page?.sections ?? [])
+    .filter((s) => pageKey !== "home" || !HOME_HIDDEN.has(s.sectionKey))
+    .map((s) => {
     const f = fallbacks.find((x) => x.sectionKey === s.sectionKey);
     return f ? { ...s, data: fillLabels(s.sectionKey, s.data as Obj, f.data) } : s;
   });

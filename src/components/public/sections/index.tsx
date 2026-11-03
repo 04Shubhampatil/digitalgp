@@ -73,6 +73,7 @@ import { LeadersSection } from "./LeadersSection";
 import { NoticesSection } from "./NoticesSection";
 import { QuickLinksSection } from "./QuickLinksSection";
 import { QuickStatsSection } from "./QuickStatsSection";
+import { HomeGallerySection, type HomeGalleryProps } from "./HomeGallerySection";
 import { WelcomeSection } from "./WelcomeSection";
 
 export interface SectionProps {
@@ -94,6 +95,7 @@ export interface SectionProps {
 const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
   hero: HeroSection,
   "quick-stats": QuickStatsSection,
+  "home-gallery": (p) => <HomeGallerySection slug={p.slug} locale={p.locale} data={p.data as HomeGalleryProps["data"]} />,
   welcome: WelcomeSection,
   "about-cards": AboutCardsSection,
   "about-hero": AboutHeroSection,
@@ -228,7 +230,8 @@ const ROW_GROUPS: { keys: string[]; cols: string }[] = [
   { keys: ["monthly-metrics", "ward-details"], cols: "lg:grid-cols-[683px_minmax(0,1fr)]" },
   { keys: ["progress-tracker", "impact-grid"], cols: "lg:grid-cols-[567px_minmax(0,1fr)]" },
   { keys: ["dev-timeline", "financial-overview"], cols: "lg:grid-cols-[601px_minmax(0,1fr)]" },
-  { keys: ["achievements", "whats-new"], cols: "lg:grid-cols-2" },
+  // Figma home: "What's New This Week?" on the left, "Top Five Achievements of the Ward" on the right (649 / 650px).
+  { keys: ["whats-new", "achievements"], cols: "lg:grid-cols-2" },
   { keys: ["weather", "sarpanch-message"], cols: "lg:grid-cols-2" },
   { keys: ["welcome-video", "village-progress"], cols: "lg:grid-cols-2" },
   { keys: ["latest-announcements", "upcoming-events"], cols: "lg:grid-cols-2" },
@@ -251,10 +254,11 @@ export function renderSections(page: PublicPageDto, slug: string, locale: UiLoca
     if (GROUPED.has(s.sectionKey)) {
       const grp = ROW_GROUPS.find((g) => g.keys.includes(s.sectionKey))!;
       const group = grp.keys;
-      const members = sorted.filter((m) => group.includes(m.sectionKey) && RENDERERS[m.sectionKey]);
+      // Columns follow the group's key order (the design's left-to-right order), not the sections' sort order.
+      const members = sorted.filter((m) => group.includes(m.sectionKey) && RENDERERS[m.sectionKey]).sort((a, b) => group.indexOf(a.sectionKey) - group.indexOf(b.sectionKey));
       members.forEach((m) => done.add(m.sectionKey));
       out.push(
-        <section key={group.join("+")} className="bg-cream py-8">
+        <section key={group.join("+")} id={members[0]?.sectionKey} className="bg-cream py-8">
           <div className={`mx-auto grid max-w-[1440px] gap-5 px-4 sm:px-8 ${grp.cols} lg:gap-[20px] lg:px-[60px] [&>*:only-child]:lg:col-span-full`}>
             {members.map((m) => {
               const Card = RENDERERS[m.sectionKey]!;
@@ -265,7 +269,12 @@ export function renderSections(page: PublicPageDto, slug: string, locale: UiLoca
       );
       continue;
     }
-    out.push(<Section key={`${s.sectionKey}-${s.sortOrder}`} slug={slug} locale={locale} data={s.data} tenantName={tenantName} siblings={siblings} />);
+    out.push(
+      // Every section is an anchor target ("page:x#<sectionKey>") so hero buttons can jump to it.
+      <div key={`${s.sectionKey}-${s.sortOrder}`} id={s.sectionKey} className="scroll-mt-[180px]">
+        <Section slug={slug} locale={locale} data={s.data} tenantName={tenantName} siblings={siblings} />
+      </div>,
+    );
   }
   return out;
 }

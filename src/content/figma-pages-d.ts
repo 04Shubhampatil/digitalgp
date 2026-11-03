@@ -116,8 +116,8 @@ export const FIGMA_PAGE_SECTIONS_D: Partial<Record<PageKey, FallbackSection[]>> 
           ["Legal Heir Certificate", "Apply for legal heir certificate"],
           ["Senior Citizen Certificate", "Apply for senior citizen certificate"],
           ["Other Certificates", "View all available services"],
-        ].map(([label, caption]) => ({ label: t(label!), caption: t(caption!), href: "page:grievance" })),
-        action: { label: t("Visit RTS Portal"), href: "page:grievance" },
+        ].map(([label, caption]) => ({ label: t(label!), caption: t(caption!), href: "https://rts.maharashtra.gov.in" })),
+        action: { label: t("Visit RTS Portal"), href: "https://rts.maharashtra.gov.in" },
       },
     },
     {

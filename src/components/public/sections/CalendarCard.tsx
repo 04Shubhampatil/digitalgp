@@ -32,8 +32,17 @@ export function CalendarCard({
   emptyLabel: string;
 }) {
   const start = new Date(initial);
-  const [year, setYear] = useState(start.getFullYear());
-  const [month, setMonth] = useState(start.getMonth());
+  // Open on the current month when it has events, else on the nearest month that does (the design shows a busy month).
+  const startMonth = start.toISOString().slice(0, 7);
+  const nearest = events.some((e) => e.date.startsWith(startMonth))
+    ? start
+    : (() => {
+        const sorted = events.map((e) => e.date).sort();
+        const next = sorted.find((d) => d >= startMonth) ?? sorted[sorted.length - 1];
+        return next ? new Date(`${next.slice(0, 7)}-01T00:00:00`) : start;
+      })();
+  const [year, setYear] = useState(nearest.getFullYear());
+  const [month, setMonth] = useState(nearest.getMonth());
   const [selected, setSelected] = useState<string | null>(null);
   const first = new Date(year, month, 1).getDay();
   const days = new Date(year, month + 1, 0).getDate();
@@ -112,7 +121,23 @@ export function CalendarCard({
           </li>
         ))}
       </ul>
-      <p className="mt-4 text-center text-[12px] font-medium text-[#135130]">{allLabel} →</p>
+      {/* No separate calendar page exists: "View Full Calendar" moves to the next month that has events. */}
+      <button
+        type="button"
+        onClick={() => {
+          const cur = `${year}-${String(month + 1).padStart(2, "0")}`;
+          const sorted = events.map((e) => e.date.slice(0, 7)).sort();
+          const next = sorted.find((m) => m > cur) ?? sorted[0];
+          if (next) {
+            setYear(Number(next.slice(0, 4)));
+            setMonth(Number(next.slice(5, 7)) - 1);
+            setSelected(null);
+          }
+        }}
+        className="mt-4 block w-full text-center text-[12px] font-medium text-[#135130] hover:underline"
+      >
+        {allLabel} →
+      </button>
     </div>
   );
 }

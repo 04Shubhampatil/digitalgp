@@ -25,6 +25,8 @@ async function loadPage(slug: string, pageKey: PageKey): Promise<PublicPageDto |
     return await getPublicPage(slug, pageKey);
   } catch (err) {
     if (isApiError(err, "NOT_FOUND")) return null;
+    // The pages API answers INTERNAL_ERROR (not 404) for a page key with no row (e.g. "progress"); see docs/backend-needs.
+    if (isApiError(err, "INTERNAL_ERROR")) return null;
     throw err;
   }
 }

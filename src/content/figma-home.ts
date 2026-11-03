@@ -15,6 +15,18 @@ import type { FallbackSection } from "./fallback";
 
 export const FIGMA_HOME_SECTIONS: FallbackSection[] = [
   {
+    sectionKey: "home-gallery",
+    sortOrder: 55,
+    data: {
+      heading: { en: "Gallery", mr: "छायाचित्र दालन" },
+      photos: [
+        { imageUrl: "/images/figma/about-road.png", caption: { en: "Village entrance" } },
+        { imageUrl: "/images/figma/about-aerial.png", caption: { en: "Aerial view" } },
+        { imageUrl: "/images/figma/home-hero.png", caption: { en: "Temple and village" } },
+      ],
+    },
+  },
+  {
     sectionKey: "hero",
     sortOrder: 0,
     data: {

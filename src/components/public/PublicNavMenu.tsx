@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -25,7 +25,8 @@ export function PublicNavMenu({ groups, menuLabel }: { groups: PublicNavGroupVie
 
   return (
     <>
-      <nav aria-label="Primary" className="hidden items-center gap-1 lg:flex">
+      {/* Figma navbar (375:13489): each item is a 135px slot, 14px semibold #414141, no chevrons. */}
+      <nav aria-label="Primary" className="hidden items-start lg:flex">
         {groups.map((g, i) =>
           g.label === null ? (
             g.links.map((l) => (
@@ -34,8 +35,8 @@ export function PublicNavMenu({ groups, menuLabel }: { groups: PublicNavGroupVie
                 href={l.href}
                 aria-current={isActive(l.href) ? "page" : undefined}
                 className={cn(
-                  "rounded px-3 py-2 text-sm font-medium hover:bg-surface-soft",
-                  isActive(l.href) ? "text-primary" : "text-ink",
+                  "flex w-[135px] justify-center border-b-2 py-2.5 text-center text-[14px] leading-5 font-semibold tracking-[0.1px] hover:border-primary-alt/40",
+                  isActive(l.href) ? "border-primary-alt text-primary-alt" : "border-transparent text-[#414141]",
                 )}
               >
                 {l.label}
@@ -43,9 +44,13 @@ export function PublicNavMenu({ groups, menuLabel }: { groups: PublicNavGroupVie
             ))
           ) : (
             <details key={i} className="group relative">
-              <summary className="flex cursor-pointer list-none items-center gap-1 rounded px-3 py-2 text-sm font-medium text-ink hover:bg-surface-soft [&::-webkit-details-marker]:hidden">
+              <summary
+                className={cn(
+                  "flex w-[135px] cursor-pointer list-none justify-center border-b-2 py-2.5 text-center text-[14px] leading-5 font-semibold tracking-[0.1px] hover:border-primary-alt/40 [&::-webkit-details-marker]:hidden",
+                  g.links.some((l) => isActive(l.href)) ? "border-primary-alt text-primary-alt" : "border-transparent text-[#414141]",
+                )}
+              >
                 {g.label}
-                <ChevronDown className="size-3.5 transition-transform group-open:rotate-180" aria-hidden />
               </summary>
               <ul className="absolute left-0 z-20 mt-1 min-w-52 rounded-card border border-line bg-surface p-1 shadow-lg">
                 {g.links.map((l) => (

@@ -1,31 +1,35 @@
+import { FIGMA_HOME_SECTIONS } from "@/content/figma-home";
 import { pickText, type Bilingual } from "@/i18n/text";
-import { publicMediaUrl } from "@/lib/api/public";
+import { AboutCardsSection } from "./AboutCardsSection";
 import type { SectionProps } from "./index";
 
 interface WelcomeData {
   heading?: Bilingual;
   body?: Bilingual;
   imageId?: string;
+  /** Optional cards; when the editor has not written any, the design's three cards are shown. */
+  cards?: unknown[];
 }
 
-/** "About the village" / welcome block: heading + long text, optional image on the right. */
-export function WelcomeSection({ slug, locale, data }: SectionProps) {
+const ABOUT_DESIGN = (FIGMA_HOME_SECTIONS.find((s) => s.sectionKey === "about-cards")?.data ?? {}) as Record<string, unknown>;
+
+/**
+ * Backend `welcome` section rendered as the Figma "About Savardari" block (375:13045): centred heading with the
+ * village name in green, the body as the subheading, three icon cards, photos and a Read More pill.
+ */
+export function WelcomeSection(props: SectionProps) {
+  const { locale, data } = props;
   const d = data as WelcomeData;
   const heading = pickText(d.heading, locale);
   const body = pickText(d.body, locale);
-  const image = d.imageId ? publicMediaUrl(slug, d.imageId) : null;
   if (!heading && !body) return null;
 
-  return (
-    <section className="mx-auto grid max-w-7xl gap-8 px-4 py-14 sm:px-6 md:grid-cols-2 md:items-center">
-      <div>
-        {heading && <h2 className="text-2xl font-bold text-ink md:text-3xl">{heading}</h2>}
-        {body && <p className="mt-4 text-base leading-relaxed whitespace-pre-line text-muted">{body}</p>}
-      </div>
-      {image && (
-        // eslint-disable-next-line @next/next/no-img-element -- backend-served media
-        <img src={image} alt="" className="aspect-[4/3] w-full rounded-card object-cover shadow-sm" loading="lazy" />
-      )}
-    </section>
-  );
+  // The About layout colours the village name green inside the heading ("Welcome to Savardari", "About Savardari").
+  const aboutData = {
+    ...ABOUT_DESIGN,
+    heading: { [locale]: heading || (ABOUT_DESIGN.heading as Bilingual | undefined)?.en },
+    subheading: body ? { [locale]: body } : ABOUT_DESIGN.subheading,
+    cards: d.cards?.length ? d.cards : ABOUT_DESIGN.cards,
+  };
+  return <AboutCardsSection {...props} data={aboutData} />;
 }
