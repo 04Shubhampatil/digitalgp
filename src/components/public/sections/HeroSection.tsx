@@ -18,27 +18,32 @@ interface HeroData {
 const FIGMA_HERO_IMAGE = "/images/figma/home-hero.png";
 
 /**
- * Figma home hero (375:12281): cream background, orange eyebrow, 32px heading, paragraph and
- * pill buttons (first filled, others outlined) on the left; village photo on the right.
+ * Figma home hero (375:12878): cream background; a 444px column with the 22px welcome line, the 30px/45px semibold
+ * heading and pill buttons (first filled, others outlined) 40px below; the 933×539 village photo on the right.
  */
 export async function HeroSection({ slug, locale, data, tenantName }: SectionProps) {
   const t = await getTranslations("public");
   const d = data as HeroData;
-  const title = pickText(d.title, locale);
-  const subtitle = pickText(d.subtitle, locale);
+  let eyebrow = tenantName ? t("welcomeTo", { name: tenantName }) : "";
+  let title = pickText(d.title, locale);
+  let subtitle = pickText(d.subtitle, locale);
+  // When the editor typed the welcome line as the title, it is the design's eyebrow and the subtitle is the heading.
+  if (/^(welcome|स्वागत)/i.test(title) || /स्वागत/.test(title)) {
+    eyebrow = title;
+    title = subtitle;
+    subtitle = "";
+  }
   const buttons = (d.actions?.length ? d.actions : d.cta ? [d.cta] : []).filter((b) => b.href && b.label);
   const image = d.backgroundImageId ? publicMediaUrl(slug, d.backgroundImageId) : FIGMA_HERO_IMAGE;
 
   return (
     <section className="overflow-hidden bg-cream">
-      <div className="mx-auto grid max-w-[1440px] items-center gap-8 px-4 sm:px-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:px-[62px]">
+      <div className="mx-auto grid max-w-[1440px] items-center gap-8 px-4 sm:px-8 lg:grid-cols-[444px_minmax(0,1fr)] lg:gap-0 lg:px-[62px]">
         <div className="flex flex-col gap-10 py-12 lg:py-0">
-          <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-8">
-              {tenantName && <p className="max-w-[431px] text-[22px] leading-snug font-semibold text-[#ea7f14] uppercase">{t("welcomeTo", { name: tenantName })}</p>}
-              <h1 className="max-w-[547px] text-[32px] leading-[50px] font-bold text-black">{title}</h1>
-            </div>
-            {subtitle && <p className="max-w-[491px] text-[15px] leading-[25px] text-[#414141]">{subtitle}</p>}
+          <div className="flex flex-col gap-8">
+            {eyebrow && <p className="text-[22px] leading-normal font-medium whitespace-nowrap text-black">{eyebrow}</p>}
+            <h1 className="max-w-[444px] text-[30px] leading-[45px] font-semibold text-black">{title}</h1>
+            {subtitle && <p className="max-w-[444px] text-[15px] leading-[25px] text-[#414141]">{subtitle}</p>}
           </div>
           {buttons.length > 0 && (
             <div className="flex flex-wrap items-center gap-2">

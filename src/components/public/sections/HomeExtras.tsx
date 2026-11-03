@@ -153,15 +153,16 @@ export function WelcomeVideoSection({ locale, data, tenantName }: SectionProps) 
   const inner = (
     <>
       {/* eslint-disable-next-line @next/next/no-img-element -- static design asset */}
-      <img src={d.imageUrl ?? "/images/figma/home-hero.png"} alt="" className="absolute inset-0 size-full object-cover" loading="lazy" />
-      <span aria-hidden className="absolute inset-0 bg-[#1a237e]/45" />
-      <span className="relative flex flex-col items-center gap-5 text-white">
-        <span className="flex size-[88px] items-center justify-center rounded-full border-[3px] border-white/80">
-          <Play className="size-10 fill-white" aria-hidden />
+      {/* Figma 375:13109: the design's lakeside photo under a navy 40% tint, an 85px outlined play ring and the label. */}
+      <img src={d.imageUrl ?? "/images/figma/home-video.png"} alt="" className="absolute inset-0 size-full object-cover" loading="lazy" />
+      <span aria-hidden className="absolute inset-0 bg-[#000080]/40" />
+      <span className="relative flex flex-col items-center gap-[11px] text-white">
+        <span className="flex size-[85px] items-center justify-center rounded-full border-2 border-white">
+          <Play className="ml-1.5 size-[42px] fill-white stroke-white" strokeWidth={1} aria-hidden />
         </span>
         {label && (
-          <span className="inline-flex items-center gap-2 text-[16px] font-bold">
-            <Play className="size-4 fill-white" aria-hidden /> {label}
+          <span className="inline-flex items-center gap-1.5 text-[15.6px] leading-[48px] font-black">
+            <Play className="size-[22px] fill-white stroke-white" aria-hidden /> {label}
           </span>
         )}
       </span>
@@ -214,11 +215,18 @@ export function VillageProgressSection({ locale, data }: SectionProps) {
   );
 }
 
-/** Decorative upward trend line under each KPI tile. */
-function Sparkline() {
+/** The design's trend line (Figma "Group 25"): a thin green curve with a blurred copy beneath it as its shadow. */
+function Sparkline({ id }: { id: string }) {
+  const curve = "M9.69 24.94C9.69 24.94 15.2 20.61 19.92 19.83C24.64 19.04 32.51 24.15 42.34 22.58C52.18 21.01 52.97 10.78 62.41 7.24C71.85 3.7 77.36 12.75 86.41 12.75C95.45 12.75 99.39 8.81 102.14 7.24C104.9 5.66 108.04 6.06 108.04 6.06";
   return (
-    <svg aria-hidden viewBox="0 0 100 24" className="h-6 w-[100px] shrink-0 drop-shadow-[0_4px_4px_rgba(34,160,10,0.35)]">
-      <path d="M1 20 C 12 12, 20 8, 30 14 S 46 20, 56 12 S 74 2, 99 5" fill="none" stroke="#22a00a" strokeWidth="1.3" strokeLinecap="round" />
+    <svg aria-hidden viewBox="0 0 119.7 41.1" width={100} height={34} className="shrink-0 overflow-visible">
+      <defs>
+        <filter id={id} x="0" y="0" width="119.7" height="41.1" filterUnits="userSpaceOnUse">
+          <feGaussianBlur stdDeviation="5.19" />
+        </filter>
+      </defs>
+      <path d={curve} transform="translate(1.18 5.16)" fill="none" stroke="#138808" strokeWidth="1.57" filter={`url(#${id})`} />
+      <path d={curve} fill="none" stroke="#138808" strokeWidth="0.79" />
     </svg>
   );
 }
@@ -249,14 +257,15 @@ export function MonthlyMetricsSection({ locale, data }: SectionProps) {
                   {caption && <p className="text-[8px] leading-3 text-[#414141]">{caption}</p>}
                 </div>
               </div>
-              <div className="flex items-end justify-between">
+              {/* Figma: "↑ 1.2% this month" on the left, the trend line right beside it on the same baseline. */}
+              <div className="flex items-center gap-1">
                 {m.change && (
-                  <p className="inline-flex items-center gap-1 whitespace-nowrap text-[11px] text-[#1b7a0a]">
-                    <ArrowUp className="size-3.5" aria-hidden />
-                    {m.change.replace(/^\+/, "")} {period && <span className="text-black">{period}</span>}
+                  <p className="inline-flex items-center gap-1 whitespace-nowrap text-[11px] leading-[19px]">
+                    <ArrowUp className="size-3.5 text-[#138808]" aria-hidden />
+                    <span className="text-[#138808]">{m.change.replace(/^\+/, "")}</span> {period && <span className="text-black">{period}</span>}
                   </p>
                 )}
-                <Sparkline />
+                <Sparkline id={`spark-${i}`} />
               </div>
             </li>
           );

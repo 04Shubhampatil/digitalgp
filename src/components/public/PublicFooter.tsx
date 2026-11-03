@@ -4,19 +4,13 @@ import Link from "next/link";
 import type { PublicTenantDto } from "@/types/api";
 import { Emblem } from "@/components/ui/Emblem";
 import { pageHref } from "@/config/public-nav";
+import { FIGMA_CHROME } from "@/content/figma-chrome";
 import type { UiLocale } from "@/i18n/config";
 import { marathiFor } from "@/i18n/mr-fallback";
 import { pair, pickText } from "@/i18n/text";
 
-/**
- * Placeholder contact details from the Figma footer, shown only while the Gram Panchayat has not
- * filled in its own contact settings. Remove once real data exists.
- */
-const FIGMA_CONTACT = {
-  address: "Gram Panchayat: Savardari, Taluka: Khed, District: Pune – 410501",
-  phone: "+919767694340",
-  email: "savardarigrampanchayat@gmail.com",
-};
+/** Placeholder contact details (shared with the header), shown only while the website's own settings are empty. */
+const FIGMA_CONTACT = FIGMA_CHROME;
 
 function Facebook() {
   return (
@@ -60,7 +54,9 @@ export async function PublicFooter({ tenant }: { tenant: PublicTenantDto }) {
   const contact = tenant.settings.contact ?? {};
   const social = tenant.settings.social ?? {};
   const rawAddress = contact.address || FIGMA_CONTACT.address;
-  const address = locale === "mr" ? (marathiFor(rawAddress) ?? rawAddress) : rawAddress;
+  const addressText = locale === "mr" ? (marathiFor(rawAddress) ?? rawAddress) : rawAddress;
+  // The design stacks the address ("Gram Panchayat: Savardari, / Taluka: Khed, / District: Pune – 410501").
+  const address = addressText.includes("\n") ? addressText : addressText.replace(/,\s+/g, ",\n");
   const phone = contact.phone || FIGMA_CONTACT.phone;
   const email = contact.email || FIGMA_CONTACT.email;
   const year = new Date().getFullYear();
@@ -114,16 +110,24 @@ export async function PublicFooter({ tenant }: { tenant: PublicTenantDto }) {
               )}
             </ul>
             <h2 className="mt-5 text-[12px] font-bold tracking-wide text-[#135130] uppercase">{t("public.followUs")}</h2>
+            {/* Only networks with a URL in the website settings are shown; a dead "#" icon is worse than none. */}
             <div className="mt-2 flex items-center gap-3">
-              <a href={social.facebook || "#"} target="_blank" rel="noopener" aria-label="Facebook">
-                <Facebook />
-              </a>
-              <a href={social.instagram || "#"} target="_blank" rel="noopener" aria-label="Instagram">
-                <Instagram />
-              </a>
-              <a href={social.youtube || "#"} target="_blank" rel="noopener" aria-label="YouTube">
-                <YouTube />
-              </a>
+              {social.facebook && (
+                <a href={social.facebook} target="_blank" rel="noopener" aria-label="Facebook">
+                  <Facebook />
+                </a>
+              )}
+              {social.instagram && (
+                <a href={social.instagram} target="_blank" rel="noopener" aria-label="Instagram">
+                  <Instagram />
+                </a>
+              )}
+              {social.youtube && (
+                <a href={social.youtube} target="_blank" rel="noopener" aria-label="YouTube">
+                  <YouTube />
+                </a>
+              )}
+              {!social.facebook && !social.instagram && !social.youtube && <p className="text-[12px] text-[#414141]">{email}</p>}
             </div>
           </div>
 

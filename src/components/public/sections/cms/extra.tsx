@@ -450,7 +450,10 @@ export async function LiveStatsSection(props: SectionProps) {
   const items = list<LiveItem>(d.items).map((it) => {
     const raw = it.live && stats ? stats[it.live] : null;
     let value = it.value;
-    if (raw !== null && raw !== undefined && raw !== "") {
+    // A live figure of 0 beside sample figures reads as broken ("0" next to "500+"); while the website has no
+    // records yet the design's sample value stays, like the figures the backend cannot compute.
+    const sampleOnly = Number(raw) === 0 && !!it.value && list<LiveItem>(d.items).some((x) => !x.live);
+    if (raw !== null && raw !== undefined && raw !== "" && !sampleOnly) {
       const n = Number(raw);
       if (it.format === "money" && Number.isFinite(n)) value = money(n, locale);
       else if (it.format === "percent" && Number.isFinite(n)) value = `${n}%`;

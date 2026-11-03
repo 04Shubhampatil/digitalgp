@@ -10,6 +10,8 @@ export interface NoticeRow {
   title: string;
   isNew?: boolean;
   href?: string;
+  /** Where the row title goes (the announcements page). */
+  titleHref?: string;
 }
 export interface NoticeTab {
   key: string;
@@ -33,7 +35,7 @@ export function NoticeTabs({ tabs, downloadLabel, viewAllLabel, viewAllHref, emp
             aria-selected={t.key === current.key}
             onClick={() => setActive(t.key)}
             className={cn(
-              "border-b-2 px-5 py-3.5 text-[13px] font-medium",
+              "border-b-2 px-6 py-4 text-[19px] font-medium",
               t.key === current.key ? "border-[#1e4aa0] bg-[#eaf0fb] text-[#1e4aa0]" : "border-transparent text-[#5b6472] hover:text-[#1e4aa0]",
             )}
           >
@@ -46,21 +48,27 @@ export function NoticeTabs({ tabs, downloadLabel, viewAllLabel, viewAllHref, emp
       ) : (
         <ul role="tabpanel">
           {current.items.map((n, i) => (
-            <li key={i} className="flex items-center gap-4 border-b border-[#eceef2] px-5 py-3.5">
-              <div className="w-[64px] shrink-0 border-r border-[#d8dce3] pr-3 text-center">
-                <p className="text-[13px] font-bold text-[#1e4aa0]">{n.day}</p>
-                <p className="text-[11px] text-[#5b6472]">{n.monthYear}</p>
+            <li key={i} className="flex items-center gap-5 border-b border-[#eceef2] px-6 py-5">
+              <div className="w-[84px] shrink-0 border-r border-[#d8dce3] pr-3 text-center">
+                <p className="text-[19px] leading-6 font-bold text-[#1e4aa0]">{n.day}</p>
+                <p className="text-[15px] leading-5 whitespace-nowrap text-[#5b6472]">{n.monthYear}</p>
               </div>
-              <p className="flex-1 text-[13px] font-medium text-[#1b2430]">
-                {n.title}{" "}
-                {n.isNew && <span className="ml-1 rounded-[3px] bg-[#ff2d3d] px-1.5 py-0.5 align-middle text-[9px] font-bold text-white">{newLabel}</span>}
+              <p className="flex-1 text-[19px] font-medium text-[#1b2430]">
+                {n.titleHref ? (
+                  <a href={n.titleHref} className="hover:text-[#1e4aa0] hover:underline">
+                    {n.title}
+                  </a>
+                ) : (
+                  n.title
+                )}{" "}
+                {n.isNew && <span className="ml-1 rounded-[3px] bg-[#ff2d3d] px-2 py-0.5 align-middle text-[11px] font-bold text-white">{newLabel}</span>}
               </p>
               {n.href ? (
-                <a href={n.href} className="inline-flex shrink-0 items-center gap-1.5 rounded-[4px] border border-[#c3cbe0] px-3 py-1.5 text-[11px] text-[#1e4aa0] hover:bg-[#eaf0fb]">
+                <a href={n.href} className="inline-flex shrink-0 items-center gap-1.5 rounded-[4px] border border-[#c3cbe0] px-4 py-2.5 text-[15px] text-[#1e4aa0] hover:bg-[#eaf0fb]">
                   <Download className="size-3" aria-hidden /> {downloadLabel}
                 </a>
               ) : (
-                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-[4px] border border-[#c3cbe0] px-3 py-1.5 text-[11px] text-[#1e4aa0]">
+                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-[4px] border border-[#c3cbe0] px-4 py-2.5 text-[15px] text-[#1e4aa0]">
                   <Download className="size-3" aria-hidden /> {downloadLabel}
                 </span>
               )}
@@ -69,8 +77,8 @@ export function NoticeTabs({ tabs, downloadLabel, viewAllLabel, viewAllHref, emp
         </ul>
       )}
       {viewAllHref && (
-        <div className="bg-[#f6f8fb] px-5 py-3 text-right">
-          <a href={viewAllHref} className="text-[13px] font-medium text-[#1e4aa0] hover:underline">
+        <div className="bg-[#f6f8fb] px-6 py-5 text-right">
+          <a href={viewAllHref} className="text-[19px] font-medium text-[#1e4aa0] hover:underline">
             {viewAllLabel} →
           </a>
         </div>

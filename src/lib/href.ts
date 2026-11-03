@@ -8,8 +8,10 @@ import { pageHref } from "@/config/public-nav";
  */
 export function resolveHref(href: string, slug: string): string {
   if (href.startsWith("page:")) {
-    const key = href.slice("page:".length);
-    return isPageKey(key) ? pageHref(slug, key) : `/${slug}`;
+    // "page:grievance#grievance-track" jumps to that section on the page (sections carry id=sectionKey).
+    const [key = "", anchor] = href.slice("page:".length).split("#");
+    const base = isPageKey(key) ? pageHref(slug, key) : `/${slug}`;
+    return anchor ? `${base}#${anchor}` : base;
   }
   return href;
 }

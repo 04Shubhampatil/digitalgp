@@ -37,6 +37,9 @@ function percentOf(r: WardRow): number {
   return m ? Math.max(0, Math.min(100, (Number(m[1]) / Number(m[2])) * 100)) : 0;
 }
 
+/** The design's ward map picture (Figma "image 50"), shown until the Gram Panchayat supplies boundaries or a map image. */
+const FIGMA_WARD_MAP = "/images/figma/ward-map.png";
+
 const WARD_COLOURS = ["#2f9e3f", "#e0a010", "#1a62e0", "#7b2cbf", "#d9480f", "#0b7285", "#c2255c", "#5c940d"];
 
 /**
@@ -99,12 +102,13 @@ export function WardDetailsCard({ heading, wards, mapSrc, viewAll }: { heading: 
   const [idx, setIdx] = useState(0);
   const ward = wards[idx] ?? wards[0];
   if (!ward) return null;
+  const hasGeometry = wards.some((w) => w.geometry);
   return (
     <div className="rounded-[10px] border border-[#414141]/20 bg-white px-3 py-2">
-      {mapSrc || ward.mapImage ? (
+      {mapSrc || ward.mapImage || !hasGeometry ? (
         <div className="relative h-[249px] overflow-hidden rounded-[10px] border border-[#414141]">
-          {/* eslint-disable-next-line @next/next/no-img-element -- ward map image supplied by the Gram Panchayat */}
-          <img src={ward.mapImage ?? mapSrc} alt="" className="h-full w-full object-cover" loading="lazy" />
+          {/* eslint-disable-next-line @next/next/no-img-element -- ward map image supplied by the Gram Panchayat, else the design's picture */}
+          <img src={ward.mapImage ?? mapSrc ?? FIGMA_WARD_MAP} alt="" className="h-full w-full object-cover object-top" loading="lazy" />
         </div>
       ) : (
         <WardMap wards={wards} active={idx} onSelect={setIdx} />

@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { pair, pickText, type Bilingual } from "@/i18n/text";
 import { listPublicAnnouncements, publicMediaUrl } from "@/lib/api/public";
 import type { Bilingual as BL } from "@/i18n/text";
+import { pageHref } from "@/config/public-nav";
 import { resolveHref } from "@/lib/href";
 import { NoticeTabs, type NoticeRow, type NoticeTab } from "./NoticeTabs";
 import type { SectionProps } from "./index";
@@ -20,6 +21,7 @@ interface NoticesData {
  * published announcements when the backend has any; otherwise the Figma placeholder rows.
  */
 export async function NoticesSection({ slug, locale, data, siblings }: SectionProps) {
+  const listHref = pageHref(slug, "announcements");
   const t = await getTranslations("public");
   const tc = await getTranslations("common");
   const d = data as NoticesData;
@@ -43,7 +45,8 @@ export async function NoticesSection({ slug, locale, data, siblings }: SectionPr
             monthYear: when ? month.format(when) : "",
             title: pickText(x.title, locale),
             isNew: when ? new Date().getTime() - when.getTime() < 7 * 24 * 3600 * 1000 : false,
-            href: x.fileId ? publicMediaUrl(slug, x.fileId) : x.buttonLink ? resolveHref(x.buttonLink, slug) : undefined,
+            href: x.fileId ? publicMediaUrl(slug, x.fileId) : x.buttonLink ? resolveHref(x.buttonLink, slug) : listHref,
+            titleHref: listHref,
           } as NoticeRow,
         };
       });
@@ -64,7 +67,9 @@ export async function NoticesSection({ slug, locale, data, siblings }: SectionPr
         monthYear: when ? fmtMonth.format(when) : "",
         title: pickText(pair(a.titleEn, a.titleMr), locale),
         isNew: when ? new Date().getTime() - when.getTime() < 7 * 24 * 3600 * 1000 : false,
-        href: a.attachmentId ? publicMediaUrl(slug, a.attachmentId) : undefined,
+        // Without an attachment, Download opens the announcements page (every control leads somewhere).
+        href: a.attachmentId ? publicMediaUrl(slug, a.attachmentId) : listHref,
+        titleHref: listHref,
       };
     });
     tabs[0] = { key: tabs[0]!.key, label: tabs[0]!.label, items: rows };
@@ -82,7 +87,7 @@ export async function NoticesSection({ slug, locale, data, siblings }: SectionPr
             tabs={tabs}
             downloadLabel={t("download")}
             viewAllLabel={tc("viewAll")}
-            viewAllHref={d.viewAll?.href ? resolveHref(d.viewAll.href, slug) : undefined}
+            viewAllHref={d.viewAll?.href ? resolveHref(d.viewAll.href, slug) : listHref}
             emptyLabel={t("noAnnouncements")}
             newLabel={t("newBadge")}
           />

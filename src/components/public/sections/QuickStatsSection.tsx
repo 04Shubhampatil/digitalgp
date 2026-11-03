@@ -15,9 +15,10 @@ export function QuickStatsSection({ locale, data }: SectionProps) {
       <dl className="grid grid-cols-2 gap-x-4 gap-y-6 rounded-[20px] bg-white px-6 py-6 shadow-[0_2px_16px_rgba(0,0,0,0.18)] sm:grid-cols-4 lg:flex lg:justify-around lg:gap-4 lg:px-8">
         {items.map((item, i) => (
           <div key={i} className="flex flex-col items-center text-center">
-            <FigmaIcon name={item.icon ?? statIconName(item.label?.en, i)} width={56} />
+            <FigmaIcon name={item.icon ?? statIconName(item.label?.en, i)} width={67} />
             <dd className="mt-2 text-[22px] leading-[31px] font-bold text-black">{item.value}</dd>
-            <dt className="max-w-[110px] text-[12px] leading-[19px] text-black">{pickText(item.label, locale)}</dt>
+            {/* The design keeps every label on one line. */}
+            <dt className="text-[12px] leading-[19px] whitespace-nowrap text-black">{pickText(item.label, locale)}</dt>
           </div>
         ))}
       </dl>

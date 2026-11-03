@@ -43,7 +43,25 @@ export async function AboutCardsSection({ slug, locale, data, tenantName }: Sect
       <div className="mx-auto flex max-w-[1440px] flex-col items-center gap-[18px] px-4 sm:px-8 lg:px-[60px]">
         <div className="max-w-[1094px] text-center">
           <h2 className="text-[30px] leading-[45px] font-semibold text-black">
-            {pickText(d.heading, locale)} {tenantName && <span className="text-[#138808]">{tenantName}</span>}
+            {(() => {
+              // The village name is green (Figma "About Savardari"); keep it in place when the heading already contains it.
+              const heading = pickText(d.heading, locale);
+              if (!tenantName) return heading;
+              const at = heading.indexOf(tenantName);
+              if (at < 0)
+                return (
+                  <>
+                    {heading} <span className="text-[#138808]">{tenantName}</span>
+                  </>
+                );
+              return (
+                <>
+                  {heading.slice(0, at)}
+                  <span className="text-[#138808]">{tenantName}</span>
+                  {heading.slice(at + tenantName.length)}
+                </>
+              );
+            })()}
           </h2>
           {pickText(d.subheading, locale) && <p className="mt-4 text-[20px] leading-[30px] text-black">{pickText(d.subheading, locale)}</p>}
         </div>

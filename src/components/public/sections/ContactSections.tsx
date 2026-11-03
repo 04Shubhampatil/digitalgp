@@ -18,8 +18,10 @@ interface ContactData {
 }
 
 function Social({ href, label, children }: { href?: string; label: string; children: React.ReactNode }) {
+  // No URL in the website settings → no icon (a dead "#" link is worse than none).
+  if (!href) return null;
   return (
-    <a href={href || "#"} target="_blank" rel="noopener" aria-label={label} className="flex size-9 items-center justify-center rounded-full bg-[#135130]/10 text-[#135130] hover:bg-[#135130]/20">
+    <a href={href} target="_blank" rel="noopener" aria-label={label} className="flex size-9 items-center justify-center rounded-full bg-[#135130]/10 text-[#135130] hover:bg-[#135130]/20">
       {children}
     </a>
   );

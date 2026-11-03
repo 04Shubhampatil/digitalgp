@@ -127,8 +127,8 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       title: t("Let’s Build a Stronger Savardari Together"),
       body: t("We welcome your feedback, suggestions, and collaboration to make our village better, stronger, and more sustainable"),
       actions: [
-        { label: t("Become a Volunteer"), href: "page:contact" },
-        { label: t("Send Feedback"), href: "page:contact" },
+        { label: t("Become a Volunteer"), href: "page:contact#volunteer-registration" },
+        { label: t("Send Feedback"), href: "page:contact#feedback-form" },
       ],
       imageUrl: P + "con-hero.png",
     }),
@@ -215,8 +215,8 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       title: t("Your Voice, Our Commitment to Better Savardari"),
       body: t("We are here to listen and act. Register your complaints, track status, share suggestions, and help us build a transparent and responsive Savardari"),
       actions: [
-        { label: t("Register a Complaint"), href: "page:grievance" },
-        { label: t("Track Complaint Status"), href: "page:grievance" },
+        { label: t("Register a Complaint"), href: "page:grievance#grievance-register" },
+        { label: t("Track Complaint Status"), href: "page:grievance#grievance-track" },
       ],
       imageUrl: P + "gri-hero.png",
     }),
@@ -285,8 +285,8 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       title: t("Creating Opportunities, Empowering Lives in Savardari"),
       body: t("Explore job opportunities, skill development programs, local talent, and resources that help our community grow and prosper"),
       actions: [
-        { label: t("View Opportunities"), href: "page:employment" },
-        { label: t("Village Talent Directory"), href: "page:employment" },
+        { label: t("View Opportunities"), href: "page:employment#local-opportunities" },
+        { label: t("Village Talent Directory"), href: "page:employment#skill-directory" },
       ],
       imageUrl: P + "emp-hero.png",
     }),
@@ -328,7 +328,7 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
           { icon: "wrench", skillName: b("Mechanics", "मेकॅनिक"), availableCount: 10, countIsApproximate: true, active: true },
           { icon: "building", skillName: b("Masons", "गवंडी"), availableCount: 14, countIsApproximate: true, active: true },
           { icon: "lightbulb", skillName: b("Painters", "रंगारी"), availableCount: 11, countIsApproximate: true, active: true },
-          { icon: "users", skillName: b("More Skills", "इतर कौशल्ये"), link: "page:employment", active: true },
+          { icon: "users", skillName: b("More Skills", "इतर कौशल्ये"), link: "page:employment#skill-directory", active: true },
         ],
       },
     },
@@ -337,10 +337,10 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       sortOrder: 25,
       data: {
         items: [
-          { icon: "rain", title: b("Daily Crop Market Prices", "दैनंदिन पीक बाजारभाव"), link: "page:environment", active: true },
+          { icon: "rain", title: b("Daily Crop Market Prices", "दैनंदिन पीक बाजारभाव"), link: "page:environment#market-prices", active: true },
           { icon: "sprout", title: b("Fertilizer Availability", "खतांची उपलब्धता"), link: "page:services", active: true },
           { icon: "wheat", title: b("Agricultural Advisory", "कृषी सल्ला"), link: "page:services", active: true },
-          { icon: "cloud", title: b("Weather Updates", "हवामान अद्यतन"), link: "page:environment", active: true },
+          { icon: "cloud", title: b("Weather Updates", "हवामान अद्यतन"), link: "page:environment#weather-update", active: true },
           { icon: "megaphone", title: b("Scheme Information", "योजनांची माहिती"), link: "page:schemes", active: true },
         ],
       },
@@ -350,10 +350,10 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       sortOrder: 30,
       data: {
         items: [
-          { thumbnailImageId: PH + "emp-train-1.webp", title: b("Skill Development Programs", "कौशल्य विकास कार्यक्रम"), shortDescription: b("Enhance your skills & build a better future", "कौशल्ये वाढवा आणि चांगले भविष्य घडवा"), ctaText: b("View Details", "तपशील पहा"), ctaLink: "page:employment", order: 1, status: "active", featured: false },
-          { thumbnailImageId: PH + "emp-train-2.webp", title: b("Youth Training Programs", "युवा प्रशिक्षण कार्यक्रम"), shortDescription: b("Special training programs for youth", "युवकांसाठी विशेष प्रशिक्षण कार्यक्रम"), ctaText: b("View Details", "तपशील पहा"), ctaLink: "page:employment", order: 2, status: "active", featured: false },
-          { thumbnailImageId: PH + "emp-train-3.webp", title: b("Digital Literacy Campaign", "डिजिटल साक्षरता मोहीम"), shortDescription: b("Learn digital skills for modern world", "आधुनिक जगासाठी डिजिटल कौशल्ये शिका"), ctaText: b("View Details", "तपशील पहा"), ctaLink: "page:employment", order: 3, status: "active", featured: false },
-          { thumbnailImageId: PH + "emp-train-4.webp", title: b("Entrepreneurship Development", "उद्योजकता विकास"), shortDescription: b("Start your own business with confidence", "आत्मविश्वासाने स्वतःचा व्यवसाय सुरू करा"), ctaText: b("View Details", "तपशील पहा"), ctaLink: "page:employment", order: 4, status: "active", featured: false },
+          { thumbnailImageId: PH + "emp-train-1.webp", title: b("Skill Development Programs", "कौशल्य विकास कार्यक्रम"), shortDescription: b("Enhance your skills & build a better future", "कौशल्ये वाढवा आणि चांगले भविष्य घडवा"), ctaText: b("View Details", "तपशील पहा"), ctaLink: "page:employment#training-programs", order: 1, status: "active", featured: false },
+          { thumbnailImageId: PH + "emp-train-2.webp", title: b("Youth Training Programs", "युवा प्रशिक्षण कार्यक्रम"), shortDescription: b("Special training programs for youth", "युवकांसाठी विशेष प्रशिक्षण कार्यक्रम"), ctaText: b("View Details", "तपशील पहा"), ctaLink: "page:employment#training-programs", order: 2, status: "active", featured: false },
+          { thumbnailImageId: PH + "emp-train-3.webp", title: b("Digital Literacy Campaign", "डिजिटल साक्षरता मोहीम"), shortDescription: b("Learn digital skills for modern world", "आधुनिक जगासाठी डिजिटल कौशल्ये शिका"), ctaText: b("View Details", "तपशील पहा"), ctaLink: "page:employment#training-programs", order: 3, status: "active", featured: false },
+          { thumbnailImageId: PH + "emp-train-4.webp", title: b("Entrepreneurship Development", "उद्योजकता विकास"), shortDescription: b("Start your own business with confidence", "आत्मविश्वासाने स्वतःचा व्यवसाय सुरू करा"), ctaText: b("View Details", "तपशील पहा"), ctaLink: "page:employment#training-programs", order: 4, status: "active", featured: false },
         ],
       },
     },
@@ -416,7 +416,8 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
         achievements: b("Secured 1st Rank in District with 95.6% in SSC Board Examination 2024", "एसएससी बोर्ड परीक्षा २०२४ मध्ये ९५.६ गुणांसह जिल्ह्यात प्रथम क्रमांक"),
         quote: b("Education is the most powerful weapon which you can use to change the world.", "शिक्षण हे जग बदलण्यासाठी वापरता येणारे सर्वात प्रभावी शस्त्र आहे."),
         buttonText: b("View All Students", "सर्व विद्यार्थी पहा"),
-        buttonLink: "page:education",
+        // No "all students" page exists yet; the button leads to the youth posts below (see docs/backend-needs).
+        buttonLink: "page:education#youth-posts",
         achievementCards: [
           { icon: "book", title: b("Academic Excellence", "शैक्षणिक प्रावीण्य"), value: "95.6%" },
           { icon: "sports", title: b("Sports Achievement", "क्रीडा कामगिरी"), value: "State Level Runner" },
@@ -458,10 +459,10 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       data: {
         items: [
           { icon: "education", title: b("Scholarship Schemes", "शिष्यवृत्ती योजना"), description: b("Central & State Government scholarships for students", "विद्यार्थ्यांसाठी केंद्र व राज्य शासनाच्या शिष्यवृत्ती"), buttonText: b("Explore Now", "आता पहा"), buttonLink: "page:schemes", active: true },
-          { icon: "growth", title: b("Skill Development", "कौशल्य विकास"), description: b("Courses & training programs for youth", "युवकांसाठी अभ्यासक्रम व प्रशिक्षण कार्यक्रम"), buttonText: b("Explore Now", "आता पहा"), buttonLink: "page:employment", active: true },
-          { icon: "book", title: b("Competitive Exams", "स्पर्धा परीक्षा"), description: b("Resources & guidance for various exams", "विविध परीक्षांसाठी साधने व मार्गदर्शन"), buttonText: b("Explore Now", "आता पहा"), buttonLink: "page:education", active: true },
-          { icon: "briefcase", title: b("Internships", "इंटर्नशिप"), description: b("Find internships & placement opportunities", "इंटर्नशिप व नोकरीच्या संधी शोधा"), buttonText: b("Explore Now", "आता पहा"), buttonLink: "page:employment", active: true },
-          { icon: "users", title: b("Youth Clubs", "युवा मंडळे"), description: b("Join youth clubs & build leadership skills", "युवा मंडळात सहभागी व्हा आणि नेतृत्वकौशल्ये वाढवा"), buttonText: b("Explore Now", "आता पहा"), buttonLink: "page:education", active: true },
+          { icon: "growth", title: b("Skill Development", "कौशल्य विकास"), description: b("Courses & training programs for youth", "युवकांसाठी अभ्यासक्रम व प्रशिक्षण कार्यक्रम"), buttonText: b("Explore Now", "आता पहा"), buttonLink: "page:employment#training-programs", active: true },
+          { icon: "book", title: b("Competitive Exams", "स्पर्धा परीक्षा"), description: b("Resources & guidance for various exams", "विविध परीक्षांसाठी साधने व मार्गदर्शन"), buttonText: b("Explore Now", "आता पहा"), buttonLink: "page:education#youth-posts", active: true },
+          { icon: "briefcase", title: b("Internships", "इंटर्नशिप"), description: b("Find internships & placement opportunities", "इंटर्नशिप व नोकरीच्या संधी शोधा"), buttonText: b("Explore Now", "आता पहा"), buttonLink: "page:employment#local-opportunities", active: true },
+          { icon: "users", title: b("Youth Clubs", "युवा मंडळे"), description: b("Join youth clubs & build leadership skills", "युवा मंडळात सहभागी व्हा आणि नेतृत्वकौशल्ये वाढवा"), buttonText: b("Explore Now", "आता पहा"), buttonLink: "page:education#youth-posts", active: true },
         ],
       },
     },
@@ -484,7 +485,7 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       eyebrow: t("Environment & Sustainability"),
       title: t("Building a Greener Savardari for a Sustainable Tomorrow"),
       body: t("We are committed to protecting our environment and building a sustainable future through community participation, innovation, and responsibility"),
-      actions: [{ label: t("Adopt a Tree Now"), href: "page:environment" }],
+      actions: [{ label: t("Adopt a Tree Now"), href: "page:contact#volunteer-registration" }],
       imageUrl: P + "env-hero.png",
     }),
     {
@@ -510,7 +511,8 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
         bullets: [b("Choose a tree to adopt", "दत्तक घ्यायचे झाड निवडा"), b("Get regular updates on its growth", "त्याच्या वाढीची नियमित माहिती मिळवा"), b("Contribute to a greener Savardari", "हरित सावरदरीसाठी योगदान द्या")],
         illustrationId: PH + "env-tree.webp",
         buttonText: b("Adopt a Tree Now", "आता झाड दत्तक घ्या"),
-        buttonLink: "page:environment",
+        // No adoption endpoint yet: the volunteer form collects the request (see docs/backend-needs).
+        buttonLink: "page:contact#volunteer-registration",
         stats: [
           { icon: "tree", title: b("Trees Adopted", "दत्तक घेतलेली झाडे"), value: "385", subText: b("+25 this month", "या महिन्यात +२५") },
           { icon: "sprout", title: b("Survival Rate", "जगण्याचा दर"), value: "92%", subText: b("Excellent", "उत्कृष्ट") },
@@ -578,8 +580,8 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       title: t("Capturing the Journey of Savardari"),
       body: t("Explore the vibrant life, cultural heritage, and development milestones of our village through images, videos, and media stories"),
       actions: [
-        { label: t("Watch Documentary"), href: "page:gallery" },
-        { label: t("View Photo Gallery"), href: "page:gallery" },
+        { label: t("Watch Documentary"), href: "page:gallery#video-feature" },
+        { label: t("View Photo Gallery"), href: "page:gallery#photo-gallery" },
       ],
       imageUrl: P + "gal-hero.png",
     }),
@@ -645,7 +647,7 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
         duration: t("Duration: 02:00"),
         published: t("Published: April 10, 2024"),
         imageUrl: P + "gal-doc.png",
-        action: { label: t("Watch Documentary"), href: "page:gallery" },
+        action: { label: t("Watch Documentary"), href: "page:gallery#video-feature" },
       },
     },
   ],

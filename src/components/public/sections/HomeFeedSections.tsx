@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { pickText, type Bilingual } from "@/i18n/text";
+import { pageHref } from "@/config/public-nav";
 import { resolveHref } from "@/lib/href";
 import { AchievementsCard } from "./HomeFeed";
 import type { SectionProps } from "./index";
@@ -8,7 +9,7 @@ import type { SectionProps } from "./index";
 type B = Bilingual | undefined;
 
 /** `achievements`: "Top Five Achievements of the Ward" (Figma 375:13333). */
-export async function AchievementsSection({ locale, data }: SectionProps) {
+export async function AchievementsSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public");
   // Published data: { title, description, completedOn, rank }; the design placeholder used { body, completed, ward }.
   const d = data as { heading?: B; wards?: B[]; items?: { title?: B; body?: B; description?: B; completed?: B; completedOn?: string; ward?: B }[] };
@@ -19,7 +20,7 @@ export async function AchievementsSection({ locale, data }: SectionProps) {
     ward: pickText(a.ward, locale) || undefined,
   }));
   if (items.length === 0) return null;
-  return <AchievementsCard heading={pickText(d.heading, locale)} selectLabel={t("selectWard")} allLabel={t("allWards")} wards={(d.wards ?? []).map((w) => pickText(w, locale))} items={items} />;
+  return <AchievementsCard heading={pickText(d.heading, locale)} selectLabel={t("selectWard")} allLabel={t("allWards")} wards={(d.wards ?? []).map((w) => pickText(w, locale))} items={items} href={pageHref(slug, "progress")} />;
 }
 
 const CHIP: Record<string, string> = {
@@ -46,7 +47,8 @@ export async function WhatsNewSection({ slug, locale, data }: SectionProps) {
       </div>
       <ul className="mt-2 rounded-[10px] border border-black/15">
         {items.map((n, i) => (
-          <li key={i} className="flex items-center gap-4 border-b border-black px-3 py-3 last:border-b-0">
+          <li key={i} className="border-b border-black last:border-b-0">
+            <Link href={n.href ? resolveHref(n.href, slug) : d.viewAll?.href ? resolveHref(d.viewAll.href, slug) : pageHref(slug, "announcements")} className="flex items-center gap-4 px-3 py-3 hover:bg-[#f4faf6]">
             {n.imageUrl && (
               // eslint-disable-next-line @next/next/no-img-element -- static design asset / backend media
               <img src={n.imageUrl} alt="" width={92} height={68} className="h-[68px] w-[92px] shrink-0 rounded-[10px] object-cover" loading="lazy" />
@@ -60,6 +62,7 @@ export async function WhatsNewSection({ slug, locale, data }: SectionProps) {
                 )}
               </p>
             </div>
+            </Link>
           </li>
         ))}
       </ul>

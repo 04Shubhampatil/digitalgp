@@ -24,8 +24,8 @@ export const FIGMA_ABOUT_SECTIONS: FallbackSection[] = [
       body: t(
         "Gram Panchayat Savardari works for transparent administration, essential services, village development, and citizen welfare while protecting the natural character and heritage of the village",
       ),
-      primary: { label: t("Know Our Leaders"), href: "page:about" },
-      secondary: { label: t("Emergency Contacts"), href: "page:contact" },
+      primary: { label: t("Know Our Leaders"), href: "page:about#leaders" },
+      secondary: { label: t("Emergency Contacts"), href: "page:about#about-emergency" },
     },
   },
   {

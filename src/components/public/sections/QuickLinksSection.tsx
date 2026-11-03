@@ -27,8 +27,9 @@ export async function QuickLinksSection({ slug, locale, data }: SectionProps) {
     })),
     { label: all.label, icon: "svc-all-services", href: resolveHref(all.href, slug) },
   ];
+  // Figma tile (375:12914): 164px high, 73px icon box 24px from the top, 16px semibold label on a 45px line at 106px.
   const cls =
-    "flex min-h-[162px] flex-col items-center justify-start gap-2 rounded-[10px] border border-black/15 bg-white px-2 pt-6 pb-4 text-center shadow-[0_0_20px_rgba(0,0,0,0.2)] transition hover:-translate-y-0.5";
+    "flex h-[164px] flex-col items-center rounded-[10px] border border-black/15 bg-white px-2 pt-6 text-center shadow-[0_0_20px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5";
   return (
     <section className="bg-cream pt-[104px] pb-8 max-lg:pt-12">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
@@ -38,8 +39,10 @@ export async function QuickLinksSection({ slug, locale, data }: SectionProps) {
             const external = /^https?:\/\//.test(tile.href);
             const body = (
               <>
-                <FigmaIcon name={tile.icon} width={tile.icon === "svc-aadhar" ? 102 : 73} height={tile.icon === "svc-aadhar" ? 76 : 73} />
-                <span className="text-[16px] leading-[22px] font-semibold text-black">{tile.label}</span>
+                <span className="flex size-[73px] shrink-0 items-center justify-center">
+                  <FigmaIcon name={tile.icon} width={73} height={73} className="size-[73px] object-cover" />
+                </span>
+                <span className="mt-[9px] text-[16px] leading-[45px] font-semibold whitespace-nowrap text-black">{tile.label}</span>
               </>
             );
             return (

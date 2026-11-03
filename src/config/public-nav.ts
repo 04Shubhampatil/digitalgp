@@ -3,7 +3,7 @@ import type { PageKey } from "@/config/pages";
 /**
  * Frontend-only metadata for the shared page registry (src/config/pages.ts):
  * route segment and the grouped navigation shown in the Figma public navbar
- * (Home · About Us · Development · Citizen Services · Community · Media).
+ * (Home · About Us · Development · Citizen Services · Community · Media · Contact).
  * Labels come from the `public.*` i18n namespace keyed by pageKey.
  */
 export const PAGE_PATH: Record<PageKey, string> = {
@@ -37,7 +37,8 @@ export const PUBLIC_NAV: PublicNavGroup[] = [
   { labelKey: "development", pages: ["projects", "schemes", "infrastructure", "finance", "progress"] },
   { labelKey: "citizenServices", pages: ["services", "grievance"] },
   { labelKey: "community", pages: ["culture", "employment", "education", "environment"] },
-  { labelKey: "media", pages: ["announcements", "gallery", "contact"] },
+  { labelKey: "media", pages: ["announcements", "gallery"] },
+  { labelKey: null, pages: ["contact"] },
 ];
 
 export function pageHref(slug: string, pageKey: PageKey): string {
