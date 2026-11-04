@@ -1,4 +1,4 @@
-import { ArrowRight, Brush, Cog, Droplets, FileText, Hammer, Handshake, Layers, Megaphone, Briefcase, Scissors, Ellipsis, Zap, type LucideIcon } from "lucide-react";
+import { ArrowRight, Brush, ChevronRight, Cog, Droplets, FileText, Hammer, Handshake, Layers, Megaphone, Briefcase, Scissors, Ellipsis, Zap, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { pickText, type Bilingual } from "@/i18n/text";
@@ -89,7 +89,37 @@ const LINK_ICONS = ["edu-scholarship", "edu-skill", "edu-exams", "edu-internship
 
 /** `link-cards`: icon + title + description + "Explore Now" cards (Education schemes & opportunities). */
 export function LinkCardsSection({ slug, locale, data }: SectionProps) {
-  const d = data as { heading?: B; items?: { title?: B; body?: B; cta?: B; href?: string }[] };
+  const d = data as { heading?: B; layout?: "cards" | "list"; items?: { title?: B; body?: B; cta?: B; href?: string; iconUrl?: string }[] };
+  if (d.layout === "list") {
+    // Figma Schemes "Scheme Information": left-aligned heading over one white card of icon rows with a chevron.
+    // Rendered as a card only: the page puts it beside the coverage map (ROW_GROUPS in index.tsx).
+    return (
+      <div className="flex min-w-0 flex-col">
+        <h2 className="text-[30px] leading-[45px] font-semibold text-black">{pickText(d.heading, locale)}</h2>
+        <ul className="mt-5 flex flex-1 flex-col justify-between gap-2 rounded-[10px] bg-white px-6 py-[37px] shadow-[0_0_10px_rgba(0,0,0,0.05)] lg:mt-[22px]">
+          {(d.items ?? []).map((it, i) => (
+            <li key={i}>
+              <Link href={resolveHref(it.href ?? "#scheme-showcase", slug)} className="group flex items-center gap-[18px] rounded-[10px] py-1 hover:bg-[#135130]/[0.04]">
+                {it.iconUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- static design asset
+                  <img src={it.iconUrl} alt="" width={64} height={64} className="size-16 shrink-0 rounded-[10px]" />
+                ) : (
+                  <span aria-hidden className="flex size-16 shrink-0 items-center justify-center rounded-[10px] bg-[#e9f4e9] text-[#135130]">
+                    <FileText className="size-7" />
+                  </span>
+                )}
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[18px] leading-6 font-semibold text-black group-hover:text-[#135130]">{pickText(it.title, locale)}</span>
+                  <span className="mt-1.5 block text-[14px] leading-6 font-medium text-[#414141]">{pickText(it.body, locale)}</span>
+                </span>
+                <ChevronRight aria-hidden className="size-6 shrink-0 text-black" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
   return (
     <section className="bg-cream py-8">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">

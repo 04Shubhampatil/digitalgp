@@ -1,31 +1,35 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ChevronDown, Search, Upload } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { forwardRef, useEffect, useId, useRef, useState, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import type { PublicGrievanceReceiptDto, PublicGrievanceStatusDto } from "@/types/api";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
 import { StatusPill } from "@/components/ui/StatusPill";
-import { Textarea } from "@/components/ui/Textarea";
 import type { UiLocale } from "@/i18n/config";
 import { isApiError } from "@/lib/api/client";
 import { getGrievanceFormSettings, submitGrievance, trackGrievance, uploadGrievanceAttachment } from "@/lib/api/public";
 import { pickText } from "@/i18n/text";
+import { cn } from "@/lib/cn";
 import { Turnstile, TURNSTILE_SITE_KEY } from "./Turnstile";
 import { formatDateTime } from "@/lib/format";
 
 const CATEGORIES = ["water", "roads", "sanitation", "electricity", "health", "education", "certificates", "tax", "other"] as const;
+/** "Complaint Type" choices of the Figma form. Not an API field: folded into the description (see composeDescription). */
+const TYPES = ["complaint", "request", "suggestion"] as const;
 
 const submitSchema = z.object({
-  category: z.enum(CATEGORIES),
+  category: z.enum(CATEGORIES, { message: "Select a category" }),
+  complaintType: z.enum(TYPES).or(z.literal("")),
   citizenName: z.string().trim().min(2).max(120),
   citizenPhone: z.string().trim().regex(/^\+?[0-9]{10,15}$/, "Invalid phone number").or(z.literal("")),
   citizenEmail: z.string().trim().pipe(z.email()).or(z.literal("")),
-  description: z.string().trim().min(10).max(5000),
+  location: z.string().trim().max(150),
+  subject: z.string().trim().max(150),
+  // The API allows 5000 characters in total; the folded type / location / subject lines need some of them.
+  description: z.string().trim().min(10).max(4500),
 });
 type SubmitValues = z.infer<typeof submitSchema>;
 
@@ -47,6 +51,74 @@ class TokenBox {
   }
 }
 
+// Figma "Register Your Complaint" (375:11315): 18px semibold labels, 50px fields with a 17px radius.
+const fieldCls = "w-full rounded-[17px] border-[1.5px] border-[#414141]/50 bg-white px-5 text-[15px] text-black placeholder:font-semibold placeholder:text-[#414141]/50 focus:border-[#135130] focus:outline-none";
+
+function Field({ label, error, htmlFor, className, children }: { label: string; error?: string; htmlFor: string; className?: string; children: ReactNode }) {
+  return (
+    <div className={cn("flex flex-col gap-2", className)}>
+      <label htmlFor={htmlFor} className="text-[18px] leading-6 font-semibold text-black">
+        {label}
+      </label>
+      {children}
+      {error && <p className="text-[12px] text-red-700">{error}</p>}
+    </div>
+  );
+}
+
+type TextProps = InputHTMLAttributes<HTMLInputElement> & { label: string; error?: string };
+const TextField = forwardRef<HTMLInputElement, TextProps>(function TextField({ label, error, id, className, ...rest }, ref) {
+  const auto = useId();
+  const fid = id ?? auto;
+  return (
+    <Field label={label} error={error} htmlFor={fid} className={className}>
+      <input ref={ref} id={fid} aria-invalid={!!error} className={cn(fieldCls, "h-[50px]")} {...rest} />
+    </Field>
+  );
+});
+
+type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & { label: string; error?: string; placeholder: string; options: { value: string; label: string }[] };
+const SelectField = forwardRef<HTMLSelectElement, SelectProps>(function SelectField({ label, error, placeholder, options, id, className, ...rest }, ref) {
+  const auto = useId();
+  const fid = id ?? auto;
+  return (
+    <Field label={label} error={error} htmlFor={fid} className={className}>
+      <div className="relative">
+        <select ref={ref} id={fid} aria-invalid={!!error} className={cn(fieldCls, "h-[50px] appearance-none pr-10 invalid:font-semibold invalid:text-[#414141]/50")} {...rest}>
+          <option value="">{placeholder}</option>
+          {options.map((o) => (
+            <option key={o.value} value={o.value} className="text-black">
+              {o.label}
+            </option>
+          ))}
+        </select>
+        <ChevronDown aria-hidden className="pointer-events-none absolute top-1/2 right-4 size-4 -translate-y-1/2 text-[#414141]" />
+      </div>
+    </Field>
+  );
+});
+
+type AreaProps = TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string; error?: string };
+const AreaField = forwardRef<HTMLTextAreaElement, AreaProps>(function AreaField({ label, error, id, className, ...rest }, ref) {
+  const auto = useId();
+  const fid = id ?? auto;
+  return (
+    <Field label={label} error={error} htmlFor={fid} className={className}>
+      <textarea ref={ref} id={fid} aria-invalid={!!error} className={cn(fieldCls, "h-[148px] resize-y py-3")} {...rest} />
+    </Field>
+  );
+});
+
+/**
+ * The complaint API (POST /public/:slug/grievances) has no complaint type, location or subject field.
+ * The design asks for them, so their values are folded into the description text the office receives
+ * instead of being dropped (see docs/backend-needs-public-site.md).
+ */
+function composeDescription(v: SubmitValues, labels: { type: string; location: string; subject: string }, typeLabel: string): string {
+  const head = [v.complaintType && `${labels.type}: ${typeLabel}`, v.location && `${labels.location}: ${v.location}`, v.subject && `${labels.subject}: ${v.subject}`].filter(Boolean);
+  return head.length ? `${head.join("\n")}\n\n${v.description}` : v.description;
+}
+
 /** Figma "Register Your Complaint" → POST /public/:slug/grievances; shows the tracking code once. */
 export function GrievanceSubmitForm({ slug }: { slug: string }) {
   const t = useTranslations("public.grievanceForm");
@@ -57,6 +129,8 @@ export function GrievanceSubmitForm({ slug }: { slug: string }) {
   const [captchaOn, setCaptchaOn] = useState(false);
   const [uploads, setUploads] = useState<{ on: boolean; maxMb: number; types: string[] }>({ on: false, maxMb: 10, types: [] });
   const [files, setFiles] = useState<File[]>([]);
+  const [dragging, setDragging] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
   // Turnstile tokens work once: keep the latest one in a ref and remount the widget after each use.
   const [tk] = useState(() => new TokenBox());
   const [resetKey, setResetKey] = useState(0);
@@ -72,7 +146,7 @@ export function GrievanceSubmitForm({ slug }: { slug: string }) {
   }
   const [successText, setSuccessText] = useState("");
   const [submitText, setSubmitText] = useState("");
-  // The office's settings for this form (CAPTCHA, texts). Defaults apply if they cannot be loaded.
+  // The office's settings for this form (CAPTCHA, uploads, texts). Defaults apply if they cannot be loaded.
   useEffect(() => {
     getGrievanceFormSettings(slug)
       .then((s) => {
@@ -89,7 +163,10 @@ export function GrievanceSubmitForm({ slug }: { slug: string }) {
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<SubmitValues>({ resolver: zodResolver(submitSchema), defaultValues: { category: "water", citizenName: "", citizenPhone: "", citizenEmail: "", description: "" } });
+  } = useForm<SubmitValues>({
+    resolver: zodResolver(submitSchema),
+    defaultValues: { category: "" as SubmitValues["category"], complaintType: "", citizenName: "", citizenPhone: "", citizenEmail: "", location: "", subject: "", description: "" },
+  });
 
   const MAX_FILES = 5;
   /** Adds the chosen files after checking count, size and type; returns an error text or null. */
@@ -119,7 +196,7 @@ export function GrievanceSubmitForm({ slug }: { slug: string }) {
         citizenName: values.citizenName,
         citizenPhone: values.citizenPhone || null,
         citizenEmail: values.citizenEmail || null,
-        description: values.description,
+        description: composeDescription(values, { type: t("type"), location: t("location"), subject: t("subject") }, values.complaintType ? t(`types.${values.complaintType}`) : ""),
       });
       setReceipt(r);
     } catch (err) {
@@ -134,79 +211,112 @@ export function GrievanceSubmitForm({ slug }: { slug: string }) {
 
   if (receipt) {
     return (
-      <div className="rounded-card border border-line bg-success-soft p-6">
-        <p className="text-sm font-semibold text-success">{t("submitted")}</p>
-        <p className="mt-2 text-2xl font-bold tracking-wide text-ink">{receipt.trackingCode}</p>
-        {successText && <p className="mt-2 text-sm text-ink">{successText}</p>}
-        <p className="mt-2 text-sm text-muted">{t("keepCode")}</p>
-        <p className="mt-1 text-xs text-muted">{formatDateTime(receipt.createdAt, locale)}</p>
+      <div className="rounded-[11px] border border-[#414141]/50 bg-[#eef5ee] p-6">
+        <p className="text-sm font-semibold text-[#135130]">{t("submitted")}</p>
+        <p className="mt-2 text-2xl font-bold tracking-wide text-black">{receipt.trackingCode}</p>
+        {successText && <p className="mt-2 text-sm text-black">{successText}</p>}
+        <p className="mt-2 text-sm text-[#414141]">{t("keepCode")}</p>
+        <p className="mt-1 text-xs text-[#414141]">{formatDateTime(receipt.createdAt, locale)}</p>
       </div>
     );
   }
 
+  const typesText = uploads.types.map((x) => x.toUpperCase()).join(", ");
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="grid gap-4 rounded-card border border-line bg-surface p-6 sm:grid-cols-2">
-      <Input label={t("name")} autoComplete="name" error={errors.citizenName?.message} {...register("citizenName")} />
-      <Select label={t("category")} options={CATEGORIES.map((c) => ({ value: c, label: t(`categories.${c}`) }))} error={errors.category?.message} {...register("category")} />
-      <Input label={`${t("phone")} (${tc("optional")})`} type="tel" autoComplete="tel" error={errors.citizenPhone?.message} {...register("citizenPhone")} />
-      <Input label={`${t("email")} (${tc("optional")})`} type="email" autoComplete="email" error={errors.citizenEmail?.message} {...register("citizenEmail")} />
-      <div className="sm:col-span-2">
-        <Textarea label={t("description")} rows={5} hint={t("descriptionHint")} error={errors.description?.message} {...register("description")} />
-      </div>
-      {uploads.on && (
-        <div className="sm:col-span-2">
-          <label className="mb-1.5 block text-sm font-medium text-ink" htmlFor="grievance-files">
-            {t("attachments")} ({tc("optional")})
-          </label>
-          <input
-            id="grievance-files"
-            type="file"
-            multiple
-            accept={uploads.types.map((x) => "." + x).join(",")}
-            onChange={(e) => {
-              const picked = Array.from(e.target.files ?? []);
-              e.target.value = "";
-              const err = pickFiles(picked);
-              setFormError(err);
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="grid gap-x-7 gap-y-4 rounded-[11px] border border-[#414141]/50 bg-white p-6 md:grid-cols-3">
+      <TextField label={t("name")} placeholder={t("namePlaceholder")} autoComplete="name" error={errors.citizenName?.message} {...register("citizenName")} />
+      <TextField label={t("phone")} placeholder={t("phonePlaceholder")} type="tel" autoComplete="tel" error={errors.citizenPhone?.message} {...register("citizenPhone")} />
+      <TextField label={t("email")} placeholder={t("emailPlaceholder")} type="email" autoComplete="email" error={errors.citizenEmail?.message} {...register("citizenEmail")} />
+      <SelectField label={t("category")} placeholder={t("categoryPlaceholder")} required options={CATEGORIES.map((c) => ({ value: c, label: t(`categories.${c}`) }))} error={errors.category ? t("categoryRequired") : undefined} {...register("category")} />
+      <SelectField label={t("type")} placeholder={t("typePlaceholder")} required options={TYPES.map((c) => ({ value: c, label: t(`types.${c}`) }))} error={errors.complaintType?.message} {...register("complaintType")} />
+      <TextField label={t("location")} placeholder={t("locationPlaceholder")} error={errors.location?.message} {...register("location")} />
+      <div className="flex flex-col gap-4">
+        <TextField label={t("subject")} placeholder={t("subjectPlaceholder")} error={errors.subject?.message} {...register("subject")} />
+        {uploads.on && (
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragging(true);
             }}
-            className="block w-full text-sm text-muted file:mr-3 file:rounded-button file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
-          />
-          <p className="mt-1 text-xs text-muted">{t("attachHint", { max: MAX_FILES, size: uploads.maxMb, types: uploads.types.join(", ").toUpperCase() })}</p>
-          {files.length > 0 && (
-            <ul className="mt-2 space-y-1">
-              {files.map((f, i) => (
-                <li key={i} className="flex items-center justify-between rounded-input bg-surface-select px-3 py-1.5 text-sm text-ink">
-                  <span className="truncate">{f.name}</span>
-                  <button type="button" onClick={() => setFiles((cur) => cur.filter((_, j) => j !== i))} className="ml-3 text-xs font-semibold text-danger">
-                    {t("removeFile")}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragging(false);
+              setFormError(pickFiles(Array.from(e.dataTransfer.files)));
+            }}
+            className={cn("mt-2 rounded-[17px] border-[1.5px] border-[#414141]/50 px-5 py-4", dragging && "border-[#135130] bg-[#eef5ee]")}
+          >
+            <p className="text-[15px] font-semibold text-black">{t("uploadTitle")}</p>
+            <div className="mt-3 flex items-start gap-3">
+              <Upload aria-hidden className="mt-1 size-6 shrink-0 text-black" />
+              <p className="text-[15px] leading-[22px] text-black">
+                {t("dropHint")}{" "}
+                <button type="button" onClick={() => fileInput.current?.click()} className="text-[#138808] hover:underline">
+                  {t("browse")}
+                </button>{" "}
+                {t("dropTypes", { types: typesText, size: uploads.maxMb })}
+              </p>
+            </div>
+            <input
+              ref={fileInput}
+              id="grievance-files"
+              type="file"
+              multiple
+              accept={uploads.types.map((x) => "." + x).join(",")}
+              onChange={(e) => {
+                const picked = Array.from(e.target.files ?? []);
+                e.target.value = "";
+                setFormError(pickFiles(picked));
+              }}
+              className="sr-only"
+              aria-label={t("uploadTitle")}
+            />
+            {files.length > 0 && (
+              <ul className="mt-3 space-y-1">
+                {files.map((f, i) => (
+                  <li key={i} className="flex items-center justify-between rounded-[8px] bg-[#eef5ee] px-3 py-1.5 text-[13px] text-black">
+                    <span className="truncate">{f.name}</span>
+                    <button type="button" onClick={() => setFiles((cur) => cur.filter((_, j) => j !== i))} className="ml-3 text-xs font-semibold text-red-700">
+                      {t("removeFile")}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </div>
+      <div className="flex flex-col gap-4 md:col-span-2">
+        <AreaField label={t("description")} placeholder={t("descriptionPlaceholder")} error={errors.description?.message} {...register("description")} />
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          {captchaOn && <Turnstile onToken={onToken} resetKey={resetKey} />}
+          <button
+            type="submit"
+            disabled={captchaBlocked || isSubmitting}
+            className="inline-flex h-[34px] min-w-[172px] items-center justify-center rounded-full border border-[#135130] bg-[#135130] px-5 text-[12px] font-semibold text-white hover:opacity-90 disabled:opacity-60"
+          >
+            {isSubmitting ? "…" : submitText || t("submit")}
+          </button>
         </div>
-      )}
-      {captchaOn && <Turnstile onToken={onToken} resetKey={resetKey} />}
+      </div>
       {captchaBlocked && (
-        <p role="alert" className="rounded-input bg-danger-soft px-4 py-3 text-sm text-danger sm:col-span-2">
+        <p role="alert" className="rounded-[8px] bg-red-50 px-4 py-3 text-sm text-red-700 md:col-span-3">
           {t("captchaUnavailable")}
         </p>
       )}
       {formError && (
-        <p role="alert" className="rounded-input bg-danger-soft px-4 py-3 text-sm text-danger sm:col-span-2">
+        <p role="alert" className="rounded-[8px] bg-red-50 px-4 py-3 text-sm text-red-700 md:col-span-3">
           {formError}
         </p>
       )}
-      <div className="sm:col-span-2">
-        <Button type="submit" size="lg" loading={isSubmitting} disabled={captchaBlocked}>
-          {submitText || t("submit")}
-        </Button>
-      </div>
     </form>
   );
 }
 
-/** Figma "Track Your Complaint" → GET /public/:slug/grievances/:trackingCode. */
+/**
+ * Figma "Track Your Complaint" → GET /public/:slug/grievances/:trackingCode. The design also offers a
+ * lookup by mobile number; the API only accepts the tracking code, so the field takes the code only.
+ */
 export function GrievanceTrackForm({ slug }: { slug: string }) {
   const t = useTranslations("public.grievanceForm");
   const tc = useTranslations("common");
@@ -233,29 +343,45 @@ export function GrievanceTrackForm({ slug }: { slug: string }) {
   }
 
   return (
-    <div className="rounded-card border border-line bg-surface p-6">
-      <form onSubmit={lookup} className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <div className="flex-1">
-          <Input label={t("trackingCode")} placeholder="GRV-XXXXXXXX" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} error={error ?? undefined} />
+    <div className="h-full rounded-[10px] bg-white px-6 py-8 shadow-[0_0_10px_rgba(0,0,0,0.12)]">
+      <form onSubmit={lookup} noValidate>
+        <label htmlFor="grievance-track-code" className="text-[18px] font-semibold text-black">
+          {t("trackLabel")}
+        </label>
+        <div className="mt-4 flex flex-col gap-4 sm:flex-row">
+          <input
+            id="grievance-track-code"
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            placeholder={t("trackPlaceholder")}
+            aria-invalid={!!error}
+            className="h-[58px] flex-1 rounded-[8px] border border-black/15 bg-white px-4 text-[16px] text-black placeholder:text-[#414141]/60 focus:border-[#135130] focus:outline-none"
+          />
+          <button type="submit" disabled={loading} className="inline-flex h-[58px] items-center justify-center gap-3 rounded-[8px] bg-[#135130] px-7 text-[18px] font-semibold text-white hover:opacity-90 disabled:opacity-60 sm:min-w-[204px]">
+            {t("trackStatus")}
+            <Search aria-hidden className="size-6" />
+          </button>
         </div>
-        <Button type="submit" size="lg" loading={loading}>
-          {t("track")}
-        </Button>
+        {error && (
+          <p role="alert" className="mt-2 text-[13px] text-red-700">
+            {error}
+          </p>
+        )}
       </form>
       {result && (
-        <div className="mt-5 border-t border-line pt-5">
+        <div className="mt-5 border-t border-black/10 pt-5">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="font-mono text-sm font-semibold text-ink">{result.trackingCode}</span>
+            <span className="font-mono text-sm font-semibold text-black">{result.trackingCode}</span>
             <StatusPill status={result.status} label={ta(`grievanceStatus.${result.status}`)} />
-            <span className="text-xs text-muted">{(CATEGORIES as readonly string[]).includes(result.category) ? t(`categories.${result.category}`) : result.category}</span>
+            <span className="text-xs text-[#414141]">{(CATEGORIES as readonly string[]).includes(result.category) ? t(`categories.${result.category}`) : result.category}</span>
           </div>
-          {result.resolutionNote && <p className="mt-3 rounded-input bg-success-soft px-4 py-3 text-sm text-ink">{result.resolutionNote}</p>}
+          {result.resolutionNote && <p className="mt-3 rounded-[8px] bg-[#eef5ee] px-4 py-3 text-sm text-black">{result.resolutionNote}</p>}
           <ol className="mt-4 grid gap-2 text-sm">
             {result.timeline.map((e, i) => (
               <li key={i} className="flex items-center gap-3">
-                <span aria-hidden className="size-2 rounded-full bg-primary" />
-                <span className="font-semibold text-ink">{ta(`grievanceStatus.${e.status}`)}</span>
-                <span className="text-xs text-muted">{formatDateTime(e.at, locale)}</span>
+                <span aria-hidden className="size-2 rounded-full bg-[#135130]" />
+                <span className="font-semibold text-black">{ta(`grievanceStatus.${e.status}`)}</span>
+                <span className="text-xs text-[#414141]">{formatDateTime(e.at, locale)}</span>
               </li>
             ))}
           </ol>

@@ -78,6 +78,8 @@ export async function SchemeShowcaseSection({ slug, locale, data }: SectionProps
     benefitsLabel?: B;
     items?: { name?: B; category?: B; level?: B; description?: B; benefitCaption?: B; benefitValue?: B }[];
     viewAll?: Btn;
+    /** Where "View Details" goes on a card that has no scheme record behind it. */
+    detailsHref?: string;
   };
   const live = await listPublicSchemes(slug, { limit: 100 }).catch(() => null);
   const fmt = new Intl.NumberFormat(locale === "mr" ? "mr-IN" : "en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
@@ -157,9 +159,10 @@ export async function SchemeShowcaseSection({ slug, locale, data }: SectionProps
                       {t("viewDetails")} <ArrowRight className="size-3.5" aria-hidden />
                     </a>
                   ) : (
-                    <span className="inline-flex w-full items-center justify-center gap-2 rounded-full border-[0.6px] border-[#135130] px-4 py-1.5 text-[12px] text-[#135130]">
+                    // Placeholder card without a scheme record: open the page's "Scheme Information" block.
+                    <Link href={resolveHref(d.detailsHref ?? "page:schemes#link-cards", slug)} className="inline-flex w-full items-center justify-center gap-2 rounded-full border-[0.6px] border-[#135130] px-4 py-1.5 text-[12px] text-[#135130] hover:bg-[#135130]/5">
                       {t("viewDetails")} <ArrowRight className="size-3.5" aria-hidden />
-                    </span>
+                    </Link>
                   )}
                 </div>
               </li>

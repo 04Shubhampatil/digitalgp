@@ -1,9 +1,11 @@
 import {
   ArrowRight,
+  ChevronRight,
+  CircleCheck,
   BriefcaseBusiness,
-  Calendar,
+  BriefcaseMedical,
+  CalendarDays,
   CircleHelp,
-  CreditCard,
   Download,
   FileText,
   Flag,
@@ -12,12 +14,16 @@ import {
   HeartHandshake,
   House,
   IdCard,
+  IndianRupee,
   Landmark,
   Mail,
   Megaphone,
+  MessageSquareText,
   Phone,
+  ReceiptText,
   ScrollText,
-  Search,
+  SearchCheck,
+  Settings,
   ShieldCheck,
   Sprout,
   Stethoscope,
@@ -41,33 +47,35 @@ interface Btn {
 }
 
 const card = "rounded-[10px] border border-black/15 bg-white shadow-[0_0_10px_rgba(0,0,0,0.08)]";
-const ghost = "inline-flex items-center gap-2 rounded-full border-[0.6px] border-[#135130] px-4 py-1.5 text-[12px] text-[#135130] hover:bg-[#135130]/5";
 
 /* ------------------------------------------------------------------ Announcements & Circulars */
 
 const CAT_ICONS: { Icon: LucideIcon; fg: string }[] = [
-  { Icon: Users, fg: "text-[#135130]" },
+  { Icon: Users, fg: "text-[#18803d]" },
   { Icon: Users, fg: "text-[#f5871f]" },
   { Icon: FileText, fg: "text-[#1a62e0]" },
-  { Icon: ScrollText, fg: "text-[#6a1b9a]" },
-  { Icon: Megaphone, fg: "text-[#135130]" },
-  { Icon: Calendar, fg: "text-[#e8202a]" },
+  { Icon: ReceiptText, fg: "text-[#6a2bc4]" },
+  { Icon: Megaphone, fg: "text-[#18803d]" },
+  { Icon: CalendarDays, fg: "text-[#e8202a]" },
 ];
 
-/** `announce-categories`: six category shortcuts overlapping the hero. */
+/**
+ * `announce-categories`: six category shortcuts overlapping the hero (filled 44px icons). Each tile jumps to the
+ * announcement list on this page (`page:announcements#announce-feed` by default) — the list has no category filter yet.
+ */
 export function AnnounceCategoriesSection({ slug, locale, data }: SectionProps) {
-  const d = data as { viewAll?: B; items?: { label?: B; href?: string }[] };
+  const d = data as { viewAll?: B; href?: string; items?: { label?: B; href?: string }[] };
   return (
-    <section className="relative z-10 mx-auto -mt-10 max-w-[1440px] px-4 sm:px-8 lg:-mt-[60px] lg:px-[62px]">
-      <ul className="grid grid-cols-2 gap-y-4 rounded-[20px] bg-white px-4 py-5 shadow-[0_2px_16px_rgba(0,0,0,0.18)] sm:grid-cols-3 lg:grid-cols-6 lg:divide-x lg:divide-black/10">
+    <section className="relative z-10 mx-auto -mt-10 max-w-[1440px] px-4 sm:px-8 lg:-mt-[108px] lg:px-[60px]">
+      <ul className="grid grid-cols-2 gap-y-4 rounded-[20px] bg-white px-4 py-5 shadow-[0_2px_16px_rgba(0,0,0,0.18)] sm:grid-cols-3 lg:grid-cols-6 lg:divide-x lg:divide-black/15 lg:py-[22px]">
         {(d.items ?? []).map((it, i) => {
           const { Icon, fg } = CAT_ICONS[i % CAT_ICONS.length]!;
           return (
             <li key={i}>
-              <Link href={resolveHref(it.href ?? "page:announcements", slug)} className="flex flex-col items-center gap-1 py-1 text-center">
-                <Icon className={`size-9 ${fg}`} strokeWidth={1.8} aria-hidden />
-                <span className="text-[18px] leading-6 font-semibold text-black">{pickText(it.label, locale)}</span>
-                <span className="text-[11px] text-[#414141]">{pickText(d.viewAll, locale)}</span>
+              <Link href={resolveHref(it.href ?? d.href ?? "page:announcements#announce-feed", slug)} className="group flex flex-col items-center gap-1 py-2 text-center">
+                <Icon className={`size-11 ${fg}`} fill="currentColor" stroke="#fff" strokeWidth={1.4} aria-hidden />
+                <span className="mt-2 text-[22px] leading-7 font-semibold text-black group-hover:text-[#135130]">{pickText(it.label, locale)}</span>
+                <span className="text-[14px] text-[#333]">{pickText(d.viewAll, locale)}</span>
               </Link>
             </li>
           );
@@ -78,12 +86,14 @@ export function AnnounceCategoriesSection({ slug, locale, data }: SectionProps) 
 }
 
 const ROW_ICONS: { Icon: LucideIcon; bg: string; fg: string }[] = [
-  { Icon: Landmark, bg: "bg-[#e3f1e9]", fg: "text-[#135130]" },
+  { Icon: Landmark, bg: "bg-[#e3f1e9]", fg: "text-[#18803d]" },
   { Icon: Stethoscope, bg: "bg-[#fdeedd]", fg: "text-[#f5871f]" },
   { Icon: FileText, bg: "bg-[#e2edfa]", fg: "text-[#1a62e0]" },
-  { Icon: ScrollText, bg: "bg-[#efe6f8]", fg: "text-[#6a1b9a]" },
-  { Icon: Users, bg: "bg-[#fdeedd]", fg: "text-[#f5871f]" },
+  { Icon: ScrollText, bg: "bg-[#efe6f8]", fg: "text-[#6a2bc4]" },
+  { Icon: UserRound, bg: "bg-[#fdeedd]", fg: "text-[#f5871f]" },
 ];
+
+const pill = "inline-flex items-center gap-2 rounded-full border border-[#135130] bg-white px-4 py-2 text-[14px] text-[#135130] hover:bg-[#135130]/5";
 
 /** `announce-feed`: latest announcements (published ones when present) beside the interactive calendar. */
 export async function AnnounceFeedSection({ slug, locale, data }: SectionProps) {
@@ -117,12 +127,12 @@ export async function AnnounceFeedSection({ slug, locale, data }: SectionProps) 
       <div className="mx-auto grid max-w-[1440px] gap-5 px-4 sm:px-8 lg:grid-cols-[minmax(0,1fr)_330px] lg:px-[62px]">
         <div className={`${card} p-5`}>
           <div className="flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-[17px] font-semibold text-black">
-              <Megaphone className="size-5 text-[#135130]" aria-hidden /> {pickText(d.heading, locale)}
+            <h2 className="flex items-center gap-4 text-[22px] font-semibold text-black">
+              <Megaphone className="size-8 -scale-x-100 text-[#135130]" fill="currentColor" aria-hidden /> {pickText(d.heading, locale)}
             </h2>
             {d.viewAll?.href && (
-              <Link href={resolveHref(d.viewAll.href, slug)} className={ghost}>
-                {pickText(d.viewAll.label, locale)} <ArrowRight className="size-3.5" aria-hidden />
+              <Link href={resolveHref(d.viewAll.href, slug)} className={pill}>
+                {pickText(d.viewAll.label, locale)} <ArrowRight className="size-4" aria-hidden />
               </Link>
             )}
           </div>
@@ -132,27 +142,29 @@ export async function AnnounceFeedSection({ slug, locale, data }: SectionProps) 
               const { Icon, bg, fg } = ROW_ICONS[i % ROW_ICONS.length]!;
               const body = (
                 <>
-                  <span aria-hidden className={`flex size-10 shrink-0 items-center justify-center rounded-[8px] ${bg} ${fg}`}>
-                    <Icon className="size-5" />
+                  <span aria-hidden className={`flex size-11 shrink-0 items-center justify-center self-start rounded-[8px] ${bg} ${fg}`}>
+                    <Icon className="size-6" />
                   </span>
-                  <span className="flex-1">
-                    <span className="block text-[14px] font-semibold text-black">{r.title}</span>
-                    {r.body && <span className="mt-0.5 block text-[11px] text-[#414141]">{r.body}</span>}
-                  </span>
-                  <span className="shrink-0 text-right text-[11px] text-[#414141]">
-                    {r.date}
-                    {r.isNew && <span className="mt-1 ml-2 inline-block rounded-[3px] bg-[#ff2d3d] px-2 py-0.5 text-[10px] font-semibold text-white">{pickText(d.newLabel, locale) || t("newBadge")}</span>}
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap items-start gap-x-4 gap-y-1">
+                      <span className="min-w-0 flex-1 text-[18px] leading-7 font-semibold text-black">{r.title}</span>
+                      <span className="flex w-[148px] shrink-0 items-center justify-between gap-2 pt-1 text-[14px] text-[#333]">
+                        {r.date}
+                        {r.isNew && <span className="rounded-[2px] bg-[#ff0000] px-2 py-0.5 text-[13px] font-medium text-white">{pickText(d.newLabel, locale) || t("newBadge")}</span>}
+                      </span>
+                    </span>
+                    {r.body && <span className="mt-1 block text-[14px] leading-6 text-[#333]">{r.body}</span>}
                   </span>
                 </>
               );
               return (
-                <li key={i} className="border-b border-black/10 last:border-b-0">
+                <li key={i}>
                   {r.href ? (
-                    <a href={r.href} className="flex items-center gap-3 px-3 py-3 hover:bg-black/[0.02]">
+                    <a href={r.href} className="flex items-center gap-5 px-4 py-4 hover:bg-black/[0.02]">
                       {body}
                     </a>
                   ) : (
-                    <div className="flex items-center gap-3 px-3 py-3">{body}</div>
+                    <div className="flex items-center gap-5 px-4 py-4">{body}</div>
                   )}
                 </li>
               );
@@ -160,8 +172,8 @@ export async function AnnounceFeedSection({ slug, locale, data }: SectionProps) 
           </ul>
           {d.viewAll?.href && (
             <div className="mt-4 flex justify-center">
-              <Link href={resolveHref(d.viewAll.href, slug)} className={ghost}>
-                {pickText(d.viewAllLong, locale) || pickText(d.viewAll.label, locale)}
+              <Link href={resolveHref(d.viewAll.href, slug)} className={pill}>
+                {pickText(d.viewAllLong, locale) || pickText(d.viewAll.label, locale)} <ArrowRight className="size-4" aria-hidden />
               </Link>
             </div>
           )}
@@ -181,72 +193,95 @@ export async function AnnounceFeedSection({ slug, locale, data }: SectionProps) 
 }
 
 const DEADLINE_STYLE = [
-  { bg: "bg-[#f1f3f1]", fg: "text-[#1b3a6b]", Icon: HandCoins },
-  { bg: "bg-[#fdeedd]", fg: "text-[#f5871f]", Icon: Landmark },
-  { bg: "bg-[#e2edfa]", fg: "text-[#1a62e0]", Icon: Stethoscope },
-  { bg: "bg-[#efe6f8]", fg: "text-[#6a1b9a]", Icon: Users },
+  { bg: "bg-[#f1f4f1]", ring: "bg-[#e2ece4]", fg: "text-[#135130]", Icon: IndianRupee },
+  { bg: "bg-[#fff8f1]", ring: "bg-[#fdebd8]", fg: "text-[#f5871f]", Icon: Landmark },
+  { bg: "bg-[#f1f6fe]", ring: "bg-[#e0ebfb]", fg: "text-[#1a62e0]", Icon: BriefcaseMedical },
+  { bg: "bg-[#f6f2fb]", ring: "bg-[#ebe2f7]", fg: "text-[#6a2bc4]", Icon: Users },
 ];
 
-/** `deadlines-downloads`: "Important Deadlines" tiles beside the "Downloads" file list. */
+/** `deadlines-downloads`: "Important Deadlines" tiles beside the "Downloads" file list (each file is a link). */
 export async function DeadlinesDownloadsSection({ slug, locale, data }: SectionProps) {
   const d = data as {
     deadlinesTitle?: B;
     downloadsTitle?: B;
     viewAll?: Btn;
+    downloadsViewAll?: Btn;
     deadlines?: { date?: B; title?: B; caption?: B }[];
-    files?: { name?: B; type?: string; size?: string }[];
+    files?: { name?: B; type?: string; size?: string; fileId?: string; href?: string }[];
   };
   const t = await getTranslations("public");
+  const filesViewAll = d.downloadsViewAll ?? d.viewAll;
   return (
     <section className="bg-cream py-4">
-      <div className="mx-auto grid max-w-[1440px] gap-5 px-4 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.6fr)] lg:px-[62px]">
-        <div className={`${card} p-5`}>
-          <div className="flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-[17px] font-semibold text-black">
-              <Calendar className="size-5 text-[#e8202a]" aria-hidden /> {pickText(d.deadlinesTitle, locale)}
+      <div className="mx-auto grid max-w-[1440px] gap-5 px-4 sm:px-8 lg:grid-cols-[minmax(0,835px)_minmax(0,1fr)] lg:px-[62px]">
+        <div className={`${card} p-5 lg:px-[18px] lg:pt-6 lg:pb-8`}>
+          <div className="flex items-center justify-between gap-3 lg:pl-2">
+            <h2 className="flex items-center gap-4 text-[22px] font-semibold text-black">
+              <CalendarDays className="size-8 text-[#e8202a]" aria-hidden /> {pickText(d.deadlinesTitle, locale)}
             </h2>
             {d.viewAll?.href && (
-              <Link href={resolveHref(d.viewAll.href, slug)} className={ghost}>
-                {pickText(d.viewAll.label, locale)}
+              <Link href={resolveHref(d.viewAll.href, slug)} className={pill}>
+                {pickText(d.viewAll.label, locale)} <ArrowRight className="size-4" aria-hidden />
               </Link>
             )}
           </div>
-          <ul className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <ul className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {(d.deadlines ?? []).map((x, i) => {
               const s = DEADLINE_STYLE[i % DEADLINE_STYLE.length]!;
               return (
-                <li key={i} className={`flex min-h-[150px] flex-col items-center justify-center gap-2 rounded-[8px] px-3 py-5 text-center ${s.bg}`}>
-                  <s.Icon className={`size-8 ${s.fg}`} strokeWidth={1.7} aria-hidden />
-                  <p className={`text-[15px] font-semibold ${s.fg}`}>{pickText(x.date, locale)}</p>
-                  <p className="text-[12px] leading-4 text-black">{pickText(x.title, locale)}</p>
-                  <p className="text-[12px] leading-4 text-black">{pickText(x.caption, locale)}</p>
+                <li key={i} className={`flex min-h-[200px] flex-col items-center gap-1 rounded-[8px] px-3 pt-8 pb-6 text-center ${s.bg}`}>
+                  <span aria-hidden className={`flex size-[60px] items-center justify-center rounded-full ${s.ring} ${s.fg}`}>
+                    <s.Icon className="size-8" strokeWidth={2} />
+                  </span>
+                  <p className={`mt-4 text-[20px] leading-7 font-semibold ${s.fg}`}>{pickText(x.date, locale)}</p>
+                  <p className="mt-2 text-[14px] leading-[30px] text-black">{pickText(x.title, locale)}</p>
+                  {pickText(x.caption, locale) && <p className="text-[14px] leading-[22px] text-black">{pickText(x.caption, locale)}</p>}
                 </li>
               );
             })}
           </ul>
         </div>
-        <div className={`${card} p-5`}>
-          <div className="flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-[17px] font-semibold text-black">
-              <Download className="size-5 text-[#135130]" aria-hidden /> {pickText(d.downloadsTitle, locale)}
+        <div className={`${card} p-5 lg:px-5 lg:pt-6 lg:pb-7`}>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="flex items-center gap-4 text-[22px] font-semibold text-black">
+              <Download className="size-8 text-[#135130]" strokeWidth={2.4} aria-hidden /> {pickText(d.downloadsTitle, locale)}
             </h2>
-            {d.viewAll?.href && (
-              <Link href={resolveHref(d.viewAll.href, slug)} className={ghost}>
-                {pickText(d.viewAll.label, locale)}
+            {filesViewAll?.href && (
+              <Link href={resolveHref(filesViewAll.href, slug)} className={pill}>
+                {pickText(filesViewAll.label, locale)} <ArrowRight className="size-4" aria-hidden />
               </Link>
             )}
           </div>
-          <ul className="mt-4 space-y-2">
-            {(d.files ?? []).map((f, i) => (
-              <li key={i} className="flex items-center gap-3 rounded-[6px] border border-black/15 px-3 py-2 text-[12px]">
-                <FileText className="size-4 shrink-0 text-[#e8202a]" aria-hidden />
-                <span className="flex-1 font-medium text-black">{pickText(f.name, locale)}</span>
-                <span className="text-[#414141]">
-                  {f.type} · {f.size}
-                </span>
-                <Download className="size-4 text-[#135130]" aria-label={t("download")} />
-              </li>
-            ))}
+          <ul className="mt-5 space-y-1.5">
+            {(d.files ?? []).map((f, i) => {
+              const file = f.fileId ? publicMediaUrl(slug, f.fileId) : undefined;
+              const href = file ?? (f.href ? resolveHref(f.href, slug) : undefined);
+              const name = pickText(f.name, locale);
+              const inner = (
+                <>
+                  <FileText className="size-5 shrink-0 text-[#e8202a]" aria-hidden />
+                  <span className="min-w-0 flex-1 text-[14px] font-medium text-black">{name}</span>
+                  <span className="shrink-0 text-[13px] text-[#555]">{[f.type, f.size].filter(Boolean).join(" • ")}</span>
+                  <Download className="size-5 shrink-0 text-[#135130]" aria-hidden />
+                </>
+              );
+              const cls = "flex items-center gap-4 rounded-[6px] border border-black/15 bg-white px-4 py-3.5";
+              return (
+                <li key={i}>
+                  {file ? (
+                    <a href={file} download aria-label={`${t("download")}: ${name}`} className={`${cls} hover:bg-black/[0.02]`}>
+                      {inner}
+                    </a>
+                  ) : href ? (
+                    <Link href={href} className={`${cls} hover:bg-black/[0.02]`}>
+                      {inner}
+                    </Link>
+                  ) : (
+                    <div className={cls}>{inner}</div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </div>
       </div>
@@ -297,34 +332,37 @@ export function ServiceStripSection({ slug, locale, data }: SectionProps) {
 
 const RTS_ICONS: LucideIcon[] = [FileText, UserRound, House, IdCard, ShieldCheck, FileText, House, ScrollText, Users, BriefcaseBusiness];
 
-/** `rts-grid`: "Right to Service (RTS) – Apply Online" certificate tiles with a portal button. */
+/** `rts-grid`: "Right to Service (RTS) – Apply Online" certificate tiles with a portal button; the card overlaps the hero (Figma ~110px). */
 export function RtsGridSection({ slug, locale, data }: SectionProps) {
   const d = data as { heading?: B; subheading?: B; items?: { label?: B; caption?: B; href?: string }[]; action?: { label?: B; href?: string } };
   return (
-    <section className="relative z-10 mx-auto -mt-10 max-w-[1440px] px-4 sm:px-8 lg:-mt-[40px] lg:px-[62px]">
-      <div className="rounded-[20px] bg-white px-5 py-6 shadow-[0_2px_16px_rgba(0,0,0,0.18)] sm:px-9">
-        <h2 className="text-center text-[24px] leading-8 font-semibold text-black">{pickText(d.heading, locale)}</h2>
-        <p className="mt-1 text-center text-[13px] text-[#414141]">{pickText(d.subheading, locale)}</p>
-        <ul className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+    <section className="relative z-10 mx-auto -mt-10 max-w-[1440px] px-4 sm:px-8 lg:-mt-[110px] lg:px-[60px]">
+      <div className="rounded-[20px] bg-white px-5 pt-8 pb-8 shadow-[0_2px_16px_rgba(0,0,0,0.12)] sm:px-[30px]">
+        <h2 className="text-center text-[28px] leading-10 font-semibold text-black">{pickText(d.heading, locale)}</h2>
+        <p className="mt-2 text-center text-[18px] leading-7 text-[#414141]">{pickText(d.subheading, locale)}</p>
+        <ul className="mt-7 grid grid-cols-2 gap-[22px] sm:grid-cols-3 lg:grid-cols-5">
           {(d.items ?? []).map((it, i) => {
             const Icon = RTS_ICONS[i % RTS_ICONS.length]!;
             return (
               <li key={i}>
-                <Link href={resolveHref(it.href ?? "page:grievance", slug)} className="flex min-h-[116px] flex-col items-center rounded-[8px] border border-black/15 bg-white px-2 py-4 text-center shadow-[0_0_8px_rgba(0,0,0,0.08)] hover:-translate-y-0.5">
-                  <span aria-hidden className="flex size-[36px] items-center justify-center rounded-[8px] bg-[#e3f1e9] text-[#135130]">
-                    <Icon className="size-5" strokeWidth={1.8} />
+                <Link
+                  href={resolveHref(it.href ?? "page:grievance", slug)}
+                  className="flex h-full min-h-[190px] flex-col items-center rounded-[10px] border border-black/10 bg-white px-3 pt-6 pb-5 text-center shadow-[0_0_10px_rgba(0,0,0,0.05)] transition-transform hover:-translate-y-0.5"
+                >
+                  <span aria-hidden className="flex size-[62px] items-center justify-center rounded-[10px] bg-[#e3f1e6] text-[#18803d]">
+                    <Icon className="size-8" strokeWidth={2.2} />
                   </span>
-                  <span className="mt-3 text-[13px] font-semibold text-black">{pickText(it.label, locale)}</span>
-                  <span className="mt-1 text-[10px] text-[#414141]">{pickText(it.caption, locale)}</span>
+                  <span className="mt-5 text-[16px] leading-6 font-bold text-black">{pickText(it.label, locale)}</span>
+                  <span className="mt-1.5 text-[14px] leading-5 text-[#555]">{pickText(it.caption, locale)}</span>
                 </Link>
               </li>
             );
           })}
         </ul>
         {d.action?.href && (
-          <div className="mt-6 flex justify-center">
-            <Link href={resolveHref(d.action.href, slug)} className="inline-flex items-center gap-3 rounded-[8px] bg-[#135130] px-8 py-3 text-[14px] font-medium text-white hover:opacity-90">
-              {pickText(d.action.label, locale)} <ArrowRight className="size-4" aria-hidden />
+          <div className="mt-7 flex justify-center">
+            <Link href={resolveHref(d.action.href, slug)} className="inline-flex items-center gap-5 rounded-[8px] bg-[#135130] px-6 py-3.5 text-[16px] font-medium text-white shadow hover:opacity-90">
+              {pickText(d.action.label, locale)} <ArrowRight className="size-5" aria-hidden />
             </Link>
           </div>
         )}
@@ -334,37 +372,40 @@ export function RtsGridSection({ slug, locale, data }: SectionProps) {
 }
 
 const ACTION_STYLES = [
-  { fg: "text-[#6a1b9a]", border: "border-[#6a1b9a]", bg: "bg-[#faf7fd]", Icon: ShieldCheck },
-  { fg: "text-[#f5871f]", border: "border-[#f5871f]", bg: "bg-[#fffaf4]", Icon: Mail },
-  { fg: "text-[#1a62e0]", border: "border-[#1a62e0]", bg: "bg-[#f6f9fe]", Icon: CreditCard },
-  { fg: "text-[#135130]", border: "border-[#135130]", bg: "bg-[#f5faf7]", Icon: Search },
+  { fg: "text-[#6a2bc4]", border: "border-[#6a2bc4]", ring: "bg-[#efe8fb]", bg: "bg-[#fbfaff]", Icon: Settings },
+  { fg: "text-[#f5741f]", border: "border-[#f5871f]", ring: "bg-[#fff1e3]", bg: "bg-[#fffdfa]", Icon: MessageSquareText },
+  { fg: "text-[#1a62e0]", border: "border-[#1a62e0]", ring: "bg-[#e7effc]", bg: "bg-[#fafcff]", Icon: HandCoins },
+  { fg: "text-[#135130]", border: "border-[#135130]", ring: "bg-[#e6f1e9]", bg: "bg-[#fafdfb]", Icon: SearchCheck },
 ];
 
-/** `action-cards`: four service cards (grievance, feedback, tax, status) with a coloured action button. */
+/** `action-cards`: four service cards (grievance, feedback, tax, status): 36px icon + 20px title, 18px text, ticked list, full-width outline button. */
 export function ActionCardsSection({ slug, locale, data }: SectionProps) {
   const d = data as { items?: { title?: B; body?: B; bullets?: B[]; action?: B; href?: string }[] };
   return (
-    <section className="bg-cream py-8">
-      <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[62px]">
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <section className="bg-cream py-12">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
+        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {(d.items ?? []).map((it, i) => {
             const s = ACTION_STYLES[i % ACTION_STYLES.length]!;
             return (
-              <li key={i} className={`flex flex-col rounded-[10px] border border-black/10 p-5 shadow-[0_0_10px_rgba(0,0,0,0.06)] ${s.bg}`}>
-                <h3 className={`flex items-center gap-2 text-[14px] font-semibold ${s.fg}`}>
-                  <s.Icon className="size-5" aria-hidden /> {pickText(it.title, locale)}
+              <li key={i} className={`flex flex-col rounded-[10px] border border-black/10 px-5 pt-6 pb-7 shadow-[0_0_10px_rgba(0,0,0,0.04)] ${s.bg}`}>
+                <h3 className={`flex items-center gap-3 text-[20px] leading-7 font-semibold ${s.fg}`}>
+                  <span aria-hidden className={`flex size-11 shrink-0 items-center justify-center rounded-full ${s.ring}`}>
+                    <s.Icon className="size-[26px]" />
+                  </span>
+                  {pickText(it.title, locale)}
                 </h3>
-                <p className="mt-3 text-[16px] leading-6 text-black">{pickText(it.body, locale)}</p>
-                <ul className="mt-4 space-y-2 text-[12px] text-black">
+                <p className="mt-5 text-[18px] leading-[31px] text-[#333]">{pickText(it.body, locale)}</p>
+                <ul className="mt-6 space-y-3 text-[16px] leading-6 text-[#333]">
                   {(it.bullets ?? []).map((b, k) => (
-                    <li key={k} className="flex items-center gap-2">
-                      <span aria-hidden className={`size-1.5 rounded-full ${s.fg} bg-current`} />
+                    <li key={k} className="flex items-center gap-3">
+                      <CircleCheck className="size-[18px] shrink-0 text-[#18803d]" aria-hidden />
                       {pickText(b, locale)}
                     </li>
                   ))}
                 </ul>
-                <Link href={resolveHref(it.href ?? "#", slug)} className={`mt-auto flex items-center justify-between rounded-[6px] border bg-white px-4 py-2.5 text-[13px] ${s.border} ${s.fg}`}>
-                  <span className="mt-0">{pickText(it.action, locale)}</span> <ArrowRight className="size-4" aria-hidden />
+                <Link href={resolveHref(it.href ?? "page:services", slug)} className={`mt-auto flex w-full items-center justify-center gap-8 rounded-[6px] border bg-white px-4 py-3.5 text-[17px] font-medium hover:bg-black/[0.02] ${s.border} ${s.fg}`}>
+                  {pickText(it.action, locale)} <ArrowRight className="size-5" aria-hidden />
                 </Link>
               </li>
             );
@@ -375,48 +416,81 @@ export function ActionCardsSection({ slug, locale, data }: SectionProps) {
   );
 }
 
-/** `help-card`: "Need Help?" with contact details and common queries. */
-export function HelpCardSection({ locale, data }: SectionProps) {
-  const d = data as { heading?: B; body?: B; phone?: string; phoneHours?: B; email?: string; emailNote?: B; queriesTitle?: B; queries?: B[] };
+/** `help-card`: "Need Help?" — illustration, contact details and the common queries (each a link to the page that answers it). */
+export function HelpCardSection({ slug, locale, data }: SectionProps) {
+  const d = data as {
+    heading?: B;
+    body?: B;
+    imageUrl?: string;
+    phone?: string;
+    phoneHours?: B;
+    email?: string;
+    emailNote?: B;
+    queriesTitle?: B;
+    queries?: (B | { label?: B; href?: string })[];
+  };
+  const queries = (d.queries ?? []).map((q) => (q && typeof q === "object" && "label" in q ? q : { label: q as B, href: undefined }));
   return (
-    <section className="bg-cream py-6">
-      <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[62px]">
-        <div className={`${card} grid gap-6 p-6 lg:grid-cols-[1.2fr_1fr]`}>
-          <div className="flex items-center gap-6">
-            <span aria-hidden className="hidden size-[120px] shrink-0 items-center justify-center rounded-full bg-[#e3f1e9] text-[#135130] sm:flex">
-              <CircleHelp className="size-14" strokeWidth={1.4} />
+    <section className="bg-cream py-10">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
+        <div className="grid items-center gap-6 rounded-[10px] border border-black/20 bg-white p-5 lg:grid-cols-[300px_minmax(0,1fr)_minmax(0,500px)] lg:gap-8 lg:py-7 lg:pr-6 lg:pl-5">
+          {d.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- static design asset
+            <img src={d.imageUrl} alt="" width={304} height={274} loading="lazy" className="mx-auto hidden h-auto w-full max-w-[300px] sm:block" />
+          ) : (
+            <span aria-hidden className="mx-auto hidden size-[160px] items-center justify-center rounded-full bg-[#e3f1e9] text-[#135130] sm:flex">
+              <CircleHelp className="size-16" strokeWidth={1.4} />
             </span>
-            <div>
-              <h2 className="text-[22px] font-semibold text-black">{pickText(d.heading, locale)}</h2>
-              <p className="mt-1 text-[13px] text-[#414141]">{pickText(d.body, locale)}</p>
-              <p className="mt-4 flex items-start gap-3 text-[13px] text-black">
-                <Phone className="mt-0.5 size-4 text-[#135130]" aria-hidden />
-                <span>
-                  <a href={`tel:${d.phone}`} className="font-semibold hover:underline">
-                    {d.phone}
-                  </a>
-                  <span className="block text-[11px] text-[#414141]">{pickText(d.phoneHours, locale)}</span>
-                </span>
-              </p>
-              <p className="mt-3 flex items-start gap-3 text-[13px] text-black">
-                <Mail className="mt-0.5 size-4 text-[#135130]" aria-hidden />
-                <span>
-                  <a href={`mailto:${d.email}`} className="font-semibold hover:underline">
-                    {d.email}
-                  </a>
-                  <span className="block text-[11px] text-[#414141]">{pickText(d.emailNote, locale)}</span>
-                </span>
-              </p>
-            </div>
+          )}
+          <div>
+            <h2 className="text-[26px] leading-9 font-bold text-black">{pickText(d.heading, locale)}</h2>
+            <p className="mt-2 max-w-[310px] text-[16px] leading-7 text-[#333]">{pickText(d.body, locale)}</p>
+            <p className="mt-6 flex items-center gap-4 text-black">
+              <span aria-hidden className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#e6f1e9] text-[#18803d]">
+                <Phone className="size-5" />
+              </span>
+              <span>
+                <a href={`tel:${(d.phone ?? "").replace(/\s/g, "")}`} className="text-[17px] font-bold hover:underline">
+                  {d.phone}
+                </a>
+                <span className="block text-[14px] text-[#333]">{pickText(d.phoneHours, locale)}</span>
+              </span>
+            </p>
+            <p className="mt-5 flex items-center gap-4 text-black">
+              <span aria-hidden className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#e6f1e9] text-[#18803d]">
+                <Mail className="size-5" />
+              </span>
+              <span>
+                <a href={`mailto:${d.email}`} className="text-[17px] font-bold hover:underline">
+                  {d.email}
+                </a>
+                <span className="block text-[14px] text-[#333]">{pickText(d.emailNote, locale)}</span>
+              </span>
+            </p>
           </div>
-          <div className="rounded-[8px] border border-black/15 p-4">
-            <h3 className="text-[14px] font-semibold text-black">{pickText(d.queriesTitle, locale)}</h3>
-            <ul className="mt-3 divide-y divide-black/10">
-              {(d.queries ?? []).map((q, i) => (
-                <li key={i} className="flex items-center justify-between py-2.5 text-[12px] text-black">
-                  {pickText(q, locale)} <ArrowRight className="size-3.5" aria-hidden />
-                </li>
-              ))}
+          <div className="rounded-[10px] border border-black/10 bg-[#f6f7f6] p-4 pt-5">
+            <h3 className="px-1 text-[18px] font-semibold text-[#18803d]">{pickText(d.queriesTitle, locale)}</h3>
+            <ul className="mt-4 space-y-1.5">
+              {queries.map((q, i) => {
+                const inner = (
+                  <>
+                    <span className="min-w-0 flex-1">{pickText(q.label, locale)}</span>
+                    <ChevronRight className="size-5 shrink-0" aria-hidden />
+                  </>
+                );
+                const cls = "flex items-center gap-3 rounded-[6px] border border-black/5 bg-white px-4 py-3 text-[14px] text-black";
+                return (
+                  <li key={i}>
+                    {q.href ? (
+                      <Link href={resolveHref(q.href, slug)} className={`${cls} hover:border-[#135130]/40 hover:text-[#135130]`}>
+                        {inner}
+                      </Link>
+                    ) : (
+                      <div className={cls}>{inner}</div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </div>
@@ -424,4 +498,3 @@ export function HelpCardSection({ locale, data }: SectionProps) {
     </section>
   );
 }
-

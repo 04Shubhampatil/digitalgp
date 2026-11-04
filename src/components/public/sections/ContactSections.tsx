@@ -2,6 +2,7 @@ import { Clock, Globe, MapPin, Phone } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { pair, pickText, type Bilingual } from "@/i18n/text";
 import { loadTenant } from "@/lib/public-tenant";
+import { FacebookIcon, InstagramIcon, YouTubeIcon } from "../SocialIcons";
 import { MailtoForm, type MailtoField } from "./MailtoForm";
 import type { SectionProps } from "./index";
 
@@ -21,7 +22,7 @@ function Social({ href, label, children }: { href?: string; label: string; child
   // No URL in the website settings → no icon (a dead "#" link is worse than none).
   if (!href) return null;
   return (
-    <a href={href} target="_blank" rel="noopener" aria-label={label} className="flex size-9 items-center justify-center rounded-full bg-[#135130]/10 text-[#135130] hover:bg-[#135130]/20">
+    <a href={href} target="_blank" rel="noopener noreferrer" aria-label={label} className="flex items-center justify-center hover:opacity-80">
       {children}
     </a>
   );
@@ -49,7 +50,7 @@ export async function ContactCardsSection({ slug, locale, data }: SectionProps) 
             <span aria-hidden className={ring}>
               <Phone className="size-9" />
             </span>
-            <h3 className="mt-5 text-[20px] font-bold text-black">{pickText(L.inquiries, locale)}</h3>
+            <h3 className="mt-5 text-[20px] font-semibold text-[#135130]">{pickText(L.inquiries, locale)}</h3>
             {phone && (
               <a href={`tel:${phone}`} className="mt-3 text-[15px] text-black hover:underline">
                 {phone}
@@ -65,30 +66,33 @@ export async function ContactCardsSection({ slug, locale, data }: SectionProps) 
             <span aria-hidden className={ring}>
               <Clock className="size-9" />
             </span>
-            <h3 className="mt-5 text-[20px] font-bold text-black">{pickText(L.hours, locale)}</h3>
+            <h3 className="mt-5 text-[20px] font-semibold text-[#135130]">{pickText(L.hours, locale)}</h3>
             <p className="mt-3 text-[15px] whitespace-pre-line text-black">{hours}</p>
           </li>
           <li className={card}>
             <span aria-hidden className={ring}>
               <MapPin className="size-9" />
             </span>
-            <h3 className="mt-5 text-[20px] font-bold text-black">{pickText(L.address, locale)}</h3>
+            <h3 className="mt-5 text-[20px] font-semibold text-[#135130]">{pickText(L.address, locale)}</h3>
             <p className="mt-3 text-[15px] whitespace-pre-line text-black">{address}</p>
           </li>
           <li className={card}>
             <span aria-hidden className={ring}>
               <Globe className="size-9" />
             </span>
-            <h3 className="mt-5 text-[20px] font-bold text-black">{pickText(L.follow, locale)}</h3>
-            <div className="mt-5 flex gap-3">
+            <h3 className="mt-5 text-[20px] font-semibold text-[#135130]">{pickText(L.follow, locale)}</h3>
+            {/* Brand icons as in Figma (32px); networks without a URL in the settings stay hidden. */}
+            <div className="mt-5 flex items-center gap-3">
               <Social href={s.facebook} label="Facebook">
-                f
-              </Social>
-              <Social href={s.instagram} label="Instagram">
-                ◎
+                <FacebookIcon className="size-8" />
               </Social>
               <Social href={s.youtube} label="YouTube">
-                ▶
+                <span className="flex size-8 items-center justify-center rounded-full bg-[#e8221b]">
+                  <YouTubeIcon className="h-5 w-6 [&_rect]:fill-white [&_path]:fill-[#e8221b]" />
+                </span>
+              </Social>
+              <Social href={s.instagram} label="Instagram">
+                <InstagramIcon className="size-8" gradientId="ig-contact" />
               </Social>
             </div>
           </li>

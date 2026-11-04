@@ -24,6 +24,7 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
         eyebrow: t("Village Infrastructure & Public Facilities"),
         title: t("Stronger Infrastructure, Better Living —"),
         titleAccent: t("Building a Better Savardari"),
+        accentBlock: true,
         body: t("Explore the infrastructure and public facilities available in our village that ensure a better quality of life and sustainable development for all"),
         imageUrl: P + "infra-hero.png",
       },
@@ -53,7 +54,16 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
       },
     },
     // The map is a photograph; its legend, the dashboard and the two lists are data (same shapes as the backend sections).
-    { sectionKey: "infra-map", sortOrder: 10, data: { mapImageId: PH + "infra-map.webp", markers: [] } },
+    {
+      sectionKey: "infra-map",
+      sortOrder: 10,
+      data: {
+        heading: b("Village Infrastructure Map", "गावाचा पायाभूत सुविधा नकाशा"),
+        subheading: b("Explore our village map to locate public facilities and infrastructure.", "सार्वजनिक सुविधा व पायाभूत सुविधा शोधण्यासाठी गावाचा नकाशा पहा."),
+        mapImageId: PH + "infra-map.webp",
+        markers: [],
+      },
+    },
     {
       sectionKey: "map-filters",
       sortOrder: 15,
@@ -76,11 +86,11 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
       sortOrder: 20,
       data: {
         items: [
-          { icon: "water", title: b("Water Supply", "पाणी पुरवठा"), smallLabel: b("Supply Availability", "पुरवठ्याची उपलब्धता"), primaryValue: "98%", statusText: b("Sufficient", "पुरेसा"), bottomLabel: b("Villages with Full Supply", "पूर्ण पुरवठा असलेली गावे"), bottomValue: "5 / 5", buttonText: b("View Details", "तपशील पहा"), buttonLink: "page:infrastructure", theme: "blue" },
-          { icon: "zap", title: b("Electricity Supply", "वीज पुरवठा"), smallLabel: b("Current Status", "सध्याची स्थिती"), primaryValue: "24x7", statusText: b("Normal", "सामान्य"), bottomLabel: b("Power Outages (This Month)", "वीज खंडित (या महिन्यात)"), bottomValue: "0", buttonText: b("View Details", "तपशील पहा"), buttonLink: "page:infrastructure", theme: "orange" },
-          { icon: "sanitation", title: b("Sanitation Services", "स्वच्छता सेवा"), smallLabel: b("Toilet Utilization", "शौचालय वापर"), primaryValue: "100%", statusText: b("Active", "सक्रिय"), bottomLabel: b("Waste Collected (Today)", "कचरा संकलन (आज)"), bottomValue: "1.2 Ton", buttonText: b("View Details", "तपशील पहा"), buttonLink: "page:infrastructure", theme: "green" },
-          { icon: "light", title: b("Street Lighting", "पथदिवे"), smallLabel: b("Operational Status", "कार्यरत स्थिती"), primaryValue: "100%", statusText: b("All Lights Functional", "सर्व दिवे सुरू"), bottomLabel: b("Total LED Lights", "एकूण LED दिवे"), bottomValue: "250", buttonText: b("View Details", "तपशील पहा"), buttonLink: "page:infrastructure", theme: "orange" },
-          { icon: "road", title: b("Road Maintenance", "रस्ते देखभाल"), smallLabel: b("This Month", "या महिन्यात"), primaryValue: "12 km", statusText: b("Roads Maintained", "रस्ते दुरुस्त"), bottomLabel: b("Potholes Repaired", "खड्डे दुरुस्त"), bottomValue: "18", buttonText: b("View Details", "तपशील पहा"), buttonLink: "page:infrastructure", theme: "orange" },
+          { icon: "water", title: b("Water Supply", "पाणी पुरवठा"), smallLabel: b("Supply Availability", "पुरवठ्याची उपलब्धता"), primaryValue: "98%", statusText: b("Sufficient", "पुरेसा"), bottomLabel: b("Villages with Full Supply", "पूर्ण पुरवठा असलेली गावे"), bottomValue: "5 / 5", buttonText: b("View Details", "तपशील पहा"), buttonLink: "page:infrastructure#facility-grid", theme: "blue" },
+          { icon: "zap", title: b("Electricity Supply", "वीज पुरवठा"), smallLabel: b("Current Status", "सध्याची स्थिती"), primaryValue: "24x7", statusText: b("Normal", "सामान्य"), bottomLabel: b("Power Outages (This Month)", "वीज खंडित (या महिन्यात)"), bottomValue: "0", buttonText: b("View Details", "तपशील पहा"), buttonLink: "page:infrastructure#facility-grid", theme: "orange" },
+          { icon: "sanitation", title: b("Sanitation Services", "स्वच्छता सेवा"), smallLabel: b("Toilet Utilization", "शौचालय वापर"), primaryValue: "100%", statusText: b("Active", "सक्रिय"), bottomLabel: b("Waste Collected (Today)", "कचरा संकलन (आज)"), bottomValue: "1.2 Ton", buttonText: b("View Details", "तपशील पहा"), buttonLink: "page:infrastructure#facility-grid", theme: "green" },
+          { icon: "light", title: b("Street Lighting", "पथदिवे"), smallLabel: b("Operational Status", "कार्यरत स्थिती"), primaryValue: "100%", statusText: b("All Lights Functional", "सर्व दिवे सुरू"), bottomLabel: b("Total LED Lights", "एकूण LED दिवे"), bottomValue: "250", buttonText: b("View Details", "तपशील पहा"), buttonLink: "page:infrastructure#facility-grid", theme: "orange" },
+          { icon: "road", title: b("Road Maintenance", "रस्ते देखभाल"), smallLabel: b("This Month", "या महिन्यात"), primaryValue: "12 km", statusText: b("Roads Maintained", "रस्ते दुरुस्त"), bottomLabel: b("Potholes Repaired", "खड्डे दुरुस्त"), bottomValue: "18", buttonText: b("View Details", "तपशील पहा"), buttonLink: "page:infrastructure#facility-grid", theme: "orange" },
         ],
       },
     },
@@ -136,11 +146,14 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
       sectionKey: "top-stats",
       sortOrder: 5,
       data: {
+        // Figma: compact strip centred under the hero, overlapping its bottom edge.
+        variant: "strip",
+        overlap: true,
         items: [
           { icon: "wallet", title: b("Total Balance", "एकूण शिल्लक"), value: "₹12,567", description: b("↑ 5.2% vs LM", "↑ ५.२% मागील महिन्याच्या तुलनेत"), visible: true },
           { icon: "growth", title: b("Growth", "वाढ"), value: "₹2,345", description: b("↑ 8.1% vs LM", "↑ ८.१% मागील महिन्याच्या तुलनेत"), visible: true },
           { icon: "file", title: b("Total Sales", "एकूण विक्री"), value: "₹1,24,567", description: b("↑ 10.2% vs LM", "↑ १०.२% मागील महिन्याच्या तुलनेत"), visible: true },
-          { icon: "users", title: b("New Members", "नवीन सदस्य"), value: "₹3,456", description: b("↑ 4.7% vs LM", "↑ ४.७% मागील महिन्याच्या तुलनेत"), visible: true },
+          { icon: "rupee", title: b("New Members", "नवीन सदस्य"), value: "₹3,456", description: b("↑ 4.7% vs LM", "↑ ४.७% मागील महिन्याच्या तुलनेत"), visible: true },
         ],
       },
     },
@@ -158,7 +171,7 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
           { name: b("Donations & Contributions", "देणग्या आणि योगदान"), amount: "1000000.00", percentage: 3.4 },
           { name: b("Other Income", "इतर उत्पन्न"), amount: "700000.00", percentage: 2.5 },
         ],
-        supportCard: { enabled: true, icon: "rupee", title: b("Government Support", "शासकीय सहाय्य"), description: b("61.6% of our income comes from government grants and funding.", "आमच्या उत्पन्नाचा ६१.६% भाग शासकीय अनुदान आणि निधीतून येतो."), buttonText: b("View Income Details", "उत्पन्न तपशील पहा"), buttonLink: "page:finance" },
+        supportCard: { enabled: true, icon: "rupee", title: b("Government Support", "शासकीय सहाय्य"), description: b("61.6% of our income comes from government grants and funding.", "आमच्या उत्पन्नाचा ६१.६% भाग शासकीय अनुदान आणि निधीतून येतो."), buttonText: b("View Income Details", "उत्पन्न तपशील पहा"), buttonLink: "page:finance#budget-visualizer" },
       },
     },
     {
@@ -177,7 +190,7 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
           { name: b("Agriculture & Livelihood", "शेती आणि उपजीविका"), amount: "1900000.00", percentage: 8, colour: "#EAB308" },
           { name: b("Others / Administration", "इतर / प्रशासन"), amount: "1700000.00", percentage: 7, colour: "#6B7280" },
         ],
-        sideCard: { enabled: true, icon: "sprout", title: b("Our Focus", "आमचे लक्ष"), description: b("Maximum investment in infrastructure, sanitation, and education for a better tomorrow.", "उत्तम उद्यासाठी पायाभूत सुविधा, स्वच्छता आणि शिक्षणात सर्वाधिक गुंतवणूक."), buttonText: b("View Expenditure Details", "खर्च तपशील पहा"), buttonLink: "page:finance" },
+        sideCard: { enabled: true, icon: "chart", title: b("Our Focus", "आमचे लक्ष"), description: b("Maximum investment in infrastructure, sanitation, and education for a better tomorrow.", "उत्तम उद्यासाठी पायाभूत सुविधा, स्वच्छता आणि शिक्षणात सर्वाधिक गुंतवणूक."), buttonText: b("View Expenditure Details", "खर्च तपशील पहा"), buttonLink: "page:finance#budget-visualizer" },
       },
     },
     {
@@ -238,13 +251,14 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
         heading: b("Plans, Reports & Documents", "आराखडे, अहवाल आणि दस्तऐवज"),
         subtitle: b("Access important plans, reports, and documents", "महत्त्वाचे आराखडे, अहवाल आणि दस्तऐवज पहा"),
         backgroundColour: "#FFFFFF",
-        // Placeholder entries have no file yet, so they appear as cards without a download link.
+        // Placeholder entries have no file yet: "Download" opens the Announcements downloads until one is uploaded.
+        fallbackLink: "page:announcements#deadlines-downloads",
         items: [
-          { title: b("Annual Budget", "वार्षिक अंदाजपत्रक"), sample: true },
-          { title: b("Budget Utilization", "अंदाजपत्रक वापर"), sample: true },
-          { title: b("Financial Statement (FY 2023-24)", "वित्तीय विवरण (आ.व. २०२३-२४)"), sample: true },
-          { title: b("Audit Report", "लेखापरीक्षण अहवाल"), sample: true },
-          { title: b("Master Plan (2021-26)", "मास्टर प्लॅन (२०२१-२६)"), sample: true },
+          { title: b("Annual Budget", "वार्षिक अंदाजपत्रक"), size: "2.4 MB", sample: true },
+          { title: b("Budget Utilization", "अंदाजपत्रक वापर"), size: "1.8 MB", sample: true },
+          { title: b("Financial Statement (FY 2023-24)", "वित्तीय विवरण (आ.व. २०२३-२४)"), size: "3.2 MB", sample: true },
+          { title: b("Audit Report", "लेखापरीक्षण अहवाल"), size: "2.1 MB", sample: true },
+          { title: b("Master Plan (2021-26)", "मास्टर प्लॅन (२०२१-२६)"), size: "4.5 MB", sample: true },
         ],
       },
     },
@@ -259,10 +273,11 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
         title: t("Proud of Our Heritage. Inspired by Our Culture — This is"),
         body: t("Discover the rich history, vibrant culture, and warm hospitality that makes Savardari a unique and wonderful place to live and visit"),
         actions: [
-          { label: t("Explore History"), href: "page:about" },
-          { label: t("View Homestay Options"), href: "page:contact" },
+          { label: t("Explore History"), href: "page:about#about-history" },
+          { label: t("View Homestay Options"), href: "page:culture#homestay" },
         ],
-        imageUrl: P + "vil-hero.png",
+        // Figma: villagers making a rangoli in a temple courtyard.
+        imageUrl: P + "vil-hero-rangoli.png",
       },
     },
     {
@@ -276,7 +291,7 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
           "सावरदरी हे सांस्कृतिक मुळे, आध्यात्मिक वारसा आणि सामाजिक प्रगतीची परंपरा लाभलेले गाव आहे. आपल्या इतिहासातून त्याचा प्रवास, उगमापासून विकासापर्यंत, जाणून घ्या.",
         ),
         buttonLabel: b("Explore History", "इतिहास पहा"),
-        buttonLink: "page:about",
+        buttonLink: "page:about#about-history",
       },
     },
     {
@@ -333,21 +348,33 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
       },
     },
     {
-      // The "Voice of the Village" video card is left out: there is no real video yet.
       sectionKey: "fpo-gallery-voice",
       sortOrder: 70,
       data: {
         enabled: true,
         fpo: {
-          iconId: PH + "vil-fpo-logo.webp",
+          iconId: P + "vil-fpo-logo.png",
           title: b("Farmer Producer Organization (FPO)", "शेतकरी उत्पादक संस्था (FPO)"),
           description: b("Savardari FPO empowers farmers by collectivizing resources, improving market access, and increasing income.", "सावरदरी FPO संसाधने एकत्र करून, बाजारपेठेपर्यंत पोहोच सुधारून आणि उत्पन्न वाढवून शेतकऱ्यांना सक्षम करते."),
           points: [b("Better Market Linkage", "उत्तम बाजार जोडणी"), b("Quality Inputs & Services", "दर्जेदार निविष्ठा व सेवा"), b("Training & Capacity Building", "प्रशिक्षण व क्षमता वाढ"), b("Sustainable Farming", "शाश्वत शेती")],
+          // No FPO page yet: "Learn More" opens the Farmer Assistance Centre on the Employment page.
+          link: "page:employment#farmer-assistance",
+          linkLabel: b("Learn More", "अधिक जाणून घ्या"),
         },
         gallery: {
           title: b("Virtual Gallery", "आभासी दालन"),
           description: b("Explore historical photos and memories of our village.", "आपल्या गावाची ऐतिहासिक छायाचित्रे व आठवणी पाहा."),
           imageIds: [1, 2, 3, 4].map((n) => `${PH}vil-gallery-${n}.webp`),
+          link: "page:gallery",
+          linkLabel: b("Explore Gallery", "दालन पहा"),
+        },
+        // No village video yet: the card shows the design still and "Watch Videos" opens the Gallery videos.
+        voice: {
+          title: b("Voice of the Village", "गावाचा आवाज"),
+          description: b("Listen to our elders as they share the stories, traditions, and memories of Savardari.", "आपले ज्येष्ठ सावरदरीच्या कथा, परंपरा व आठवणी सांगतात त्या ऐका."),
+          imageId: P + "vil-voice.png",
+          link: "page:gallery#video-gallery",
+          linkLabel: b("Watch Videos", "व्हिडिओ पहा"),
         },
       },
     },
@@ -355,11 +382,14 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
       sectionKey: "success-stories",
       sortOrder: 80,
       data: {
+        heading: b("Success Stories from Our People", "आपल्या लोकांच्या यशोगाथा"),
+        // No story pages yet: "Read Story" stays on this block, where each story is shown in full.
+        viewAll: { label: b("View All Success Stories", "सर्व यशोगाथा पहा"), href: "page:culture#success-stories" },
         items: [
-          { imageId: PH + "vil-story-1.webp", title: b("From Farmer to Entrepreneur", "शेतकऱ्यापासून उद्योजकापर्यंत"), description: b("Ramesh transformed his farm into a successful organic farming business and inspires many.", "रमेश यांनी आपल्या शेतीचे रूपांतर यशस्वी सेंद्रिय शेती व्यवसायात केले आणि अनेकांना प्रेरणा दिली."), buttonText: b("Read Story", "कथा वाचा"), buttonLink: "page:culture", order: 1 },
-          { imageId: PH + "vil-story-2.webp", title: b("Empowering Rural Women", "ग्रामीण महिलांचे सक्षमीकरण"), description: b("The SHG women of Savardari are creating handmade products and earning with pride.", "सावरदरीतील बचत गटाच्या महिला हस्तनिर्मित वस्तू बनवून अभिमानाने कमाई करतात."), buttonText: b("Read Story", "कथा वाचा"), buttonLink: "page:culture", order: 2 },
-          { imageId: PH + "vil-story-3.webp", title: b("Youth Making a Difference", "बदल घडविणारे युवक"), description: b("Local youth are using digital skills to build careers and support the village.", "स्थानिक युवक डिजिटल कौशल्यांतून करिअर घडवून गावाला हातभार लावत आहेत."), buttonText: b("Read Story", "कथा वाचा"), buttonLink: "page:culture", order: 3 },
-          { imageId: PH + "vil-story-4.webp", title: b("Preserving Our Heritage", "आपला वारसा जपताना"), description: b("Our community is working together to preserve our culture for future generations.", "आपला समाज पुढील पिढ्यांसाठी संस्कृती जपण्यासाठी एकत्र काम करत आहे."), buttonText: b("Read Story", "कथा वाचा"), buttonLink: "page:culture", order: 4 },
+          { imageId: PH + "vil-story-1.webp", title: b("From Farmer to Entrepreneur", "शेतकऱ्यापासून उद्योजकापर्यंत"), description: b("Ramesh transformed his farm into a successful organic farming business and inspires many.", "रमेश यांनी आपल्या शेतीचे रूपांतर यशस्वी सेंद्रिय शेती व्यवसायात केले आणि अनेकांना प्रेरणा दिली."), buttonText: b("Read Story", "कथा वाचा"), buttonLink: "page:culture#success-stories", order: 1 },
+          { imageId: PH + "vil-story-2.webp", title: b("Empowering Rural Women", "ग्रामीण महिलांचे सक्षमीकरण"), description: b("The SHG women of Savardari are creating handmade products and earning with pride.", "सावरदरीतील बचत गटाच्या महिला हस्तनिर्मित वस्तू बनवून अभिमानाने कमाई करतात."), buttonText: b("Read Story", "कथा वाचा"), buttonLink: "page:culture#success-stories", order: 2 },
+          { imageId: PH + "vil-story-3.webp", title: b("Youth Making a Difference", "बदल घडविणारे युवक"), description: b("Local youth are using digital skills to build careers and support the village.", "स्थानिक युवक डिजिटल कौशल्यांतून करिअर घडवून गावाला हातभार लावत आहेत."), buttonText: b("Read Story", "कथा वाचा"), buttonLink: "page:culture#success-stories", order: 3 },
+          { imageId: PH + "vil-story-4.webp", title: b("Preserving Our Heritage", "आपला वारसा जपताना"), description: b("Our community is working together to preserve our culture for future generations.", "आपला समाज पुढील पिढ्यांसाठी संस्कृती जपण्यासाठी एकत्र काम करत आहे."), buttonText: b("Read Story", "कथा वाचा"), buttonLink: "page:culture#success-stories", order: 4 },
         ],
       },
     },

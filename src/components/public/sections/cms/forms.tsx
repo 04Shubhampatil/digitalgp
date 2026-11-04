@@ -1,10 +1,13 @@
+import { ArrowRight, ArrowUpCircle, BadgeCheck, ChartLine, CircleCheck, ClipboardList, Clock, FileBarChart, ShieldCheck, Users } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { GrievanceSubmitForm, GrievanceTrackForm } from "@/components/public/GrievanceForms";
+import { getGrievanceStats } from "@/lib/api/public";
 import { resolveHref } from "@/lib/href";
 import type { SectionProps } from "../index";
 import { MailtoForm } from "../MailtoForm";
+import { VolunteerCardsClient } from "./VolunteerCards";
 import { Band, Icon, QrCode, cardClass, externalProps, list, mediaUrl, tx, type B } from "./kit";
 
 // ------------------------------------------------------------------------------------ services
@@ -106,10 +109,13 @@ export function ServiceCategoriesSection({ slug, locale, data }: SectionProps) {
   );
 }
 
+/** Badge colours of the QR cards, in the Figma order. */
+const QR_COLOURS = ["#1b7a3a", "#7b3fc4", "#f5871f", "#1a6fe0", "#1b9a3a", "#8a3fc4"];
+
 /** `qr-codes`: a QR code (generated from the link) with the service icon, title and description. */
 export async function QrCodesSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
-  const raw = list<{ title?: B; description?: B; serviceIcon?: string; buttonText?: B; linkUrl?: string }>((data as { items?: unknown }).items).filter((i) => i.linkUrl);
+  const raw = list<{ title?: B; description?: B; serviceIcon?: string; buttonText?: B; linkUrl?: string; colour?: string }>((data as { items?: unknown }).items).filter((i) => i.linkUrl);
   if (raw.length === 0) return null;
   // Published links are absolute https addresses. Placeholder links may point at the site's own pages
   // ("page:grievance"); those are turned into full addresses here, because a QR code needs one to scan.
@@ -127,10 +133,11 @@ export async function QrCodesSection({ slug, locale, data }: SectionProps) {
           <li key={i}>
             <a href={q.linkUrl} {...externalProps} aria-label={`${tx(q.title, locale)}: ${tx(q.buttonText, locale) || t("open")}`} className={`${cardClass} flex h-full flex-col items-center text-center hover:shadow-md`}>
               <QrCode text={q.linkUrl!} label={tx(q.title, locale)} className="w-full max-w-[140px]" />
-              <span className="relative -mt-5 flex size-9 items-center justify-center rounded-full border-2 border-white bg-[#135130] text-white shadow">
-                <Icon name={q.serviceIcon} className="size-4" />
+              {/* Figma Services: each badge has its own colour (green, purple, orange, blue, green, purple). */}
+              <span className="relative -mt-7 flex size-[54px] items-center justify-center rounded-full border-2 border-white text-white shadow" style={{ backgroundColor: q.colour ?? QR_COLOURS[i % QR_COLOURS.length] }}>
+                <Icon name={q.serviceIcon} className="size-6" />
               </span>
-              <span className="mt-2 text-[14px] font-semibold text-black">{tx(q.title, locale)}</span>
+              <span className="mt-2 text-[16px] font-semibold text-black">{tx(q.title, locale)}</span>
               {tx(q.description, locale) && <span className="text-[12px] text-[#414141]">{tx(q.description, locale)}</span>}
             </a>
           </li>
@@ -206,7 +213,8 @@ export function ComplaintFormSection({ slug, locale, data }: SectionProps) {
       <div className="mx-auto max-w-[1320px] px-4 sm:px-8">
         <h2 className="text-center text-[30px] leading-[45px] font-semibold text-black">{tx(d.heading, locale)}</h2>
         {tx(d.description, locale) && <p className="mx-auto mt-1 mb-6 max-w-2xl text-center text-[14px] text-[#414141]">{tx(d.description, locale)}</p>}
-        <div className="mt-4 rounded-[10px] border border-black/20 bg-white p-6 sm:p-8">
+        {/* The form draws its own bordered card. */}
+        <div className="mt-4">
           <GrievanceSubmitForm slug={slug} />
         </div>
       </div>
@@ -222,7 +230,8 @@ export function TrackComplaintSection({ slug, locale, data }: SectionProps) {
       <div className="mx-auto max-w-[1320px] px-4 sm:px-8">
         <h2 className="text-center text-[30px] leading-[45px] font-semibold text-black">{tx(d.heading, locale)}</h2>
         {tx(d.description, locale) && <p className="mx-auto mt-1 mb-6 max-w-2xl text-center text-[14px] text-[#414141]">{tx(d.description, locale)}</p>}
-        <div className="mt-4 rounded-[10px] border border-black/20 bg-white p-6 sm:p-8">
+        {/* The lookup draws its own card. */}
+        <div className="mt-4">
           <GrievanceTrackForm slug={slug} />
         </div>
       </div>
@@ -230,42 +239,85 @@ export function TrackComplaintSection({ slug, locale, data }: SectionProps) {
   );
 }
 
-/** `escalation-matrix`: numbered steps and the status legend. */
-export async function EscalationMatrixSection({ locale, data }: SectionProps) {
+/** Step badges of the Figma escalation matrix, in step order (registered → resolved). */
+const STEP_ICONS = [ClipboardList, Users, BadgeCheck, ArrowUpCircle, ShieldCheck];
+
+/**
+ * `escalation-matrix` (Figma 375:11358, top half): left-aligned heading, the steps as round icon badges
+ * with a numbered dot and arrows between them, and on the right the live "Complaint Status" card
+ * (GET /public/:slug/stats/grievances). The status legend is kept below the steps.
+ */
+export async function EscalationMatrixSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
   const d = data as { steps?: unknown; statusSummary?: unknown };
   const steps = list<{ title?: B; description?: B }>(d.steps);
   const statuses = list<{ label?: B; colour?: string }>(d.statusSummary);
   if (steps.length === 0 && statuses.length === 0) return null;
+  const stats = await getGrievanceStats(slug);
+  const num = (n: number) => n.toLocaleString(locale === "mr" ? "mr-IN" : "en-IN");
+  const rows = stats
+    ? [
+        { icon: FileBarChart, label: t("statusTotal"), value: num(stats.total), fg: "#1a62e0", bg: "#eaf2fd", border: "#b9d0f5", text: "text-black" },
+        { icon: CircleCheck, label: t("statusResolved"), value: num(stats.resolved), fg: "#2f8a3c", bg: "#eef7ee", border: "#cfe6cf", text: "text-black" },
+        { icon: Clock, label: t("statusPending"), value: num(stats.pending), fg: "#f5871f", bg: "#fef4e8", border: "#f8d9b5", text: "text-black" },
+        { icon: ChartLine, label: t("statusRate"), value: stats.resolutionRate === null ? "—" : `${stats.resolutionRate}%`, fg: "#7b2cbf", bg: "#f4ecfc", border: "#dcc8f2", text: "text-[#7b2cbf]" },
+      ]
+    : [];
   return (
-    <Band heading={t("escalation")} subheading={t("escalationSub")}>
-      {steps.length > 0 && (
-        <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(170px,1fr))]">
-          {steps.map((s, i) => (
-            <li key={i} className={`${cardClass} relative text-center`}>
-              {i < steps.length - 1 && (
-                <span aria-hidden className="absolute top-1/2 -right-3.5 z-10 hidden -translate-y-1/2 text-[#135130] lg:block">
-                  →
-                </span>
-              )}
-              <span className="mx-auto flex size-10 items-center justify-center rounded-full bg-[#135130] text-[15px] font-semibold text-white">{i + 1}</span>
-              <p className="mt-3 text-[14px] font-semibold text-black">{tx(s.title, locale)}</p>
-              {tx(s.description, locale) && <p className="mt-1 text-[12px] leading-5 text-[#414141]">{tx(s.description, locale)}</p>}
-            </li>
-          ))}
-        </ol>
-      )}
-      {statuses.length > 0 && (
-        <ul className="mt-5 flex flex-wrap gap-2">
-          {statuses.map((s, i) => (
-            <li key={i} className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3 py-1.5 text-[12px] font-medium text-black">
-              <span aria-hidden className="size-3 rounded-full" style={{ backgroundColor: s.colour }} />
-              {tx(s.label, locale)}
-            </li>
-          ))}
-        </ul>
-      )}
-    </Band>
+    <section className="bg-cream py-8">
+      <div className={`mx-auto grid max-w-[1440px] gap-8 px-4 sm:px-8 lg:px-[60px] ${rows.length ? "lg:grid-cols-[minmax(0,1fr)_436px]" : ""}`}>
+        <div>
+          <h2 className="text-[22px] leading-8 font-semibold text-black">{t("escalationTitle")}</h2>
+          {steps.length > 0 && (
+            <ol className="mt-6 grid grid-cols-2 gap-y-6 sm:grid-cols-3 lg:flex lg:justify-between">
+              {steps.map((s, i) => {
+                const StepIcon = STEP_ICONS[i % STEP_ICONS.length]!;
+                return (
+                  <li key={i} className="relative flex flex-1 flex-col items-center text-center">
+                    {i < steps.length - 1 && (
+                      <ArrowRight aria-hidden className="absolute top-[30px] -right-3 hidden size-5 -translate-y-1/2 text-[#6b6b6b] lg:block" />
+                    )}
+                    <span className="flex size-[60px] items-center justify-center rounded-full border border-black/10 bg-white text-[#135130] shadow-[0_0_8px_rgba(0,0,0,0.08)]">
+                      <StepIcon aria-hidden className="size-7" />
+                    </span>
+                    <span className="relative mt-4 flex w-full justify-center">
+                      <span aria-hidden className="absolute inset-x-4 top-1/2 h-px bg-black/15" />
+                      <span className="relative flex size-6 items-center justify-center rounded-full bg-[#135130] text-[12px] font-semibold text-white">{i + 1}</span>
+                    </span>
+                    <p className="mt-3 text-[14px] font-semibold text-[#135130]">{tx(s.title, locale)}</p>
+                    {tx(s.description, locale) && <p className="mt-1 max-w-[170px] text-[13px] leading-[22px] text-[#414141]">{tx(s.description, locale)}</p>}
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+          {statuses.length > 0 && (
+            <ul className="mt-5 flex flex-wrap gap-2">
+              {statuses.map((s, i) => (
+                <li key={i} className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3 py-1.5 text-[12px] font-medium text-black">
+                  <span aria-hidden className="size-3 rounded-full" style={{ backgroundColor: s.colour }} />
+                  {tx(s.label, locale)}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        {rows.length > 0 && (
+          <div>
+            <h2 className="text-[20px] leading-8 font-semibold text-black">{t("complaintStatus")}</h2>
+            <ul className="mt-4 space-y-2.5">
+              {rows.map((r) => (
+                <li key={r.label} className="flex h-[45px] items-center gap-4 rounded-[6px] border px-4" style={{ backgroundColor: r.bg, borderColor: r.border }}>
+                  <r.icon aria-hidden className="size-6 shrink-0" style={{ color: r.fg }} />
+                  <span className={`flex-1 text-[15px] ${r.text}`}>{r.label}</span>
+                  <span className="w-20 text-[16px] font-semibold text-black">{r.value}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -316,138 +368,158 @@ export async function CmsContactCardsSection({ slug, locale, data }: SectionProp
 
 const MAP_PREFIXES = ["https://www.google.com/maps/embed", "https://maps.google.com/maps", "https://www.openstreetmap.org/export/embed"];
 
-/** `office-location` (card in a two-column row with `feedback-form`): address and a sandboxed Google Maps / OpenStreetMap embed. */
+/** Contact-page heading that sits above its card (Figma: 30px, Title Case). */
+function OutsideHeading({ children, center }: { children: React.ReactNode; center?: boolean }) {
+  return <h2 className={`mb-5 text-[30px] leading-[45px] font-semibold text-black ${center ? "text-center" : ""}`}>{children}</h2>;
+}
+
+/**
+ * `office-location` (left column of a row with `feedback-form`): heading above the card, then a
+ * ~420px sandboxed Google Maps / OpenStreetMap embed with the address under it.
+ */
 export async function OfficeLocationSection({ locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
   const d = data as { title?: B; address?: B; mapEmbedUrl?: string };
   // Re-checked here as well as in the backend schema: only these providers may be framed.
   const map = d.mapEmbedUrl && MAP_PREFIXES.some((p) => d.mapEmbedUrl!.startsWith(p)) ? d.mapEmbedUrl : undefined;
   return (
-    <div className={cardClass}>
-      <h2 className="text-[22px] font-semibold text-black">{tx(d.title, locale)}</h2>
-      {tx(d.address, locale) && (
-        <p className="mt-2 flex gap-2 text-[14px] leading-6 whitespace-pre-line text-[#414141]">
-          <Icon name="map" className="mt-1 size-4 shrink-0 text-[#135130]" />
-          {tx(d.address, locale)}
-        </p>
-      )}
-      {map && (
-        <iframe
-          src={map}
-          title={tx(d.title, locale) || t("officeMap")}
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-          sandbox="allow-scripts allow-same-origin"
-          className="mt-4 h-72 w-full rounded-[10px] border border-black/10"
-        />
-      )}
+    <div className="flex flex-col">
+      <OutsideHeading>{tx(d.title, locale) || t("officeLocationTitle")}</OutsideHeading>
+      <div className="flex flex-1 flex-col overflow-hidden rounded-[10px] border border-black/15 bg-white">
+        {map && (
+          <iframe
+            src={map}
+            title={tx(d.title, locale) || t("officeMap")}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            sandbox="allow-scripts allow-same-origin allow-popups"
+            className="h-[420px] w-full flex-1 border-0"
+          />
+        )}
+        {tx(d.address, locale) && (
+          <p className="flex gap-2 px-5 py-3 text-[14px] leading-6 whitespace-pre-line text-[#414141]">
+            <Icon name="map" className="mt-1 size-4 shrink-0 text-[#135130]" />
+            {tx(d.address, locale)}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
 
-/** `feedback-form` (card in a two-column row with `office-location`): opens the visitor's mail app (no feedback endpoint yet). */
+/**
+ * `feedback-form` (right column of a row with `office-location`): POST /public/:slug/feedback, or the
+ * visitor's mail app while the section is placeholder content. The row wrapper only carries the first
+ * section's id, so this column carries id="feedback-form" for "page:contact#feedback-form" links.
+ */
 export async function FeedbackFormSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
   const d = data as { enabled?: boolean; showOnWebsite?: boolean; heading?: B; description?: B; recipientEmail?: string; submitButtonText?: B };
   if (d.enabled === false || d.showOnWebsite === false || !d.recipientEmail) return null;
+  const input = "w-full rounded-[10px] border border-black/30 bg-white px-4 text-[15px] font-normal text-black placeholder:text-[#8a8a8a] focus:border-[#135130] focus:outline-none";
   return (
-    <div className={cardClass}>
-      <h2 className="text-[22px] font-semibold text-black">{tx(d.heading, locale)}</h2>
-      {tx(d.description, locale) && <p className="mt-1 mb-4 text-[13px] text-[#414141]">{tx(d.description, locale)}</p>}
-      <MailtoForm
-        to={d.recipientEmail}
-        subject={tx(d.heading, locale) || t("feedback")}
-        submitLabel={tx(d.submitButtonText, locale) || t("send")}
-        hint={t("mailHint")}
-        api={{ slug, kind: "feedback" }}
-        fields={[
-          { name: "name", label: t("yourName"), required: true },
-          { name: "email", label: t("yourEmail"), type: "email" },
-          { name: "message", label: t("yourMessage"), type: "textarea", span: 4, required: true },
-        ]}
-      />
+    <div id="feedback-form" className="flex scroll-mt-[180px] flex-col">
+      <OutsideHeading>{tx(d.heading, locale) || t("feedbackTitle")}</OutsideHeading>
+      <div className="flex-1 rounded-[10px] border border-black/25 bg-white p-6">
+        {tx(d.description, locale) && <p className="mb-4 text-[13px] text-[#414141]">{tx(d.description, locale)}</p>}
+        <MailtoForm
+          to={d.recipientEmail}
+          subject={tx(d.heading, locale) || t("feedback")}
+          submitLabel={tx(d.submitButtonText, locale) || t("send")}
+          hint={t("mailHint")}
+          api={{ slug, kind: "feedback" }}
+          labelClass="text-[15px] font-medium text-black"
+          inputClass={`${input} min-h-[56px] py-3`}
+          submitClass="mt-2 h-[56px] w-full rounded-full bg-[#135130] px-6 text-[17px] font-semibold text-white hover:opacity-90 disabled:opacity-60"
+          fields={[
+            { name: "name", label: t("fbName"), placeholder: t("phName"), required: true },
+            { name: "email", label: t("fbEmail"), placeholder: t("phEmail"), type: "email" },
+            { name: "phone", label: t("fbPhone"), placeholder: t("phPhone"), type: "tel" },
+            // The feedback API has no subject field: the subject is sent as the first line of the message.
+            { name: "subject", label: t("fbSubject"), placeholder: t("phSubject"), foldInto: "message" },
+            { name: "message", label: t("fbMessage"), placeholder: t("phMessage"), type: "textarea", span: 4, required: true },
+          ]}
+        />
+      </div>
     </div>
   );
 }
 
-/** `partners`: partner logos with their own logo rows. */
+/** `partners`: groups of partners — icon in a pale circle beside the title, description, then the logos. */
 export async function PartnersSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
   const items = list<{ logoId?: string; title?: B; description?: B; partnerLogoIds?: string[] }>((data as { items?: unknown }).items);
   if (items.length === 0) return null;
   return (
-    <Band tone="white" heading={t("partnersHeading")}>
-      <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {items.map((p, i) => {
-          const logo = mediaUrl(slug, p.logoId);
-          return (
-            <li key={i} className={cardClass}>
-              {logo && (
-                // eslint-disable-next-line @next/next/no-img-element -- website media served by the backend
-                <img src={logo} alt="" loading="lazy" className="h-14 w-auto object-contain" />
-              )}
-              <p className="mt-3 text-[15px] font-semibold text-black">{tx(p.title, locale)}</p>
-              {tx(p.description, locale) && <p className="mt-1 text-[13px] leading-5 text-[#414141]">{tx(p.description, locale)}</p>}
-              {list<string>(p.partnerLogoIds).length > 0 && (
-                <ul className="mt-3 flex flex-wrap gap-3">
-                  {list<string>(p.partnerLogoIds).map((id) => (
-                    <li key={id}>
-                      {/* eslint-disable-next-line @next/next/no-img-element -- website media served by the backend */}
-                      <img src={mediaUrl(slug, id)} alt="" loading="lazy" className="h-9 w-auto object-contain" />
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    </Band>
-  );
-}
-
-/** `volunteer-categories`: the areas volunteers can join (also offered in the registration form); cards when they have descriptions. */
-export async function VolunteerCategoriesSection({ slug, locale, data }: SectionProps) {
-  const t = await getTranslations("public.cms");
-  const items = list<{ title?: B; description?: B; iconId?: string; order?: number }>((data as { items?: unknown }).items).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-  if (items.length === 0) return null;
-  const cards = items.some((c) => tx(c.description, locale) || c.iconId);
-  return (
-    <Band heading={t("volunteerAreas")} tone="cream">
-      {cards ? (
-        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {items.map((c, i) => {
-            const icon = mediaUrl(slug, c.iconId);
+    <section className="bg-cream py-10">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
+        <OutsideHeading center>{t("partnersTitle")}</OutsideHeading>
+        <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {items.map((p, i) => {
+            const logo = mediaUrl(slug, p.logoId);
             return (
-              <li key={i} className={`${cardClass} flex flex-col items-center text-center`}>
-                {icon ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- website media served by the backend
-                  <img src={icon} alt="" loading="lazy" className="size-16 rounded-full object-cover" />
-                ) : (
-                  <span className="flex size-16 items-center justify-center rounded-full bg-[#135130]/10 text-[#135130]">
-                    <Icon name="users" className="size-8" />
+              <li key={i} className="flex flex-col rounded-[10px] bg-white p-6 shadow-[0_0_10px_rgba(0,0,0,0.12)]">
+                <div className="flex items-start gap-4">
+                  <span className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#e9f4e9] text-[#135130]">
+                    {logo ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- website media served by the backend
+                      <img src={logo} alt="" loading="lazy" className="size-full object-contain" />
+                    ) : (
+                      <Icon name="users" className="size-7" />
+                    )}
                   </span>
+                  <div>
+                    <p className="text-[20px] leading-7 font-semibold text-[#135130]">{tx(p.title, locale)}</p>
+                    {tx(p.description, locale) && <p className="mt-2 text-[14px] leading-6 text-[#414141]">{tx(p.description, locale)}</p>}
+                  </div>
+                </div>
+                {list<string>(p.partnerLogoIds).length > 0 && (
+                  <ul className="mt-6 grid grid-cols-3 items-center gap-4">
+                    {list<string>(p.partnerLogoIds).map((id) => (
+                      <li key={id} className="flex justify-center">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- website media served by the backend */}
+                        <img src={mediaUrl(slug, id)} alt="" loading="lazy" className="h-[60px] w-auto max-w-full object-contain" />
+                      </li>
+                    ))}
+                  </ul>
                 )}
-                <p className="mt-3 text-[16px] font-semibold text-black">{tx(c.title, locale)}</p>
-                {tx(c.description, locale) && <p className="mt-1 text-[13px] leading-5 text-[#414141]">{tx(c.description, locale)}</p>}
               </li>
             );
           })}
         </ul>
-      ) : (
-        <ul className="flex flex-wrap gap-2">
-          {items.map((c, i) => (
-            <li key={i} className="rounded-full border border-[#135130] bg-white px-4 py-2 text-[13px] font-medium text-[#135130]">
-              {tx(c.title, locale)}
-            </li>
-          ))}
-        </ul>
-      )}
-    </Band>
+      </div>
+    </section>
   );
 }
 
-/** `volunteer-registration`: opens the visitor's mail app; the category list comes from `volunteer-categories`. */
+/**
+ * `volunteer-categories`: "Become a Volunteer" heading (taken from `volunteer-registration`) and one
+ * selectable card per category; choosing a card preselects that category in the registration form.
+ */
+export async function VolunteerCategoriesSection({ slug, locale, data, siblings }: SectionProps) {
+  const t = await getTranslations("public.cms");
+  const items = list<{ title?: B; description?: B; iconId?: string; order?: number }>((data as { items?: unknown }).items).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  if (items.length === 0) return null;
+  const reg = (siblings?.["volunteer-registration"] ?? {}) as { heading?: B; description?: B };
+  return (
+    <section className="bg-cream py-10">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
+        <h2 className="text-center text-[30px] leading-[45px] font-semibold text-black">{tx(reg.heading, locale) || t("becomeVolunteer")}</h2>
+        {tx(reg.description, locale) && <p className="mt-3 text-center text-[20px] leading-[30px] text-black">{tx(reg.description, locale)}</p>}
+        <VolunteerCardsClient
+          field="area"
+          items={items.map((c) => ({ title: tx(c.title, locale), description: tx(c.description, locale), icon: mediaUrl(slug, c.iconId) }))}
+        />
+      </div>
+    </section>
+  );
+}
+
+/**
+ * `volunteer-registration`: "Volunteer Registration Form" card (POST /public/:slug/volunteers, or the
+ * mail app while placeholder). Name / email / phone / category are API fields; the design's Address
+ * and Area of Interest are not, so they are sent as lines of the optional message.
+ */
 export async function VolunteerRegistrationSection({ slug, locale, data, siblings }: SectionProps) {
   const t = await getTranslations("public.cms");
   const d = data as { enabled?: boolean; showOnWebsite?: boolean; heading?: B; description?: B; deadline?: string; recipientEmail?: string; submitButtonText?: B };
@@ -456,24 +528,44 @@ export async function VolunteerRegistrationSection({ slug, locale, data, sibling
     .map((c) => tx(c.title, locale))
     .filter(Boolean);
   const deadline = d.deadline ? new Date(`${d.deadline}T00:00:00`).toLocaleDateString(locale === "mr" ? "mr-IN" : "en-IN", { day: "numeric", month: "long", year: "numeric" }) : "";
+  // Without the category cards above, this section shows the page heading and subtitle itself.
+  const standalone = !siblings?.["volunteer-categories"];
+  const sub = [standalone ? tx(d.description, locale) : "", deadline ? t("deadline", { date: deadline }) : ""].filter(Boolean).join(" · ");
+  const input = "h-[48px] w-full rounded-[10px] border border-black/30 bg-white px-4 text-[15px] font-normal text-black placeholder:text-[#8a8a8a] focus:border-[#135130] focus:outline-none";
   return (
-    <Band heading={tx(d.heading, locale)} subheading={[tx(d.description, locale), deadline && t("deadline", { date: deadline })].filter(Boolean).join(" · ")}>
-      <div className={`${cardClass} sm:p-8`}>
-        <MailtoForm
-          to={d.recipientEmail}
-          subject={tx(d.heading, locale) || t("volunteer")}
-          submitLabel={tx(d.submitButtonText, locale) || t("send")}
-          hint={t("mailHint")}
-          api={{ slug, kind: "volunteers", map: { area: "category" } }}
-          fields={[
-            { name: "name", label: t("yourName"), required: true },
-            { name: "phone", label: t("yourPhone"), type: "tel", required: true },
-            { name: "email", label: t("yourEmail"), type: "email", required: true },
-            ...(categories.length ? [{ name: "area", label: t("volunteerArea"), type: "select" as const, options: categories, placeholder: t("choose"), required: true }] : []),
-            { name: "message", label: t("yourMessage"), type: "textarea", span: 4 },
-          ]}
-        />
+    <section className="bg-cream py-10">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
+        {standalone && <OutsideHeading center>{tx(d.heading, locale) || t("becomeVolunteer")}</OutsideHeading>}
+        <div className="rounded-[10px] border border-black/25 bg-white px-6 pt-4 pb-7">
+          <h3 className="text-center text-[24px] leading-9 font-semibold text-[#135130]">{t("volunteerFormTitle")}</h3>
+          {sub && <p className="mt-1 text-center text-[14px] text-[#414141]">{sub}</p>}
+          <div className="mt-4">
+            <MailtoForm
+              to={d.recipientEmail}
+              subject={tx(d.heading, locale) || t("volunteer")}
+              submitLabel={tx(d.submitButtonText, locale) || t("send")}
+              hint={t("mailHint")}
+              api={{ slug, kind: "volunteers", map: { area: "category" } }}
+              gridClass="sm:grid-cols-2 lg:grid-cols-12 lg:gap-x-7"
+              labelClass="text-[18px] font-semibold text-black"
+              inputClass={input}
+              submitWrapClass="flex flex-col justify-end gap-2 sm:col-span-full lg:col-span-3"
+              submitClass="h-[46px] w-full rounded-full bg-[#135130] px-6 text-[15px] font-semibold text-white hover:opacity-90 disabled:opacity-60"
+              fields={[
+                { name: "name", label: t("fullName"), placeholder: t("phName"), required: true, className: "lg:col-span-3" },
+                { name: "email", label: t("fbEmail"), placeholder: t("phEmail"), type: "email", required: true, className: "lg:col-span-3" },
+                { name: "phone", label: t("fbPhone"), placeholder: t("phPhone"), type: "tel", required: true, className: "lg:col-span-3" },
+                ...(categories.length
+                  ? [{ name: "area", label: t("volCategory"), type: "select" as const, options: categories, placeholder: t("selectCategory"), required: true, className: "lg:col-span-3" }]
+                  : []),
+                // Not API fields: sent as lines of the volunteer's message.
+                { name: "address", label: t("volAddress"), placeholder: t("phAddress"), foldInto: "message", className: "lg:col-span-5" },
+                { name: "interest", label: t("areaOfInterest"), placeholder: t("phArea"), foldInto: "message", className: "lg:col-span-4" },
+              ]}
+            />
+          </div>
+        </div>
       </div>
-    </Band>
+    </section>
   );
 }

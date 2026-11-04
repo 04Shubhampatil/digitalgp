@@ -26,6 +26,8 @@ export const FIGMA_PAGE_SECTIONS_D: Partial<Record<PageKey, FallbackSection[]>> 
       sortOrder: 5,
       data: {
         viewAll: t("View All"),
+        // The list below has no category filter yet, so every tile jumps to it.
+        href: "page:announcements#announce-feed",
         items: [t("Community"), t("Welfare Schemes"), t("Transfer"), t("Bills"), t("Jobs"), t("Events")].map((label) => ({ label })),
       },
     },
@@ -35,7 +37,7 @@ export const FIGMA_PAGE_SECTIONS_D: Partial<Record<PageKey, FallbackSection[]>> 
       data: {
         heading: t("Latest Announcements"),
         calendarTitle: t("Interactive Calendar"),
-        viewAll: { label: t("View All"), href: "page:announcements" },
+        viewAll: { label: t("View All"), href: "page:announcements#announce-feed" },
         viewAllLong: t("View All Announcements"),
         items: [
           { title: t("Gram Sabha Meeting Notice - July 2026"), body: t("All villagers are informed that the Gram Sabha meeting will be held on 15th July 2026."), date: t("July 5, 2025") },
@@ -58,7 +60,8 @@ export const FIGMA_PAGE_SECTIONS_D: Partial<Record<PageKey, FallbackSection[]>> 
       data: {
         deadlinesTitle: t("Important Deadlines"),
         downloadsTitle: t("Downloads"),
-        viewAll: { label: t("View All"), href: "page:announcements" },
+        viewAll: { label: t("View All"), href: "page:announcements#announce-feed" },
+        downloadsViewAll: { label: t("View All"), href: "page:finance#documents" },
         deadlines: [
           { date: t("July 31, 2026"), title: t("Property Tax Payment"), caption: t("Last Date") },
           { date: t("Jun 15, 2026"), title: t("Gram Panchayat"), caption: t("Sessions") },
@@ -66,11 +69,11 @@ export const FIGMA_PAGE_SECTIONS_D: Partial<Record<PageKey, FallbackSection[]>> 
           { date: t("Jun 15, 2026"), title: t("Women’s Awareness"), caption: t("Program") },
         ],
         files: [
-          { name: t("Gram Sabha Meeting Format"), type: "PDF", size: "125 KB" },
-          { name: t("Property Tax Application Form"), type: "PDF", size: "98 KB" },
-          { name: t("Birth Certificate Application Form"), type: "PDF", size: "153 KB" },
-          { name: t("Government Circular - Plastic Ban"), type: "PDF", size: "208 KB" },
-          { name: t("Financial Year Budget 2024-25"), type: "PDF", size: "1.2 MB" },
+          { name: t("Gram Sabha Meeting Format"), type: "PDF", size: "125 KB", href: "page:announcements#announce-feed" },
+          { name: t("Property Tax Application Form"), type: "PDF", size: "98 KB", href: "page:services#action-cards" },
+          { name: t("Birth Certificate Application Form"), type: "PDF", size: "153 KB", href: "page:services#rts-grid" },
+          { name: t("Government Circular - Plastic Ban"), type: "PDF", size: "208 KB", href: "page:announcements#announce-feed" },
+          { name: t("Financial Year Budget 2024-25"), type: "PDF", size: "1.2 MB", href: "page:finance#documents" },
         ],
       },
     },
@@ -84,7 +87,7 @@ export const FIGMA_PAGE_SECTIONS_D: Partial<Record<PageKey, FallbackSection[]>> 
           { label: t("Employment"), caption: t("8+ Services"), href: "page:employment" },
           { label: t("Education"), caption: t("15+ Services"), href: "page:education" },
           { label: t("Women"), caption: t("10+ Services"), href: "page:schemes" },
-          { label: t("Announcements"), caption: t("5+ Update"), href: "page:announcements" },
+          { label: t("Announcements"), caption: t("5+ Update"), href: "page:announcements#announce-feed" },
           { label: t("Events & Drives"), caption: t("7+ Programs"), href: "page:gallery" },
         ],
       },
@@ -151,11 +154,12 @@ export const FIGMA_PAGE_SECTIONS_D: Partial<Record<PageKey, FallbackSection[]>> 
       sortOrder: 30,
       data: {
         source: "services",
+        variant: "band",
         items: [
           { live: "certificatesIssuedThisMonth", icon: "file", title: b("Certificates Issued This Month", "या महिन्यात दिलेले दाखले"), value: "500+", background: "#E8F1EA", visible: true },
-          { live: "grievancesResolvedThisMonth", icon: "info", title: b("Grievances Resolved This Month", "या महिन्यात निराकरण झालेल्या तक्रारी"), value: "250+", background: "#E8F1EA", visible: true },
+          { live: "grievancesResolvedThisMonth", icon: "file", title: b("Grievances Resolved This Month", "या महिन्यात निराकरण झालेल्या तक्रारी"), value: "250+", background: "#E8F1EA", visible: true },
           { live: "taxCollectedThisMonth", format: "money", icon: "rupee", title: b("Tax Collection This Month", "या महिन्यातील कर संकलन"), value: "₹12.5L+", background: "#E8F1EA", visible: true },
-          { live: "citizenSatisfactionRate", format: "percent", icon: "shield", title: b("Citizen Satisfaction Rate", "नागरिक समाधान दर"), value: "98%", background: "#E8F1EA", visible: true },
+          { live: "citizenSatisfactionRate", format: "percent", icon: "award", title: b("Citizen Satisfaction Rate", "नागरिक समाधान दर"), value: "98%", background: "#E8F1EA", visible: true },
         ],
       },
     },
@@ -164,13 +168,19 @@ export const FIGMA_PAGE_SECTIONS_D: Partial<Record<PageKey, FallbackSection[]>> 
       sortOrder: 40,
       data: {
         heading: t("Need Help?"),
+        imageUrl: P + "svc-help.png",
         body: t("Our support team is here to assist you with any queries or issues."),
         phone: "+91 12345 67890",
         phoneHours: t("Mon to Sat, 10:00 AM – 6:00 PM"),
         email: "support@savardari.gov.in",
         emailNote: t("We typically reply in 24 hours."),
         queriesTitle: t("Common Queries"),
-        queries: [t("How do I apply for a certificate?"), t("How can I track my application status?"), t("How do I pay taxes online?"), t("I'm facing login issues. What to do?")],
+        queries: [
+          { label: t("How do I apply for a certificate?"), href: "page:services#rts-grid" },
+          { label: t("How can I track my application status?"), href: "page:grievance#grievance-track" },
+          { label: t("How do I pay taxes online?"), href: "page:services#action-cards" },
+          { label: t("I'm facing login issues. What to do?"), href: "page:contact" },
+        ],
       },
     },
   ],

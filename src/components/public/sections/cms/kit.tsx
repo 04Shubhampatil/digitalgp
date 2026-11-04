@@ -19,6 +19,7 @@ import {
   Globe,
   GraduationCap,
   Hammer,
+  Handshake,
   Headset,
   Heart,
   HeartHandshake,
@@ -109,6 +110,8 @@ const ICONS: Record<string, LucideIcon> = {
   landmark: Landmark,
   office: Building2,
   briefcase: Briefcase,
+  handshake: Handshake,
+  partnership: Handshake,
   job: Briefcase,
   jobs: Briefcase,
   rupee: IndianRupee,
@@ -236,7 +239,7 @@ export function Band({
         {(heading || subheading || action) && (
           <div className={`mb-6 flex flex-wrap items-end gap-3 ${center ? "justify-center text-center" : "justify-between"}`}>
             <div className={center ? "mx-auto max-w-3xl" : "max-w-3xl"}>
-              {heading && <h2 className="text-[26px] leading-tight font-semibold text-black">{heading}</h2>}
+              {heading && <h2 className="text-[26px] leading-tight font-semibold text-black lg:text-[30px] lg:leading-[45px]">{heading}</h2>}
               {subheading && <p className="mt-1 text-[14px] leading-6 text-[#414141]">{subheading}</p>}
             </div>
             {action}
@@ -257,6 +260,27 @@ export function LinkButton({ href, children, external }: { href: string; childre
       {...(external ? externalProps : {})}
       className="inline-flex items-center gap-1.5 rounded-full border border-[#135130] px-4 py-2 text-[12.5px] font-medium text-[#135130] hover:bg-[#135130] hover:text-white"
     >
+      {children}
+    </a>
+  );
+}
+
+/** Green text link with a trailing arrow ("View Details →", "Read More →") used where Figma shows a link, not a pill. */
+export function TextLink({ href, children, external, className }: { href: string; children: ReactNode; external?: boolean; className?: string }) {
+  return (
+    <a href={href} {...(external ? externalProps : {})} className={`inline-flex items-center gap-2 text-[14px] font-semibold text-[#135130] hover:underline ${className ?? ""}`}>
+      {children}
+      <svg viewBox="0 0 24 24" aria-hidden className="size-4" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M5 12h14M13 6l6 6-6 6" />
+      </svg>
+    </a>
+  );
+}
+
+/** Filled green pill button (Figma "View All …" buttons). */
+export function FilledButton({ href, children, external }: { href: string; children: ReactNode; external?: boolean }) {
+  return (
+    <a href={href} {...(external ? externalProps : {})} className="inline-flex items-center justify-center rounded-full bg-[#135130] px-5 py-2.5 text-[14px] font-medium text-white hover:opacity-90">
       {children}
     </a>
   );

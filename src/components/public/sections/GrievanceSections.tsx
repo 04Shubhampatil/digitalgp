@@ -36,9 +36,8 @@ export async function GrievanceRegisterSection({ slug, locale, data }: SectionPr
     <section id="register" className="bg-cream py-8">
       <div className="mx-auto max-w-[1320px] px-4 sm:px-8">
         <h2 className="mb-6 text-center text-[30px] leading-[45px] font-semibold text-black">{pickText(d.heading, locale) || t("registerTitle")}</h2>
-        <div className="rounded-[10px] border border-black/20 bg-white p-6 sm:p-8">
-          <GrievanceSubmitForm slug={slug} />
-        </div>
+        {/* The form draws its own bordered card (Figma frame 375:11315). */}
+        <GrievanceSubmitForm slug={slug} />
       </div>
     </section>
   );
@@ -53,17 +52,16 @@ export async function GrievanceTrackSection({ slug, locale, data }: SectionProps
     <section id="track" className="bg-cream py-8">
       <div className="mx-auto max-w-[1320px] px-4 sm:px-8">
         <h2 className="mb-6 text-center text-[30px] leading-[45px] font-semibold text-black">{pickText(d.heading, locale) || t("trackTitle")}</h2>
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_459px]">
-          <div className="rounded-[10px] border border-black/20 bg-white p-6 sm:p-8">
-            <GrievanceTrackForm slug={slug} />
-          </div>
+        {/* Figma "Group 34": white lookup card + pale-green "How It Works?" card (459px). */}
+        <div className="grid items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_459px]">
+          <GrievanceTrackForm slug={slug} />
           {steps.length > 0 && (
-            <div className="rounded-[10px] bg-white p-6 shadow-[0_2px_10px_rgba(0,0,0,0.08)]">
+            <div className="rounded-[10px] bg-[#eef5ee] px-7 py-6 shadow-[0_0_10px_rgba(0,0,0,0.12)]">
               {pickText(d.howTitle, locale) && <h3 className="text-[20px] font-semibold text-[#135130]">{pickText(d.howTitle, locale)}</h3>}
               <ol className="mt-4 space-y-3">
                 {steps.map((s, i) => (
-                  <li key={i} className="flex items-center gap-3 text-[15px] text-black">
-                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#135130] text-[12px] font-semibold text-white">{i + 1}</span>
+                  <li key={i} className="flex items-center gap-3 text-[16px] text-black">
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#135130] text-[13px] font-semibold text-white">{i + 1}</span>
                     {pickText(s, locale)}
                   </li>
                 ))}
