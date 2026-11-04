@@ -40,13 +40,14 @@ export function LeadersSection({ slug, locale, data }: SectionProps) {
           </h2>
         )}
         {subheading && <p className="mt-3 text-center text-[20px] leading-[28px] text-black">{subheading}</p>}
+        {/* Figma: 4 cards in the first row, the rest centred below (cards share the row width, so the scrollbar never pushes one down). */}
         <ul className="mt-9 flex flex-wrap justify-center gap-[15px]">
           {items.map((p, i) => {
             const photo = p.photoId ? publicMediaUrl(slug, p.photoId) : (p.photoUrl ?? null);
             return (
               <li
                 key={i}
-                className="flex w-full max-w-[320px] flex-col items-stretch gap-[18px] rounded-[7.5px] border-t-[6.8px] border-[#f93] bg-white px-[27px] py-[22px] shadow-[0_0_15px_3.8px_rgba(0,0,0,0.25)]"
+                className="flex w-full max-w-[320px] flex-col items-stretch gap-[18px] rounded-[7.5px] lg:w-[calc((100%-45px)/4)] lg:max-w-[321px] border-t-[6.8px] border-[#f93] bg-white px-[27px] py-[22px] shadow-[0_0_15px_3.8px_rgba(0,0,0,0.25)]"
               >
                 <div className="h-[218px] overflow-hidden rounded-[7.5px] border border-black/15 bg-white">
                   {photo ? (
