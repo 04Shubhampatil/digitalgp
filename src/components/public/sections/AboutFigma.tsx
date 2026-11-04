@@ -23,7 +23,7 @@ interface Btn {
  * paragraph, pill buttons (first filled) and photo on the right. Shared by every inner page.
  */
 export function AboutHeroSection({ slug, locale, data, tenantName }: SectionProps) {
-  const d = data as { eyebrow?: B; title?: B; titleAccent?: B; noTenantName?: boolean; body?: B; primary?: Btn; secondary?: Btn; actions?: Btn[]; imageUrl?: string };
+  const d = data as { eyebrow?: B; title?: B; titleAccent?: B; /** Start the green accent on its own line (as some Figma heroes do). */ accentBlock?: boolean; noTenantName?: boolean; body?: B; primary?: Btn; secondary?: Btn; actions?: Btn[]; imageUrl?: string };
   const buttons = (d.actions?.length ? d.actions : [d.primary, d.secondary]).filter((b): b is Btn => !!b?.href);
   const accent = pickText(d.titleAccent, locale) || (d.noTenantName ? "" : (tenantName ?? ""));
   return (
@@ -33,7 +33,7 @@ export function AboutHeroSection({ slug, locale, data, tenantName }: SectionProp
           <div className="flex flex-col gap-8">
             <p className="text-[22px] font-semibold text-[#ea7f14] uppercase">{pickText(d.eyebrow, locale)}</p>
             <h1 className="max-w-[547px] text-[36px] leading-[50px] font-bold text-black lg:text-[40px]">
-              {pickText(d.title, locale)} {accent && <span className="text-[#135130]">{accent}</span>}
+              {pickText(d.title, locale)} {accent && <span className={d.accentBlock ? "block text-[#135130]" : "text-[#135130]"}>{accent}</span>}
             </h1>
           </div>
           <p className="max-w-[491px] text-[15px] leading-[25px] text-[#414141]">{pickText(d.body, locale)}</p>

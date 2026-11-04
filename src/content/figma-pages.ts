@@ -56,7 +56,7 @@ export const FIGMA_PAGE_SECTIONS: Partial<Record<PageKey, FallbackSection[]>> = 
           PROJECT("COMPLETED", "Internal Road Construction", "Ward 2"),
           PROJECT("COMPLETED", "Internal Road Construction", "Ward 2"),
         ],
-        viewAll: { label: t("View All Projects"), href: "page:projects" },
+        viewAll: { label: t("View All Projects"), href: "page:projects#project-showcase" },
       },
     },
     {
@@ -64,7 +64,12 @@ export const FIGMA_PAGE_SECTIONS: Partial<Record<PageKey, FallbackSection[]>> = 
       sortOrder: 20,
       data: {
         eyebrow: t("Before & After Gallery"),
-        items: [{ label: t("Road Development") }, { label: t("Lake Restoration") }, { label: t("Street Lighting") }, { label: t("School Renovation") }],
+        // Figma uses the same before/after photo pair on all four tiles (nodes 375:14002–14068).
+        items: ["Road Development", "Lake Restoration", "Street Lighting", "School Renovation"].map((label) => ({
+          label: t(label),
+          beforeUrl: "/images/figma/pages/prj-before.png",
+          afterUrl: "/images/figma/pages/prj-after.png",
+        })),
         viewAll: { label: t("View All Transformation"), href: "page:gallery" },
       },
     },
@@ -122,7 +127,7 @@ export const FIGMA_PAGE_SECTIONS: Partial<Record<PageKey, FallbackSection[]>> = 
           { year: "2024", label: t("Smart Lighting"), status: t("Completed") },
           { year: "2025", label: t("Village Beautification"), status: t("In Progress"), done: false },
         ],
-        action: { label: t("View Timeline"), href: "page:projects" },
+        action: { label: t("View Timeline"), href: "page:projects#dev-timeline" },
       },
     },
     {
@@ -154,11 +159,11 @@ export const FIGMA_PAGE_SECTIONS: Partial<Record<PageKey, FallbackSection[]>> = 
       sortOrder: 50,
       data: {
         title: t("Success Stories"),
-        viewAll: { label: t("View All Stories"), href: "page:projects" },
+        viewAll: { label: t("View All Stories"), href: "page:projects#stories-figma" },
         items: [
-          { quote: t("The new road has reduced travel time from 20 minutes to just 7 minutes, it has truly changed our lives."), name: t("Sunil Pawar"), role: t("Resident Ward 2") },
-          { quote: t("Drinking water facility has improved a lot. Now we can get clean water right at our village."), name: t("Lata Jadhav"), role: t("Resident Ward 3") },
-          { quote: t("The solar street lights have made our village safter and brighter at night."), name: t("Ramesh Shinde"), role: t("Resident Ward 4") },
+          { quote: t("The new road has reduced travel time from 20 minutes to just 7 minutes, it has truly changed our lives."), name: t("Sunil Pawar"), role: t("Resident Ward 2"), photoUrl: "/images/figma/pages/prj-story-1.png" },
+          { quote: t("Drinking water facility has improved a lot. Now we can get clean water right at our village."), name: t("Lata Jadhav"), role: t("Resident Ward 3"), photoUrl: "/images/figma/pages/prj-story-2.png" },
+          { quote: t("The solar street lights have made our village safter and brighter at night."), name: t("Ramesh Shinde"), role: t("Resident Ward 4"), photoUrl: "/images/figma/pages/prj-story-3.png" },
         ],
       },
     },

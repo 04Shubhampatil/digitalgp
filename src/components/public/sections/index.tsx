@@ -11,13 +11,32 @@ import { AchievementsSection, WhatsNewSection } from "./HomeFeedSections";
 import { SchemeLevelsSection, SchemeShowcaseSection } from "./PageKit3";
 import { ActionCardsSection, AnnounceCategoriesSection, AnnounceFeedSection, DeadlinesDownloadsSection, HelpCardSection, RtsGridSection, ServiceStripSection } from "./PageKit4";
 import { AboutCardsSection } from "./AboutCardsSection";
-import { AssistanceItemsSection, BannerSection, CmsSuccessStoriesSection, LocalOpportunitiesSection, SchemeCardsSection, SupportCardsSection, TopStatsSection, TrainingProgramsSection } from "./cms/common";
+import { BannerSection, CmsSuccessStoriesSection, SupportCardsSection, TopStatsSection } from "./cms/common";
+import {
+  AssistanceItemsSection,
+  CultureCardsSection,
+  FpoGalleryVoiceSection,
+  HeritageCardsSection,
+  HomestaySection,
+  JobPortalsSection,
+  LeaderCardsSection,
+  LocalOpportunitiesSection,
+  SchemeCardsSection,
+  SkillDirectorySection,
+  StudentSpotlightSection,
+  SupportStripSection,
+  TrainingProgramsSection,
+  VillageIntroSection,
+  YouthPostsSection,
+  YouthSpeakTabsSection,
+} from "./cms/village";
 import {
   BudgetVisualizerSection,
   DocumentsSection,
   ExpenditureSection,
   IncomeSourcesSection,
   GreenScoreboardSection,
+  KeyInitiativesSection,
   InfraMapSection,
   LatestAnnouncementsCard,
   MapFiltersSection,
@@ -46,25 +65,14 @@ import {
 import {
   AnnouncementCategoriesSection,
   CalendarSection,
-  CultureCardsSection,
   DeadlineCardsSection,
   DownloadFormsSection,
-  FpoGalleryVoiceSection,
-  HeritageCardsSection,
-  HomestaySection,
-  JobPortalsSection,
-  LeaderCardsSection,
   LiveAnnouncementsSection,
   MiniDocumentarySection,
   PhotoGallerySection,
   PressCoverageSection,
-  SkillDirectorySection,
-  StudentSpotlightSection,
   ThenAndNowSection,
   VideoGallerySection,
-  VillageIntroSection,
-  YouthPostsSection,
-  YouthSpeakTabsSection,
 } from "./cms/pages";
 import { GeographySection, HistorySection, MembersSection, OfficeSection } from "./AboutSections";
 import { HeroSection } from "./HeroSection";
@@ -164,7 +172,8 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
   banner: BannerSection,
   "top-stats": TopStatsSection,
   "green-scoreboard": GreenScoreboardSection,
-  "support-cards": SupportCardsSection,
+  // Employment / Education use the Figma strip that overlaps the hero; Grievance and Announcements keep the cards.
+  "support-cards": (p) => ((p.data as { layout?: string }).layout === "strip" ? <SupportStripSection {...p} /> : <SupportCardsSection {...p} />),
   "local-opportunities": LocalOpportunitiesSection,
   "assistance-items": AssistanceItemsSection,
   "success-stories": CmsSuccessStoriesSection,
@@ -180,6 +189,8 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
   "budget-visualizer": BudgetVisualizerSection,
   documents: DocumentsSection,
   "tree-adoption": TreeAdoptionSection,
+  // Placeholder-only Environment panel (no backend section yet).
+  "key-initiatives": KeyInitiativesSection,
   "sustainability-initiatives": SustainabilityInitiativesSection,
   "market-prices": MarketPricesSection,
   "weather-update": WeatherUpdateSection,
@@ -226,7 +237,7 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
 };
 
 /** Sections that share one two-column row (card renderers only; the wrapper supplies the layout). */
-const ROW_GROUPS: { keys: string[]; cols: string }[] = [
+const ROW_GROUPS: { keys: string[]; cols: string; all?: boolean }[] = [
   { keys: ["monthly-metrics", "ward-details"], cols: "lg:grid-cols-[683px_minmax(0,1fr)]" },
   { keys: ["progress-tracker", "impact-grid"], cols: "lg:grid-cols-[567px_minmax(0,1fr)]" },
   { keys: ["dev-timeline", "financial-overview"], cols: "lg:grid-cols-[601px_minmax(0,1fr)]" },
@@ -239,8 +250,11 @@ const ROW_GROUPS: { keys: string[]; cols: string }[] = [
   { keys: ["office-location", "feedback-form"], cols: "lg:grid-cols-2" },
   { keys: ["live-announcements", "calendar"], cols: "lg:grid-cols-[minmax(0,1fr)_340px]" },
   { keys: ["deadline-cards", "download-forms"], cols: "lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]" },
+  // Figma Schemes: "Scheme Information" list (425px) beside the "Scheme Coverage Map"; only when both are on the page.
+  // Figma Employment: "Village Talent Directory" (758px) beside the "Farmer Assistance Centre" (541px).
+  { keys: ["skill-directory", "assistance-items"], cols: "lg:grid-cols-[minmax(0,758fr)_minmax(0,541fr)]", all: true },
+  { keys: ["link-cards", "coverage-map"], cols: "lg:grid-cols-[425px_minmax(0,1fr)] lg:items-stretch", all: true },
 ];
-const GROUPED = new Set(ROW_GROUPS.flatMap((g) => g.keys));
 
 export function renderSections(page: PublicPageDto, slug: string, locale: UiLocale, tenantName?: string): React.ReactNode[] {
   const sorted = page.sections.slice().sort((a, b) => a.sortOrder - b.sortOrder);
@@ -251,14 +265,14 @@ export function renderSections(page: PublicPageDto, slug: string, locale: UiLoca
     if (done.has(s.sectionKey)) continue;
     const Section = RENDERERS[s.sectionKey];
     if (!Section) continue;
-    if (GROUPED.has(s.sectionKey)) {
-      const grp = ROW_GROUPS.find((g) => g.keys.includes(s.sectionKey))!;
+    const grp = ROW_GROUPS.find((g) => g.keys.includes(s.sectionKey));
+    if (grp && (!grp.all || grp.keys.every((k) => k in siblings))) {
       const group = grp.keys;
       // Columns follow the group's key order (the design's left-to-right order), not the sections' sort order.
       const members = sorted.filter((m) => group.includes(m.sectionKey) && RENDERERS[m.sectionKey]).sort((a, b) => group.indexOf(a.sectionKey) - group.indexOf(b.sectionKey));
       members.forEach((m) => done.add(m.sectionKey));
       out.push(
-        <section key={group.join("+")} id={members[0]?.sectionKey} className="bg-cream py-8">
+        <section key={group.join("+")} id={members[0]?.sectionKey} className="scroll-mt-[180px] bg-cream py-8">
           <div className={`mx-auto grid max-w-[1440px] gap-5 px-4 sm:px-8 ${grp.cols} lg:gap-[20px] lg:px-[60px] [&>*:only-child]:lg:col-span-full`}>
             {members.map((m) => {
               const Card = RENDERERS[m.sectionKey]!;

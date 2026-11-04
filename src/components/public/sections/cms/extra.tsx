@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChartPie, CircleCheck, Clock, FileBarChart } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { getGrievanceStats, getSchemeStats, getServiceStats } from "@/lib/api/public";
@@ -61,14 +61,59 @@ export function QuickActionsSection({ slug, locale, data }: SectionProps) {
 const SHADES = ["#d6ecd9", "#a9d8b0", "#6fbf7d", "#3a9a50", "#1e7a37", "#135130"];
 
 /** `coverage-map`: how many households each ward has reached, as shaded ward blocks (or a map picture) with a table. */
-export async function CoverageMapSection({ slug, locale, data }: SectionProps) {
+export async function CoverageMapSection({ slug, locale, data, siblings }: SectionProps) {
   const t = await getTranslations("public.cms");
-  const d = data as { heading?: B; mapImageId?: string; wards?: unknown };
+  const d = data as { heading?: B; subheading?: B; mapImageId?: string; wards?: unknown };
   const wards = list<{ wardNo?: string; households?: number; beneficiaries?: number; colour?: string }>(d.wards);
   if (wards.length === 0) return null;
   const max = Math.max(...wards.map((w) => w.households ?? 0), 1);
   const shade = (n: number) => SHADES[Math.min(SHADES.length - 1, Math.floor((n / max) * SHADES.length - 0.0001))] ?? SHADES[0]!;
   const picture = mediaUrl(slug, d.mapImageId);
+  const num = (n: number | undefined) => (n ?? 0).toLocaleString(locale === "mr" ? "mr-IN" : "en-IN");
+  if (siblings?.["link-cards"]) {
+    // Figma Schemes: the map is the right column beside "Scheme Information" (ROW_GROUPS in index.tsx), so it renders
+    // as a card: centred heading + subtitle, then the ward map picture (with its legend) or the shaded ward blocks.
+    return (
+      <div id="coverage-map" className="flex min-w-0 scroll-mt-[180px] flex-col">
+        <h2 className="text-center text-[30px] leading-[45px] font-semibold text-black">{tx(d.heading, locale) || t("coverageMap")}</h2>
+        <p className="mt-2 text-center text-[20px] leading-[30px] text-black">{tx(d.subheading, locale) || t("coverageMapSub")}</p>
+        <div className="mt-[14px] overflow-hidden rounded-[10px] bg-white shadow-[0_0_10px_rgba(0,0,0,0.05)]">
+          {picture ? (
+            // eslint-disable-next-line @next/next/no-img-element -- website media / design picture
+            <img src={picture} alt={t("coverageMap")} loading="lazy" width={873} height={510} className="block h-auto w-full" />
+          ) : (
+            <ul className="grid min-h-[260px] gap-2 bg-[#1d3b24] p-3" style={{ gridTemplateColumns: `repeat(${Math.min(wards.length, 4)}, minmax(0, 1fr))` }}>
+              {wards.map((w, i) => (
+                <li key={i} className="flex flex-col items-center justify-center rounded-[12px] px-2 py-3 text-center" style={{ backgroundColor: w.colour ?? shade(w.households ?? 0), color: (w.households ?? 0) / max > 0.4 ? "#fff" : "#0b3a1b" }}>
+                  <span className="text-[13px] font-semibold">{t("ward", { no: w.wardNo ?? "" })}</span>
+                  <span className="text-[18px] font-bold">{num(w.households)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {/* The picture carries the legend; the ward figures stay available to screen readers. */}
+          <table className="sr-only">
+            <thead>
+              <tr>
+                <th>{t("wardCol")}</th>
+                <th>{t("householdsCol")}</th>
+                <th>{t("beneficiariesCol")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {wards.map((w, i) => (
+                <tr key={i}>
+                  <td>{t("ward", { no: w.wardNo ?? "" })}</td>
+                  <td>{num(w.households)}</td>
+                  <td>{num(w.beneficiaries)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
   return (
     <Band heading={tx(d.heading, locale) || t("coverageMap")} subheading={t("coverageMapSub")}>
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
@@ -256,16 +301,21 @@ export function FinancialItemsView({ locale, data }: { locale: SectionProps["loc
 /** `monthly-report`: complaint figures computed by the backend (GET /public/:slug/stats/grievances). */
 export async function MonthlyReportSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
+  const tg = await getTranslations("public.grievanceForm");
   const d = data as { heading?: B; cardLabels?: { total?: B; resolved?: B; pending?: B; resolutionRate?: B }; categoryColours?: { category?: string; colour?: string }[] };
   const stats = await getGrievanceStats(slug);
   if (!stats) return null;
   const num = (n: number) => n.toLocaleString(locale === "mr" ? "mr-IN" : "en-IN");
   const change = stats.receivedChangePercent;
+  // Month-on-month change of resolved complaints (the API gives the two monthly counts, not the percentage).
+  const resolvedChange = stats.monthBefore.resolved > 0 ? Math.round(((stats.lastMonth.resolved - stats.monthBefore.resolved) / stats.monthBefore.resolved) * 1000) / 10 : null;
+  const note = (n: number | null) => (n === null ? "" : `${n > 0 ? "+" : ""}${n}% ${t("fromLastMonthShort")}`);
+  // Figma 375:11358: 48px pale circle with a coloured icon, label, 24px bold value and a change line.
   const cards = [
-    { label: tx(d.cardLabels?.total, locale) || t("reportTotal"), value: num(stats.total), note: change === null ? "" : `${change > 0 ? "+" : ""}${change}% ${t("fromLastMonth")}` },
-    { label: tx(d.cardLabels?.resolved, locale) || t("reportResolved"), value: num(stats.resolved), note: "" },
-    { label: tx(d.cardLabels?.pending, locale) || t("reportPending"), value: num(stats.pending), note: "" },
-    { label: tx(d.cardLabels?.resolutionRate, locale) || t("reportRate"), value: stats.resolutionRate === null ? "—" : `${stats.resolutionRate}%`, note: "" },
+    { label: tx(d.cardLabels?.total, locale) || t("statusTotal"), value: num(stats.total), note: note(change), icon: FileBarChart, fg: "#1a62e0", bg: "#dce9fc" },
+    { label: tx(d.cardLabels?.resolved, locale) || t("statusResolved"), value: num(stats.resolved), note: note(resolvedChange), icon: CircleCheck, fg: "#2f8a3c", bg: "#dcefdc" },
+    { label: tx(d.cardLabels?.pending, locale) || t("statusPending"), value: num(stats.pending), note: "", icon: Clock, fg: "#f5871f", bg: "#fde6cc" },
+    { label: tx(d.cardLabels?.resolutionRate, locale) || t("reportRatePct"), value: stats.resolutionRate === null ? "—" : `${stats.resolutionRate}%`, note: "", icon: ChartPie, fg: "#7b2cbf", bg: "#ecdffa" },
   ];
   const series: BudgetChartData["series"] = [
     { name: t("received"), colour: "#1a62e0", values: stats.monthly.map((m) => m.received) },
@@ -275,50 +325,91 @@ export async function MonthlyReportSection({ slug, locale, data }: SectionProps)
   const colours = new Map(list<{ category?: string; colour?: string }>(d.categoryColours).map((c) => [c.category ?? "", c.colour ?? "#6b7280"]));
   const palette = ["#1a62e0", "#2f9e3f", "#f5871f", "#7b2cbf", "#6b7280", "#0b7285"];
   return (
-    <Band heading={tx(d.heading, locale) || t("monthlyReport")}>
+    <section className="bg-cream py-8">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
+      <h2 className="text-center text-[24px] leading-8 font-semibold text-black">{tx(d.heading, locale) || t("monthlyReport")}</h2>
+      <span aria-hidden className="mx-auto mt-2 mb-6 block h-0.5 w-10 rounded bg-[#135130]" />
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((c, i) => (
-          <li key={i} className={cardClass}>
-            <p className="text-[12px] text-[#414141]">{c.label}</p>
-            <p className="text-[26px] leading-8 font-bold text-black">{c.value}</p>
-            {c.note && <p className="text-[11px] font-medium text-[#135130]">{c.note}</p>}
+          <li key={i} className="flex items-center gap-5 rounded-[10px] border border-black/10 bg-white px-6 py-5 shadow-[0_0_10px_rgba(0,0,0,0.05)]">
+            <span className="flex size-12 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: c.bg, color: c.fg }}>
+              <c.icon aria-hidden className="size-6" />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-[14px] text-[#414141]">{c.label}</span>
+              <span className="block text-[24px] leading-8 font-bold text-black">{c.value}</span>
+              {c.note && <span className="block text-[13px] font-medium text-[#2f8a3c]">{c.note}</span>}
+            </span>
           </li>
         ))}
       </ul>
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <div className={cardClass}>
-          <p className="mb-2 text-[14px] font-semibold text-black">{t("monthlyTrend")}</p>
+          <p className="mb-2 text-[15px] font-semibold text-black">{t("trendOverview")}</p>
           <BudgetChartClient
             tabs={[]}
             plain
-            charts={[{ tabKey: "m", type: "bar", labels: stats.monthly.map((m) => m.month.slice(2)), series }]}
+            charts={[{ tabKey: "m", type: "bar", labels: stats.monthly.map((m) => monthLabel(m.month, locale)), series }]}
             crLabel=""
             lakhLabel=""
             emptyLabel={t("noChart")}
           />
         </div>
         <div className={cardClass}>
-          <p className="mb-3 text-[14px] font-semibold text-black">{t("byCategory")}</p>
+          <p className="mb-3 text-[15px] font-semibold text-black">{t("categoryWise")}</p>
           {stats.byCategory.length === 0 ? (
             <p className="text-[13px] text-[#414141]">{t("noChart")}</p>
           ) : (
-            <ul className="space-y-2.5">
-              {stats.byCategory.map((c, i) => (
-                <li key={i} className="text-[12px]">
-                  <div className="flex justify-between">
-                    <span className="font-medium text-black">{c.category}</span>
-                    <span className="text-[#414141]">{c.sharePercent}%</span>
-                  </div>
-                  <div className="mt-1 h-2 rounded-full bg-black/10">
-                    <div className="h-full rounded-full" style={{ width: `${c.sharePercent}%`, backgroundColor: colours.get(c.category) ?? palette[i % palette.length] }} />
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <CategoryDonut
+              items={stats.byCategory.map((c, i) => ({
+                label: (GRIEVANCE_CATEGORIES as readonly string[]).includes(c.category) ? tg(`categories.${c.category}`) : c.category,
+                pct: c.sharePercent,
+                value: c.total,
+                colour: colours.get(c.category) ?? palette[i % palette.length]!,
+              }))}
+            />
           )}
         </div>
       </div>
-    </Band>
+      </div>
+    </section>
+  );
+}
+
+/** Complaint category keys of the public form (their names are translated under public.grievanceForm.categories). */
+const GRIEVANCE_CATEGORIES = ["water", "roads", "sanitation", "electricity", "health", "education", "certificates", "tax", "other"] as const;
+
+/** "2024-05" → "May" (other month strings are shown as they are). */
+function monthLabel(month: string, locale: SectionProps["locale"]): string {
+  if (!/^\d{4}-\d{2}$/.test(month)) return month;
+  return new Date(`${month}-01T00:00:00`).toLocaleDateString(locale === "mr" ? "mr-IN" : "en-IN", { month: "short" });
+}
+
+/** Figma "Category Wise Complaints": ring chart on the left, colour / name / share legend on the right. */
+function CategoryDonut({ items }: { items: { label: string; pct: number; value: number; colour: string }[] }) {
+  const total = items.reduce((s, x) => s + x.value, 0) || 1;
+  const R = 70;
+  const C = 2 * Math.PI * R;
+  // Arc length of each slice and where it starts (sum of the slices before it).
+  const dashes = items.map((it) => (it.value / total) * C);
+  const starts = dashes.map((_, i) => dashes.slice(0, i).reduce((s, x) => s + x, 0));
+  return (
+    <div className="flex flex-col items-center gap-6 sm:flex-row">
+      <svg viewBox="0 0 200 200" className="size-[150px] shrink-0 -rotate-90" role="img" aria-label={items.map((i) => `${i.label} ${i.pct}%`).join(", ")}>
+        {items.map((it, i) => (
+          <circle key={i} cx="100" cy="100" r={R} fill="none" stroke={it.colour} strokeWidth="34" strokeDasharray={`${dashes[i]} ${C - dashes[i]!}`} strokeDashoffset={-starts[i]!} />
+        ))}
+      </svg>
+      <ul className="w-full space-y-2.5 text-[13px]">
+        {items.map((it, i) => (
+          <li key={i} className="flex items-center gap-3">
+            <span aria-hidden className="size-3 shrink-0 rounded-full" style={{ backgroundColor: it.colour }} />
+            <span className="flex-1 text-black">{it.label}</span>
+            <span className="text-black">{it.pct}%</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -421,6 +512,7 @@ export async function EmergencyServicesSection({ locale, data }: SectionProps) {
 
 interface LiveItem {
   icon?: string;
+  iconUrl?: string;
   title?: B;
   description?: B;
   value?: string;
@@ -452,14 +544,15 @@ export async function LiveStatsSection(props: SectionProps) {
     let value = it.value;
     // A live figure of 0 beside sample figures reads as broken ("0" next to "500+"); while the website has no
     // records yet the design's sample value stays, like the figures the backend cannot compute.
-    const sampleOnly = Number(raw) === 0 && !!it.value && list<LiveItem>(d.items).some((x) => !x.live);
+    const isNull = (v: unknown) => v === null || v === undefined || v === "";
+    const sampleOnly = Number(raw) === 0 && !!it.value && list<LiveItem>(d.items).some((x) => !x.live || isNull(stats?.[x.live]));
     if (raw !== null && raw !== undefined && raw !== "" && !sampleOnly) {
       const n = Number(raw);
       if (it.format === "money" && Number.isFinite(n)) value = money(n, locale);
       else if (it.format === "percent" && Number.isFinite(n)) value = `${n}%`;
       else if (Number.isFinite(n)) value = n.toLocaleString(locale === "mr" ? "mr-IN" : "en-IN");
     }
-    return { icon: it.icon, title: it.title, description: it.description, value, background: it.background, visible: true };
+    return { icon: it.icon, iconUrl: it.iconUrl, title: it.title, description: it.description, value, background: it.background, visible: true };
   });
   return <TopStatsSection {...props} data={{ ...d, items }} />;
 }

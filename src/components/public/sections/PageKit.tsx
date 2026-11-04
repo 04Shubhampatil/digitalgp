@@ -67,7 +67,7 @@ export async function ProjectShowcaseSection({ slug, locale, data }: SectionProp
     outcome: t("outcome"),
     families: t("familiesBenefited"),
     details: t("viewDetails"),
-    stageLabel: { ONGOING: t("projectStage.ONGOING"), COMPLETED: t("projectStage.COMPLETED"), UPCOMING: t("projectStage.UPCOMING") },
+    stageLabel: { ONGOING: t("projectBadge.ONGOING"), COMPLETED: t("projectBadge.COMPLETED"), UPCOMING: t("projectBadge.UPCOMING") },
     empty: t("noProjects"),
   };
   return (
@@ -254,7 +254,7 @@ export function FinancialOverviewSection({ slug, locale, data }: SectionProps) {
         </div>
         <div>
           <div className="flex items-start gap-4">
-            <svg viewBox="0 0 100 100" className="size-[110px] shrink-0 -rotate-90" role="img" aria-label={pickText(d.sourcesLabel, locale)}>
+            <svg viewBox="0 0 100 100" className="size-[150px] shrink-0 -rotate-90" role="img" aria-label={pickText(d.sourcesLabel, locale)}>
               {segs.map((g, i) => (
                 <circle key={i} cx="50" cy="50" r={R} fill="none" stroke={SOURCE_COLORS[i % SOURCE_COLORS.length]} strokeWidth="18" strokeDasharray={`${g.len} ${C - g.len}`} strokeDashoffset={-g.off} />
               ))}
@@ -304,12 +304,12 @@ export function SuccessStoriesSection({ slug, locale, data }: SectionProps) {
             {(d.items ?? []).map((s, i) => {
               const name = pickText(s.name, locale);
               return (
-                <li key={i} className="flex gap-4 rounded-[8px] border border-black/15 p-4">
+                <li key={i} className="flex gap-6 rounded-[8px] border border-black/15 p-4 lg:gap-8 lg:px-5">
                   {s.photoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element -- static design asset
-                    <img src={s.photoUrl} alt="" className="size-[76px] shrink-0 rounded-full object-cover" loading="lazy" />
+                    <img src={s.photoUrl} alt="" className="size-[92px] shrink-0 rounded-full object-cover" loading="lazy" />
                   ) : (
-                    <span aria-hidden className="flex size-[76px] shrink-0 items-center justify-center rounded-full bg-[#e9f4e9] text-[24px] font-bold text-[#135130]">
+                    <span aria-hidden className="flex size-[92px] shrink-0 items-center justify-center rounded-full bg-[#e9f4e9] text-[24px] font-bold text-[#135130]">
                       {name.charAt(0)}
                     </span>
                   )}

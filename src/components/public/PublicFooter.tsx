@@ -8,43 +8,12 @@ import { FIGMA_CHROME } from "@/content/figma-chrome";
 import type { UiLocale } from "@/i18n/config";
 import { marathiFor } from "@/i18n/mr-fallback";
 import { pair, pickText } from "@/i18n/text";
+import { resolveHref } from "@/lib/href";
+import { FacebookIcon, InstagramIcon, YouTubeIcon } from "./SocialIcons";
 
 /** Placeholder contact details (shared with the header), shown only while the website's own settings are empty. */
 const FIGMA_CONTACT = FIGMA_CHROME;
 
-function Facebook() {
-  return (
-    <svg viewBox="0 0 24 24" className="size-6" aria-hidden>
-      <circle cx="12" cy="12" r="12" fill="#1877f2" />
-      <path d="M13.3 19v-6.2h2.1l.3-2.5h-2.4V8.8c0-.7.2-1.2 1.2-1.2h1.3V5.4c-.2 0-1-.1-1.9-.1-1.9 0-3.2 1.2-3.2 3.3v1.7H8.6v2.5h2.1V19z" fill="#fff" />
-    </svg>
-  );
-}
-function Instagram() {
-  return (
-    <svg viewBox="0 0 24 24" className="size-6" aria-hidden>
-      <defs>
-        <linearGradient id="ig" x1="0" y1="1" x2="1" y2="0">
-          <stop offset="0" stopColor="#feda75" />
-          <stop offset=".4" stopColor="#d62976" />
-          <stop offset="1" stopColor="#4f5bd5" />
-        </linearGradient>
-      </defs>
-      <rect width="24" height="24" rx="6" fill="url(#ig)" />
-      <rect x="6" y="6" width="12" height="12" rx="3.5" fill="none" stroke="#fff" strokeWidth="1.6" />
-      <circle cx="12" cy="12" r="2.8" fill="none" stroke="#fff" strokeWidth="1.6" />
-      <circle cx="16" cy="8" r="0.9" fill="#fff" />
-    </svg>
-  );
-}
-function YouTube() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-8" aria-hidden>
-      <rect x="1" y="4" width="22" height="16" rx="5" fill="#f00" />
-      <path d="M10 9l5 3-5 3z" fill="#fff" />
-    </svg>
-  );
-}
 
 /** Figma footer (375:12692): white with tricolour wash; identity / contact / quick links, then copyright row. */
 export async function PublicFooter({ tenant }: { tenant: PublicTenantDto }) {
@@ -61,14 +30,23 @@ export async function PublicFooter({ tenant }: { tenant: PublicTenantDto }) {
   const email = contact.email || FIGMA_CONTACT.email;
   const year = new Date().getFullYear();
 
-  const quick = (["home", "about", "services", "announcements", "schemes", "about", "grievance", "contact"] as const).map((p, i) => ({
-    href: pageHref(tenant.slug, p),
-    label: [t("public.home"), t("public.about"), t("public.services"), t("public.announcements"), t("public.schemes"), t("public.officials"), t("public.grievance"), t("public.contact")][i] ?? "",
-  }));
+  // Figma quick links, row by row in two columns (Home | About Us, Citizen Services | Notices & GRs, …).
+  const quick = [
+    { href: pageHref(tenant.slug, "home"), label: t("public.home") },
+    { href: pageHref(tenant.slug, "about"), label: t("public.about") },
+    { href: pageHref(tenant.slug, "services"), label: t("public.services") },
+    { href: pageHref(tenant.slug, "announcements"), label: t("public.footerNotices") },
+    { href: pageHref(tenant.slug, "schemes"), label: t("public.schemes") },
+    // No separate officials page: the About page's administration section lists them.
+    { href: resolveHref("page:about#about-structure", tenant.slug), label: t("public.officials") },
+    { href: resolveHref("page:contact#feedback-form", tenant.slug), label: t("public.footerFeedback") },
+    { href: pageHref(tenant.slug, "contact"), label: t("public.contact") },
+  ];
 
   return (
     <footer className="relative mt-16 overflow-hidden border-t border-black/10 bg-white text-[#1b1b1b]">
-      <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(255,153,51,0.14),transparent_45%),radial-gradient(ellipse_at_top_right,rgba(19,136,8,0.12),transparent_40%)]" />
+      {/* Figma "image 127": tricolour wash with the faded Ashoka chakra top-right (60% opacity). */}
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[257px] bg-[url('/images/figma/pages/footer-bg.png')] bg-[length:1440px_auto] bg-top bg-no-repeat opacity-60 xl:bg-[length:100%_auto]" />
       <div className="relative mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[46px]">
         <div className="grid gap-10 py-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] lg:gap-0 lg:divide-x lg:divide-black/15">
           <div className="lg:pr-10">
@@ -114,17 +92,17 @@ export async function PublicFooter({ tenant }: { tenant: PublicTenantDto }) {
             <div className="mt-2 flex items-center gap-3">
               {social.facebook && (
                 <a href={social.facebook} target="_blank" rel="noopener" aria-label="Facebook">
-                  <Facebook />
+                  <FacebookIcon className="size-[34px]" />
                 </a>
               )}
               {social.instagram && (
                 <a href={social.instagram} target="_blank" rel="noopener" aria-label="Instagram">
-                  <Instagram />
+                  <InstagramIcon className="size-[34px]" gradientId="ig-footer" />
                 </a>
               )}
               {social.youtube && (
                 <a href={social.youtube} target="_blank" rel="noopener" aria-label="YouTube">
-                  <YouTube />
+                  <YouTubeIcon className="h-[26px] w-[38px]" />
                 </a>
               )}
               {!social.facebook && !social.instagram && !social.youtube && <p className="text-[12px] text-[#414141]">{email}</p>}

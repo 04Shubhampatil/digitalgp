@@ -90,3 +90,22 @@ frontend shows the design's placeholder or hides the control. Owner: backend (Sh
 30. Infrastructure: `infra-map.markers` and `map-filters` published, live status per facility.
 31. `fpo-gallery-voice`: `learnMoreLink`, `galleryLink`; `homestay`: booking/contact link.
 32. Project cards: `wardLabel`, `outcomeShort`, before/after images; success stories with photos.
+
+## Per-page layout pass (fields the placeholders use today)
+
+The design layouts below read optional presentation fields that only the Figma placeholder data sets
+today. Add them to the section schemas (src/config/sections-pages.ts) so published content can use them:
+
+33. `heading`, `subheading`, `viewAll {label, href}` on success-stories, local-opportunities,
+    skill-directory, assistance-items, training-programs, job-portals, scheme-cards, youth-posts.
+34. `layout` switches: `support-cards.layout` ("strip" / "contact"), `success-stories.layout`
+    ("quote"), `link-cards.layout` ("list"), `top-stats.variant` ("strip" / "card" / "band").
+35. `link` and `colour` per icon card (support-cards, scheme-cards, assistance-items).
+36. `youth-posts` items: `author`, `date`.
+37. `fpo-gallery-voice`: `link` / `linkLabel` for FPO and Voice, voice `imageId`.
+38. `before-after` (projects): `beforeUrl` / `afterUrl` media per tile.
+39. `mini-documentary`: `thumbnailUrl`, `duration`.
+40. `key-initiatives` (environment): a new section type with icon, title, link per tile.
+41. `documents` (finance): `fileSize` (or use `GET /media/:id/meta`).
+42. Content: real video / documentary URLs (placeholders point at youtube.com), the office map
+    embed URL, a higher-resolution "before" photo for Projects.

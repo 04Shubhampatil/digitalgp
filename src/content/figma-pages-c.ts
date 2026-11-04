@@ -14,6 +14,23 @@ const P = "/images/figma/pages/";
 const PH = "/images/figma/photos/";
 const hero = (data: Record<string, unknown>): FallbackSection => ({ sectionKey: "page-hero", sortOrder: 0, data: { noTenantName: true, ...data } });
 
+/**
+ * "View Details" targets of the Environment initiative cards, in card order (placeholder-only: the
+ * backend item has no link field yet). Cards without their own section on the page lead to the photo
+ * gallery, where the works are shown.
+ */
+const INITIATIVE_LINKS = [
+  "page:environment#tree-adoption",
+  "page:gallery#photo-gallery",
+  "page:gallery#photo-gallery",
+  "page:gallery#photo-gallery",
+  "page:gallery#photo-gallery",
+  "page:gallery#photo-gallery",
+  "page:gallery#photo-gallery",
+  "page:environment#weather-update",
+  "page:environment#market-prices",
+];
+
 
 export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> = {
   schemes: [
@@ -48,7 +65,8 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
           { name: t("Mukhyamantri Uddhav Balasaheb Thackeray Awas Yojana"), category: t("Housing"), level: t("State"), description: t("Provides houses to eligible beneficiaries in Maharashtra"), benefitValue: t("₹1.50 Lakh"), benefitCaption: t("Financial Assistance") },
           { name: t("Social Justice Scholarship"), category: t("Education"), level: t("State"), description: t("Scholarships for students from backward classes"), benefitValue: t("Up to ₹75,000"), benefitCaption: t("Scholarship Amount") },
         ],
-        viewAll: { label: t("View All Schemes"), href: "page:schemes" },
+        viewAll: { label: t("View All Schemes"), href: "page:schemes#scheme-levels" },
+        detailsHref: "page:schemes#link-cards",
       },
     },
     {
@@ -56,12 +74,13 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       sortOrder: 20,
       data: {
         heading: b("Scheme Information", "योजनेची माहिती"),
+        layout: "list",
         items: [
-          { title: b("Purpose of the Scheme", "योजनेचा उद्देश"), body: b("Understand the objective and goals", "उद्दिष्ट व ध्येये समजून घ्या"), cta: b("Know More", "अधिक जाणून घ्या"), href: "page:schemes" },
-          { title: b("Eligibility Criteria", "पात्रतेचे निकष"), body: b("Check if you are eligible", "आपण पात्र आहात का ते तपासा"), cta: b("Know More", "अधिक जाणून घ्या"), href: "page:schemes" },
-          { title: b("Application Procedure", "अर्जाची प्रक्रिया"), body: b("Step-by-step application process", "टप्प्याटप्प्याने अर्ज प्रक्रिया"), cta: b("Know More", "अधिक जाणून घ्या"), href: "page:schemes" },
-          { title: b("Required Documents", "आवश्यक कागदपत्रे"), body: b("Documents required to apply", "अर्जासाठी लागणारी कागदपत्रे"), cta: b("Know More", "अधिक जाणून घ्या"), href: "page:schemes" },
-          { title: b("Benefits of the Scheme", "योजनेचे लाभ"), body: b("Know the benefits you will receive", "आपल्याला मिळणारे लाभ जाणून घ्या"), cta: b("Know More", "अधिक जाणून घ्या"), href: "page:schemes" },
+          { title: b("Purpose of the Scheme", "योजनेचा उद्देश"), body: b("Understand the objective and goals", "उद्दिष्ट व ध्येये समजून घ्या"), cta: b("Know More", "अधिक जाणून घ्या"), href: "page:schemes#scheme-showcase", iconUrl: P + "sch-info-1.png" },
+          { title: b("Eligibility Criteria", "पात्रतेचे निकष"), body: b("Check if you are eligible", "आपण पात्र आहात का ते तपासा"), cta: b("Know More", "अधिक जाणून घ्या"), href: "page:schemes#scheme-showcase", iconUrl: P + "sch-info-2.png" },
+          { title: b("Application Procedure", "अर्जाची प्रक्रिया"), body: b("Step-by-step application process", "टप्प्याटप्प्याने अर्ज प्रक्रिया"), cta: b("Know More", "अधिक जाणून घ्या"), href: "page:services#rts-grid", iconUrl: P + "sch-info-3.png" },
+          { title: b("Required Documents", "आवश्यक कागदपत्रे"), body: b("Documents required to apply", "अर्जासाठी लागणारी कागदपत्रे"), cta: b("Know More", "अधिक जाणून घ्या"), href: "page:announcements#deadlines-downloads", iconUrl: P + "sch-info-4.png" },
+          { title: b("Benefits of the Scheme", "योजनेचे लाभ"), body: b("Know the benefits you will receive", "आपल्याला मिळणारे लाभ जाणून घ्या"), cta: b("Know More", "अधिक जाणून घ्या"), href: "page:schemes#live-stats", iconUrl: P + "sch-info-5.png" },
         ],
       },
     },
@@ -70,6 +89,8 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       sortOrder: 25,
       data: {
         heading: b("Scheme Coverage Map", "योजना व्याप्ती नकाशा"),
+        subheading: b("Ward-wise coverage of beneficiaries for major government schemes", "प्रमुख शासकीय योजनांच्या लाभार्थ्यांची प्रभागनिहाय व्याप्ती"),
+        mapImageId: P + "sch-coverage-map.png",
         wards: [
           { wardNo: "1", households: 210, beneficiaries: 540 },
           { wardNo: "2", households: 96, beneficiaries: 240 },
@@ -85,11 +106,12 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       sortOrder: 30,
       data: {
         source: "schemes",
+        variant: "card",
         items: [
-          { live: "totalSchemes", icon: "building", title: b("Total Schemes", "एकूण योजना"), value: "106", description: b("All Government Schemes", "सर्व शासकीय योजना"), background: "#E8F1EA", visible: true },
-          { live: "totalBeneficiaries", icon: "users", title: b("Total Beneficiaries", "एकूण लाभार्थी"), value: "2,845", description: b("In Savardari Village", "सावरदरी गावात"), background: "#E8F1EA", visible: true },
-          { live: "amountDisbursedThisFinancialYear", format: "money", icon: "rupee", title: b("Total Amount Disbursed", "एकूण वितरित रक्कम"), value: "₹ 8.45 Cr", description: b("This Financial Year", "या आर्थिक वर्षात"), background: "#E8F1EA", visible: true },
-          { live: "coveragePercent", format: "percent", icon: "shield", title: b("Coverage", "व्याप्ती"), value: "87%", description: b("Households Covered", "कुटुंबे समाविष्ट"), background: "#E8F1EA", visible: true },
+          { live: "totalSchemes", icon: "building", iconUrl: P + "sch-stat-1.png", title: b("Total Schemes", "एकूण योजना"), value: "106", description: b("All Government Schemes", "सर्व शासकीय योजना"), background: "#E8F1EA", visible: true },
+          { live: "totalBeneficiaries", icon: "users", iconUrl: P + "sch-stat-2.png", title: b("Total Beneficiaries", "एकूण लाभार्थी"), value: "2,845", description: b("In Savardari Village", "सावरदरी गावात"), background: "#E8F1EA", visible: true },
+          { live: "amountDisbursedThisFinancialYear", format: "money", icon: "rupee", iconUrl: P + "sch-stat-3.png", title: b("Total Amount Disbursed", "एकूण वितरित रक्कम"), value: "₹ 8.45 Cr", description: b("This Financial Year", "या आर्थिक वर्षात"), background: "#E8F1EA", visible: true },
+          { live: "coveragePercent", format: "percent", icon: "shield", iconUrl: P + "sch-stat-4.png", title: b("Coverage", "व्याप्ती"), value: "87%", description: b("Households Covered", "कुटुंबे समाविष्ट"), background: "#E8F1EA", visible: true },
         ],
       },
     },
@@ -97,11 +119,14 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       sectionKey: "success-stories",
       sortOrder: 40,
       data: {
+        layout: "quote",
+        heading: b("Success Stories", "यशोगाथा"),
+        subheading: b("Real stories of beneficiaries whose lives have been transformed by government schemes.", "शासकीय योजनांमुळे जीवन बदललेल्या लाभार्थ्यांच्या खऱ्या कथा."),
         items: [
-          { imageId: PH + "sch-story-1.webp", title: b("PM Awas Yojana gave me a home of my own.", "प्रधानमंत्री आवास योजनेने मला स्वतःचे घर दिले."), description: b("I am very thankful to the government for providing affordable housing and a better future for my children. — Sunita Vishwakarma, Ward No. 3", "परवडणारे घर आणि माझ्या मुलांसाठी चांगले भविष्य दिल्याबद्दल मी शासनाची आभारी आहे. — सुनीता विश्वकर्मा, प्रभाग क्र. ३"), order: 1 },
-          { imageId: PH + "sch-story-2.webp", title: b("PM-KISAN provided regular income & financial security.", "पीएम-किसानने नियमित उत्पन्न व आर्थिक सुरक्षा दिली."), description: b("It helps me support my family and manage farm expenses during difficult times. — Ramesh Kumar, Ward No. 2", "कठीण काळात कुटुंबाला आधार देण्यास व शेतीचा खर्च भागविण्यास हे मदत करते. — रमेश कुमार, प्रभाग क्र. २"), order: 2 },
-          { imageId: PH + "sch-story-3.webp", title: b("PM Kisan Samman Nidhi is a great support.", "पीएम किसान सन्मान निधी मोठा आधार आहे."), description: b("The amount helps me in buying seeds and fertilizers for my farm. — Vithal Kale, Ward No. 1", "या रकमेतून मला शेतीसाठी बियाणे व खते घेता येतात. — विठ्ठल काळे, प्रभाग क्र. १"), order: 3 },
-          { imageId: PH + "sch-story-4.webp", title: b("Scholarship Scheme helped me continue my education.", "शिष्यवृत्ती योजनेमुळे मला शिक्षण सुरू ठेवता आले."), description: b("It has been a huge support in achieving my dreams. — Anjali Patil, Ward No. 4", "माझी स्वप्ने पूर्ण करण्यात हा मोठा आधार ठरला. — अंजली पाटील, प्रभाग क्र. ४"), order: 4 },
+          { imageId: PH + "sch-story-1.webp", title: b("PM Awas Yojana gave me a home of my own.", "प्रधानमंत्री आवास योजनेने मला स्वतःचे घर दिले."), description: b("I am very thankful to the government for providing affordable housing and a better future for my children.", "परवडणारे घर आणि माझ्या मुलांसाठी चांगले भविष्य दिल्याबद्दल मी शासनाची आभारी आहे."), name: b("Sunita Vishwakarma", "सुनीता विश्वकर्मा"), ward: b("Ward No. 3", "प्रभाग क्र. ३"), tag: b("PM Awas Yojana", "प्रधानमंत्री आवास योजना"), order: 1 },
+          { imageId: PH + "sch-story-2.webp", title: b("PM-KISAN provided regular income & financial security.", "पीएम-किसानने नियमित उत्पन्न व आर्थिक सुरक्षा दिली."), description: b("It helps me support my family and manage farm expenses during difficult times.", "कठीण काळात कुटुंबाला आधार देण्यास व शेतीचा खर्च भागविण्यास हे मदत करते."), name: b("Ramesh Kumar", "रमेश कुमार"), ward: b("Ward No. 2", "प्रभाग क्र. २"), tag: b("PM-KISAN", "पीएम-किसान"), order: 2 },
+          { imageId: PH + "sch-story-3.webp", title: b("PM Kisan Samman Nidhi is a great support.", "पीएम किसान सन्मान निधी मोठा आधार आहे."), description: b("The amount helps me in buying seeds and fertilizers for my farm.", "या रकमेतून मला शेतीसाठी बियाणे व खते घेता येतात."), name: b("Vithal Kale", "विठ्ठल काळे"), ward: b("Ward No. 1", "प्रभाग क्र. १"), tag: b("PM Kisan Samman Nidhi", "पीएम किसान सन्मान निधी"), order: 3 },
+          { imageId: PH + "sch-story-4.webp", title: b("Scholarship Scheme helped me continue my education.", "शिष्यवृत्ती योजनेमुळे मला शिक्षण सुरू ठेवता आले."), description: b("It has been a huge support in achieving my dreams.", "माझी स्वप्ने पूर्ण करण्यात हा मोठा आधार ठरला."), name: b("Anjali Patil", "अंजली पाटील"), ward: b("Ward No. 4", "प्रभाग क्र. ४"), tag: b("Social Justice Scholarship", "सामाजिक न्याय शिष्यवृत्ती"), order: 4 },
         ],
       },
     },
@@ -158,7 +183,8 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       data: {
         title: b("Our Office Location", "आमचे कार्यालय स्थान"),
         address: b("Gram Panchayat: Savardari, Taluka: Khed, District: Pune – 410501", "ग्रामपंचायत: सावरदरी, तालुका: खेड, जिल्हा: पुणे – ४१०५०१"),
-        mapEmbedUrl: "https://maps.google.com/maps?q=Savardari%2C%20Khed%2C%20Pune&output=embed",
+        // The final embed address (maps.google.com/maps?…&output=embed redirects here with a SAMEORIGIN redirect response).
+        mapEmbedUrl: "https://www.google.com/maps/embed?origin=mfe&pb=!1m2!2m1!1sSavardari,+Khed,+Pune",
       },
     },
     {
@@ -239,9 +265,12 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
           { icon: "headset", title: b("Toll-Free Helpline", "टोल-फ्री हेल्पलाइन"), contactOrAction: "1800 123 6789", description: b("Mon - Sat: 10:30 AM - 5:00 PM", "सोम - शनि: सकाळी १०:३० - सायं. ५:००"), visible: true },
           { icon: "whatsapp", title: b("WhatsApp Support", "व्हॉट्सअॅप सहाय्य"), contactOrAction: "+91 98765 43210", description: b("Chat with us on WhatsApp", "व्हॉट्सअॅपवर आमच्याशी बोला"), visible: true },
           { icon: "bot", title: b("WhatsApp Chatbot", "व्हॉट्सअॅप चॅटबॉट"), contactOrAction: b("24/7 Assistance", "२४/७ सहाय्य") , description: b("Get instant answers", "तात्काळ उत्तरे मिळवा"), visible: true },
-          { icon: "mail", title: b("Suggestion Box", "सूचना पेटी"), contactOrAction: b("Share your ideas", "आपल्या कल्पना सांगा"), description: b("Help us improve", "आम्हाला सुधारण्यास मदत करा"), visible: true },
-          { icon: "file", title: b("Feedback Form", "अभिप्राय अर्ज"), contactOrAction: b("Your feedback matters", "आपला अभिप्राय महत्त्वाचा"), description: b("Tell us your experience", "आपला अनुभव सांगा"), visible: true },
+          // `link` is placeholder-only (the backend card has no link field); the helpline and WhatsApp cards
+          // get tel: / wa.me links from their numbers in the renderer.
+          { icon: "mail", title: b("Suggestion Box", "सूचना पेटी"), contactOrAction: b("Share your ideas", "आपल्या कल्पना सांगा"), description: b("Help us improve", "आम्हाला सुधारण्यास मदत करा"), link: "page:contact#feedback-form", visible: true },
+          { icon: "file", title: b("Feedback Form", "अभिप्राय अर्ज"), contactOrAction: b("Your feedback matters", "आपला अभिप्राय महत्त्वाचा"), description: b("Tell us your experience", "आपला अनुभव सांगा"), link: "page:contact#feedback-form", visible: true },
         ],
+        variant: "contact",
       },
     },
     {
@@ -253,7 +282,8 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
         howSteps: [
           b("Register your complaint online.", "आपली तक्रार ऑनलाइन नोंदवा."),
           b("Receive a unique Complaint ID.", "विशिष्ट तक्रार क्रमांक मिळवा."),
-          b("Track the status using Complaint ID / Mobile Number.", "तक्रार क्रमांक / मोबाईल क्रमांकाने स्थिती तपासा."),
+          // The design says "Complaint ID / Mobile Number"; the tracking API accepts the complaint ID only.
+          b("Track the status using your Complaint ID.", "तक्रार क्रमांकाने स्थिती तपासा."),
           b("Get updates on resolution.", "निराकरणाबाबत अद्यतने मिळवा."),
         ],
       },
@@ -291,16 +321,18 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       imageUrl: P + "emp-hero.png",
     }),
     {
+      // Figma: one white strip overlapping the hero; each tile jumps to its block on this page.
       sectionKey: "support-cards",
       sortOrder: 5,
       data: {
+        layout: "strip",
         items: [
-          { icon: "briefcase", title: b("Local Employment", "स्थानिक रोजगार"), description: b("Find jobs & work opportunities", "नोकरी व कामाच्या संधी शोधा"), visible: true },
-          { icon: "file", title: b("Government Tenders", "शासकीय निविदा"), description: b("Tenders & contract opportunities", "निविदा व कंत्राटाच्या संधी"), visible: true },
-          { icon: "users", title: b("SHGs & MSMEs", "बचत गट व लघुउद्योग"), description: b("Support for Self-Help Groups & Businesses", "बचत गट व व्यवसायांना सहाय्य"), visible: true },
-          { icon: "education", title: b("Training Programs", "प्रशिक्षण कार्यक्रम"), description: b("Skill development & youth training", "कौशल्य विकास व युवा प्रशिक्षण"), visible: true },
-          { icon: "monitor", title: b("Digital Literacy", "डिजिटल साक्षरता"), description: b("Digital literacy campaigns", "डिजिटल साक्षरता मोहिमा"), visible: true },
-          { icon: "link", title: b("Govt. Job Portals", "शासकीय रोजगार पोर्टल"), description: b("Access government employment portals", "शासकीय रोजगार पोर्टलवर जा"), visible: true },
+          { icon: "briefcase", title: b("Local Employment", "स्थानिक रोजगार"), description: b("Find jobs & work opportunities", "नोकरी व कामाच्या संधी शोधा"), link: "page:employment#local-opportunities", visible: true },
+          { icon: "file", title: b("Government Tenders", "शासकीय निविदा"), description: b("Tenders & contract opportunities", "निविदा व कंत्राटाच्या संधी"), link: "page:employment#local-opportunities", visible: true },
+          { icon: "users", title: b("SHGs & MSMEs", "बचत गट व लघुउद्योग"), description: b("Support for Self-Help Groups & Businesses", "बचत गट व व्यवसायांना सहाय्य"), link: "page:employment#skill-directory", visible: true },
+          { icon: "education", title: b("Training Programs", "प्रशिक्षण कार्यक्रम"), description: b("Skill development & youth training", "कौशल्य विकास व युवा प्रशिक्षण"), link: "page:employment#training-programs", visible: true },
+          { icon: "monitor", title: b("Digital Literacy", "डिजिटल साक्षरता"), description: b("Digital literacy campaigns", "डिजिटल साक्षरता मोहिमा"), link: "page:employment#training-programs", visible: true },
+          { icon: "link", title: b("Govt. Job Portals", "शासकीय रोजगार पोर्टल"), description: b("Access government employment portals", "शासकीय रोजगार पोर्टलवर जा"), link: "page:employment#gov-job-portals", visible: true },
         ],
       },
     },
@@ -308,52 +340,63 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       sectionKey: "local-opportunities",
       sortOrder: 10,
       data: {
+        heading: b("Local Opportunities", "स्थानिक संधी"),
         items: [
-          { icon: "briefcase", contactOrAction: "128", title: b("Active Job Openings", "सक्रिय रोजगार संधी"), description: b("Updated this week", "या आठवड्यात अद्ययावत"), visible: true },
-          { icon: "building", contactOrAction: "42", title: b("Private Sector Jobs", "खाजगी क्षेत्रातील नोकऱ्या"), description: b("Multiple locations", "विविध ठिकाणी"), visible: true },
-          { icon: "education", contactOrAction: "16", title: b("Apprenticeship Program", "शिकाऊ उमेदवारी कार्यक्रम"), description: b("For skill development", "कौशल्य विकासासाठी"), visible: true },
-          { icon: "file", contactOrAction: "21", title: b("Contract Opportunities", "कंत्राटी संधी"), description: b("Apply for local tenders", "स्थानिक निविदांसाठी अर्ज करा"), visible: true },
+          { icon: "file", colour: "#138808", contactOrAction: "128", title: b("Active Job Openings", "सक्रिय रोजगार संधी"), description: b("Updated this week", "या आठवड्यात अद्ययावत"), visible: true },
+          { icon: "briefcase", colour: "#6d3fc0", contactOrAction: "42", title: b("Private Sector Jobs", "खाजगी क्षेत्रातील नोकऱ्या"), description: b("Multiple locations", "विविध ठिकाणी"), visible: true },
+          { icon: "handshake", colour: "#1a62e0", contactOrAction: "16", title: b("Apprenticeship Program", "शिकाऊ उमेदवारी कार्यक्रम"), description: b("For skill development", "कौशल्य विकासासाठी"), visible: true },
+          { icon: "megaphone", colour: "#f5871f", contactOrAction: "21", title: b("Contract Opportunities", "कंत्राटी संधी"), description: b("Apply for local tenders", "स्थानिक निविदांसाठी अर्ज करा"), visible: true },
         ],
+        // No job listing page yet: the government job portals below list the openings.
+        viewAll: { label: b("View All Opportunities", "सर्व संधी पहा"), href: "page:employment#gov-job-portals" },
       },
     },
     {
       sectionKey: "skill-directory",
       sortOrder: 20,
       data: {
+        heading: b("Village Talent Directory", "गाव कौशल्य निर्देशिका"),
+        subheading: b("Find skilled professionals in our village for your needs", "आपल्या गरजांसाठी गावातील कुशल व्यावसायिक शोधा"),
         items: [
-          { icon: "zap", skillName: b("Electricians", "इलेक्ट्रिशियन"), availableCount: 18, countIsApproximate: true, active: true },
-          { icon: "droplets", skillName: b("Plumbers", "प्लंबर"), availableCount: 12, countIsApproximate: true, active: true },
-          { icon: "hammer", skillName: b("Carpenters", "सुतार"), availableCount: 15, countIsApproximate: true, active: true },
-          { icon: "star", skillName: b("Tailors", "शिंपी"), availableCount: 20, countIsApproximate: true, active: true },
-          { icon: "wrench", skillName: b("Mechanics", "मेकॅनिक"), availableCount: 10, countIsApproximate: true, active: true },
-          { icon: "building", skillName: b("Masons", "गवंडी"), availableCount: 14, countIsApproximate: true, active: true },
-          { icon: "lightbulb", skillName: b("Painters", "रंगारी"), availableCount: 11, countIsApproximate: true, active: true },
-          { icon: "users", skillName: b("More Skills", "इतर कौशल्ये"), link: "page:employment#skill-directory", active: true },
+          { icon: "zap", skillName: b("Electricians", "इलेक्ट्रिशियन"), availableCount: 18, countIsApproximate: false, active: true },
+          { icon: "droplets", skillName: b("Plumbers", "प्लंबर"), availableCount: 12, countIsApproximate: false, active: true },
+          { icon: "hammer", skillName: b("Carpenters", "सुतार"), availableCount: 15, countIsApproximate: false, active: true },
+          { icon: "star", skillName: b("Tailors", "शिंपी"), availableCount: 20, countIsApproximate: false, active: true },
+          { icon: "wrench", skillName: b("Mechanics", "मेकॅनिक"), availableCount: 10, countIsApproximate: false, active: true },
+          { icon: "building", skillName: b("Masons", "गवंडी"), availableCount: 14, countIsApproximate: false, active: true },
+          { icon: "lightbulb", skillName: b("Painters", "रंगारी"), availableCount: 11, countIsApproximate: false, active: true },
+          // No full directory page yet: the Panchayat office keeps the list (Contact page).
+          { icon: "users", skillName: b("More Skills", "इतर कौशल्ये"), link: "page:contact", active: true },
         ],
+        viewAll: { label: b("View Full Directory", "संपूर्ण निर्देशिका पहा"), href: "page:contact" },
       },
     },
     {
       sectionKey: "assistance-items",
       sortOrder: 25,
       data: {
+        heading: b("Farmer Assistance Centre", "शेतकरी सहाय्य केंद्र"),
+        subheading: b("Important information & resources for farmers.", "शेतकऱ्यांसाठी महत्त्वाची माहिती व साधने."),
         items: [
-          { icon: "rain", title: b("Daily Crop Market Prices", "दैनंदिन पीक बाजारभाव"), link: "page:environment#market-prices", active: true },
-          { icon: "sprout", title: b("Fertilizer Availability", "खतांची उपलब्धता"), link: "page:services", active: true },
-          { icon: "wheat", title: b("Agricultural Advisory", "कृषी सल्ला"), link: "page:services", active: true },
-          { icon: "cloud", title: b("Weather Updates", "हवामान अद्यतन"), link: "page:environment#weather-update", active: true },
-          { icon: "megaphone", title: b("Scheme Information", "योजनांची माहिती"), link: "page:schemes", active: true },
+          { icon: "rain", colour: "#f5871f", title: b("Daily Crop Market Prices", "दैनंदिन पीक बाजारभाव"), description: b("Check latest market rates in your region", "आपल्या भागातील ताजे बाजारभाव पहा"), link: "page:environment#market-prices", active: true },
+          { icon: "sprout", colour: "#1a62e0", title: b("Fertilizer Availability", "खतांची उपलब्धता"), description: b("Find fertilizers near to your location", "जवळपास उपलब्ध खते शोधा"), link: "page:services", active: true },
+          { icon: "wheat", colour: "#3f9b2f", title: b("Agricultural Advisory", "कृषी सल्ला"), description: b("Expert advice for better farming", "चांगल्या शेतीसाठी तज्ज्ञ सल्ला"), link: "page:services", active: true },
+          { icon: "cloud", colour: "#6d3fc0", title: b("Weather Updates", "हवामान अद्यतन"), description: b("Get latest weather & forecast", "ताजे हवामान व अंदाज मिळवा"), link: "page:environment#weather-update", active: true },
+          { icon: "megaphone", colour: "#f59e0b", title: b("Scheme Information", "योजनांची माहिती"), description: b("Latest schemes and market updates", "नवीन योजना व बाजार अद्यतने"), link: "page:schemes", active: true },
         ],
+        viewAll: { label: b("Visit Farmer Assistance Center", "शेतकरी सहाय्य केंद्राला भेट द्या"), href: "page:services" },
       },
     },
     {
       sectionKey: "training-programs",
       sortOrder: 30,
       data: {
+        heading: b("Training Programs & Digital Literacy", "प्रशिक्षण कार्यक्रम आणि डिजिटल साक्षरता"),
         items: [
-          { thumbnailImageId: PH + "emp-train-1.webp", title: b("Skill Development Programs", "कौशल्य विकास कार्यक्रम"), shortDescription: b("Enhance your skills & build a better future", "कौशल्ये वाढवा आणि चांगले भविष्य घडवा"), ctaText: b("View Details", "तपशील पहा"), ctaLink: "page:employment#training-programs", order: 1, status: "active", featured: false },
-          { thumbnailImageId: PH + "emp-train-2.webp", title: b("Youth Training Programs", "युवा प्रशिक्षण कार्यक्रम"), shortDescription: b("Special training programs for youth", "युवकांसाठी विशेष प्रशिक्षण कार्यक्रम"), ctaText: b("View Details", "तपशील पहा"), ctaLink: "page:employment#training-programs", order: 2, status: "active", featured: false },
-          { thumbnailImageId: PH + "emp-train-3.webp", title: b("Digital Literacy Campaign", "डिजिटल साक्षरता मोहीम"), shortDescription: b("Learn digital skills for modern world", "आधुनिक जगासाठी डिजिटल कौशल्ये शिका"), ctaText: b("View Details", "तपशील पहा"), ctaLink: "page:employment#training-programs", order: 3, status: "active", featured: false },
-          { thumbnailImageId: PH + "emp-train-4.webp", title: b("Entrepreneurship Development", "उद्योजकता विकास"), shortDescription: b("Start your own business with confidence", "आत्मविश्वासाने स्वतःचा व्यवसाय सुरू करा"), ctaText: b("View Details", "तपशील पहा"), ctaLink: "page:employment#training-programs", order: 4, status: "active", featured: false },
+          { thumbnailImageId: PH + "emp-train-1.webp", title: b("Skill Development Programs", "कौशल्य विकास कार्यक्रम"), shortDescription: b("Enhance your skills & build a better future", "कौशल्ये वाढवा आणि चांगले भविष्य घडवा"), ctaText: b("View Details", "तपशील पहा"), ctaLink: "page:contact", order: 1, status: "active", featured: false },
+          { thumbnailImageId: PH + "emp-train-2.webp", title: b("Youth Training Programs", "युवा प्रशिक्षण कार्यक्रम"), shortDescription: b("Special training programs for youth", "युवकांसाठी विशेष प्रशिक्षण कार्यक्रम"), ctaText: b("View Details", "तपशील पहा"), ctaLink: "page:education#scheme-cards", order: 2, status: "active", featured: false },
+          { thumbnailImageId: PH + "emp-train-3.webp", title: b("Digital Literacy Campaign", "डिजिटल साक्षरता मोहीम"), shortDescription: b("Learn digital skills for modern world", "आधुनिक जगासाठी डिजिटल कौशल्ये शिका"), ctaText: b("View Details", "तपशील पहा"), ctaLink: "page:services", order: 3, status: "active", featured: false },
+          { thumbnailImageId: PH + "emp-train-4.webp", title: b("Entrepreneurship Development", "उद्योजकता विकास"), shortDescription: b("Start your own business with confidence", "आत्मविश्वासाने स्वतःचा व्यवसाय सुरू करा"), ctaText: b("View Details", "तपशील पहा"), ctaLink: "page:schemes", order: 4, status: "active", featured: false },
         ],
       },
     },
@@ -361,23 +404,30 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       sectionKey: "job-portals",
       sortOrder: 35,
       data: {
+        heading: b("Government Job Portals", "शासकीय रोजगार पोर्टल"),
+        subheading: b("Access official government employment portals", "अधिकृत शासकीय रोजगार पोर्टल वापरा"),
         items: [
           { logoId: PH + "emp-portal-1.webp", name: b("National Career Service", "राष्ट्रीय करिअर सेवा"), description: b("Find government & private sector jobs", "शासकीय व खाजगी क्षेत्रातील नोकऱ्या शोधा"), websiteUrl: "https://www.ncs.gov.in", order: 1, active: true },
           { logoId: PH + "emp-portal-2.webp", name: b("Maharashtra Rojgar Portal", "महाराष्ट्र रोजगार पोर्टल"), description: b("Government of Maharashtra", "महाराष्ट्र शासन"), websiteUrl: "https://rojgar.mahaswayam.gov.in", order: 2, active: true },
           { logoId: PH + "emp-portal-3.webp", name: b("PM Kaushal Vikas Yojana", "पंतप्रधान कौशल्य विकास योजना"), description: b("Skill development & training", "कौशल्य विकास व प्रशिक्षण"), websiteUrl: "https://www.pmkvyofficial.org", order: 3, active: true },
           { logoId: PH + "emp-portal-4.webp", name: b("Apprenticeship India", "अप्रेंटिसशिप इंडिया"), description: b("Find apprenticeship opportunities", "शिकाऊ उमेदवारीच्या संधी शोधा"), websiteUrl: "https://www.apprenticeshipindia.gov.in", order: 4, active: true },
         ],
+        // The National Career Service portal links every government job portal.
+        viewAll: { label: b("View All Portals", "सर्व पोर्टल पहा"), href: "https://www.ncs.gov.in" },
       },
     },
     {
       sectionKey: "success-stories",
       sortOrder: 40,
       data: {
+        heading: b("Success Stories of Savardari", "सावरदरीच्या यशोगाथा"),
+        // No story pages yet: "Read More" stays on this block; "View All" opens every village story on Our Village.
+        viewAll: { label: b("View All Success Stories", "सर्व यशोगाथा पहा"), href: "page:culture#success-stories" },
         items: [
-          { imageId: PH + "emp-story-1.webp", title: b("From Homemaker to Entrepreneur", "गृहिणीपासून उद्योजिकेपर्यंत"), description: b("Sunita Tai started a tailoring business with SHG support and now employs 15 women in the village.", "सुनीताताईंनी बचत गटाच्या मदतीने शिवणकाम व्यवसाय सुरू केला आणि आज गावातील १५ महिलांना रोजगार देतात."), buttonText: b("Read More", "अधिक वाचा"), buttonLink: "page:culture", order: 1 },
-          { imageId: PH + "emp-story-2.webp", title: b("Skilled Youth, Bright Future", "कुशल युवक, उज्ज्वल भविष्य"), description: b("Rohit completed electrician training and now runs a successful electrical services business.", "रोहितने इलेक्ट्रिशियन प्रशिक्षण पूर्ण केले आणि आता तो यशस्वी विद्युत सेवा व्यवसाय चालवतो."), buttonText: b("Read More", "अधिक वाचा"), buttonLink: "page:culture", order: 2 },
-          { imageId: PH + "emp-story-3.webp", title: b("Digital Skills, New Opportunities", "डिजिटल कौशल्ये, नव्या संधी"), description: b("Pooja learned digital marketing through our training program and now works as a freelancer.", "पूजाने आमच्या प्रशिक्षण कार्यक्रमातून डिजिटल मार्केटिंग शिकले आणि आता ती फ्रीलान्सर म्हणून काम करते."), buttonText: b("Read More", "अधिक वाचा"), buttonLink: "page:culture", order: 3 },
-          { imageId: PH + "emp-story-4.webp", title: b("Modern Farming, Better Income", "आधुनिक शेती, चांगले उत्पन्न"), description: b("Ramesh adopted modern farming techniques and increased his income by 60% in one season.", "रमेश यांनी आधुनिक शेती तंत्रे अवलंबली आणि एका हंगामात उत्पन्न ६०% ने वाढवले."), buttonText: b("Read More", "अधिक वाचा"), buttonLink: "page:culture", order: 4 },
+          { imageId: PH + "emp-story-1.webp", title: b("From Homemaker to Entrepreneur", "गृहिणीपासून उद्योजिकेपर्यंत"), description: b("Sunita Tai started a tailoring business with SHG support and now employs 15 women in the village.", "सुनीताताईंनी बचत गटाच्या मदतीने शिवणकाम व्यवसाय सुरू केला आणि आज गावातील १५ महिलांना रोजगार देतात."), buttonText: b("Read More", "अधिक वाचा"), buttonLink: "page:employment#success-stories", order: 1 },
+          { imageId: PH + "emp-story-2.webp", title: b("Skilled Youth, Bright Future", "कुशल युवक, उज्ज्वल भविष्य"), description: b("Rohit completed electrician training and now runs a successful electrical services business.", "रोहितने इलेक्ट्रिशियन प्रशिक्षण पूर्ण केले आणि आता तो यशस्वी विद्युत सेवा व्यवसाय चालवतो."), buttonText: b("Read More", "अधिक वाचा"), buttonLink: "page:employment#success-stories", order: 2 },
+          { imageId: PH + "emp-story-3.webp", title: b("Digital Skills, New Opportunities", "डिजिटल कौशल्ये, नव्या संधी"), description: b("Pooja learned digital marketing through our training program and now works as a freelancer.", "पूजाने आमच्या प्रशिक्षण कार्यक्रमातून डिजिटल मार्केटिंग शिकले आणि आता ती फ्रीलान्सर म्हणून काम करते."), buttonText: b("Read More", "अधिक वाचा"), buttonLink: "page:employment#success-stories", order: 3 },
+          { imageId: PH + "emp-story-4.webp", title: b("Modern Farming, Better Income", "आधुनिक शेती, चांगले उत्पन्न"), description: b("Ramesh adopted modern farming techniques and increased his income by 60% in one season.", "रमेश यांनी आधुनिक शेती तंत्रे अवलंबली आणि एका हंगामात उत्पन्न ६०% ने वाढवले."), buttonText: b("Read More", "अधिक वाचा"), buttonLink: "page:employment#success-stories", order: 4 },
         ],
       },
     },
@@ -391,16 +441,18 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       imageUrl: P + "edu-hero.png",
     }),
     {
+      // Figma: one white strip overlapping the hero; each tile jumps to its block.
       sectionKey: "support-cards",
       sortOrder: 5,
       data: {
+        layout: "strip",
         items: [
-          { icon: "school", title: b("Schools in Village", "गावातील शाळा"), description: b("Explore schools and education facilities", "शाळा व शैक्षणिक सुविधा जाणून घ्या"), visible: true },
-          { icon: "trophy", title: b("Student Achievements", "विद्यार्थ्यांचे यश"), description: b("Celebrating the success of our students", "आपल्या विद्यार्थ्यांच्या यशाचा गौरव"), visible: true },
-          { icon: "education", title: b("Scholarship Schemes", "शिष्यवृत्ती योजना"), description: b("Find and apply for scholarships", "शिष्यवृत्ती शोधा व अर्ज करा"), visible: true },
-          { icon: "compass", title: b("Career Guidance", "करिअर मार्गदर्शन"), description: b("Resources for a better career tomorrow", "उज्ज्वल करिअरसाठी साधने"), visible: true },
-          { icon: "sports", title: b("Sports Activities", "क्रीडा उपक्रम"), description: b("Promoting sports and fitness", "खेळ व तंदुरुस्तीला प्रोत्साहन"), visible: true },
-          { icon: "nss", title: b("NSS Activities", "एनएसएस उपक्रम"), description: b("National Service Scheme & youth initiatives", "राष्ट्रीय सेवा योजना व युवा उपक्रम"), visible: true },
+          { icon: "school", title: b("Schools in Village", "गावातील शाळा"), description: b("Explore schools and education facilities", "शाळा व शैक्षणिक सुविधा जाणून घ्या"), link: "page:infrastructure#facility-grid", visible: true },
+          { icon: "trophy", title: b("Student Achievements", "विद्यार्थ्यांचे यश"), description: b("Celebrating the success of our students", "आपल्या विद्यार्थ्यांच्या यशाचा गौरव"), link: "page:education#student-spotlight", visible: true },
+          { icon: "education", title: b("Scholarship Schemes", "शिष्यवृत्ती योजना"), description: b("Find and apply for scholarships", "शिष्यवृत्ती शोधा व अर्ज करा"), link: "page:education#scheme-cards", visible: true },
+          { icon: "compass", title: b("Career Guidance", "करिअर मार्गदर्शन"), description: b("Resources for a better career tomorrow", "उज्ज्वल करिअरसाठी साधने"), link: "page:education#scheme-cards", visible: true },
+          { icon: "sports", title: b("Sports Activities", "क्रीडा उपक्रम"), description: b("Promoting sports and fitness", "खेळ व तंदुरुस्तीला प्रोत्साहन"), link: "page:education#youth-posts", visible: true },
+          { icon: "nss", title: b("NSS Activities", "एनएसएस उपक्रम"), description: b("National Service Scheme & youth initiatives", "राष्ट्रीय सेवा योजना व युवा उपक्रम"), link: "page:education#youth-posts", visible: true },
         ],
       },
     },
@@ -441,26 +493,33 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       },
     },
     {
+      // Figma shows one sample post per type (same picture, author and date); two pages of them so the
+      // arrow and "View All Contribution" have something to show. Placeholder posts have no link yet.
       sectionKey: "youth-posts",
       sortOrder: 25,
       data: {
-        items: [1, 2, 3, 4].map(() => ({
-          tabKey: "blogs",
-          type: "blog",
-          title: b("Power of Education In Rural India", "ग्रामीण भारतातील शिक्षणाची ताकद"),
-          coverImageId: PH + "edu-blog.webp",
-          url: "page:education",
-        })),
+        items: [0, 1, 2, 3, 4, 5, 6, 7].map((i) => {
+          const kind = (["blog", "youtube", "reel", "idea"] as const)[i % 4]!;
+          return {
+            tabKey: { blog: "blogs", youtube: "youtube", reel: "reels", idea: "ideas" }[kind],
+            type: kind,
+            title: b("Power of Education In Rural India", "ग्रामीण भारतातील शिक्षणाची ताकद"),
+            coverImageId: PH + "edu-blog.webp",
+            author: b("Rutuja Wankhade", "ऋतुजा वानखडे"),
+            date: "2024-03-25",
+          };
+        }),
       },
     },
     {
       sectionKey: "scheme-cards",
       sortOrder: 30,
       data: {
+        heading: b("Schemes & Opportunities for Youth", "युवकांसाठी योजना आणि संधी"),
         items: [
           { icon: "education", title: b("Scholarship Schemes", "शिष्यवृत्ती योजना"), description: b("Central & State Government scholarships for students", "विद्यार्थ्यांसाठी केंद्र व राज्य शासनाच्या शिष्यवृत्ती"), buttonText: b("Explore Now", "आता पहा"), buttonLink: "page:schemes", active: true },
-          { icon: "growth", title: b("Skill Development", "कौशल्य विकास"), description: b("Courses & training programs for youth", "युवकांसाठी अभ्यासक्रम व प्रशिक्षण कार्यक्रम"), buttonText: b("Explore Now", "आता पहा"), buttonLink: "page:employment#training-programs", active: true },
-          { icon: "book", title: b("Competitive Exams", "स्पर्धा परीक्षा"), description: b("Resources & guidance for various exams", "विविध परीक्षांसाठी साधने व मार्गदर्शन"), buttonText: b("Explore Now", "आता पहा"), buttonLink: "page:education#youth-posts", active: true },
+          { icon: "award", title: b("Skill Development", "कौशल्य विकास"), description: b("Courses & training programs for youth", "युवकांसाठी अभ्यासक्रम व प्रशिक्षण कार्यक्रम"), buttonText: b("Explore Now", "आता पहा"), buttonLink: "page:employment#training-programs", active: true },
+          { icon: "file", title: b("Competitive Exams", "स्पर्धा परीक्षा"), description: b("Resources & guidance for various exams", "विविध परीक्षांसाठी साधने व मार्गदर्शन"), buttonText: b("Explore Now", "आता पहा"), buttonLink: "page:education#youth-posts", active: true },
           { icon: "briefcase", title: b("Internships", "इंटर्नशिप"), description: b("Find internships & placement opportunities", "इंटर्नशिप व नोकरीच्या संधी शोधा"), buttonText: b("Explore Now", "आता पहा"), buttonLink: "page:employment#local-opportunities", active: true },
           { icon: "users", title: b("Youth Clubs", "युवा मंडळे"), description: b("Join youth clubs & build leadership skills", "युवा मंडळात सहभागी व्हा आणि नेतृत्वकौशल्ये वाढवा"), buttonText: b("Explore Now", "आता पहा"), buttonLink: "page:education#youth-posts", active: true },
         ],
@@ -470,11 +529,13 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       sectionKey: "success-stories",
       sortOrder: 40,
       data: {
+        heading: b("Success Stories from Savardari", "सावरदरीतील यशोगाथा"),
+        viewAll: { label: b("View All Success Stories", "सर्व यशोगाथा पहा"), href: "page:culture#success-stories" },
         items: [
-          { imageId: PH + "edu-story-1.webp", title: b("From Farmer to Agri Entrepreneur", "शेतकऱ्यापासून कृषी उद्योजकापर्यंत"), description: b("Ramesh Jadhav started organic farming and now supplies vegetables to Nagpur markets. An inspiration for rural youth.", "रमेश जाधव यांनी सेंद्रिय शेती सुरू केली आणि आता नागपूरच्या बाजारात भाजीपाला पुरवतात. ग्रामीण युवकांसाठी प्रेरणा."), buttonText: b("Read More", "अधिक वाचा"), buttonLink: "page:culture", order: 1 },
-          { imageId: PH + "edu-story-2.webp", title: b("Young Coder of Savardari", "सावरदरीचा युवा कोडर"), description: b("Amit Dongre, a 12th student, developed a smart irrigation system and won a district-level innovation award.", "१२ वीतील अमित डोंगरे यांनी स्मार्ट सिंचन प्रणाली विकसित केली आणि जिल्हास्तरीय नावीन्य पुरस्कार जिंकला."), buttonText: b("Read More", "अधिक वाचा"), buttonLink: "page:culture", order: 2 },
-          { imageId: PH + "edu-story-3.webp", title: b("Women Entrepreneur", "महिला उद्योजिका"), description: b("Pooja Wankhade runs a successful papad making business and empowers other women in the village.", "पूजा वानखडे यशस्वी पापड व्यवसाय चालवतात आणि गावातील इतर महिलांना सक्षम करतात."), buttonText: b("Read More", "अधिक वाचा"), buttonLink: "page:culture", order: 3 },
-          { imageId: PH + "edu-story-4.webp", title: b("Sports Star", "क्रीडा तारा"), description: b("Rahul Tayade represented Maharashtra in the State-level Athletics Competition and won a silver medal.", "राहुल तायडे यांनी राज्यस्तरीय अॅथलेटिक्स स्पर्धेत महाराष्ट्राचे प्रतिनिधित्व करून रौप्यपदक जिंकले."), buttonText: b("Read More", "अधिक वाचा"), buttonLink: "page:culture", order: 4 },
+          { imageId: PH + "edu-story-1.webp", title: b("From Farmer to Agri Entrepreneur", "शेतकऱ्यापासून कृषी उद्योजकापर्यंत"), description: b("Ramesh Jadhav started organic farming and now supplies vegetables to Nagpur markets. An inspiration for rural youth.", "रमेश जाधव यांनी सेंद्रिय शेती सुरू केली आणि आता नागपूरच्या बाजारात भाजीपाला पुरवतात. ग्रामीण युवकांसाठी प्रेरणा."), buttonText: b("Read More", "अधिक वाचा"), buttonLink: "page:education#success-stories", order: 1 },
+          { imageId: PH + "edu-story-2.webp", title: b("Young Coder of Savardari", "सावरदरीचा युवा कोडर"), description: b("Amit Dongre, a 12th student, developed a smart irrigation system and won a district-level innovation award.", "१२ वीतील अमित डोंगरे यांनी स्मार्ट सिंचन प्रणाली विकसित केली आणि जिल्हास्तरीय नावीन्य पुरस्कार जिंकला."), buttonText: b("Read More", "अधिक वाचा"), buttonLink: "page:education#success-stories", order: 2 },
+          { imageId: PH + "edu-story-3.webp", title: b("Women Entrepreneur", "महिला उद्योजिका"), description: b("Pooja Wankhade runs a successful papad making business and empowers other women in the village.", "पूजा वानखडे यशस्वी पापड व्यवसाय चालवतात आणि गावातील इतर महिलांना सक्षम करतात."), buttonText: b("Read More", "अधिक वाचा"), buttonLink: "page:education#success-stories", order: 3 },
+          { imageId: PH + "edu-story-4.webp", title: b("Sports Star", "क्रीडा तारा"), description: b("Rahul Tayade represented Maharashtra in the State-level Athletics Competition and won a silver medal.", "राहुल तायडे यांनी राज्यस्तरीय अॅथलेटिक्स स्पर्धेत महाराष्ट्राचे प्रतिनिधित्व करून रौप्यपदक जिंकले."), buttonText: b("Read More", "अधिक वाचा"), buttonLink: "page:education#success-stories", order: 4 },
         ],
       },
     },
@@ -488,6 +549,27 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       actions: [{ label: t("Adopt a Tree Now"), href: "page:contact#volunteer-registration" }],
       imageUrl: P + "env-hero.png",
     }),
+    {
+      // Figma "Our Key Initiatives" panel under the hero. No backend section exists for it yet
+      // (docs/backend-needs-public-site.md); each tile jumps to the matching section of this page.
+      sectionKey: "key-initiatives",
+      sortOrder: 3,
+      data: {
+        heading: b("Our Key Initiatives", "आमचे प्रमुख उपक्रम"),
+        items: [
+          { icon: "tree", title: b("Tree Plantation Campaigns", "वृक्षलागवड मोहिमा"), link: "page:environment#tree-adoption" },
+          { icon: "recycle", title: b("Plastic-Free Village", "प्लास्टिकमुक्त गाव"), link: "page:environment#sustainability-initiatives" },
+          { icon: "trash", title: b("Waste Management (Solid & Liquid)", "कचरा व्यवस्थापन (घन व द्रव)"), link: "page:environment#sustainability-initiatives" },
+          { icon: "droplets", title: b("Rainwater Harvesting", "पर्जन्यजल संधारण"), link: "page:environment#sustainability-initiatives" },
+          { icon: "sun", title: b("Solar Energy Projects", "सौरऊर्जा प्रकल्प"), link: "page:environment#sustainability-initiatives" },
+          { icon: "water", title: b("Water Conservation Programmes", "जलसंधारण कार्यक्रम"), link: "page:environment#sustainability-initiatives" },
+          { icon: "sprout", title: b("Organic Farming Promotion", "सेंद्रिय शेतीला प्रोत्साहन"), link: "page:environment#sustainability-initiatives" },
+          { icon: "cloud", title: b("Weather Updates & Forecasts", "हवामान अद्यतने व अंदाज"), link: "page:environment#weather-update" },
+          { icon: "chart", title: b("Crop Information & Statistics", "पीक माहिती व आकडेवारी"), link: "page:environment#sustainability-initiatives" },
+          { icon: "growth", title: b("Agricultural Market Prices", "शेतमाल बाजारभाव"), link: "page:environment#market-prices" },
+        ],
+      },
+    },
     {
       sectionKey: "green-scoreboard",
       sortOrder: 5,
@@ -534,7 +616,7 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
           ["Organic Farming Promotion", "सेंद्रिय शेतीला प्रोत्साहन", "Encouraging natural farming and reducing chemical usage.", "नैसर्गिक शेतीला प्रोत्साहन आणि रासायनिक वापरात घट."],
           ["Weather Updates & Forecasts", "हवामान अद्यतने व अंदाज", "Stay informed about weather conditions and seasonal forecasts.", "हवामानाची स्थिती व हंगामी अंदाजाची माहिती मिळवा."],
           ["Crop Types & Statistics", "पिकांचे प्रकार व आकडेवारी", "Information on major crops, production, and yield statistics.", "प्रमुख पिके, उत्पादन व उत्पन्नाच्या आकडेवारीची माहिती."],
-        ].map(([en, mr, dEn, dMr], i) => ({ imageId: `${PH}env-init-${i + 1}.webp`, title: b(en!, mr!), description: b(dEn!, dMr!), active: true })),
+        ].map(([en, mr, dEn, dMr], i) => ({ imageId: `${PH}env-init-${i + 1}.webp`, title: b(en!, mr!), description: b(dEn!, dMr!), active: true, link: INITIATIVE_LINKS[i] })),
       },
     },
     {
@@ -553,7 +635,10 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
           { commodity: b("Gram (Chickpea)", "हरभरा"), unit: "Quintal", minPrice: 5000, maxPrice: 5600, modalPrice: 5300 },
         ],
         buttonText: b("View All Prices", "सर्व भाव पहा"),
-        buttonLink: "page:environment",
+        // There is no separate price list yet: the link jumps to this table (an anchor, not a reload).
+        buttonLink: "page:environment#market-prices",
+        // Placeholder flag: the design's sample date must not show the "prices may be out of date" warning.
+        designSample: true,
       },
     },
     {
@@ -580,7 +665,7 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       title: t("Capturing the Journey of Savardari"),
       body: t("Explore the vibrant life, cultural heritage, and development milestones of our village through images, videos, and media stories"),
       actions: [
-        { label: t("Watch Documentary"), href: "page:gallery#video-feature" },
+        { label: t("Watch Documentary"), href: "page:gallery#mini-documentary" },
         { label: t("View Photo Gallery"), href: "page:gallery#photo-gallery" },
       ],
       imageUrl: P + "gal-hero.png",
@@ -630,24 +715,33 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       },
     },
     {
-      sectionKey: "before-after",
+      // Same shape as the backend `then-and-now` section (slider).
+      sectionKey: "then-and-now",
       sortOrder: 40,
       data: {
-        heading: t("Then & Now — Transformation Journey"),
-        items: [{ label: t(""), beforeUrl: P + "gal-before.png", afterUrl: P + "gal-after.png", height: 354 }],
+        heading: b("Then & Now — Transformation Journey", "तेव्हा आणि आता — परिवर्तनाचा प्रवास"),
+        autoPlay: false,
+        transitionMs: 3000,
+        comparisons: [{ beforeImageId: P + "gal-before.png", afterImageId: P + "gal-after.png", heading: t(""), order: 1 }],
       },
     },
     {
-      sectionKey: "video-feature",
+      // Same shape as the backend `mini-documentary` section. The real documentary link is not known yet
+      // (content need): until then the button opens YouTube in a new tab. `thumbnailUrl` and `duration`
+      // are placeholder-only fields (the backend section has neither).
+      sectionKey: "mini-documentary",
       sortOrder: 50,
       data: {
-        heading: t("Mini Documentary"),
-        title: t("Savardari: A Journey of Transformation & Progress"),
-        body: t("A short documentary showcasing the efforts, achievements, and the bright future of our village."),
-        duration: t("Duration: 02:00"),
-        published: t("Published: April 10, 2024"),
-        imageUrl: P + "gal-doc.png",
-        action: { label: t("Watch Documentary"), href: "page:gallery#video-feature" },
+        heading: b("Mini Documentary", "लघु माहितीपट"),
+        title: b("Savardari: A Journey of Transformation & Progress", "सावरदरी: परिवर्तन व प्रगतीचा प्रवास"),
+        description: b("A short documentary showcasing the efforts, achievements, and the bright future of our village.", "आपल्या गावाचे प्रयत्न, यश आणि उज्ज्वल भविष्य दाखवणारा लघु माहितीपट."),
+        source: "link",
+        videoUrl: "https://www.youtube.com",
+        publishedDate: "2024-04-10",
+        playback: { autoplay: false, controls: true, muted: false, loop: false },
+        autoThumbnail: false,
+        thumbnailUrl: P + "gal-doc.png",
+        duration: "02:00",
       },
     },
   ],
