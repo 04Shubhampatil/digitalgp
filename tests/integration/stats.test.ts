@@ -55,9 +55,13 @@ describe("public statistics", () => {
     expect(s).toMatchObject({ total: 4, resolved: 2, rejected: 1, pending: 1, resolutionRate: 50 });
     expect(s.monthly).toHaveLength(12);
     expect(s.monthly[11]).toMatchObject({ received: 2, resolved: 1, pending: 0 });
-    expect(s.lastMonth).toEqual({ received: 1, resolved: 1 });
-    expect(s.monthBefore).toEqual({ received: 1, resolved: 0 });
+    // Month-end snapshots: end of last month = 2 received (1 resolved, 1 open); end of the month before = 1 received, still open.
+    expect(s.lastMonth).toEqual({ received: 1, resolved: 1, pendingAtEnd: 1, resolutionRate: 50 });
+    expect(s.monthBefore).toEqual({ received: 1, resolved: 0, pendingAtEnd: 1, resolutionRate: 0 });
     expect(s.receivedChangePercent).toBe(0);
+    expect(s.resolvedChangePercent).toBeNull(); // nothing was resolved the month before
+    expect(s.pendingChangePercent).toBe(0);
+    expect(s.resolutionRateChangePoints).toBe(50);
     expect(s.byCategory).toEqual([
       { category: "Water", total: 2, resolved: 1, sharePercent: 50 },
       { category: "Light", total: 1, resolved: 1, sharePercent: 25 },
@@ -80,7 +84,7 @@ describe("public statistics", () => {
   it("empty websites return zeros and null rates", async () => {
     await buildWorld();
     const s = await getPublicGrievanceStats("gp-a");
-    expect(s).toMatchObject({ total: 0, resolved: 0, pending: 0, resolutionRate: null, receivedChangePercent: null, byCategory: [] });
+    expect(s).toMatchObject({ total: 0, resolved: 0, pending: 0, resolutionRate: null, receivedChangePercent: null, resolvedChangePercent: null, pendingChangePercent: null, resolutionRateChangePoints: null, byCategory: [] });
     expect(s.monthly.every((m) => m.received === 0 && m.resolved === 0 && m.pending === 0)).toBe(true);
   });
 
@@ -112,6 +116,22 @@ describe("public statistics", () => {
     expect((await getPublicSchemeStats("gp-b")).totalSchemes).toBe(0);
   });
 
+  it("amount disbursed this financial year sums schemes tagged with the current year only", async () => {
+    const w = await buildWorld();
+    const admin = await actor("GP_ADMIN", w.gpA.id);
+    const fy = financialYear(new Date()).label;
+    const start = Number(fy.slice(0, 4));
+    const lastFy = `${start - 1}-${String(start).slice(2)}`;
+    for (const [nameEn, amountDisbursed, disbursedFinancialYear] of [["This year", 1000.25, fy], ["Also this year", 500, fy], ["Last year", 9999, lastFy]] as const) {
+      const s = await createScheme(admin.ctx, { tenantId: w.tenantA.id, level: "STATE", nameEn, amountDisbursed, disbursedFinancialYear }, client);
+      await transitionScheme(admin.ctx, s.id, "submit", null, client);
+      await transitionScheme(admin.ctx, s.id, "approve", null, client);
+      await transitionScheme(admin.ctx, s.id, "publish", null, client);
+    }
+    const s = await getPublicSchemeStats("gp-a");
+    expect(s).toMatchObject({ amountDisbursedTotal: "11499.25", amountDisbursedThisFinancialYear: "1500.25" });
+  });
+
   it("service stats return this month's grievance figures and null for sources that do not exist yet", async () => {
     const w = await buildWorld();
     const admin = await actor("GP_ADMIN", w.gpA.id);
@@ -123,6 +143,30 @@ describe("public statistics", () => {
     expect(s).toMatchObject({ grievancesReceivedThisMonth: 2, grievancesResolvedThisMonth: 1, certificatesIssuedThisMonth: null, taxCollectedThisMonth: null, citizenSatisfactionRate: null });
     expect(s.month).toMatch(/^\d{4}-\d{2}$/);
     void w;
+  });
+
+  it("service stats use this month's typed-in figures and compute satisfaction from feedback ratings", async () => {
+    const w = await buildWorld();
+    const month = new Date().toISOString().slice(0, 7);
+    await db.tenant.update({
+      where: { id: w.tenantA.id },
+      data: { settings: { serviceStats: { month, certificatesIssued: 42, taxCollected: 125000.5, satisfactionRate: 88 } } },
+    });
+    let s = await getPublicServiceStats("gp-a");
+    expect(s).toMatchObject({ certificatesIssuedThisMonth: 42, taxCollectedThisMonth: "125000.50", citizenSatisfactionRate: 88, satisfactionSource: "MANUAL", ratingsCount: 0 });
+
+    // Five or more ratings in the last 90 days replace the typed-in rate: 4 of 5 rated 4–5 → 80%.
+    for (const rating of [5, 4, 5, 2, 4]) {
+      await db.formSubmission.create({ data: { tenantId: w.tenantA.id, kind: "FEEDBACK", name: "Visitor", message: "Feedback text here", rating } });
+    }
+    invalidateMemo();
+    s = await getPublicServiceStats("gp-a");
+    expect(s).toMatchObject({ citizenSatisfactionRate: 80, satisfactionSource: "FEEDBACK_RATINGS", ratingsCount: 5 });
+
+    // Figures typed in for another month are not shown as "this month".
+    await db.tenant.update({ where: { id: w.tenantA.id }, data: { settings: { serviceStats: { month: "2001-01", certificatesIssued: 7 } } } });
+    invalidateMemo();
+    expect(await getPublicServiceStats("gp-a")).toMatchObject({ certificatesIssuedThisMonth: null, taxCollectedThisMonth: null });
   });
 
   it("financial year runs April to March", () => {

@@ -11,6 +11,13 @@ export const amountSchema = z
   .max(1_000_000_000_000)
   .refine((v) => Math.abs(v * 100 - Math.round(v * 100)) < 1e-6, "At most two decimal places");
 
+/** Indian financial year label "YYYY-YY", e.g. "2026-27" (the second part must be the next year). */
+export const financialYearSchema = z
+  .string()
+  .trim()
+  .regex(/^\d{4}-\d{2}$/, "Use the form 2026-27")
+  .refine((v) => (Number(v.slice(0, 4)) + 1) % 100 === Number(v.slice(5)), "The second year must follow the first");
+
 const base = {
   level: schemeLevelSchema,
   nameEn: optionalShortText,
@@ -24,6 +31,11 @@ const base = {
   externalUrl: z.url().max(2000).optional().nullable(),
   beneficiaryCount: z.number().int().min(0).max(100_000_000).optional().nullable(),
   amountDisbursed: amountSchema.optional().nullable(),
+  /** Financial year the amount belongs to, e.g. "2026-27"; counts towards "disbursed this financial year". */
+  disbursedFinancialYear: financialYearSchema.optional().nullable(),
+  category: z.string().trim().min(1).max(60).optional().nullable(),
+  /** Map picture for the coverage block (when the wards have no polygons). */
+  mapImageId: idSchema.optional().nullable(),
 };
 
 const atLeastOneName = (v: { nameEn?: string | null; nameMr?: string | null }) => !!(v.nameEn?.trim() || v.nameMr?.trim());
@@ -63,5 +75,6 @@ export type ListSchemesQuery = z.infer<typeof listSchemesQuerySchema>;
 
 export const publicSchemesQuerySchema = paginationQuerySchema.extend({
   level: schemeLevelSchema.optional(),
+  category: z.string().trim().min(1).max(60).optional(),
 });
 export type PublicSchemesQuery = z.infer<typeof publicSchemesQuerySchema>;

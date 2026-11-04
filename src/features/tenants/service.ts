@@ -1,5 +1,5 @@
 import type { Prisma } from "@/generated/prisma/client";
-import { DEFAULT_PAGE_KEYS } from "@/config/pages";
+import { DEFAULT_PAGE_KEYS, OPTIONAL_PAGE_KEYS } from "@/config/pages";
 import { actorFromContext, writeAudit } from "@/lib/audit";
 import type { AuthContext } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -8,7 +8,8 @@ import type { ClientInfo } from "@/lib/http";
 import { assertCan, unitPathScopeFilter } from "@/lib/permissions";
 import { getPublicTenantBySlug, getTenantForActor, getUnitForActor } from "@/lib/tenant";
 import { paginate, parseValue } from "@/lib/validation";
-import type { PublicTenantDto, TenantDto, TenantSettingsDto } from "@/types/api";
+import type { PublicTenantDto, TenantAdminRefDto, TenantDto, TenantSettingsDto } from "@/types/api";
+import { EXPORT_MAX_ROWS, toCsv } from "@/lib/csv";
 import {
   tenantSettingsSchema,
   type CreateTenantInput,
@@ -35,20 +36,67 @@ export function toTenantDto(t: TenantRow): TenantDto {
   };
 }
 
-export async function listTenants(ctx: AuthContext, query: ListTenantsQuery) {
+function tenantListWhere(ctx: AuthContext, query: Omit<ListTenantsQuery, "limit" | "cursor">): Prisma.TenantWhereInput {
   const scope = unitPathScopeFilter(ctx);
+  return {
+    unit: query.unitId ? { AND: [scope, { path: { contains: `/${query.unitId}/` } }] } : scope,
+    ...(query.status ? { status: query.status } : {}),
+    ...(query.q ? { OR: [{ nameEn: { contains: query.q, mode: "insensitive" } }, { nameMr: { contains: query.q } }, { slug: { contains: query.q } }] } : {}),
+  };
+}
+
+type TenantWithUnit = TenantRow & { unit: { path: string } };
+
+/**
+ * Active Block Admins whose block contains each website (the "Block Admin" column).
+ * Only names and emails of staff are returned, and only to callers who can already see the website.
+ */
+async function blockAdminsByTenant(rows: TenantWithUnit[]): Promise<Map<string, TenantAdminRefDto[]>> {
+  const ancestorIds = [...new Set(rows.flatMap((t) => t.unit.path.split("/").filter(Boolean)))];
+  const assignments = ancestorIds.length
+    ? await db.roleAssignment.findMany({
+        where: { role: "BLOCK_ADMIN", revokedAt: null, unitId: { in: ancestorIds }, user: { status: "ACTIVE" } },
+        select: { unitId: true, user: { select: { id: true, name: true, email: true } } },
+      })
+    : [];
+  const result = new Map<string, TenantAdminRefDto[]>();
+  for (const t of rows) {
+    const ids = new Set(t.unit.path.split("/").filter(Boolean));
+    const admins = assignments.filter((a) => ids.has(a.unitId)).map((a) => ({ id: a.user.id, name: a.user.name, email: a.user.email }));
+    result.set(t.id, [...new Map(admins.map((a) => [a.id, a])).values()]);
+  }
+  return result;
+}
+
+export async function listTenants(ctx: AuthContext, query: ListTenantsQuery) {
   const rows = await db.tenant.findMany({
-    where: {
-      unit: query.unitId ? { AND: [scope, { path: { contains: `/${query.unitId}/` } }] } : scope,
-      ...(query.status ? { status: query.status } : {}),
-      ...(query.q ? { OR: [{ nameEn: { contains: query.q, mode: "insensitive" } }, { nameMr: { contains: query.q } }, { slug: { contains: query.q } }] } : {}),
-    },
+    where: tenantListWhere(ctx, query),
+    include: { unit: { select: { path: true } } },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: query.limit + 1,
     ...(query.cursor ? { cursor: { id: query.cursor }, skip: 1 } : {}),
   });
   const page = paginate(rows, query.limit);
-  return { ...page, items: page.items.map(toTenantDto) };
+  const admins = await blockAdminsByTenant(page.items);
+  return { ...page, items: page.items.map((t) => ({ ...toTenantDto(t), blockAdmins: admins.get(t.id) ?? [] })) };
+}
+
+/** GP websites list as CSV (same filters and scope as the list, at most EXPORT_MAX_ROWS). */
+export async function exportTenants(ctx: AuthContext, query: Omit<ListTenantsQuery, "limit" | "cursor">): Promise<string> {
+  const rows = await db.tenant.findMany({
+    where: tenantListWhere(ctx, query),
+    include: { unit: { select: { path: true, parent: { select: { nameEn: true } } } } },
+    orderBy: [{ nameEn: "asc" }, { id: "asc" }],
+    take: EXPORT_MAX_ROWS,
+  });
+  const admins = await blockAdminsByTenant(rows);
+  return toCsv(
+    ["Website (English)", "Website (Marathi)", "Slug", "Custom domain", "Parent unit", "Status", "Published at", "Block admins", "Block admin emails", "Created at"],
+    rows.map((t) => {
+      const a = admins.get(t.id) ?? [];
+      return [t.nameEn, t.nameMr, t.slug, t.customDomain ?? "", t.unit.parent?.nameEn ?? "", t.status, t.publishedAt ?? "", a.map((x) => x.name).join("; "), a.map((x) => x.email).join("; "), t.createdAt];
+    }),
+  );
 }
 
 export async function getTenant(ctx: AuthContext, tenantId: string): Promise<TenantDto> {
@@ -75,7 +123,7 @@ export async function createTenant(ctx: AuthContext, input: CreateTenantInput, c
         customDomain: input.customDomain ?? null,
         defaultLocale: input.defaultLocale ?? "MR",
         settings: (input.settings ?? {}) as Prisma.InputJsonValue,
-        pages: { create: DEFAULT_PAGE_KEYS.map((pageKey) => ({ pageKey })) },
+        pages: { create: DEFAULT_PAGE_KEYS.map((pageKey) => ({ pageKey, isEnabled: !OPTIONAL_PAGE_KEYS.includes(pageKey) })) },
       },
     });
     await writeAudit(

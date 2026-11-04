@@ -11,6 +11,7 @@ import { paginate } from "@/lib/validation";
 import type { PublicSchemeDto, SchemeDto } from "@/types/api";
 import { assertEditable, nextStatus, transitionCapability, type WorkflowAction } from "@/features/content/workflow";
 import type { CreateSchemeInput, ListSchemesQuery, PublicSchemesQuery, UpdateSchemeInput } from "@/features/schemes/validators";
+import { assertUsableMedia } from "@/features/media/ownership";
 
 const MODULE = "schemes" as const;
 
@@ -42,6 +43,9 @@ export function toSchemeDto(s: SchemeRow): SchemeDto {
     externalUrl: s.externalUrl,
     beneficiaryCount: s.beneficiaryCount,
     amountDisbursed: decimalToString(s.amountDisbursed),
+    disbursedFinancialYear: s.disbursedFinancialYear,
+    category: s.category,
+    mapImageId: s.mapImageId,
     status: s.status,
     targets: s.targets.map((t) => ({ unitId: t.unit.id, level: t.unit.level, nameEn: t.unit.nameEn, nameMr: t.unit.nameMr })),
     createdById: s.createdById,
@@ -71,6 +75,9 @@ function toPublicDto(s: SchemeRow): PublicSchemeDto {
     externalUrl: s.externalUrl,
     beneficiaryCount: s.beneficiaryCount,
     amountDisbursed: decimalToString(s.amountDisbursed),
+    disbursedFinancialYear: s.disbursedFinancialYear,
+    category: s.category,
+    mapImageId: s.mapImageId,
     publishedAt: s.publishedAt?.toISOString() ?? null,
     isShared: s.tenantId === null,
   };
@@ -110,6 +117,9 @@ function baseData(input: Partial<CreateSchemeInput>): Prisma.SchemeUncheckedUpda
   if (input.amountDisbursed !== undefined) {
     data.amountDisbursed = input.amountDisbursed === null ? null : new Prisma.Decimal(input.amountDisbursed.toFixed(2));
   }
+  if (input.disbursedFinancialYear !== undefined) data.disbursedFinancialYear = input.disbursedFinancialYear;
+  if (input.category !== undefined) data.category = input.category;
+  if (input.mapImageId !== undefined) data.mapImageId = input.mapImageId;
   return data;
 }
 
@@ -163,6 +173,10 @@ export async function createScheme(ctx: AuthContext, input: CreateSchemeInput, c
     ownerUnitId = owner.id;
     targetUnitIds = await validateTargets(owner.path, input.targetUnitIds!);
   }
+  if (input.mapImageId) {
+    const ownerPath = (await db.adminUnit.findUniqueOrThrow({ where: { id: ownerUnitId }, select: { path: true } })).path;
+    await assertUsableMedia(input.mapImageId, { tenantId, unitPath: ownerPath }, { kind: "IMAGE", label: "Map image" });
+  }
 
   const created = await db.$transaction(async (tx) => {
     const row = await tx.scheme.create({
@@ -197,6 +211,7 @@ export async function updateScheme(ctx: AuthContext, id: string, input: UpdateSc
   }
 
   const targetUnitIds = input.targetUnitIds ? await validateTargets(before.ownerUnit.path, input.targetUnitIds) : null;
+  if (input.mapImageId) await assertUsableMedia(input.mapImageId, { tenantId: before.tenantId, unitPath: before.ownerUnit.path }, { kind: "IMAGE", label: "Map image" });
 
   const updated = await db.$transaction(async (tx) => {
     const row = await tx.scheme.update({
@@ -291,6 +306,7 @@ export async function listPublicSchemes(tenantSlug: string, query: PublicSchemes
       status: "PUBLISHED",
       OR: [{ tenantId: tenant.id }, { tenantId: null, targets: { some: { unitId: { in: ancestorIds } } } }],
       ...(query.level ? { level: query.level } : {}),
+      ...(query.category ? { category: { equals: query.category, mode: "insensitive" } } : {}),
     },
     include: schemeInclude,
     orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
@@ -299,4 +315,16 @@ export async function listPublicSchemes(tenantSlug: string, query: PublicSchemes
   });
   const page = paginate(rows, query.limit);
   return { ...page, items: page.items.map(toPublicDto) };
+}
+
+/** One published scheme visible on the website ("Know More"); 404 for drafts, deleted or untargeted schemes. */
+export async function getPublicScheme(tenantSlug: string, id: string): Promise<PublicSchemeDto> {
+  const tenant = await getPublicTenantBySlug(tenantSlug);
+  const ancestorIds = tenant.unitPath.split("/").filter(Boolean);
+  const row = await db.scheme.findFirst({
+    where: { id, deletedAt: null, status: "PUBLISHED", OR: [{ tenantId: tenant.id }, { tenantId: null, targets: { some: { unitId: { in: ancestorIds } } } }] },
+    include: schemeInclude,
+  });
+  if (!row) throw Errors.notFound("Scheme");
+  return toPublicDto(row);
 }

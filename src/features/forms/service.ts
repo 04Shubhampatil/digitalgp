@@ -12,7 +12,8 @@ import { publishedSectionData as publishedSection } from "@/lib/published-sectio
 import { getPublicTenantBySlug, getTenantForActor } from "@/lib/tenant";
 import { paginate } from "@/lib/validation";
 import type { FormSubmissionDto, FormSubmissionSummaryDto } from "@/types/api";
-import type { FeedbackInput, ListFormSubmissionsQuery, VolunteerInput } from "@/features/forms/validators";
+import type { Prisma } from "@/generated/prisma/client";
+import type { FeedbackInput, ListFormSubmissionsQuery, TreeAdoptionInput, VolunteerInput } from "@/features/forms/validators";
 
 /**
  * Public contact-page forms (feedback and volunteer applications).
@@ -51,16 +52,9 @@ function localized(value: Bilingual | undefined): string {
   return value?.en ?? value?.mr ?? "Thank you. Your message has been received.";
 }
 
-type SubmissionRow = {
-  id: string;
-  kind: "FEEDBACK" | "VOLUNTEER";
-  name: string;
-  email: string | null;
-  phone: string | null;
-  category: string | null;
-  message: string | null;
-  createdAt: Date;
-};
+type TreeAdoptionSettings = { enabled?: boolean; recipientEmail?: string; successMessage?: Bilingual };
+
+type SubmissionRow = Prisma.FormSubmissionGetPayload<Record<string, never>>;
 
 function toDto(row: SubmissionRow): FormSubmissionDto {
   return {
@@ -70,7 +64,12 @@ function toDto(row: SubmissionRow): FormSubmissionDto {
     email: row.email,
     phone: row.phone,
     category: row.category,
+    subject: row.subject,
+    address: row.address,
+    areaOfInterest: row.areaOfInterest,
+    rating: row.rating,
     message: row.message,
+    details: (row.details ?? null) as Record<string, unknown> | null,
     createdAt: row.createdAt.toISOString(),
   };
 }
@@ -101,6 +100,8 @@ export async function submitFeedback(tenantSlug: string, input: FeedbackInput, c
       name: input.name,
       email: input.email ?? null,
       phone: input.phone ?? null,
+      subject: input.subject ?? null,
+      rating: input.rating ?? null,
       message: input.message,
     },
   });
@@ -117,7 +118,7 @@ export async function submitFeedback(tenantSlug: string, input: FeedbackInput, c
     await sendMail({
       to,
       subject: `${tenant.slug}: new feedback`,
-      text: `Name: ${input.name}\nEmail: ${input.email ?? "-"}\nPhone: ${input.phone ?? "-"}\n\n${input.message}`,
+      text: `Name: ${input.name}\nEmail: ${input.email ?? "-"}\nPhone: ${input.phone ?? "-"}\nSubject: ${input.subject ?? "-"}\n\n${input.message}`,
     });
   }
   if (input.email && settings?.autoReply) {
@@ -152,6 +153,8 @@ export async function submitVolunteer(tenantSlug: string, input: VolunteerInput,
       email: input.email,
       phone: input.phone,
       category: input.category,
+      address: input.address ?? null,
+      areaOfInterest: input.areaOfInterest ?? null,
       message: input.message ?? null,
     },
   });
@@ -167,10 +170,52 @@ export async function submitVolunteer(tenantSlug: string, input: VolunteerInput,
     await sendMail({
       to: settings.recipientEmail,
       subject: `${tenant.slug}: new volunteer application`,
-      text: `Name: ${input.name}\nEmail: ${input.email}\nPhone: ${input.phone}\nCategory: ${input.category}\n\n${input.message ?? ""}`,
+      text: `Name: ${input.name}\nEmail: ${input.email}\nPhone: ${input.phone}\nCategory: ${input.category}\nArea of interest: ${input.areaOfInterest ?? "-"}\n\n${input.message ?? ""}`,
     });
   }
   return { message: localized(settings?.successMessage) };
+}
+
+/** "Adopt a Tree" request. Open only while the Environment page's tree-adoption section is published and enabled. */
+export async function submitTreeAdoption(tenantSlug: string, input: TreeAdoptionInput, client: ClientInfo): Promise<{ message: string }> {
+  const tenant = await getPublicTenantBySlug(tenantSlug);
+  const settings = (await publishedSection(tenant.id, "environment", "tree-adoption")) as TreeAdoptionSettings | null;
+  if (!settings || settings.enabled !== true) throw Errors.notFound("Form");
+  await consumeRateLimit(`tree:ip:${client.ipAddress ?? "unknown"}`, SUBMIT_LIMIT_PER_IP, SUBMIT_WINDOW_MS);
+  const success = settings.successMessage?.en || settings.successMessage?.mr
+    ? localized(settings.successMessage)
+    : "Thank you for adopting a tree. The Gram Panchayat office will contact you.";
+  if (input.website) return { message: success };
+  await verifyCaptcha(input.turnstileToken, client.ipAddress);
+
+  const details = { treeCount: input.treeCount, species: input.species ?? null, preferredLocation: input.preferredLocation ?? null };
+  const row = await db.formSubmission.create({
+    data: {
+      tenantId: tenant.id,
+      kind: "TREE_ADOPTION",
+      name: input.name,
+      email: input.email ?? null,
+      phone: input.phone,
+      address: input.address ?? null,
+      message: input.message ?? null,
+      details,
+    },
+  });
+  await writeAudit(actorFromContext(null, client), {
+    action: "form.tree_adoption_submit",
+    entityType: "FormSubmission",
+    entityId: row.id,
+    tenantId: tenant.id,
+    after: { kind: "TREE_ADOPTION", treeCount: input.treeCount },
+  });
+  if (settings.recipientEmail) {
+    await sendMail({
+      to: settings.recipientEmail,
+      subject: `${tenant.slug}: new tree adoption request`,
+      text: `Name: ${input.name}\nPhone: ${input.phone}\nTrees: ${input.treeCount}\nSpecies: ${input.species ?? "-"}\nLocation: ${input.preferredLocation ?? "-"}\n\n${input.message ?? ""}`,
+    });
+  }
+  return { message: success };
 }
 
 // ---------------------------------------------------------------------------
@@ -202,17 +247,20 @@ export async function formSubmissionSummary(ctx: AuthContext, tenantId: string):
   const tenant = await getTenantForActor(ctx, tenantId);
   assertCan(ctx, "content:review", { unitPath: tenant.unitPath });
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  const count = (kind: "FEEDBACK" | "VOLUNTEER", from?: Date) =>
+  const count = (kind: "FEEDBACK" | "VOLUNTEER" | "TREE_ADOPTION", from?: Date) =>
     db.formSubmission.count({ where: { tenantId: tenant.id, kind, ...(from ? { createdAt: { gte: from } } : {}) } });
-  const [feedbackTotal, feedbackLast30Days, volunteerTotal, volunteerLast30Days] = await Promise.all([
+  const [feedbackTotal, feedbackLast30Days, volunteerTotal, volunteerLast30Days, treeTotal, treeLast30Days] = await Promise.all([
     count("FEEDBACK"),
     count("FEEDBACK", since),
     count("VOLUNTEER"),
     count("VOLUNTEER", since),
+    count("TREE_ADOPTION"),
+    count("TREE_ADOPTION", since),
   ]);
   return {
     feedback: { total: feedbackTotal, last30Days: feedbackLast30Days },
     volunteer: { total: volunteerTotal, last30Days: volunteerLast30Days },
+    treeAdoption: { total: treeTotal, last30Days: treeLast30Days },
   };
 }
 

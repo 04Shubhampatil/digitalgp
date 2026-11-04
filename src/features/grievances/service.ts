@@ -14,7 +14,7 @@ import { attachToGrievance, requireCaptcha, toAttachmentDto, validateAttachments
 import { complaintFormSettings } from "@/features/grievances/form-settings";
 import { getPublicTenantBySlug } from "@/lib/tenant";
 import { paginate } from "@/lib/validation";
-import type { GrievanceDto, GrievanceEventDto, PublicGrievanceReceiptDto, PublicGrievanceStatusDto } from "@/types/api";
+import type { GrievanceDto, GrievanceEventDto, PublicGrievanceLookupItemDto, PublicGrievanceReceiptDto, PublicGrievanceStatusDto } from "@/types/api";
 import {
   GRIEVANCE_TRANSITIONS,
   type AssignGrievanceInput,
@@ -55,6 +55,9 @@ export function toGrievanceDto(g: GrievanceRow): GrievanceDto {
     citizenName: g.citizenName,
     citizenPhone: g.citizenPhone,
     citizenEmail: g.citizenEmail,
+    complaintType: g.complaintType,
+    subject: g.subject,
+    location: g.location,
     description: g.description,
     status: g.status,
     assignedToId: g.assignedToId,
@@ -106,7 +109,16 @@ export async function listGrievances(ctx: AuthContext, query: ListGrievancesQuer
       ...(query.status ? { status: query.status } : {}),
       ...(query.category ? { category: query.category } : {}),
       ...(query.assignedToId ? { assignedToId: query.assignedToId } : {}),
-      ...(query.q ? { OR: [{ trackingCode: { contains: query.q.toUpperCase() } }, { citizenName: { contains: query.q, mode: "insensitive" } }, { description: { contains: query.q, mode: "insensitive" } }] } : {}),
+      ...(query.q
+        ? {
+            OR: [
+              { trackingCode: { contains: query.q.toUpperCase() } },
+              { citizenName: { contains: query.q, mode: "insensitive" } },
+              { subject: { contains: query.q, mode: "insensitive" } },
+              { description: { contains: query.q, mode: "insensitive" } },
+            ],
+          }
+        : {}),
     },
     include: grievanceInclude,
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
@@ -213,6 +225,9 @@ export async function submitGrievance(tenantSlug: string, input: SubmitGrievance
           citizenName: input.citizenName,
           citizenPhone: input.citizenPhone ?? null,
           citizenEmail: input.citizenEmail ?? null,
+          complaintType: input.complaintType ?? null,
+          subject: input.subject ?? null,
+          location: input.location ?? null,
           description: input.description,
           events: { create: { fromStatus: null, toStatus: "OPEN", note: null } },
         },
@@ -233,6 +248,7 @@ export async function submitGrievance(tenantSlug: string, input: SubmitGrievance
         text: `A new complaint was submitted.
 Tracking code: ${row.trackingCode}
 Category: ${input.category}
+Type: ${input.complaintType ?? "-"}
 Attachments: ${attachmentIds.length}
 
 Open the admin panel to review it.`,
@@ -271,6 +287,9 @@ export async function getPublicGrievanceStatus(tenantSlug: string, trackingCode:
   return {
     trackingCode: row.trackingCode,
     category: row.category,
+    complaintType: row.complaintType,
+    subject: row.subject,
+    location: row.location,
     status: row.status,
     resolutionNote: row.status === "RESOLVED" || row.status === "REJECTED" ? row.resolutionNote : null,
     resolvedAt: row.resolvedAt?.toISOString() ?? null,
@@ -278,6 +297,48 @@ export async function getPublicGrievanceStatus(tenantSlug: string, trackingCode:
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
+}
+
+const LOOKUP_LIMIT_PER_IP = 10;
+const LOOKUP_LIMIT_PER_PHONE = 5;
+const LOOKUP_WINDOW_MS = 60 * 60 * 1000;
+const LOOKUP_MONTHS = 12;
+const LOOKUP_MAX = 20;
+
+/** Accepts "+91 98765 43210", "09876543210" or "9876543210": compares on the last 10 digits. */
+function lastTenDigits(phone: string): string {
+  return phone.replace(/\D/g, "").slice(-10);
+}
+
+/**
+ * Complaints filed with a mobile number on this website (last 12 months, newest first).
+ * Anyone can type a number, so the answer is deliberately minimal: tracking code, category/type,
+ * status and dates. No subject, description, location, resolution note or names. Rate limited per IP
+ * and per number to stop enumeration; the number itself is never logged.
+ */
+export async function lookupPublicGrievancesByPhone(tenantSlug: string, phone: string, client: ClientInfo): Promise<PublicGrievanceLookupItemDto[]> {
+  const tenant = await getPublicTenantBySlug(tenantSlug);
+  const digits = lastTenDigits(phone);
+  await consumeRateLimit(`grievance-lookup:ip:${client.ipAddress ?? "unknown"}`, LOOKUP_LIMIT_PER_IP, LOOKUP_WINDOW_MS);
+  await consumeRateLimit(`grievance-lookup:phone:${tenant.id}:${digits}`, LOOKUP_LIMIT_PER_PHONE, LOOKUP_WINDOW_MS);
+  const since = new Date();
+  since.setUTCMonth(since.getUTCMonth() - LOOKUP_MONTHS);
+  const rows = await db.grievance.findMany({
+    where: { tenantId: tenant.id, citizenPhone: { endsWith: digits }, createdAt: { gte: since } },
+    select: { trackingCode: true, category: true, complaintType: true, status: true, createdAt: true, updatedAt: true, citizenPhone: true },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: LOOKUP_MAX,
+  });
+  return rows
+    .filter((r) => r.citizenPhone && lastTenDigits(r.citizenPhone) === digits)
+    .map((r) => ({
+      trackingCode: r.trackingCode,
+      category: r.category,
+      complaintType: r.complaintType,
+      status: r.status,
+      createdAt: r.createdAt.toISOString(),
+      updatedAt: r.updatedAt.toISOString(),
+    }));
 }
 
 /** Exposed for tests / future UI hints. */

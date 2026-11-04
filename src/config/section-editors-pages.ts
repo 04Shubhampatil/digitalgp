@@ -300,6 +300,10 @@ const education: SectionEditorSpec[] = [
 // ---------------------------------------------------------------- Environment & Sustainability
 const environment: SectionEditorSpec[] = [
   banner,
+  section("key-initiatives", "keyInitiatives", {
+    fields: [bi("heading", "heading"), bi("subheading", "subheading")],
+    items: list("items", "initiative", 20, [icon("icon", { required: true }), bi("title", "title", { required: true }), link("link"), on("active", "active", { default: true })]),
+  }),
   topStats,
   section("green-scoreboard", "greenScoreboard", { items: list("items", "scoreItem", 12, [icon(), bi("title", "title", { required: true }), txt("value", "value", 40, { required: true }), bi("description", "description"), on("visible", "visible", { default: true })]) }),
   section("tree-adoption", "treeAdoption", {
@@ -435,6 +439,13 @@ export const EXTRA_EDITORS: Partial<Record<PageKey, SectionEditorSpec[]>> = {
       fields: [bi("heading", "heading")],
       items: list("items", "leader", 30, [img("photoId", "photo"), bi("name", "name", { required: true }), bi("designation", "designation", { required: true }), bi("bio", "bio"), tel("phone"), txt("wardNo", "wardNo", 20)]),
     }),
+    section("vision-mission", "visionMission", {
+      fields: [bi("heading", "heading"), img("imageId"), bi("valuesTitle", "title"), bullets("values", "points", 10)],
+      groups: [
+        group("vision", "vision", [bi("title", "title"), bl("body", "body", { required: true }), icon()]),
+        group("mission", "mission", [bi("title", "title"), bl("body", "body"), icon(), bullets("points", "points", 10)]),
+      ],
+    }),
     section("roles-cards", "rolesCards", { fields: [bi("heading", "heading")], items: list("items", "roleCard", 12, [icon("icon", { required: true }), bi("title", "title", { required: true }), bullets("responsibilities", "responsibilities", 6)]) }),
     section("emergency-services", "emergencyServices", {
       fields: [bi("heading", "heading")],
@@ -465,6 +476,10 @@ export const EXTRA_EDITORS: Partial<Record<PageKey, SectionEditorSpec[]>> = {
   schemes: [
     banner,
     section("category-strip", "categoryStrip", { items: list("items", "categoryStripItem", 12, [icon("icon", { required: true }), bi("label", "label", { required: true }), txt("key", "keyName", 40, { required: true }), on("active", "active", { default: true })]) }),
+    section("link-cards", "linkCards", {
+      fields: [bi("heading", "heading"), bi("subheading", "subheading"), sel("layout", "layout", ["grid", "list"])],
+      items: list("items", "linkCard", 12, [icon(), img("iconId", "icon"), bi("title", "title", { required: true }), bi("body", "body"), bi("cta", "cta"), link("href", "link")]),
+    }),
     section("coverage-map", "coverageMap", {
       fields: [bi("heading", "heading"), img("mapImageId", "mapImage")],
       items: list("wards", "coverageWard", 60, [txt("wardNo", "wardNo", 20, { required: true }), int("households", "households", { required: true, default: 0 }), int("beneficiaries", "beneficiaries", { required: true, default: 0 }), colour("colour", "colour")]),

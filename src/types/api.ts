@@ -84,11 +84,60 @@ export interface TenantDto {
   updatedAt: string;
 }
 
+/** Row of GET /dashboard/websites. */
+export interface DashboardWebsiteDto {
+  tenantId: string;
+  slug: string;
+  nameEn: string;
+  nameMr: string;
+  status: TenantStatus;
+  publishedAt: string | null;
+  /** Section drafts, announcements, schemes, projects and stories in SUBMITTED / UNDER_REVIEW. */
+  pendingItems: number;
+  /** Last change by a staff member (sign-ins and public submissions excluded). */
+  lastUpdatedAt: string | null;
+  lastUpdatedBy: { id: string; name: string } | null;
+  lastAction: string | null;
+  /** Enabled pages that have at least one published, visible section. */
+  setupProgress: { pagesWithContent: number; pagesTotal: number; percent: number; missingPages: string[] };
+}
+
+/** Item of GET /dashboard/pending-updates. */
+export interface DashboardPendingItemDto {
+  type: "SECTION" | "ANNOUNCEMENT" | "SCHEME" | "PROJECT" | "SUCCESS_STORY";
+  id: string;
+  titleEn: string | null;
+  titleMr: string | null;
+  /** SECTION only. */
+  pageKey: string | null;
+  sectionKey: string | null;
+  status: ContentStatus;
+  submittedAt: string | null;
+  /** Null for shared (taluka / district) announcements and schemes. */
+  tenant: { id: string; slug: string; nameEn: string } | null;
+  submittedBy: { id: string; name: string | null };
+}
+
+/** A staff member shown next to a website (e.g. the Block Admin column). */
+export interface TenantAdminRefDto {
+  id: string;
+  name: string;
+  email: string;
+}
+
+/** Row of GET /tenants: the tenant plus the Block Admins whose block contains it. */
+export interface TenantListItemDto extends TenantDto {
+  blockAdmins: TenantAdminRefDto[];
+}
+
 export interface TenantSettingsDto {
   contact?: { address?: string; phone?: string; email?: string; hours?: string };
-  social?: { facebook?: string; instagram?: string; youtube?: string };
+  social?: { facebook?: string; instagram?: string; youtube?: string; twitter?: string };
   branding?: { logoMediaId?: string; tagline?: { en?: string; mr?: string } };
   seo?: { title?: { en?: string; mr?: string }; description?: { en?: string; mr?: string } };
+  weather?: { location: string };
+  /** Monthly figures typed in by the GP office; `month` is "YYYY-MM". */
+  serviceStats?: { month: string; certificatesIssued?: number; taxCollected?: number; satisfactionRate?: number };
 }
 
 export interface AssignmentDto {
@@ -141,6 +190,10 @@ export interface AnnouncementDto {
   status: ContentStatus;
   publishAt: string | null;
   expiresAt: string | null;
+  eventStartAt: string | null;
+  eventEndAt: string | null;
+  eventLocationEn: string | null;
+  eventLocationMr: string | null;
   targets: { unitId: string; level: AdminUnitLevel; nameEn: string; nameMr: string }[];
   createdById: string;
   submittedAt: string | null;
@@ -163,11 +216,62 @@ export interface PublicAnnouncementDto {
   bodyEn: string | null;
   bodyMr: string | null;
   attachmentId: string | null;
+  /** Downloads tiles: file details (download via GET /public/:slug/media/:id). Null when none or deleted. */
+  attachment: { id: string; kind: MediaKind; name: string; mimeType: string; sizeBytes: number } | null;
   displayPages: string[];
   publishedAt: string | null;
   expiresAt: string | null;
+  /** Calendar: event start/end (ISO, UTC); null = not an event. */
+  eventStartAt: string | null;
+  eventEndAt: string | null;
+  eventLocationEn: string | null;
+  eventLocationMr: string | null;
   /** True when the announcement was published by a higher-level authority. */
   isShared: boolean;
+}
+
+/** Public projection of a citizen success story ("Read Story"). */
+export interface PublicSuccessStoryDto {
+  id: string;
+  /** Page the story is shown on: home, projects, schemes, employment, education, culture, environment. */
+  pageKey: string;
+  titleEn: string | null;
+  titleMr: string | null;
+  summaryEn: string | null;
+  summaryMr: string | null;
+  bodyEn: string | null;
+  bodyMr: string | null;
+  quoteEn: string | null;
+  quoteMr: string | null;
+  personName: string | null;
+  personRoleEn: string | null;
+  personRoleMr: string | null;
+  location: string | null;
+  photoId: string | null;
+  projectId: string | null;
+  schemeId: string | null;
+  publishedAt: string | null;
+}
+
+export interface SuccessStoryDto extends PublicSuccessStoryDto {
+  tenantId: string;
+  consentConfirmed: boolean;
+  sortOrder: number;
+  status: ContentStatus;
+  createdById: string;
+  submittedAt: string | null;
+  reviewedById: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+  publishedById: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** GET /public/:slug/announcements/categories */
+export interface PublicAnnouncementCategoryDto {
+  category: string;
+  count: number;
 }
 
 export interface SchemeDto {
@@ -188,6 +292,10 @@ export interface SchemeDto {
   beneficiaryCount: number | null;
   /** Decimal serialised as a string with two decimals, e.g. "150000.50". */
   amountDisbursed: string | null;
+  /** Financial year `amountDisbursed` belongs to, e.g. "2026-27"; null = cumulative. */
+  disbursedFinancialYear: string | null;
+  category: string | null;
+  mapImageId: string | null;
   status: ContentStatus;
   targets: { unitId: string; level: AdminUnitLevel; nameEn: string; nameMr: string }[];
   createdById: string;
@@ -216,6 +324,9 @@ export interface PublicSchemeDto {
   externalUrl: string | null;
   beneficiaryCount: number | null;
   amountDisbursed: string | null;
+  disbursedFinancialYear: string | null;
+  category: string | null;
+  mapImageId: string | null;
   publishedAt: string | null;
   isShared: boolean;
 }
@@ -235,7 +346,15 @@ export interface ProjectDto {
   familiesBenefited: number | null;
   outcomeEn: string | null;
   outcomeMr: string | null;
+  /** One-line outcome for cards. */
+  outcomeShortEn: string | null;
+  outcomeShortMr: string | null;
   coverImageId: string | null;
+  beforeImageId: string | null;
+  afterImageId: string | null;
+  /** Derived from wardNo, e.g. "Ward 3" / "वॉर्ड ३". */
+  wardLabelEn: string | null;
+  wardLabelMr: string | null;
   status: ContentStatus;
   createdById: string;
   submittedAt: string | null;
@@ -262,7 +381,13 @@ export interface PublicProjectDto {
   familiesBenefited: number | null;
   outcomeEn: string | null;
   outcomeMr: string | null;
+  outcomeShortEn: string | null;
+  outcomeShortMr: string | null;
   coverImageId: string | null;
+  beforeImageId: string | null;
+  afterImageId: string | null;
+  wardLabelEn: string | null;
+  wardLabelMr: string | null;
   publishedAt: string | null;
 }
 
@@ -314,6 +439,9 @@ export interface GrievanceDto {
   citizenName: string;
   citizenPhone: string | null;
   citizenEmail: string | null;
+  complaintType: string | null;
+  subject: string | null;
+  location: string | null;
   description: string;
   status: GrievanceStatus;
   assignedToId: string | null;
@@ -337,11 +465,24 @@ export interface PublicGrievanceReceiptDto {
 export interface PublicGrievanceStatusDto {
   trackingCode: string;
   category: string;
+  complaintType: string | null;
+  subject: string | null;
+  location: string | null;
   status: GrievanceStatus;
   /** Shown only when RESOLVED/REJECTED. */
   resolutionNote: string | null;
   resolvedAt: string | null;
   timeline: { status: GrievanceStatus; at: string }[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** One row of `GET /public/:slug/grievances?phone=…` — deliberately minimal (no subject or notes). */
+export interface PublicGrievanceLookupItemDto {
+  trackingCode: string;
+  category: string;
+  complaintType: string | null;
+  status: GrievanceStatus;
   createdAt: string;
   updatedAt: string;
 }
@@ -401,8 +542,9 @@ export interface PublicPageDto {
 export interface SchemeWardCoverageDto {
   schemeId: string;
   tenantId: string;
-  wards: { wardNo: string; households: number }[];
+  wards: WardCoverageRow[];
   totalHouseholds: number;
+  totalBeneficiaries: number | null;
   updatedAt: string | null;
 }
 
@@ -410,8 +552,18 @@ export interface SchemeWardCoverageDto {
 export interface PublicSchemeCoverageDto {
   /** Null when no schemeId was given (totals across all published schemes). */
   schemeId: string | null;
-  wards: { wardNo: string; households: number }[];
+  wards: WardCoverageRow[];
   totalHouseholds: number;
+  /** Null when no ward has a beneficiary figure. */
+  totalBeneficiaries: number | null;
+  /** The scheme's map picture (only with schemeId). Ward polygons come from Home › ward-details. */
+  mapImageId: string | null;
+}
+
+export interface WardCoverageRow {
+  wardNo: string;
+  households: number;
+  beneficiaries: number | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -435,15 +587,30 @@ export interface PublicGrievanceStatsDto {
   pending: number;
   /** resolved / total, as a percentage with one decimal; null when there are no grievances. */
   resolutionRate: number | null;
-  lastMonth: { received: number; resolved: number };
-  monthBefore: { received: number; resolved: number };
+  lastMonth: GrievanceMonthSnapshot;
+  monthBefore: GrievanceMonthSnapshot;
   /** Percentage change in received grievances, last month vs the month before; null when the month before had none. */
   receivedChangePercent: number | null;
+  /** Percentage change in grievances resolved, last month vs the month before; null when the month before had none. */
+  resolvedChangePercent: number | null;
+  /** Percentage change in grievances pending at month end, last month vs the month before; null when the month before had none. */
+  pendingChangePercent: number | null;
+  /** Change in the cumulative resolution rate at month end, in percentage points (e.g. 2.5 = +2.5 pts); null when unknown. */
+  resolutionRateChangePoints: number | null;
   monthly: MonthlyGrievanceCount[];
   byCategory: { category: string; total: number; resolved: number; sharePercent: number }[];
   /** Counts per status, for the escalation summary. */
   byStatus: { OPEN: number; IN_PROGRESS: number; RESOLVED: number; REJECTED: number };
   generatedAt: string;
+}
+
+export interface GrievanceMonthSnapshot {
+  received: number;
+  resolved: number;
+  /** OPEN + IN_PROGRESS at the end of the month. */
+  pendingAtEnd: number;
+  /** Cumulative resolved / received at the end of the month (%, one decimal); null when nothing was received yet. */
+  resolutionRate: number | null;
 }
 
 export interface PublicSchemeStatsDto {
@@ -452,7 +619,7 @@ export interface PublicSchemeStatsDto {
   totalBeneficiaries: number | null;
   /** Sum of `amountDisbursed` over published schemes as a decimal string; not split by financial year. */
   amountDisbursedTotal: string | null;
-  /** Not available yet: schemes carry a cumulative figure without a disbursement date. */
+  /** Sum of `amountDisbursed` over published schemes whose `disbursedFinancialYear` is the current one; null when none is tagged. */
   amountDisbursedThisFinancialYear: string | null;
   /** Households reached by at least one scheme (per-ward maximum of the coverage table). */
   householdsCovered: number | null;
@@ -465,14 +632,17 @@ export interface PublicSchemeStatsDto {
 }
 
 export interface PublicServiceStatsDto {
-  /** No data source yet. */
+  /** From settings.serviceStats (typed in monthly by the GP office); null when not entered for this month. */
   certificatesIssuedThisMonth: number | null;
   grievancesResolvedThisMonth: number;
   grievancesReceivedThisMonth: number;
-  /** No data source yet. */
+  /** Rupees as a decimal string, from settings.serviceStats; null when not entered for this month. */
   taxCollectedThisMonth: string | null;
-  /** No data source yet. */
+  /** % of feedback rated 4–5 (last 90 days, at least 5 ratings), else settings.serviceStats.satisfactionRate, else null. */
   citizenSatisfactionRate: number | null;
+  satisfactionSource: "FEEDBACK_RATINGS" | "MANUAL" | null;
+  /** Feedback ratings received in the last 90 days. */
+  ratingsCount: number;
   month: string;
   generatedAt: string;
 }
@@ -480,7 +650,15 @@ export interface PublicServiceStatsDto {
 export interface AuditLogDto {
   id: string;
   actorId: string | null;
+  actorName: string | null;
+  actorEmail: string | null;
   actorRole: Role | null;
+  tenantSlug: string | null;
+  tenantName: string | null;
+  /** SUCCESS, or FAILURE (e.g. wrong password) / DENIED (e.g. suspended account). */
+  result: "SUCCESS" | "FAILURE" | "DENIED";
+  ipAddress: string | null;
+  userAgent: string | null;
   tenantId: string | null;
   unitId: string | null;
   action: string;
@@ -506,16 +684,27 @@ export interface PublicTenantDto {
 
 export interface FormSubmissionDto {
   id: string;
-  kind: "FEEDBACK" | "VOLUNTEER";
+  kind: "FEEDBACK" | "VOLUNTEER" | "TREE_ADOPTION";
   name: string;
   email: string | null;
   phone: string | null;
   category: string | null;
+  /** Feedback only. */
+  subject: string | null;
+  /** Volunteer and tree adoption. */
+  address: string | null;
+  /** Volunteer only. */
+  areaOfInterest: string | null;
+  /** Feedback only, 1–5. */
+  rating: number | null;
   message: string | null;
+  /** Tree adoption: { treeCount, species, preferredLocation }. */
+  details: Record<string, unknown> | null;
   createdAt: string;
 }
 
 export interface FormSubmissionSummaryDto {
   feedback: { total: number; last30Days: number };
   volunteer: { total: number; last30Days: number };
+  treeAdoption: { total: number; last30Days: number };
 }

@@ -1069,6 +1069,9 @@
     "uploadImage": "प्रतिमा अपलोड करा",
     "replaceImage": "प्रतिमा बदला",
     "sections": {
+      "keyInitiatives": "प्रमुख उपक्रम",
+      "linkCards": "माहिती कार्डे",
+      "visionMission": "दृष्टी आणि ध्येय",
       "hero": "बॅनर",
       "heroDesc": "मथळा, उपमथळा, पार्श्वभूमी फोटो आणि बटण.",
       "quickStats": "त्वरित आकडेवारी",
@@ -1176,6 +1179,10 @@
       "bannerOverlay": "आच्छादन आणि वाचनीयता"
     },
     "fields": {
+      "layout": "मांडणी",
+      "linkCard": "कार्ड",
+      "vision": "दृष्टी",
+      "mission": "ध्येय",
       "title": "शीर्षक",
       "subtitle": "उपशीर्षक",
       "backgroundImage": "पार्श्वभूमी प्रतिमा",

@@ -28,11 +28,18 @@ export const bilingualSchema = z.object({ en: text(200).optional(), mr: text(200
 export const bilingualLongSchema = z.object({ en: text(20_000).optional(), mr: text(20_000).optional() }).strict();
 export const mediaId = z.string().trim().min(10).max(40).regex(/^[a-z0-9]+$/, "Invalid media id");
 export const mediaIdList = (max: number) => z.array(mediaId).max(max);
+/**
+ * Links in section content: absolute URLs, site-relative paths, mailto:, tel:, or `page:<pageKey>[#section]`
+ * (a page of the same website; the frontend resolves it for the current slug, see src/lib/href.ts).
+ */
 export const href = z
   .string()
   .trim()
   .max(2000)
-  .regex(/^(https?:\/\/|\/|mailto:|tel:)/, "Links must be absolute URLs, site-relative paths, mailto: or tel:");
+  .regex(
+    /^(https?:\/\/|\/|mailto:|tel:)|^page:[a-z]+(-[a-z]+)*(#[a-z0-9]+(-[a-z0-9]+)*)?$/,
+    "Links must be absolute URLs, site-relative paths, mailto:, tel: or page:<page>#<section>",
+  );
 export const phone = z.string().trim().regex(/^\+?[0-9]{10,15}$/, "Invalid phone number");
 export const email = z.email().max(254);
 export const colour = z.string().trim().regex(/^#[0-9a-fA-F]{6}$/, "Use a hex colour such as #1F7A4D");
@@ -119,6 +126,45 @@ export const geometrySchema = z
     `A ward geometry may hold at most ${GEOMETRY_MAX_POSITIONS} coordinate pairs`,
   );
 
+/** "View all" button under a list section. */
+export const viewAllSchema = z.object({ label: bilingualSchema, href }).strict();
+
+/** Optional heading, subheading and "View all" link shared by list sections (spread into the section shape). */
+export const listHeader = {
+  heading: bilingualSchema.optional(),
+  subheading: bilingualSchema.optional(),
+  viewAll: viewAllSchema.optional(),
+};
+
+/**
+ * Success stories typed into a section. A card can instead point at a SuccessStory record
+ * (`storyId`, read via GET /public/:slug/success-stories/:id) for the "Read Story" page.
+ * `layout`: "cards" (default) or "quote" (one large testimonial at a time).
+ */
+export const successStoriesSchema = z
+  .object({
+    ...listHeader,
+    layout: z.enum(["cards", "quote"]).optional(),
+    items: z
+      .array(
+        z
+          .object({
+            imageId: mediaId.optional(),
+            title: bilingualSchema,
+            description: bilingualSchema.optional(),
+            quote: bilingualSchema.optional(),
+            personName: bilingualSchema.optional(),
+            storyId: z.string().trim().min(10).max(40).regex(/^[a-z0-9]+$/, "Invalid story id").optional(),
+            buttonText: bilingualSchema.optional(),
+            buttonLink: href.optional(),
+            order: z.number().int().min(0).max(10_000),
+          })
+          .strict(),
+      )
+      .max(30),
+  })
+  .strict();
+
 /** Repeated list of bilingual items: `items: [{...}]` with a sane upper bound. */
 export const itemList = <T extends z.ZodType>(item: T, max: number) => z.array(item).max(max);
 
@@ -128,7 +174,12 @@ export const supportCardItem = z
     icon: iconName,
     title: bilingualSchema,
     description: bilingualSchema.optional(),
-    contactOrAction: text(300).optional(),
+    /** Short contact line or number ("1800-233-4000", "128"), plain or bilingual. */
+    contactOrAction: text(300).or(bilingualSchema).optional(),
+    /** Where the card leads: a page section, tel:, https://wa.me/…, mailto:. */
+    link: href.optional(),
+    /** Accent colour of the icon tile. */
+    colour: colour.optional(),
     visible: z.boolean(),
   })
   .strict();

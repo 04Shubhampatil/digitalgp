@@ -35,7 +35,22 @@ const home: SectionDefinition[] = [
     sortOrder: 10,
     schema: z
       .object({
-        items: z.array(z.object({ label: bilingualSchema, value: text(40), icon: text(40).optional() }).strict()).min(1).max(8),
+        items: z
+          .array(
+            z
+              .object({
+                label: bilingualSchema,
+                value: text(40),
+                /** e.g. "Hectares", "%" — shown after the value. */
+                unit: bilingualSchema.optional(),
+                icon: text(40).optional(),
+                /** false hides the tile without deleting it (default: shown). */
+                visible: z.boolean().optional(),
+              })
+              .strict(),
+          )
+          .min(1)
+          .max(8),
       })
       .strict(),
   },
@@ -68,7 +83,21 @@ const home: SectionDefinition[] = [
         /** Period label shown with the change figures, e.g. "this month". */
         period: bilingualSchema.optional(),
         items: z
-          .array(z.object({ label: bilingualSchema, value: text(40), change: text(40).optional() }).strict())
+          .array(
+            z
+              .object({
+                label: bilingualSchema,
+                value: text(40),
+                change: text(40).optional(),
+                /** Direction of the change arrow. */
+                trend: z.enum(["up", "down", "flat"]).optional(),
+                /** Whether this direction is good news (green) or bad news (red), e.g. rising complaints. */
+                trendIsPositive: z.boolean().optional(),
+                /** Comparison period for this row, e.g. "vs last month" (overrides the section `period`). */
+                comparedTo: bilingualSchema.optional(),
+              })
+              .strict(),
+          )
           .min(1)
           .max(12),
       })
@@ -142,7 +171,16 @@ const about: SectionDefinition[] = [
   {
     key: "overview",
     sortOrder: 0,
-    schema: z.object({ heading: bilingualSchema, body: bilingualLongSchema, imageId: mediaId.optional() }).strict(),
+    // The About hero: eyebrow, heading, text, photo and up to three buttons.
+    schema: z
+      .object({
+        eyebrow: bilingualSchema.optional(),
+        heading: bilingualSchema,
+        body: bilingualLongSchema,
+        imageId: mediaId.optional(),
+        actions: z.array(z.object({ label: bilingualSchema, href }).strict()).max(3).optional(),
+      })
+      .strict(),
   },
   {
     key: "history",

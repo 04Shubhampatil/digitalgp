@@ -165,6 +165,7 @@ describe("admin access to submissions", () => {
     expect(await formSubmissionSummary(admin.ctx, w.tenantA.id)).toEqual({
       feedback: { total: 1, last30Days: 1 },
       volunteer: { total: 0, last30Days: 0 },
+      treeAdoption: { total: 0, last30Days: 0 },
     });
   });
 

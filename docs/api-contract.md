@@ -501,3 +501,71 @@ Shared rules still apply: https-only external links (banner external CTAs includ
 - **Video size limit (item 8):** the 10 MB cap stays. External YouTube/Vimeo links are supported for the mini-documentary and video gallery. A higher cap for video needs a storage and streaming decision with the frontend owner.
 - **Skill directory (item 11):** counts stay as typed, approximate values (`countIsApproximate`). A real talent directory would need its own module.
 - **Seed content for new sections (item 11):** needs JSON fixtures from the frontend owner.
+
+## Public-site backend needs (docs/backend-needs-public-site.md)
+
+Migration `20261104090000_public_site_fields` is **additive only** (new nullable columns, enum value
+`TREE_ADOPTION`, table `SuccessStory`, indexes) and backfills a disabled `progress` page for every website.
+
+### Pages
+- `GET /public/:slug/pages/:pageKey` answers `404 NOT_FOUND` for unknown keys, disabled pages and pages without a row (it never answered 500 on the backend; an `INTERNAL_ERROR` in the browser means the client could not parse the reply, e.g. `APP_ORIGIN` pointing at another app).
+- Every website now has every page row. Optional pages (`OPTIONAL_PAGE_KEYS`, today `progress`) are created **disabled**; enable with `PATCH /content/:tenantId/pages/progress { isEnabled: true }`.
+
+### Website settings (`PATCH /tenants/:id { settings }`)
+- `social.twitter` (https URL) added next to facebook / instagram / youtube.
+- `serviceStats: { month: "YYYY-MM", certificatesIssued?, taxCollected?, satisfactionRate? }` — figures typed in by the GP office; shown by `/stats/services` only while `month` is the current month.
+
+### Grievances
+- `POST /public/:slug/grievances` accepts `complaintType?` (≤80), `subject?` (3–200), `location?` (≤300). Returned in `GrievanceDto` and `PublicGrievanceStatusDto`; admin search (`q`) also matches `subject`.
+- `GET /public/:slug/grievances?phone=9876543210` → `PublicGrievanceLookupItemDto[]` (`trackingCode, category, complaintType, status, createdAt, updatedAt`). Last 12 months, max 20, matched on the last 10 digits. **No subject, description, location, note or names.** Rate limit: 10 / hour per IP and 5 / hour per number (`429`).
+- `GET /public/:slug/stats/grievances` adds `resolvedChangePercent`, `pendingChangePercent`, `resolutionRateChangePoints`; `lastMonth` / `monthBefore` add `pendingAtEnd` and `resolutionRate` (month-end snapshots).
+
+### Contact forms
+- Feedback: `subject?`, `rating?` (1–5). Volunteers: `address?`, `areaOfInterest?`.
+- `POST /public/:slug/tree-adoptions` `{ name, phone, email?, address?, treeCount (1–100), species?, preferredLocation?, message?, website (honeypot), turnstileToken? }` → `201 { message }`. Open only while Environment › `tree-adoption` is published with `enabled: true`; that section may set `recipientEmail` and `successMessage`. Same rate limit / captcha / honeypot as the other forms.
+- `GET /form-submissions?kind=TREE_ADOPTION`; `FormSubmissionDto` adds `subject, address, areaOfInterest, rating, details`; the summary adds `treeAdoption`.
+
+### Statistics
+- `/stats/services`: `certificatesIssuedThisMonth`, `taxCollectedThisMonth` from `settings.serviceStats`; `citizenSatisfactionRate` = % of feedback rated 4–5 in the last 90 days once there are ≥ 5 ratings, else the typed-in figure; new `satisfactionSource` and `ratingsCount`.
+- `/stats/schemes`: `amountDisbursedThisFinancialYear` sums schemes whose `disbursedFinancialYear` equals the current FY.
+
+### Detail endpoints (public, published only, same visibility as the lists)
+| Path | Response |
+| --- | --- |
+| `GET /public/:slug/projects/:projectId` | `PublicProjectDto` |
+| `GET /public/:slug/schemes/:schemeId` | `PublicSchemeDto` |
+| `GET /public/:slug/announcements/:announcementId` | `PublicAnnouncementDto` |
+| `GET /public/:slug/success-stories?page=&projectId=&schemeId=&limit&cursor` | paginated `PublicSuccessStoryDto` |
+| `GET /public/:slug/success-stories/:storyId` | `PublicSuccessStoryDto` |
+| `GET /public/:slug/schemes/coverage?schemeId=` | `PublicSchemeCoverageDto` (route added; adds `beneficiaries` per ward, `totalBeneficiaries`, `mapImageId`) |
+
+### Projects and schemes
+- Projects: `outcomeShortEn/Mr` (≤160), `beforeImageId`, `afterImageId` (same-website images); DTOs add derived `wardLabelEn` ("Ward 3") / `wardLabelMr` ("वॉर्ड ३").
+- Schemes: `category`, `disbursedFinancialYear` ("2026-27"), `mapImageId`; public list filter `?category=` (case-insensitive). Coverage `PUT` rows accept `beneficiaries?`.
+
+### Announcements
+- Fields `eventStartAt`, `eventEndAt` (ISO with offset; end ≥ start, end needs a start), `eventLocationEn/Mr`.
+- `GET /public/:slug/announcements` adds `from`, `to` (calendar: events starting in `[from, to)`, ≤ 400 days, sorted by date), `events=true`, `hasAttachment=true`; `category` is now case-insensitive.
+- `GET /public/:slug/announcements/categories?page=` → `[{ category, count }]` of live announcements.
+- `PublicAnnouncementDto.attachment` `{ id, kind, name, mimeType, sizeBytes }` (download: `GET /public/:slug/media/:id`).
+- `attachmentId` is now checked: it must be a file of the same website (or shared from above). Before this change any id was accepted.
+
+### Success stories (admin)
+`GET/POST /success-stories`, `GET/PATCH/DELETE /success-stories/:id`, `POST /success-stories/:id/{submit|start_review|approve|reject|publish|unpublish|archive}`.
+Fields: `pageKey` (home, projects, schemes, employment, education, culture, environment), `title*`, `summary*`, `body*`, `quote*`, `personName`, `personRole*`, `location`, `photoId`, `projectId`, `schemeId`, `consentConfirmed`, `sortOrder`.
+Operators need the `pages` module. A story that names or pictures a person cannot be submitted until `consentConfirmed` is true.
+
+### Section schema additions
+- Links in sections may use `page:<pageKey>[#<sectionKey>]` (resolved per website by the frontend).
+- `heading`, `subheading`, `viewAll { label, href }` on success-stories, local-opportunities, support-cards, skill-directory, assistance-items, training-programs, job-portals, scheme-cards, youth-posts, student-spotlight, key-initiatives, link-cards.
+- Layouts: `support-cards.layout` grid/strip/contact; `success-stories.layout` cards/quote; `link-cards.layout` grid/list; `top-stats.variant` tiles/strip/card/band.
+- Cards: `link`, `colour` on support cards, scheme-cards, assistance-items; `description` on assistance-items; support cards' `contactOrAction` may be bilingual.
+- `youth-posts`: `author`, `date`. `sustainability-initiatives`: `link`. `press-coverage`: `category`. `fpo-gallery-voice`: `link` / `linkLabel` on fpo, gallery and voice, voice `imageId`. `homestay`: `bookingLink`, `bookingLabel`. `before-after-gallery`: `eyebrow`, `heading`, `viewAll`. Success stories: `quote`, `personName`, `storyId`. `mini-documentary`: `thumbnailId` / `thumbnailUrl` (https), `duration` (MM:SS). `documents`: `fileSize` label. `market-prices`: `markets[]` (`key`, `name`, `lastUpdatedAt?`, `rows`). `tree-adoption`: `recipientEmail`, `successMessage`.
+- Home `quick-stats` items: `unit`, `visible`; `monthly-metrics` items: `trend` (up/down/flat), `trendIsPositive`, `comparedTo`.
+- About `overview`: `eyebrow`, `actions[]` (≤3). New sections: Environment `key-initiatives`, Schemes `link-cards`, About `vision-mission`.
+
+### Admin panel
+- `GET /tenants` rows add `blockAdmins: [{ id, name, email }]` (active Block Admins whose unit contains the website). `GET /tenants/export?status&unitId&q` → CSV.
+- `GET /dashboard/websites?unitId&limit&cursor` → paginated `DashboardWebsiteDto` (pending items, last update and who, setup progress). `GET /dashboard/pending-updates?unitId` → latest 20 `DashboardPendingItemDto`.
+- `AuditLogDto` adds `actorName`, `actorEmail`, `tenantSlug`, `tenantName`, `result` (SUCCESS / FAILURE / DENIED), `ipAddress`, `userAgent`; `?result=` filter. Failed sign-ins are FAILURE, suspended-account sign-ins DENIED. `GET /audit-logs/export` → CSV (≤ 5000 rows, no before/after payloads).
+- CSV exports are UTF-8 with BOM; cells that start with `= + - @` are prefixed with `'` (no formula injection).

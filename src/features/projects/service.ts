@@ -12,6 +12,14 @@ import type { ProjectDto, PublicProjectDto } from "@/types/api";
 import { assertEditable, nextStatus, transitionCapability, type WorkflowAction } from "@/features/content/workflow";
 import type { CreateProjectInput, ListProjectsQuery, PublicProjectsQuery, UpdateProjectInput } from "@/features/projects/validators";
 import { decimalToString } from "@/features/schemes/service";
+import { assertUsableMedia } from "@/features/media/ownership";
+
+/** "Ward 3" / "वॉर्ड ३"-style labels for cards; null when the project has no ward. */
+function wardLabels(wardNo: string | null): { wardLabelEn: string | null; wardLabelMr: string | null } {
+  if (!wardNo) return { wardLabelEn: null, wardLabelMr: null };
+  const mrDigits = wardNo.replace(/[0-9]/g, (d) => "०१२३४५६७८९"[Number(d)]!);
+  return { wardLabelEn: `Ward ${wardNo}`, wardLabelMr: `वॉर्ड ${mrDigits}` };
+}
 
 const MODULE = "projects" as const;
 
@@ -36,7 +44,12 @@ export function toProjectDto(p: ProjectRow): ProjectDto {
     familiesBenefited: p.familiesBenefited,
     outcomeEn: p.outcomeEn,
     outcomeMr: p.outcomeMr,
+    outcomeShortEn: p.outcomeShortEn,
+    outcomeShortMr: p.outcomeShortMr,
     coverImageId: p.coverImageId,
+    beforeImageId: p.beforeImageId,
+    afterImageId: p.afterImageId,
+    ...wardLabels(p.wardNo),
     status: p.status,
     createdById: p.createdById,
     submittedAt: p.submittedAt?.toISOString() ?? null,
@@ -64,7 +77,12 @@ function toPublicDto(p: ProjectRow): PublicProjectDto {
     familiesBenefited: p.familiesBenefited,
     outcomeEn: p.outcomeEn,
     outcomeMr: p.outcomeMr,
+    outcomeShortEn: p.outcomeShortEn,
+    outcomeShortMr: p.outcomeShortMr,
     coverImageId: p.coverImageId,
+    beforeImageId: p.beforeImageId,
+    afterImageId: p.afterImageId,
+    ...wardLabels(p.wardNo),
     publishedAt: p.publishedAt?.toISOString() ?? null,
   };
 }
@@ -77,15 +95,12 @@ async function findInScope(ctx: AuthContext, id: string): Promise<ProjectRow> {
   return row;
 }
 
-/** A cover image must belong to the same tenant (or be shared from an ancestor) and not be deleted. */
-async function validateCoverImage(tenantId: string, tenantPath: string, coverImageId: string) {
-  const media = await db.media.findFirst({
-    where: { id: coverImageId, deletedAt: null, kind: "IMAGE", source: "ADMIN" },
-    select: { tenantId: true, ownerUnit: { select: { path: true } } },
-  });
-  if (!media) throw Errors.badRequest("Cover image not found");
-  const allowed = media.tenantId === tenantId || (media.tenantId === null && tenantPath.startsWith(media.ownerUnit.path));
-  if (!allowed) throw Errors.badRequest("Cover image belongs to another website");
+/** Cover / before / after images must belong to the same website (or be shared from an ancestor). */
+async function validateImages(tenantId: string, tenantPath: string, input: Partial<CreateProjectInput>) {
+  const owner = { tenantId, unitPath: tenantPath };
+  if (input.coverImageId) await assertUsableMedia(input.coverImageId, owner, { kind: "IMAGE", label: "Cover image" });
+  if (input.beforeImageId) await assertUsableMedia(input.beforeImageId, owner, { kind: "IMAGE", label: "Before image" });
+  if (input.afterImageId) await assertUsableMedia(input.afterImageId, owner, { kind: "IMAGE", label: "After image" });
 }
 
 function baseData(input: Partial<CreateProjectInput>): Prisma.ProjectUncheckedUpdateInput {
@@ -102,6 +117,10 @@ function baseData(input: Partial<CreateProjectInput>): Prisma.ProjectUncheckedUp
   if (input.outcomeEn !== undefined) data.outcomeEn = input.outcomeEn;
   if (input.outcomeMr !== undefined) data.outcomeMr = input.outcomeMr;
   if (input.coverImageId !== undefined) data.coverImageId = input.coverImageId;
+  if (input.outcomeShortEn !== undefined) data.outcomeShortEn = input.outcomeShortEn;
+  if (input.outcomeShortMr !== undefined) data.outcomeShortMr = input.outcomeShortMr;
+  if (input.beforeImageId !== undefined) data.beforeImageId = input.beforeImageId;
+  if (input.afterImageId !== undefined) data.afterImageId = input.afterImageId;
   return data;
 }
 
@@ -141,7 +160,7 @@ export async function getProject(ctx: AuthContext, id: string): Promise<ProjectD
 export async function createProject(ctx: AuthContext, input: CreateProjectInput, client: ClientInfo): Promise<ProjectDto> {
   const tenant = await getTenantForActor(ctx, input.tenantId);
   assertCan(ctx, "content:edit", { unitPath: tenant.unitPath, moduleKey: MODULE });
-  if (input.coverImageId) await validateCoverImage(tenant.id, tenant.unitPath, input.coverImageId);
+  await validateImages(tenant.id, tenant.unitPath, input);
 
   const created = await db.$transaction(async (tx) => {
     const row = await tx.project.create({
@@ -167,7 +186,7 @@ export async function updateProject(ctx: AuthContext, id: string, input: UpdateP
   const before = await findInScope(ctx, id);
   assertEditable(before.status);
   assertCan(ctx, "content:edit", { unitPath: before.tenant.unit.path, moduleKey: MODULE });
-  if (input.coverImageId) await validateCoverImage(before.tenantId, before.tenant.unit.path, input.coverImageId);
+  await validateImages(before.tenantId, before.tenant.unit.path, input);
 
   const updated = await db.$transaction(async (tx) => {
     const row = await tx.project.update({
@@ -268,4 +287,12 @@ export async function listPublicProjects(tenantSlug: string, query: PublicProjec
   });
   const page = paginate(rows, query.limit);
   return { ...page, items: page.items.map(toPublicDto) };
+}
+
+/** One published project of a published website ("View Details"). */
+export async function getPublicProject(tenantSlug: string, id: string): Promise<PublicProjectDto> {
+  const tenant = await getPublicTenantBySlug(tenantSlug);
+  const row = await db.project.findFirst({ where: { id, tenantId: tenant.id, deletedAt: null, status: "PUBLISHED" }, include: projectInclude });
+  if (!row) throw Errors.notFound("Project");
+  return toPublicDto(row);
 }

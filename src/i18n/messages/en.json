@@ -1069,6 +1069,9 @@
     "uploadImage": "Upload image",
     "replaceImage": "Replace image",
     "sections": {
+      "keyInitiatives": "Key initiatives",
+      "linkCards": "Information cards",
+      "visionMission": "Vision and mission",
       "hero": "Banner",
       "heroDesc": "Headline, supporting line, background photo and call-to-action.",
       "quickStats": "Quick statistics",
@@ -1176,6 +1179,10 @@
       "bannerOverlay": "Overlay & Readability"
     },
     "fields": {
+      "layout": "Layout",
+      "linkCard": "Card",
+      "vision": "Vision",
+      "mission": "Mission",
       "title": "Title",
       "subtitle": "Subtitle",
       "backgroundImage": "Background image",

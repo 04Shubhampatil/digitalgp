@@ -16,11 +16,26 @@ export const tenantSettingsSchema = z
       })
       .strict()
       .optional(),
-    social: z.object({ facebook: url.optional(), instagram: url.optional(), youtube: url.optional() }).strict().optional(),
+    social: z.object({ facebook: url.optional(), instagram: url.optional(), youtube: url.optional(), twitter: url.optional() }).strict().optional(),
     branding: z.object({ logoMediaId: idSchema.optional(), tagline: bilingual.optional() }).strict().optional(),
     seo: z.object({ title: bilingual.optional(), description: bilingual.optional() }).strict().optional(),
     /** Place name sent to the weather provider, e.g. "Khed,IN". */
     weather: z.object({ location: z.string().trim().min(2).max(120) }).strict().optional(),
+    /**
+     * Monthly service figures typed in by the GP office (there is no certificate or tax module).
+     * Shown by GET /public/:slug/stats/services only while `month` is the current month.
+     */
+    serviceStats: z
+      .object({
+        month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Use the form 2026-11"),
+        certificatesIssued: z.number().int().min(0).max(1_000_000).optional(),
+        /** Rupees, at most two decimals. */
+        taxCollected: z.number().min(0).max(1_000_000_000).optional(),
+        /** Percentage 0–100; used only while fewer than 5 feedback ratings exist for the last 90 days. */
+        satisfactionRate: z.number().min(0).max(100).optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 export type TenantSettings = z.infer<typeof tenantSettingsSchema>;

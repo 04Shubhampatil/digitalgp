@@ -30,17 +30,39 @@ describe("scheme ward coverage", () => {
     expect((await getSchemeCoverage(admin.ctx, w.tenantA.id, published.id)).totalHouseholds).toBe(65);
     await putSchemeCoverage(admin.ctx, w.tenantA.id, draft.id, { wards: [{ wardNo: "1", households: 99 }] }, client);
 
-    expect(await getPublicSchemeCoverage("gp-a", published.id)).toEqual({ schemeId: published.id, totalHouseholds: 65, wards: [{ wardNo: "1", households: 25 }, { wardNo: "2", households: 40 }] });
+    expect(await getPublicSchemeCoverage("gp-a", published.id)).toEqual({
+      schemeId: published.id,
+      totalHouseholds: 65,
+      totalBeneficiaries: null,
+      mapImageId: null,
+      wards: [
+        { wardNo: "1", households: 25, beneficiaries: null },
+        { wardNo: "2", households: 40, beneficiaries: null },
+      ],
+    });
     await expectCode(getPublicSchemeCoverage("gp-a", draft.id), "NOT_FOUND");
     // Without a scheme id: per-ward maximum across published schemes (draft scheme's 99 is excluded).
-    expect(await getPublicSchemeCoverage("gp-a", undefined)).toEqual({ schemeId: null, totalHouseholds: 65, wards: [{ wardNo: "1", households: 25 }, { wardNo: "2", households: 40 }] });
+    expect(await getPublicSchemeCoverage("gp-a", undefined)).toEqual({
+      schemeId: null,
+      totalHouseholds: 65,
+      totalBeneficiaries: null,
+      mapImageId: null,
+      wards: [
+        { wardNo: "1", households: 25, beneficiaries: null },
+        { wardNo: "2", households: 40, beneficiaries: null },
+      ],
+    });
+
+    // Beneficiaries are summed per ward across published schemes.
+    await putSchemeCoverage(admin.ctx, w.tenantA.id, published.id, { wards: [{ wardNo: "1", households: 25, beneficiaries: 60 }, { wardNo: "2", households: 40, beneficiaries: 100 }] }, client);
+    expect(await getPublicSchemeCoverage("gp-a", published.id)).toMatchObject({ totalBeneficiaries: 160, wards: [{ wardNo: "1", beneficiaries: 60 }, { wardNo: "2", beneficiaries: 100 }] });
 
     // Replace shrinks the list; audit recorded; delete clears it.
     await putSchemeCoverage(admin.ctx, w.tenantA.id, published.id, { wards: [{ wardNo: "1", households: 30 }] }, client);
-    expect((await getPublicSchemeCoverage("gp-a", published.id)).wards).toEqual([{ wardNo: "1", households: 30 }]);
+    expect((await getPublicSchemeCoverage("gp-a", published.id)).wards).toEqual([{ wardNo: "1", households: 30, beneficiaries: null }]);
     await deleteSchemeCoverage(admin.ctx, w.tenantA.id, published.id, client);
     expect((await getPublicSchemeCoverage("gp-a", published.id)).wards).toEqual([]);
-    expect((await db.auditLog.findMany({ where: { entityId: published.id, action: "scheme.coverage_update" } })).length).toBe(3);
+    expect((await db.auditLog.findMany({ where: { entityId: published.id, action: "scheme.coverage_update" } })).length).toBe(4);
   });
 
   it("validates ward numbers and household counts", async () => {

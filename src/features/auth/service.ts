@@ -45,11 +45,11 @@ export async function login(input: LoginInput, client: ClientInfo) {
   const valid = user ? await verifyPassword(user.passwordHash, input.password) : (await burnPasswordVerification(), false);
 
   if (!user || !valid) {
-    await writeAudit({ userId: user?.id ?? null, client }, { action: "auth.login_failed", entityType: "User", entityId: user?.id ?? null });
+    await writeAudit({ userId: user?.id ?? null, client }, { action: "auth.login_failed", entityType: "User", entityId: user?.id ?? null, result: "FAILURE" });
     throw Errors.unauthenticated("Invalid email or password");
   }
   if (user.status !== "ACTIVE") {
-    await writeAudit({ userId: user.id, client }, { action: "auth.login_suspended", entityType: "User", entityId: user.id });
+    await writeAudit({ userId: user.id, client }, { action: "auth.login_suspended", entityType: "User", entityId: user.id, result: "DENIED" });
     throw Errors.forbidden("This account is suspended");
   }
 

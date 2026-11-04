@@ -4,6 +4,21 @@ What the public pages need from the backend to look and behave exactly like the 
 (file `qBVt7yv0KG41onObVWfnP1`). Nothing here is invented in the UI: where data is missing the
 frontend shows the design's placeholder or hides the control. Owner: backend (Shubham).
 
+## Backend status (2026-11-04)
+
+Done on the backend (details and request shapes in docs/api-contract.md, "Public-site backend needs"):
+1 (404 was already returned; `progress` now exists disabled on every website), 2 (seeded, social links still need the
+GP's real URLs), 3, 4, 7, 8, 9–15, 18–28 (detail endpoints, success stories, About structure, service and scheme
+stats, coverage, announcements), 31–41 and the admin items. **Roles** and per-GP **Assign Access** stay as they are by decision
+(2026-11-04): the permission matrix is fixed in code and Block Admin access is per area, so the Roles screen
+is read-only and Assign Access grants a whole area, not single websites. Not possible without real content from the Gram Panchayat: real social URLs (3), ward geometry or
+map pictures (5), finance files (29), infrastructure markers and live status (30), real video / documentary URLs, the
+office map embed and a sharper "before" photo (42). 16: several markets are supported; a live mandi feed is not.
+Frontend follow-ups: the placeholder keys `before-after`, `about-hero`, `about-structure`, `about-vision`,
+`about-emergency`, `about-roles`, `progress-tracker`, `project-showcase` … are not backend sections; the backend
+equivalents are `before-after-gallery`, `overview`, `members` + `office`, `vision-mission`, `emergency-services`,
+`roles-cards`, `village-resolution-tracker`, and the projects API. Grievance support cards use `layout`, not `variant`.
+
 ## Bugs
 
 1. **Public pages API answers 500 for a page with no row.** `GET /public/:slug/pages/progress`

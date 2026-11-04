@@ -11,8 +11,11 @@ import {
   mediaId,
   order,
   phone,
+  listHeader,
+  successStoriesSchema,
   text,
   topStatItem,
+  viewAllSchema,
   type SectionDefinition,
 } from "@/config/section-primitives";
 
@@ -28,23 +31,11 @@ const strict = <T extends z.ZodRawShape>(shape: T) => z.object(shape).strict();
 const topStats = strict({
   heading: bilingualSchema.optional(),
   subheading: bilingualSchema.optional(),
-  variant: z.enum(["tiles", "strip"]).optional(),
+  variant: z.enum(["tiles", "strip", "card", "band"]).optional(),
   items: list(topStatItem, 8),
 });
 
-const successStories = strict({
-  items: list(
-    strict({
-      imageId: mediaId.optional(),
-      title: bilingualSchema,
-      description: bilingualSchema.optional(),
-      buttonText: bilingualSchema.optional(),
-      buttonLink: href.optional(),
-      order,
-    }),
-    30,
-  ),
-});
+const successStories = successStoriesSchema;
 
 // ---------------------------------------------------------------------------
 // Projects page
@@ -57,6 +48,9 @@ export const PROJECTS_SECTIONS: SectionDefinition[] = [
     key: "before-after-gallery",
     sortOrder: 10,
     schema: strict({
+      eyebrow: bilingualSchema.optional(),
+      heading: bilingualSchema.optional(),
+      viewAll: viewAllSchema.optional(),
       items: list(
         strict({ beforeImageId: mediaId, afterImageId: mediaId, title: bilingualSchema, description: bilingualSchema.optional(), order }),
         20,
@@ -139,6 +133,7 @@ export const SCHEMES_SECTIONS: SectionDefinition[] = [
     // Per-ward beneficiary counts. Households here are the reach of schemes; the scheme records carry the totals.
     schema: strict({
       heading: bilingualSchema.optional(),
+      subheading: bilingualSchema.optional(),
       mapImageId: mediaId.optional(),
       wards: list(
         strict({
@@ -148,6 +143,26 @@ export const SCHEMES_SECTIONS: SectionDefinition[] = [
           colour: colour.optional(),
         }),
         60,
+      ),
+    }),
+  },
+  {
+    // "Scheme Information" cards: purpose, eligibility, procedure, documents, benefits. `layout` "list" = one column with arrows.
+    key: "link-cards",
+    sortOrder: 15,
+    schema: strict({
+      ...listHeader,
+      layout: z.enum(["grid", "list"]).optional(),
+      items: list(
+        strict({
+          icon: iconName.optional(),
+          iconId: mediaId.optional(),
+          title: bilingualSchema,
+          body: bilingualSchema.optional(),
+          cta: bilingualSchema.optional(),
+          href: href.optional(),
+        }),
+        12,
       ),
     }),
   },
@@ -266,6 +281,24 @@ export const ABOUT_EXTRA_SECTIONS: SectionDefinition[] = [
         }),
         30,
       ),
+    }),
+  },
+  {
+    key: "vision-mission",
+    sortOrder: 15,
+    schema: strict({
+      heading: bilingualSchema.optional(),
+      vision: strict({ title: bilingualSchema.optional(), body: bilingualLongSchema, icon: iconName.optional() }),
+      mission: strict({
+        title: bilingualSchema.optional(),
+        body: bilingualLongSchema.optional(),
+        icon: iconName.optional(),
+        points: list(bilingualSchema, 10).optional(),
+      }),
+      /** "Core values" chips. */
+      valuesTitle: bilingualSchema.optional(),
+      values: list(bilingualSchema, 10).optional(),
+      imageId: mediaId.optional(),
     }),
   },
   {

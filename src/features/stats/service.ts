@@ -54,6 +54,18 @@ async function computeGrievanceStats(tenant: ResolvedTenant, now: Date): Promise
   const lastMonth = months[months.length - 2]!;
   const monthBefore = months[months.length - 3]!;
 
+  // Snapshots at the end of last month (= start of this month) and at the end of the month before.
+  const snapshotAt = async (end: Date) => {
+    const [receivedBy, resolvedBy, closedBy] = await Promise.all([
+      db.grievance.count({ where: { tenantId: tenant.id, createdAt: { lt: end } } }),
+      db.grievance.count({ where: { tenantId: tenant.id, createdAt: { lt: end }, status: "RESOLVED", resolvedAt: { lt: end } } }),
+      db.grievance.count({ where: { tenantId: tenant.id, createdAt: { lt: end }, resolvedAt: { lt: end } } }),
+    ]);
+    return { pendingAtEnd: receivedBy - closedBy, resolutionRate: pct(resolvedBy, receivedBy) };
+  };
+  const [endLast, endBefore] = await Promise.all([snapshotAt(monthStart(now)), snapshotAt(monthStart(now, -1))]);
+  const change = (current: number, previous: number) => (previous > 0 ? Math.round(((current - previous) / previous) * 1000) / 10 : null);
+
   // Per-status counts for the escalation summary, from the same grouped query.
   const byStatus = { OPEN: 0, IN_PROGRESS: 0, RESOLVED: 0, REJECTED: 0 };
   for (const row of categories) byStatus[row.status] += row._count._all;
@@ -72,9 +84,13 @@ async function computeGrievanceStats(tenant: ResolvedTenant, now: Date): Promise
     rejected,
     pending,
     resolutionRate: pct(resolved, total),
-    lastMonth: { received: lastMonth.received, resolved: lastMonth.resolved },
-    monthBefore: { received: monthBefore.received, resolved: monthBefore.resolved },
-    receivedChangePercent: monthBefore.received > 0 ? Math.round(((lastMonth.received - monthBefore.received) / monthBefore.received) * 1000) / 10 : null,
+    lastMonth: { received: lastMonth.received, resolved: lastMonth.resolved, ...endLast },
+    monthBefore: { received: monthBefore.received, resolved: monthBefore.resolved, ...endBefore },
+    receivedChangePercent: change(lastMonth.received, monthBefore.received),
+    resolvedChangePercent: change(lastMonth.resolved, monthBefore.resolved),
+    pendingChangePercent: change(endLast.pendingAtEnd, endBefore.pendingAtEnd),
+    resolutionRateChangePoints:
+      endLast.resolutionRate !== null && endBefore.resolutionRate !== null ? Math.round((endLast.resolutionRate - endBefore.resolutionRate) * 10) / 10 : null,
     monthly: months,
     byCategory: [...byCat]
       .map(([category, c]) => ({ category, total: c.total, resolved: c.resolved, sharePercent: pct(c.total, total) ?? 0 }))
@@ -97,7 +113,7 @@ async function computeSchemeStats(tenant: ResolvedTenant, now: Date): Promise<Pu
   const ancestorIds = tenant.unitPath.split("/").filter(Boolean);
   const visible = { deletedAt: null, status: "PUBLISHED" as const, OR: [{ tenantId: tenant.id }, { tenantId: null, targets: { some: { unitId: { in: ancestorIds } } } }] };
   const [schemes, coverageRows, geography] = await Promise.all([
-    db.scheme.findMany({ where: visible, select: { beneficiaryCount: true, amountDisbursed: true } }),
+    db.scheme.findMany({ where: visible, select: { beneficiaryCount: true, amountDisbursed: true, disbursedFinancialYear: true } }),
     db.schemeWardCoverage.findMany({ where: { tenantId: tenant.id, scheme: visible }, select: { wardNo: true, households: true } }),
     publishedSectionData(tenant.id, "about", "geography") as Promise<{ households?: number } | null>,
   ]);
@@ -105,6 +121,8 @@ async function computeSchemeStats(tenant: ResolvedTenant, now: Date): Promise<Pu
   const withBeneficiaries = schemes.filter((s) => s.beneficiaryCount !== null);
   const withAmount = schemes.filter((s) => s.amountDisbursed !== null);
   const amountTotal = withAmount.reduce((sum, s) => sum + Number(s.amountDisbursed), 0);
+  const fy = financialYear(now).label;
+  const thisYear = withAmount.filter((s) => s.disbursedFinancialYear === fy);
 
   const perWard = new Map<string, number>();
   for (const r of coverageRows) perWard.set(r.wardNo, Math.max(perWard.get(r.wardNo) ?? 0, r.households));
@@ -115,11 +133,11 @@ async function computeSchemeStats(tenant: ResolvedTenant, now: Date): Promise<Pu
     totalSchemes: schemes.length,
     totalBeneficiaries: withBeneficiaries.length ? withBeneficiaries.reduce((sum, s) => sum + (s.beneficiaryCount ?? 0), 0) : null,
     amountDisbursedTotal: withAmount.length ? amountTotal.toFixed(2) : null,
-    amountDisbursedThisFinancialYear: null, // schemes hold a cumulative figure with no disbursement date
+    amountDisbursedThisFinancialYear: thisYear.length ? thisYear.reduce((sum, s) => sum + Number(s.amountDisbursed), 0).toFixed(2) : null,
     householdsCovered,
     totalHouseholds,
     coveragePercent: householdsCovered !== null && totalHouseholds !== null ? Math.min(100, pct(householdsCovered, totalHouseholds) ?? 0) : null,
-    financialYear: financialYear(now).label,
+    financialYear: fy,
     generatedAt: now.toISOString(),
   };
 }
@@ -133,19 +151,37 @@ export async function getPublicSchemeStats(tenantSlug: string, now: Date = new D
 // Services
 // ---------------------------------------------------------------------------
 
+/** Ratings needed before the satisfaction rate is computed from feedback instead of the typed-in figure. */
+export const MIN_RATINGS_FOR_SATISFACTION = 5;
+const SATISFACTION_WINDOW_DAYS = 90;
+
+type ServiceStatsSettings = { month?: string; certificatesIssued?: number; taxCollected?: number; satisfactionRate?: number };
+
 async function computeServiceStats(tenant: ResolvedTenant, now: Date): Promise<PublicServiceStatsDto> {
   const start = monthStart(now);
   const end = monthStart(now, 1);
-  const [received, resolved] = await Promise.all([
+  const ratingSince = new Date(now.getTime() - SATISFACTION_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+  const [received, resolved, ratings, tenantRow] = await Promise.all([
     db.grievance.count({ where: { tenantId: tenant.id, createdAt: { gte: start, lt: end } } }),
     db.grievance.count({ where: { tenantId: tenant.id, status: "RESOLVED", resolvedAt: { gte: start, lt: end } } }),
+    db.formSubmission.findMany({ where: { tenantId: tenant.id, kind: "FEEDBACK", rating: { not: null }, createdAt: { gte: ratingSince } }, select: { rating: true } }),
+    db.tenant.findUniqueOrThrow({ where: { id: tenant.id }, select: { settings: true } }),
   ]);
+  const manual = ((tenantRow.settings ?? {}) as { serviceStats?: ServiceStatsSettings }).serviceStats;
+  const current = manual?.month === monthKey(start) ? manual : undefined;
+
+  // Satisfied = rating 4 or 5 out of 5.
+  const fromRatings = ratings.length >= MIN_RATINGS_FOR_SATISFACTION ? pct(ratings.filter((r) => (r.rating ?? 0) >= 4).length, ratings.length) : null;
+  const satisfaction = fromRatings ?? (typeof manual?.satisfactionRate === "number" ? manual.satisfactionRate : null);
+
   return {
-    certificatesIssuedThisMonth: null, // no certificate module yet
+    certificatesIssuedThisMonth: current?.certificatesIssued ?? null,
     grievancesResolvedThisMonth: resolved,
     grievancesReceivedThisMonth: received,
-    taxCollectedThisMonth: null, // no tax-collection data yet
-    citizenSatisfactionRate: null, // no rating captured on resolution yet
+    taxCollectedThisMonth: typeof current?.taxCollected === "number" ? current.taxCollected.toFixed(2) : null,
+    citizenSatisfactionRate: satisfaction,
+    satisfactionSource: fromRatings !== null ? "FEEDBACK_RATINGS" : satisfaction !== null ? "MANUAL" : null,
+    ratingsCount: ratings.length,
     month: monthKey(start),
     generatedAt: now.toISOString(),
   };

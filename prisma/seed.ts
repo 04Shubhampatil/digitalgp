@@ -11,7 +11,8 @@ import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { hash } from "@node-rs/argon2";
 import { PrismaClient, Prisma } from "../src/generated/prisma/client";
-import { DEFAULT_PAGE_KEYS } from "../src/config/pages";
+import { DEFAULT_PAGE_KEYS, OPTIONAL_PAGE_KEYS } from "../src/config/pages";
+import { findSection } from "../src/config/sections";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL ?? "" });
 const prisma = new PrismaClient({ adapter });
@@ -62,7 +63,7 @@ async function ensureTenant(unitId: string, slug: string, nameEn: string, nameMr
     update: {},
   });
   for (const pageKey of DEFAULT_PAGE_KEYS) {
-    await prisma.page.upsert({ where: { tenantId_pageKey: { tenantId: tenant.id, pageKey } }, create: { tenantId: tenant.id, pageKey }, update: {} });
+    await prisma.page.upsert({ where: { tenantId_pageKey: { tenantId: tenant.id, pageKey } }, create: { tenantId: tenant.id, pageKey, isEnabled: !OPTIONAL_PAGE_KEYS.includes(pageKey) }, update: {} });
   }
   return tenant;
 }
@@ -91,6 +92,11 @@ function canonical(value: unknown): string {
 
 /** Publish a section. A new revision is created only when the content differs from the live one. */
 async function publishSection(tenantId: string, pageKey: string, sectionKey: string, sortOrder: number, data: object, authorId: string) {
+  // Seed content goes through the same schema as the admin editor, so it can never publish invalid data.
+  const def = findSection(pageKey as Parameters<typeof findSection>[0], sectionKey);
+  if (!def) throw new Error(`Unknown section ${pageKey}/${sectionKey}`);
+  const parsed = def.schema.safeParse(data);
+  if (!parsed.success) throw new Error(`Invalid seed data for ${pageKey}/${sectionKey}: ${parsed.error.message}`);
   const page = await prisma.page.findUniqueOrThrow({ where: { tenantId_pageKey: { tenantId, pageKey } } });
   const section = await prisma.section.upsert({
     where: { pageId_sectionKey: { pageId: page.id, sectionKey } },
@@ -126,7 +132,20 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
   const tenant = await ensureTenant(unit.id, "savardari", "Savardari", "सवरदरी");
   await prisma.tenant.update({
     where: { id: tenant.id },
-    data: { settings: { contact: { address: "Gram Panchayat: Savardari, Taluka: Khed, District: Pune – 410501" } } },
+    // Contact values and tagline from the Figma header/footer (node 375:13479). Social links are left
+    // out until the Gram Panchayat gives its real Facebook / Instagram / YouTube / Twitter pages.
+    data: {
+      settings: {
+        contact: {
+          address: "Gram Panchayat: Savardari, Taluka: Khed, District: Pune – 410501",
+          phone: "+91 9767694340",
+          email: "savardarigrampanchayat@gmail.com",
+          hours: "Monday to Friday: 9:45 am to 6:15 pm\nWeekends and Sundays: Closed",
+        },
+        branding: { tagline: { en: "Tal. Khed, Dist. Pune", mr: "ता. खेड, जि. पुणे" } },
+        weather: { location: "Khed,IN" },
+      },
+    },
   });
 
   // Accounts for the test website
@@ -138,9 +157,9 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
   await ensureAssignment(operator.id, "DATA_ENTRY_OPERATOR", unit.id, ["announcements", "projects", "schemes", "media"]);
 
   // ---- Home page (design: hero, quick statistics, welcome, Message from the Sarpanch, Citizen Services)
+  // The hero title is the slogan; the "Welcome to Gram Panchayat <name>" line comes from the tenant name.
   await publishSection(tenant.id, "home", "hero", 0, {
-    title: { en: "Welcome to Gram Panchayat Savardari" },
-    subtitle: { en: "Building a Sustainable, Transparent & Digital Village." },
+    title: { en: "Building a Sustainable, Transparent & Digital Village." },
     cta: { label: { en: "Explore Village" }, href: "/savardari/about" },
     actions: [
       { label: { en: "Explore Village" }, href: "/savardari/about" },
@@ -194,13 +213,14 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
   await publishSection(tenant.id, "home", "village-progress", 35, {
     heading: { en: "Village Development Progress" },
     subheading: { en: "Live indicators tracking Savardari's development journey" },
+    // Values as shown in the design (Figma home, "Village Development Progress").
     items: [
-      { label: { en: "Tap Water (Jal Jeevan Mission)" } },
-      { label: { en: "Sanitation Coverage (ODF++)" } },
-      { label: { en: "Solar Street Lights" } },
-      { label: { en: "PM Awas Housing Completed" } },
-      { label: { en: "All-Weather Road Connectivity" } },
-      { label: { en: "Digital Literacy Enrolment" } },
+      { label: { en: "Tap Water (Jal Jeevan Mission)" }, valueText: "100%" },
+      { label: { en: "Sanitation Coverage (ODF++)" }, valueText: "82%" },
+      { label: { en: "Solar Street Lights" }, valueText: "48%" },
+      { label: { en: "PM Awas Housing Completed" }, valueText: "65%" },
+      { label: { en: "All-Weather Road Connectivity" }, valueText: "82%" },
+      { label: { en: "Digital Literacy Enrolment" }, valueText: "60%" },
     ],
   }, gpAdmin.id);
 
@@ -238,10 +258,65 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
     ],
   }, gpAdmin.id);
 
-  // ---- About page (design: About Savardari, Vision & Governance, Industrial Growth, Nature & Agriculture)
+  // ---- About page (design "2. About us": hero, history, structure, office, roles, emergency numbers, vision)
   await publishSection(tenant.id, "about", "overview", 0, {
-    heading: { en: "About Savardari" },
-    body: { en: "Gram Panchayat: Savardari, Taluka: Khed, District: Pune This village is a progressive village that combines natural wealth with industrial development" },
+    eyebrow: { en: "About the Gram Panchayat" },
+    heading: { en: "People-led governance for a sustainable" },
+    body: {
+      en: "Gram Panchayat Savardari works for transparent administration, essential services, village development, and citizen welfare while protecting the natural character and heritage of the village",
+    },
+    actions: [
+      { label: { en: "Know Our Leaders" }, href: "page:about#members" },
+      { label: { en: "Emergency Contacts" }, href: "page:about#emergency-services" },
+    ],
+  }, gpAdmin.id);
+
+  await publishSection(tenant.id, "about", "vision-mission", 15, {
+    vision: {
+      title: { en: "A clean, connected, self-reliant village" },
+      body: { en: "To make Savardari a self-reliant, digitally empowered, and prosperous model village in Maharashtra by 2030, ensuring quality of life for every citizen." },
+    },
+    mission: {
+      body: {
+        en: "To deliver transparent, efficient, and citizen-centric governance; ensure universal access to basic amenities; promote sustainable development; and empower all communities including women and marginalized groups.",
+      },
+    },
+    valuesTitle: { en: "Core values" },
+    values: [
+      { en: "Transparency and accountability" },
+      { en: "Cleanliness and public health" },
+      { en: "Equal access to services" },
+      { en: "Respect for culture and environment" },
+    ],
+  }, gpAdmin.id);
+
+  await publishSection(tenant.id, "about", "roles-cards", 35, {
+    heading: { en: "What Panchayat officials do" },
+    items: [
+      { icon: "road", title: { en: "Village Development" }, responsibilities: [{ en: "Plan and monitor road, water supply, drainage, sanitation lighting, and public assets" }] },
+      { icon: "file", title: { en: "Citizen Services" }, responsibilities: [{ en: "Support certificates, tax records, complaints, birth and death records, and scheme applications" }] },
+      { icon: "wallet", title: { en: "Financial Discipline" }, responsibilities: [{ en: "Prepare budgets, maintain accounts, collect taxes, and place key decisions before the Gram Sabha" }] },
+      { icon: "heart", title: { en: "Public Welfare" }, responsibilities: [{ en: "Coordinate health, education, women and child welfare, social justice, and emergency response." }] },
+      { icon: "tree", title: { en: "Environment" }, responsibilities: [{ en: "Protect trees, water bodies, cleanliness drives, waste management, and climate-ready local planning" }] },
+      { icon: "eye", title: { en: "Transparency" }, responsibilities: [{ en: "Publish notices, resolution, tenders, beneficiary lists, and development updates for residents" }] },
+    ],
+  }, gpAdmin.id);
+
+  await publishSection(tenant.id, "about", "emergency-services", 45, {
+    heading: { en: "Emergency and Public Support" },
+    items: [
+      { title: { en: "Total emergency services" }, number: "112", category: "other", icon: "siren", active: true },
+      { title: { en: "Ambulance" }, number: "108", category: "health", icon: "ambulance", active: true },
+      { title: { en: "Fire Service" }, number: "101", category: "fire", icon: "flame", active: true },
+      { title: { en: "Government health advice" }, number: "104", category: "health", icon: "health", active: true },
+      { title: { en: "Disaster Management Room" }, number: "1077", category: "disaster", icon: "alert", active: true },
+      { title: { en: "MSEDCL — Electricity Complaint" }, number: "1912", category: "utility", icon: "bolt", active: true },
+      { title: { en: "MSEDCL (Toll Free)" }, number: "1800-233-3435", category: "utility", icon: "bolt", active: true },
+      { title: { en: "Forest Department — Hello Forest" }, number: "1926", category: "other", icon: "tree", active: true },
+      { title: { en: "State Emergency Operations Centre" }, number: "+91 9321587143", category: "disaster", icon: "alert", active: true },
+      { title: { en: "Women's Aid" }, number: "1091", category: "police", icon: "shield", active: true },
+      { title: { en: "Women's Helpline" }, number: "181", category: "police", icon: "shield", active: true },
+    ],
   }, gpAdmin.id);
 
   await publishSection(tenant.id, "about", "history", 10, {
@@ -260,12 +335,15 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
   }, gpAdmin.id);
 
   await publishSection(tenant.id, "about", "members", 30, {
-    heading: { en: "Message from the Sarpanch" },
+    heading: { en: "Local Administration" },
     items: [{ name: { en: "Smt. Sabitabai Gaikwad" }, designation: { en: "Sarpanch" } }],
   }, gpAdmin.id);
 
   await publishSection(tenant.id, "about", "office", 40, {
     address: { en: "Gram Panchayat: Savardari, Taluka: Khed, District: Pune – 410501" },
+    hours: { en: "Monday to Friday: 9:45 am to 6:15 pm. Weekends and Sundays: Closed" },
+    phone: "+919767694340",
+    email: "savardarigrampanchayat@gmail.com",
   }, gpAdmin.id);
 
   // ---- Announcements ("Notice & Announcement" and the "What's New This Week?" list), in design order

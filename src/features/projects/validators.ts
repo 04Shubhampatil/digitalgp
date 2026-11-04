@@ -18,6 +18,11 @@ const base = {
   outcomeEn: optionalLongText,
   outcomeMr: optionalLongText,
   coverImageId: idSchema.optional().nullable(),
+  /** One-line outcome for project cards, e.g. "Water for 120 families". */
+  outcomeShortEn: z.string().trim().max(160).optional().nullable(),
+  outcomeShortMr: z.string().trim().max(160).optional().nullable(),
+  beforeImageId: idSchema.optional().nullable(),
+  afterImageId: idSchema.optional().nullable(),
 };
 
 const atLeastOneName = (v: { nameEn?: string | null; nameMr?: string | null }) => !!(v.nameEn?.trim() || v.nameMr?.trim());

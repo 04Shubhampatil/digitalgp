@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import type { AdminUnitLevel, Role } from "@/generated/prisma/enums";
-import { DEFAULT_PAGE_KEYS } from "@/config/pages";
+import { DEFAULT_PAGE_KEYS, OPTIONAL_PAGE_KEYS } from "@/config/pages";
 import { createSession, hashPassword, validateSessionToken, type AuthContext } from "@/lib/auth";
 import { db } from "@/lib/db";
 
@@ -24,7 +24,7 @@ export async function createTenant(unitId: string, slug = `gp-${next()}`, status
       nameMr: slug,
       status,
       publishedAt: status === "PUBLISHED" ? new Date() : null,
-      pages: { create: DEFAULT_PAGE_KEYS.map((pageKey) => ({ pageKey })) },
+      pages: { create: DEFAULT_PAGE_KEYS.map((pageKey) => ({ pageKey, isEnabled: !OPTIONAL_PAGE_KEYS.includes(pageKey) })) },
     },
   });
 }

@@ -10,6 +10,11 @@ export const submitGrievanceSchema = z.object({
   citizenName: z.string().trim().min(2).max(120),
   citizenPhone: phoneSchema.optional().nullable(),
   citizenEmail: emailSchema.optional().nullable(),
+  /** Type picked on the form (e.g. "Water Supply"); `category` stays the routing category. */
+  complaintType: z.string().trim().min(1).max(80).optional().nullable(),
+  subject: z.string().trim().min(3).max(200).optional().nullable(),
+  /** Where the problem is, e.g. "Ward 2, near the temple". */
+  location: z.string().trim().min(2).max(300).optional().nullable(),
   description: z.string().trim().min(10).max(5000),
   /** Media ids of files the citizen attached. Allowed only when the complaint form enables uploads. */
   attachmentIds: z.array(z.string().trim().min(10).max(40).regex(/^[a-z0-9]+$/, "Invalid file id")).max(5).optional().default([]),
@@ -22,6 +27,9 @@ export const trackingCodeSchema = z
   .trim()
   .toUpperCase()
   .regex(/^GRV-[A-Z0-9]{8}$/, "Invalid tracking code");
+
+/** Public lookup by the mobile number used on the complaint. */
+export const grievanceLookupQuerySchema = z.object({ phone: phoneSchema });
 
 export const assignGrievanceSchema = z.object({ assignedToId: idSchema.nullable() });
 export type AssignGrievanceInput = z.infer<typeof assignGrievanceSchema>;

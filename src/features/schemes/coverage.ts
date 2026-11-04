@@ -21,7 +21,18 @@ export const wardNoSchema = z.string().trim().min(1).max(20);
 
 export const putCoverageSchema = z
   .object({
-    wards: z.array(z.object({ wardNo: wardNoSchema, households: z.number().int().min(0).max(5_000_000) }).strict()).max(200),
+    wards: z
+      .array(
+        z
+          .object({
+            wardNo: wardNoSchema,
+            households: z.number().int().min(0).max(5_000_000),
+            /** Individual beneficiaries in the ward (aggregate count only). */
+            beneficiaries: z.number().int().min(0).max(50_000_000).optional().nullable(),
+          })
+          .strict(),
+      )
+      .max(200),
   })
   .strict()
   .refine((v) => new Set(v.wards.map((w) => w.wardNo)).size === v.wards.length, { message: "Ward numbers must be unique", path: ["wards"] });
@@ -49,8 +60,9 @@ async function loadCoverage(tenantId: string, schemeId: string): Promise<SchemeW
   return {
     schemeId,
     tenantId,
-    wards: rows.map((r) => ({ wardNo: r.wardNo, households: r.households })),
+    wards: rows.map((r) => ({ wardNo: r.wardNo, households: r.households, beneficiaries: r.beneficiaries })),
     totalHouseholds: rows.reduce((n, r) => n + r.households, 0),
+    totalBeneficiaries: rows.some((r) => r.beneficiaries !== null) ? rows.reduce((n, r) => n + (r.beneficiaries ?? 0), 0) : null,
     updatedAt: rows.length ? new Date(Math.max(...rows.map((r) => r.updatedAt.getTime()))).toISOString() : null,
   };
 }
@@ -76,7 +88,7 @@ export async function putSchemeCoverage(ctx: AuthContext, tenantId: string, sche
   await db.$transaction(async (tx) => {
     await tx.schemeWardCoverage.deleteMany({ where: { tenantId: tenant.id, schemeId } });
     if (input.wards.length) {
-      await tx.schemeWardCoverage.createMany({ data: input.wards.map((w) => ({ tenantId: tenant.id, schemeId, wardNo: w.wardNo, households: w.households })) });
+      await tx.schemeWardCoverage.createMany({ data: input.wards.map((w) => ({ tenantId: tenant.id, schemeId, wardNo: w.wardNo, households: w.households, beneficiaries: w.beneficiaries ?? null })) });
     }
     await writeAudit(
       actorFromContext(ctx, client),
@@ -103,15 +115,30 @@ export async function getPublicSchemeCoverage(tenantSlug: string, schemeId: stri
   const tenant = await getPublicTenantBySlug(tenantSlug);
   if (schemeId) {
     await schemeForTenant(tenant, schemeId, true);
-    const c = await loadCoverage(tenant.id, schemeId);
-    return { schemeId, wards: c.wards, totalHouseholds: c.totalHouseholds };
+    const [c, scheme] = await Promise.all([loadCoverage(tenant.id, schemeId), db.scheme.findUniqueOrThrow({ where: { id: schemeId }, select: { mapImageId: true } })]);
+    return { schemeId, wards: c.wards, totalHouseholds: c.totalHouseholds, totalBeneficiaries: c.totalBeneficiaries, mapImageId: scheme.mapImageId };
   }
   const rows = await db.schemeWardCoverage.findMany({
     where: { tenantId: tenant.id, scheme: { ...visibleSchemeWhere(tenant), status: "PUBLISHED" } },
-    select: { wardNo: true, households: true },
+    select: { wardNo: true, households: true, beneficiaries: true },
   });
-  const perWard = new Map<string, number>();
-  for (const r of rows) perWard.set(r.wardNo, Math.max(perWard.get(r.wardNo) ?? 0, r.households));
-  const wards = [...perWard].map(([wardNo, households]) => ({ wardNo, households })).sort((a, b) => a.wardNo.localeCompare(b.wardNo, undefined, { numeric: true }));
-  return { schemeId: null, wards, totalHouseholds: wards.reduce((n, w) => n + w.households, 0) };
+  // Households: per-ward maximum (reached by at least one scheme). Beneficiaries: per-ward sum across schemes.
+  const perWard = new Map<string, { households: number; beneficiaries: number | null }>();
+  for (const r of rows) {
+    const prev = perWard.get(r.wardNo) ?? { households: 0, beneficiaries: null };
+    perWard.set(r.wardNo, {
+      households: Math.max(prev.households, r.households),
+      beneficiaries: r.beneficiaries === null ? prev.beneficiaries : (prev.beneficiaries ?? 0) + r.beneficiaries,
+    });
+  }
+  const wards = [...perWard]
+    .map(([wardNo, w]) => ({ wardNo, households: w.households, beneficiaries: w.beneficiaries }))
+    .sort((a, b) => a.wardNo.localeCompare(b.wardNo, undefined, { numeric: true }));
+  return {
+    schemeId: null,
+    wards,
+    totalHouseholds: wards.reduce((n, w) => n + w.households, 0),
+    totalBeneficiaries: wards.some((w) => w.beneficiaries !== null) ? wards.reduce((n, w) => n + (w.beneficiaries ?? 0), 0) : null,
+    mapImageId: null,
+  };
 }

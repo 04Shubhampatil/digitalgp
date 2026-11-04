@@ -16,7 +16,15 @@ const base = {
   displayPages: z.array(z.enum(PAGE_KEYS)).min(1).max(PAGE_KEYS.length).default(["home", "announcements"]),
   publishAt: z.iso.datetime().optional().nullable(),
   expiresAt: z.iso.datetime().optional().nullable(),
+  /** Event date/time for the public calendar (with offset, e.g. "2026-11-20T10:00:00+05:30"); null = not an event. */
+  eventStartAt: z.iso.datetime({ offset: true }).optional().nullable(),
+  eventEndAt: z.iso.datetime({ offset: true }).optional().nullable(),
+  eventLocationEn: optionalShortText,
+  eventLocationMr: optionalShortText,
 };
+
+const eventEndsAfterStart = (v: { eventStartAt?: string | null; eventEndAt?: string | null }) =>
+  !v.eventEndAt || (!!v.eventStartAt && new Date(v.eventEndAt) >= new Date(v.eventStartAt));
 
 const atLeastOneTitle = (v: { titleEn?: string | null; titleMr?: string | null }) => !!(v.titleEn?.trim() || v.titleMr?.trim());
 
@@ -32,6 +40,7 @@ export const createAnnouncementSchema = z
     targetUnitIds: z.array(idSchema).min(1).max(500).optional(),
   })
   .refine(atLeastOneTitle, { message: "A title in English or Marathi is required", path: ["titleEn"] })
+  .refine(eventEndsAfterStart, { message: "The event must end after it starts (and needs a start)", path: ["eventEndAt"] })
   .refine((v) => (v.tenantId ? !v.ownerUnitId && !v.targetUnitIds : !!v.ownerUnitId && !!v.targetUnitIds), {
     message: "Provide tenantId for a Gram Panchayat announcement, or ownerUnitId with targetUnitIds for a shared one",
     path: ["tenantId"],
@@ -56,9 +65,24 @@ export const listAnnouncementsQuerySchema = paginationQuerySchema.extend({
 });
 export type ListAnnouncementsQuery = z.infer<typeof listAnnouncementsQuerySchema>;
 
-export const publicAnnouncementsQuerySchema = paginationQuerySchema.extend({
-  page: z.enum(PAGE_KEYS).optional(),
-  priority: prioritySchema.optional(),
-  category: z.string().trim().min(1).max(60).optional(),
-});
+export const publicAnnouncementsQuerySchema = paginationQuerySchema
+  .extend({
+    page: z.enum(PAGE_KEYS).optional(),
+    priority: prioritySchema.optional(),
+    category: z.string().trim().min(1).max(60).optional(),
+    /** Calendar: only events starting in [from, to). Dates or date-times. */
+    from: z.iso.date().or(z.iso.datetime({ offset: true })).optional(),
+    to: z.iso.date().or(z.iso.datetime({ offset: true })).optional(),
+    /** `true` = events only. */
+    events: z.enum(["true", "false"]).optional(),
+    /** `true` = only announcements with a downloadable attachment (Downloads tiles). */
+    hasAttachment: z.enum(["true", "false"]).optional(),
+  })
+  .refine((v) => !v.from || !v.to || new Date(v.from) < new Date(v.to), { message: "`from` must be before `to`", path: ["to"] })
+  .refine((v) => !v.from || !v.to || new Date(v.to).getTime() - new Date(v.from).getTime() <= 400 * 24 * 60 * 60 * 1000, {
+    message: "The range can be at most 400 days",
+    path: ["to"],
+  });
+
+export const publicAnnouncementCategoriesQuerySchema = z.object({ page: z.enum(PAGE_KEYS).optional() });
 export type PublicAnnouncementsQuery = z.infer<typeof publicAnnouncementsQuerySchema>;

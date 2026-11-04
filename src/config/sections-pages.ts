@@ -22,6 +22,8 @@ import {
   order,
   percent,
   phone,
+  listHeader,
+  successStoriesSchema,
   supportCardItem,
   text,
   topStatItem,
@@ -47,35 +49,32 @@ const strict = <T extends z.ZodRawShape>(shape: T) => z.object(shape).strict();
 // Shared sections
 // ---------------------------------------------------------------------------
 
-/** Top statistics. `variant` "strip" renders the compact band over a hero (Finance); "tiles" is the default grid. */
+/**
+ * Top statistics. `variant`: "tiles" (default grid), "strip" (compact band over a hero, Finance),
+ * "card" (one white card with dividers), "band" (full-width coloured band).
+ */
 const topStatsSchema = (max: number) =>
   strict({
     heading: bilingualSchema.optional(),
     subheading: bilingualSchema.optional(),
-    variant: z.enum(["tiles", "strip"]).optional(),
+    variant: z.enum(["tiles", "strip", "card", "band"]).optional(),
     items: sectionList(topStatItem, max),
   });
 const topStats = topStatsSchema(8);
 /** Infrastructure shows up to 15 facility tiles ("Public Facilities Overview"). */
 const facilityStats = topStatsSchema(15);
 
-const supportCards = strict({ items: sectionList(supportCardItem, 12) });
-
-const successStories = strict({
-  items: sectionList(
-    strict({
-      imageId: mediaId.optional(),
-      title: bilingualSchema,
-      description: bilingualSchema.optional(),
-      buttonText: bilingualSchema.optional(),
-      buttonLink: href.optional(),
-      order,
-    }),
-    30,
-  ),
+/** Support cards. `layout`: "grid" (default), "strip" (one row of category tiles), "contact" (helpline cards). */
+const supportCards = strict({
+  ...listHeader,
+  layout: z.enum(["grid", "strip", "contact"]).optional(),
+  items: sectionList(supportCardItem, 12),
 });
 
+const successStories = successStoriesSchema;
+
 const trainingPrograms = strict({
+  ...listHeader,
   items: sectionList(
     strict({
       thumbnailImageId: mediaId.optional(),
@@ -91,7 +90,14 @@ const trainingPrograms = strict({
   ),
 });
 
-const iconCardList = (max: number) => strict({ items: sectionList(strict({ icon: iconName, title: bilingualSchema, link: href.optional(), active: z.boolean() }), max) });
+const iconCardList = (max: number) =>
+  strict({
+    ...listHeader,
+    items: sectionList(
+      strict({ icon: iconName, title: bilingualSchema, description: bilingualSchema.optional(), link: href.optional(), colour: colour.optional(), active: z.boolean() }),
+      max,
+    ),
+  });
 
 // ---------------------------------------------------------------------------
 // Village Infrastructure
@@ -275,7 +281,8 @@ const finance: SectionDefinition[] = [
       subtitle: bilingualSchema.optional(),
       description: bilingualSchema.optional(),
       backgroundColour: colour,
-      items: sectionList(strict({ title: bilingualSchema, fileId: mediaId, buttonText: bilingualSchema.optional() }), 50),
+      // `fileSize` is a display label ("2.4 MB"); the exact size is also available from GET /public/:slug/media/:id/meta.
+      items: sectionList(strict({ title: bilingualSchema, fileId: mediaId, fileSize: text(20).optional(), buttonText: bilingualSchema.optional() }), 50),
     }),
   },
 ];
@@ -446,6 +453,9 @@ const culture: SectionDefinition[] = [
       description: bilingualSchema.optional(),
       buttonLabel: bilingualSchema.optional(),
       buttonLink: href.optional(),
+      /** Booking / enquiry link (tel:, https://wa.me/…, a booking site or a page section). */
+      bookingLink: href.optional(),
+      bookingLabel: bilingualSchema.optional(),
       imageId: mediaId.optional(),
       features: sectionList(strict({ icon: iconName, title: bilingualSchema }), 8),
     }),
@@ -476,17 +486,25 @@ const culture: SectionDefinition[] = [
         title: bilingualSchema,
         description: bilingualSchema.optional(),
         points: sectionList(bilingualSchema, 10),
+        link: href.optional(),
+        linkLabel: bilingualSchema.optional(),
       }),
       gallery: strict({
         title: bilingualSchema,
         description: bilingualSchema.optional(),
         imageIds: mediaIdList(30),
+        link: href.optional(),
+        linkLabel: bilingualSchema.optional(),
       }),
       voice: strict({
         title: bilingualSchema,
         description: bilingualSchema.optional(),
+        /** Still shown on the card (the video plays from videoId / videoUrl). */
+        imageId: mediaId.optional(),
         videoId: mediaId.optional(),
         videoUrl: videoUrl.optional(),
+        link: href.optional(),
+        linkLabel: bilingualSchema.optional(),
       }),
     }),
   },
@@ -505,6 +523,7 @@ const employment: SectionDefinition[] = [
     key: "skill-directory",
     sortOrder: 30,
     schema: strict({
+      ...listHeader,
       items: sectionList(
         strict({
           icon: iconName,
@@ -525,6 +544,7 @@ const employment: SectionDefinition[] = [
     key: "job-portals",
     sortOrder: 60,
     schema: strict({
+      ...listHeader,
       items: sectionList(
         strict({
           logoId: mediaId.optional(),
@@ -568,6 +588,7 @@ const education: SectionDefinition[] = [
     key: "student-spotlight",
     sortOrder: 20,
     schema: strict({
+      ...listHeader,
       photoId: mediaId.optional(),
       name: bilingualSchema,
       classAndSchool: bilingualSchema.optional(),
@@ -589,13 +610,17 @@ const education: SectionDefinition[] = [
     key: "youth-posts",
     sortOrder: 40,
     schema: strict({
+      ...listHeader,
       items: sectionList(
         strict({
           tabKey: text(40),
+          /** blog / youtube / reel / idea (shown as the Blogs / YouTube / Reels / Ideas tabs). */
           type: z.enum(YOUTH_POST_TYPES),
           title: bilingualSchema,
           coverImageId: mediaId.optional(),
           url: href.optional(),
+          author: bilingualSchema.optional(),
+          date: isoDate.optional(),
         }).superRefine((post, ctx) => {
           if (!post.url) return;
           if (post.type === "youtube" && !hostAllowed(post.url, YOUTUBE_HOSTS)) {
@@ -613,6 +638,7 @@ const education: SectionDefinition[] = [
     key: "scheme-cards",
     sortOrder: 50,
     schema: strict({
+      ...listHeader,
       items: sectionList(
         strict({
           icon: iconName,
@@ -620,6 +646,9 @@ const education: SectionDefinition[] = [
           description: bilingualSchema.optional(),
           buttonText: bilingualSchema.optional(),
           buttonLink: href.optional(),
+          /** Card-wide link (same as buttonLink when only one is needed). */
+          link: href.optional(),
+          colour: colour.optional(),
           active: z.boolean(),
         }),
         30,
@@ -633,8 +662,28 @@ const education: SectionDefinition[] = [
 // Environment & Sustainability
 // ---------------------------------------------------------------------------
 
+const priceRow = strict({
+  commodity: bilingualSchema,
+  unit: text(20),
+  minPrice: z.number().min(0),
+  maxPrice: z.number().min(0),
+  modalPrice: z.number().min(0),
+}).refine((r) => r.minPrice <= r.modalPrice && r.modalPrice <= r.maxPrice, {
+  message: "Prices must satisfy min ≤ modal ≤ max",
+  path: ["modalPrice"],
+});
+
 const environment: SectionDefinition[] = [
   { key: "banner", sortOrder: 0, schema: bannerSchema },
+  {
+    // "Our Key Initiatives" tiles: icon, title and a link per tile.
+    key: "key-initiatives",
+    sortOrder: 3,
+    schema: strict({
+      ...listHeader,
+      items: sectionList(strict({ icon: iconName, title: bilingualSchema, link: href.optional(), active: z.boolean().optional() }), 20),
+    }),
+  },
   { key: "top-stats", sortOrder: 5, schema: topStats },
   {
     key: "green-scoreboard",
@@ -655,13 +704,16 @@ const environment: SectionDefinition[] = [
       buttonText: bilingualSchema.optional(),
       buttonLink: href.optional(),
       stats: sectionList(strict({ icon: iconName, title: bilingualSchema, value: text(40), subText: bilingualSchema.optional() }), 6),
+      /** POST /public/:slug/tree-adoptions: who is told about new requests, and the thank-you text. */
+      recipientEmail: email.optional(),
+      successMessage: bilingualSchema.optional(),
     }),
   },
   {
     key: "sustainability-initiatives",
     sortOrder: 30,
     schema: strict({
-      items: sectionList(strict({ imageId: mediaId.optional(), title: bilingualSchema, description: bilingualSchema.optional(), active: z.boolean() }), 30),
+      items: sectionList(strict({ imageId: mediaId.optional(), title: bilingualSchema, description: bilingualSchema.optional(), link: href.optional(), active: z.boolean() }), 30),
     }),
   },
   {
@@ -672,19 +724,17 @@ const environment: SectionDefinition[] = [
       lastUpdatedAt: isoDateTime,
       marketName: bilingualSchema.optional(),
       currency: z.string().trim().min(3).max(10).default("INR"),
-      rows: sectionList(
-        strict({
-          commodity: bilingualSchema,
-          unit: text(20),
-          minPrice: z.number().min(0),
-          maxPrice: z.number().min(0),
-          modalPrice: z.number().min(0),
-        }).refine((r) => r.minPrice <= r.modalPrice && r.modalPrice <= r.maxPrice, {
-          message: "Prices must satisfy min ≤ modal ≤ max",
-          path: ["modalPrice"],
-        }),
-        50,
-      ),
+      rows: sectionList(priceRow, 50),
+      /**
+       * Several markets for the "Select Market" dropdown. When present the page lists these;
+       * `marketName` + `rows` stay as the single-market form (and the default selection).
+       */
+      markets: sectionList(
+        strict({ key: text(40).min(1), name: bilingualSchema, lastUpdatedAt: isoDateTime.optional(), rows: sectionList(priceRow, 50) }),
+        10,
+      )
+        .optional()
+        .refine((m) => !m || new Set(m.map((x) => x.key)).size === m.length, "Market keys must be unique"),
       note: bilingualSchema.optional(),
       buttonText: bilingualSchema.optional(),
       buttonLink: href.optional(),
@@ -806,6 +856,8 @@ const gallery: SectionDefinition[] = [
           logoId: mediaId.optional(),
           mediaName: text(120),
           title: bilingualSchema,
+          /** e.g. "News", "Article", "TV" (shown as a tag). */
+          category: bilingualSchema.optional(),
           date: isoDate,
           url: httpsUrl,
           order,
@@ -840,6 +892,11 @@ const gallery: SectionDefinition[] = [
       publishedDate: isoDate,
       playback: strict({ autoplay: z.boolean(), controls: z.boolean(), muted: z.boolean(), loop: z.boolean() }),
       autoThumbnail: z.boolean(),
+      /** Poster picture: an uploaded image (preferred) or an https image URL. */
+      thumbnailId: mediaId.optional(),
+      thumbnailUrl: httpsUrl.optional(),
+      /** Running time shown on the poster, "MM:SS" or "H:MM:SS". */
+      duration: z.string().trim().regex(/^(\d{1,2}:)?[0-5]?\d:[0-5]\d$/, "Use MM:SS or H:MM:SS").optional(),
     }).superRefine((d, ctx) => {
       if (d.source === "upload" && !d.videoId) ctx.addIssue({ code: "custom", path: ["videoId"], message: "Upload a video or switch to a link" });
       if (d.source === "link" && !d.videoUrl) ctx.addIssue({ code: "custom", path: ["videoUrl"], message: "Add a YouTube or Vimeo link" });

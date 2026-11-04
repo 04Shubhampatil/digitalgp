@@ -12,7 +12,11 @@ export interface AuditEntry {
   unitId?: string | null;
   before?: unknown;
   after?: unknown;
+  /** Defaults to SUCCESS. FAILURE = the action was attempted and failed (e.g. wrong password); DENIED = refused by policy. */
+  result?: AuditResult;
 }
+
+export type AuditResult = "SUCCESS" | "FAILURE" | "DENIED";
 
 export interface AuditActor {
   userId: string | null;
@@ -40,6 +44,7 @@ export async function writeAudit(actor: AuditActor, entry: AuditEntry, tx: Tx | 
       entityId: entry.entityId ?? null,
       before: entry.before === undefined ? undefined : toJson(entry.before),
       after: entry.after === undefined ? undefined : toJson(entry.after),
+      result: entry.result ?? "SUCCESS",
       ipAddress: actor.client?.ipAddress ?? null,
       userAgent: actor.client?.userAgent?.slice(0, 512) ?? null,
     },

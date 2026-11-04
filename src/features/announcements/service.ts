@@ -8,8 +8,9 @@ import { assertCan, assertInScope, unitPathScopeFilter } from "@/lib/permissions
 import { getPublicTenantBySlug, getTenantForActor, getUnitForActor } from "@/lib/tenant";
 import { paginate } from "@/lib/validation";
 import { revalidateWebsitesUnder } from "@/lib/revalidate";
-import type { AnnouncementDto, PublicAnnouncementDto } from "@/types/api";
+import type { AnnouncementDto, PublicAnnouncementCategoryDto, PublicAnnouncementDto } from "@/types/api";
 import { assertEditable, nextStatus, transitionCapability, type WorkflowAction } from "@/features/content/workflow";
+import { assertUsableMedia } from "@/features/media/ownership";
 import type {
   CreateAnnouncementInput,
   ListAnnouncementsQuery,
@@ -21,6 +22,7 @@ const MODULE = "announcements" as const;
 
 const announcementInclude = {
   ownerUnit: { select: { id: true, path: true } },
+  attachment: { select: { id: true, kind: true, originalName: true, mimeType: true, sizeBytes: true, deletedAt: true } },
   targets: { include: { unit: { select: { id: true, level: true, nameEn: true, nameMr: true } } } },
 } satisfies Prisma.AnnouncementInclude;
 
@@ -42,6 +44,10 @@ export function toAnnouncementDto(a: AnnouncementRow): AnnouncementDto {
     status: a.status,
     publishAt: a.publishAt?.toISOString() ?? null,
     expiresAt: a.expiresAt?.toISOString() ?? null,
+    eventStartAt: a.eventStartAt?.toISOString() ?? null,
+    eventEndAt: a.eventEndAt?.toISOString() ?? null,
+    eventLocationEn: a.eventLocationEn,
+    eventLocationMr: a.eventLocationMr,
     targets: a.targets.map((t) => ({ unitId: t.unit.id, level: t.unit.level, nameEn: t.unit.nameEn, nameMr: t.unit.nameMr })),
     createdById: a.createdById,
     submittedAt: a.submittedAt?.toISOString() ?? null,
@@ -64,10 +70,18 @@ function toPublicDto(a: AnnouncementRow): PublicAnnouncementDto {
     titleMr: a.titleMr,
     bodyEn: a.bodyEn,
     bodyMr: a.bodyMr,
-    attachmentId: a.attachmentId,
+    attachmentId: a.attachment && !a.attachment.deletedAt ? a.attachmentId : null,
+    attachment:
+      a.attachment && !a.attachment.deletedAt
+        ? { id: a.attachment.id, kind: a.attachment.kind, name: a.attachment.originalName, mimeType: a.attachment.mimeType, sizeBytes: a.attachment.sizeBytes }
+        : null,
     displayPages: a.displayPages,
     publishedAt: a.publishedAt?.toISOString() ?? null,
     expiresAt: a.expiresAt?.toISOString() ?? null,
+    eventStartAt: a.eventStartAt?.toISOString() ?? null,
+    eventEndAt: a.eventEndAt?.toISOString() ?? null,
+    eventLocationEn: a.eventLocationEn,
+    eventLocationMr: a.eventLocationMr,
     isShared: a.tenantId === null,
   };
 }
@@ -102,6 +116,10 @@ function baseData(input: Partial<CreateAnnouncementInput>): Prisma.AnnouncementU
   if (input.displayPages !== undefined) data.displayPages = input.displayPages;
   if (input.publishAt !== undefined) data.publishAt = input.publishAt ? new Date(input.publishAt) : null;
   if (input.expiresAt !== undefined) data.expiresAt = input.expiresAt ? new Date(input.expiresAt) : null;
+  if (input.eventStartAt !== undefined) data.eventStartAt = input.eventStartAt ? new Date(input.eventStartAt) : null;
+  if (input.eventEndAt !== undefined) data.eventEndAt = input.eventEndAt ? new Date(input.eventEndAt) : null;
+  if (input.eventLocationEn !== undefined) data.eventLocationEn = input.eventLocationEn;
+  if (input.eventLocationMr !== undefined) data.eventLocationMr = input.eventLocationMr;
   return data;
 }
 
@@ -159,6 +177,7 @@ export async function createAnnouncement(ctx: AuthContext, input: CreateAnnounce
     ownerPath = owner.path;
     targetUnitIds = await validateTargets(owner.path, input.targetUnitIds!);
   }
+  if (input.attachmentId) await assertUsableMedia(input.attachmentId, { tenantId, unitPath: ownerPath }, { label: "Attachment" });
 
   const created = await db.$transaction(async (tx) => {
     const row = await tx.announcement.create({
@@ -179,7 +198,6 @@ export async function createAnnouncement(ctx: AuthContext, input: CreateAnnounce
     );
     return row;
   });
-  void ownerPath;
   return toAnnouncementDto(created);
 }
 
@@ -194,6 +212,13 @@ export async function updateAnnouncement(ctx: AuthContext, id: string, input: Up
   }
 
   const targetUnitIds = input.targetUnitIds ? await validateTargets(before.ownerUnit.path, input.targetUnitIds) : null;
+  if (input.attachmentId) await assertUsableMedia(input.attachmentId, { tenantId: before.tenantId, unitPath: before.ownerUnit.path }, { label: "Attachment" });
+  // A partial update must still leave a valid event range.
+  const start = input.eventStartAt !== undefined ? input.eventStartAt : before.eventStartAt?.toISOString() ?? null;
+  const end = input.eventEndAt !== undefined ? input.eventEndAt : before.eventEndAt?.toISOString() ?? null;
+  if (end && (!start || new Date(end) < new Date(start))) {
+    throw Errors.validation([{ path: "eventEndAt", message: "The event must end after it starts (and needs a start)" }]);
+  }
 
   const updated = await db.$transaction(async (tx) => {
     const row = await tx.announcement.update({
@@ -286,28 +311,63 @@ export async function deleteAnnouncement(ctx: AuthContext, id: string, client: C
  * Published announcements visible on a tenant website: its own, plus shared ones whose targets
  * include the tenant's unit or any ancestor. Draft/private content never reaches this query.
  */
+/** Live announcements of a website: published, inside their publish window, own or targeted at it. */
+function publicVisibleWhere(tenant: { id: string; unitPath: string }, now: Date): Prisma.AnnouncementWhereInput {
+  const ancestorIds = tenant.unitPath.split("/").filter(Boolean);
+  return {
+    deletedAt: null,
+    status: "PUBLISHED",
+    AND: [
+      { OR: [{ publishAt: null }, { publishAt: { lte: now } }] },
+      { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
+      { OR: [{ tenantId: tenant.id }, { tenantId: null, targets: { some: { unitId: { in: ancestorIds } } } }] },
+    ],
+  };
+}
+
 export async function listPublicAnnouncements(tenantSlug: string, query: PublicAnnouncementsQuery) {
   const tenant = await getPublicTenantBySlug(tenantSlug);
-  const ancestorIds = tenant.unitPath.split("/").filter(Boolean);
   const now = new Date();
+  const calendar = !!(query.from || query.to);
+  const eventRange: Prisma.DateTimeNullableFilter = {
+    not: null,
+    ...(query.from ? { gte: new Date(query.from) } : {}),
+    ...(query.to ? { lt: new Date(query.to) } : {}),
+  };
   const rows = await db.announcement.findMany({
     where: {
-      deletedAt: null,
-      status: "PUBLISHED",
-      AND: [
-        { OR: [{ publishAt: null }, { publishAt: { lte: now } }] },
-        { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
-        { OR: [{ tenantId: tenant.id }, { tenantId: null, targets: { some: { unitId: { in: ancestorIds } } } }] },
-      ],
+      ...publicVisibleWhere(tenant, now),
       ...(query.page ? { displayPages: { has: query.page } } : {}),
       ...(query.priority ? { priority: query.priority } : {}),
-      ...(query.category ? { category: query.category } : {}),
+      ...(query.category ? { category: { equals: query.category, mode: "insensitive" } } : {}),
+      ...(calendar || query.events === "true" ? { eventStartAt: eventRange } : {}),
+      ...(query.hasAttachment === "true" ? { attachment: { deletedAt: null } } : {}),
     },
     include: announcementInclude,
-    orderBy: [{ publishAt: "desc" }, { id: "desc" }],
+    // The calendar reads events in date order; lists show the newest first.
+    orderBy: calendar ? [{ eventStartAt: "asc" }, { id: "asc" }] : [{ publishAt: "desc" }, { id: "desc" }],
     take: query.limit + 1,
     ...(query.cursor ? { cursor: { id: query.cursor }, skip: 1 } : {}),
   });
   const page = paginate(rows, query.limit);
   return { ...page, items: page.items.map(toPublicDto) };
+}
+
+/** One live announcement ("View Details"); 404 for drafts, expired, scheduled or untargeted ones. */
+export async function getPublicAnnouncement(tenantSlug: string, id: string): Promise<PublicAnnouncementDto> {
+  const tenant = await getPublicTenantBySlug(tenantSlug);
+  const row = await db.announcement.findFirst({ where: { id, ...publicVisibleWhere(tenant, new Date()) }, include: announcementInclude });
+  if (!row) throw Errors.notFound("Announcement");
+  return toPublicDto(row);
+}
+
+/** Counts per category of live announcements (category tiles), largest first. */
+export async function listPublicAnnouncementCategories(tenantSlug: string, page?: string): Promise<PublicAnnouncementCategoryDto[]> {
+  const tenant = await getPublicTenantBySlug(tenantSlug);
+  const rows = await db.announcement.groupBy({
+    by: ["category"],
+    where: { ...publicVisibleWhere(tenant, new Date()), ...(page ? { displayPages: { has: page } } : {}) },
+    _count: { _all: true },
+  });
+  return rows.map((r) => ({ category: r.category, count: r._count._all })).sort((a, b) => b.count - a.count || a.category.localeCompare(b.category));
 }

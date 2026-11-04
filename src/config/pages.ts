@@ -27,5 +27,8 @@ export function isPageKey(value: string): value is PageKey {
   return (PAGE_KEYS as readonly string[]).includes(value);
 }
 
-/** Pages created for every new tenant website (the 15-page template). */
-export const DEFAULT_PAGE_KEYS: readonly PageKey[] = PAGE_KEYS.filter((k) => k !== "progress");
+/** Pages created for every new tenant website: all keys get a row so admins can enable optional ones. */
+export const DEFAULT_PAGE_KEYS: readonly PageKey[] = PAGE_KEYS;
+
+/** Optional pages: their row is created disabled and the public API answers 404 until an admin enables it. */
+export const OPTIONAL_PAGE_KEYS: readonly PageKey[] = ["progress"];
