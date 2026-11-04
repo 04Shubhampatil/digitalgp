@@ -2,7 +2,7 @@ import { Clock, Globe, MapPin, Phone } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { pair, pickText, type Bilingual } from "@/i18n/text";
 import { loadTenant } from "@/lib/public-tenant";
-import { FacebookIcon, InstagramIcon, YouTubeIcon } from "../SocialIcons";
+import { FacebookIcon, InstagramIcon, XIcon, YouTubeIcon } from "../SocialIcons";
 import { MailtoForm, type MailtoField } from "./MailtoForm";
 import type { SectionProps } from "./index";
 
@@ -85,6 +85,9 @@ export async function ContactCardsSection({ slug, locale, data }: SectionProps) 
             <div className="mt-5 flex items-center gap-3">
               <Social href={s.facebook} label="Facebook">
                 <FacebookIcon className="size-8" />
+              </Social>
+              <Social href={s.twitter} label="X (Twitter)">
+                <XIcon className="size-8" />
               </Social>
               <Social href={s.youtube} label="YouTube">
                 <span className="flex size-8 items-center justify-center rounded-full bg-[#e8221b]">

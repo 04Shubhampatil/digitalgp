@@ -36,3 +36,13 @@ export function YouTubeIcon({ className = "h-6 w-8" }: { className?: string }) {
     </svg>
   );
 }
+
+/** X (formerly Twitter): Figma Contact frame shows a blue round badge; this uses the current X glyph on it. */
+export function XIcon({ className = "size-6" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden>
+      <circle cx="12" cy="12" r="12" fill="#1d9bf0" />
+      <path d="M13.2 11.1 17.6 6h-1.1l-3.8 4.4L9.7 6H6.2l4.6 6.7L6.2 18h1.1l4-4.7 3.2 4.7H18zm-1.4 1.7-.5-.7-3.7-5.3h1.6l3 4.3.5.7 3.9 5.6H15z" fill="#fff" />
+    </svg>
+  );
+}

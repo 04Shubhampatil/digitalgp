@@ -31,7 +31,7 @@ export async function AdminShell({ user, children }: { user: CurrentUserDto; chi
   const cmsGroups: NavGroup[] = gpCms
     ? [
         { items: [{ href: `/admin/websites/${soleTenant}`, label: t("dashboard"), exact: true }] },
-        { label: t("cmsGroups.content"), items: [page("home"), page("about"), page("projects", "/admin/projects"), page("schemes", "/admin/schemes"), page("infrastructure"), page("finance")] },
+        { label: t("cmsGroups.content"), items: [page("home"), page("about"), page("projects", "/admin/projects"), page("schemes", "/admin/schemes"), { href: "/admin/success-stories", label: t("storiesUi.titlePlural") }, page("infrastructure"), page("finance")] },
         { label: t("cmsGroups.development"), items: [page("services"), page("grievance", "/admin/grievances")] },
         { label: t("cmsGroups.dynamic"), items: [page("culture"), page("employment"), page("education"), page("environment")] },
         { label: t("cmsGroups.media"), items: [page("announcements", "/admin/announcements"), page("gallery", "/admin/media"), page("contact")] },
@@ -89,6 +89,7 @@ export async function AdminShell({ user, children }: { user: CurrentUserDto; chi
         { href: "/admin/announcements", label: t("announcements.title"), show: hasCapability(user, "content:read") },
         { href: "/admin/schemes", label: t("schemes"), show: hasCapability(user, "content:read") },
         { href: "/admin/projects", label: t("projects"), show: hasCapability(user, "content:read") },
+        { href: "/admin/success-stories", label: t("storiesUi.titlePlural"), show: hasCapability(user, "content:read") },
         { href: "/admin/media", label: t("media"), show: hasCapability(user, "media:manage") },
         { href: "/admin/grievances", label: t("grievances"), show: hasCapability(user, "grievance:manage") },
         { href: "/admin/form-submissions", label: t("formSubmissions.title"), show: hasCapability(user, "content:review") },

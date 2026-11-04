@@ -33,7 +33,11 @@ const schema = z
     familiesBenefited: z.string().trim().regex(/^\d*$/, "Whole number"),
     outcomeEn: z.string().trim().max(20_000),
     outcomeMr: z.string().trim().max(20_000),
+    outcomeShortEn: z.string().trim().max(160),
+    outcomeShortMr: z.string().trim().max(160),
     coverImageId: z.string(),
+    beforeImageId: z.string(),
+    afterImageId: z.string(),
   })
   .refine((v) => !!(v.nameEn || v.nameMr), { message: "A name in English or Marathi is required", path: ["nameEn"] });
 type FormValues = z.infer<typeof schema>;
@@ -64,9 +68,31 @@ export function ProjectForm({ existing }: { existing?: ProjectDto }) {
           familiesBenefited: existing.familiesBenefited?.toString() ?? "",
           outcomeEn: existing.outcomeEn ?? "",
           outcomeMr: existing.outcomeMr ?? "",
+          outcomeShortEn: existing.outcomeShortEn ?? "",
+          outcomeShortMr: existing.outcomeShortMr ?? "",
           coverImageId: existing.coverImageId ?? "",
+          beforeImageId: existing.beforeImageId ?? "",
+          afterImageId: existing.afterImageId ?? "",
         }
-      : { tenantId: "", stage: "ONGOING", nameEn: "", nameMr: "", descriptionEn: "", descriptionMr: "", wardNo: "", year: "", budget: "", familiesBenefited: "", outcomeEn: "", outcomeMr: "", coverImageId: "" },
+      : {
+          tenantId: "",
+          stage: "ONGOING",
+          nameEn: "",
+          nameMr: "",
+          descriptionEn: "",
+          descriptionMr: "",
+          wardNo: "",
+          year: "",
+          budget: "",
+          familiesBenefited: "",
+          outcomeEn: "",
+          outcomeMr: "",
+          outcomeShortEn: "",
+          outcomeShortMr: "",
+          coverImageId: "",
+          beforeImageId: "",
+          afterImageId: "",
+        },
   });
   const { register, handleSubmit, control, setError, formState } = form;
   const tenantId = useWatch({ control, name: "tenantId" });
@@ -85,7 +111,11 @@ export function ProjectForm({ existing }: { existing?: ProjectDto }) {
       familiesBenefited: nn(v.familiesBenefited),
       outcomeEn: nz(v.outcomeEn),
       outcomeMr: nz(v.outcomeMr),
+      outcomeShortEn: nz(v.outcomeShortEn),
+      outcomeShortMr: nz(v.outcomeShortMr),
       coverImageId: nz(v.coverImageId),
+      beforeImageId: nz(v.beforeImageId),
+      afterImageId: nz(v.afterImageId),
     };
     try {
       const saved = existing ? await projects.update(existing.id, body) : await projects.create({ ...body, tenantId: v.tenantId });
@@ -119,13 +149,19 @@ export function ProjectForm({ existing }: { existing?: ProjectDto }) {
           <Input label={`${tp("familiesBenefited")} (${tc("optional")})`} inputMode="numeric" error={formState.errors.familiesBenefited?.message} {...register("familiesBenefited")} />
           <Textarea label={t("projectsUi.outcomeEn")} rows={3} {...register("outcomeEn")} />
           <Textarea label={t("projectsUi.outcomeMr")} lang="mr" rows={3} {...register("outcomeMr")} />
-          <div className="sm:col-span-2">
-            {tenantId ? (
-              <Controller control={control} name="coverImageId" render={({ field }) => <MediaField label={t("projectsUi.coverImage")} value={field.value} onChange={field.onChange} tenantId={tenantId} />} />
-            ) : (
-              <p className="text-xs text-muted">{t("projectsUi.pickWebsiteFirst")}</p>
-            )}
-          </div>
+          <Input label={`${t("projectsUi.outcomeShortEn")} (${tc("optional")})`} hint={t("projectsUi.outcomeShortHint")} maxLength={160} error={formState.errors.outcomeShortEn?.message} {...register("outcomeShortEn")} />
+          <Input label={`${t("projectsUi.outcomeShortMr")} (${tc("optional")})`} lang="mr" maxLength={160} error={formState.errors.outcomeShortMr?.message} {...register("outcomeShortMr")} />
+          {tenantId ? (
+            <>
+              <div className="sm:col-span-2">
+                <Controller control={control} name="coverImageId" render={({ field }) => <MediaField label={t("projectsUi.coverImage")} value={field.value} onChange={field.onChange} tenantId={tenantId} error={formState.errors.coverImageId?.message} />} />
+              </div>
+              <Controller control={control} name="beforeImageId" render={({ field }) => <MediaField label={`${t("projectsUi.beforeImage")} (${tc("optional")})`} value={field.value} onChange={field.onChange} tenantId={tenantId} error={formState.errors.beforeImageId?.message} />} />
+              <Controller control={control} name="afterImageId" render={({ field }) => <MediaField label={`${t("projectsUi.afterImage")} (${tc("optional")})`} value={field.value} onChange={field.onChange} tenantId={tenantId} error={formState.errors.afterImageId?.message} />} />
+            </>
+          ) : (
+            <p className="text-xs text-muted sm:col-span-2">{t("projectsUi.pickWebsiteFirst")}</p>
+          )}
         </div>
       </section>
       {formError && (

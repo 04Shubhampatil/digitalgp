@@ -7,6 +7,7 @@ import { pageHref } from "@/config/public-nav";
 import type { UiLocale } from "@/i18n/config";
 import { pair, pickText } from "@/i18n/text";
 import { getPublicPage, listPublicAnnouncements, listPublicProjects, listPublicSchemes } from "@/lib/api/public";
+import { detailHref } from "@/lib/href";
 import { loadTenant } from "@/lib/public-tenant";
 
 export const metadata: Metadata = { title: "Search" };
@@ -61,15 +62,15 @@ export default async function SearchPage({ params, searchParams }: { params: Pro
     ]);
     for (const a of ann?.data ?? []) {
       const text = [a.titleEn, a.titleMr, a.bodyEn, a.bodyMr, a.category].filter(Boolean).join(" ");
-      if (text.toLowerCase().includes(needle)) hits.push({ href: pageHref(slug, "announcements"), title: pickText(pair(a.titleEn, a.titleMr), ui), snippet: snippet(text, query), kind: t("announcements") });
+      if (text.toLowerCase().includes(needle)) hits.push({ href: detailHref(slug, "announcements", a.id), title: pickText(pair(a.titleEn, a.titleMr), ui), snippet: snippet(text, query), kind: t("announcements") });
     }
     for (const s of sch?.data ?? []) {
       const text = [s.nameEn, s.nameMr, s.descriptionEn, s.descriptionMr, s.eligibilityEn, s.eligibilityMr].filter(Boolean).join(" ");
-      if (text.toLowerCase().includes(needle)) hits.push({ href: pageHref(slug, "schemes"), title: pickText(pair(s.nameEn, s.nameMr), ui), snippet: snippet(text, query), kind: t("schemes") });
+      if (text.toLowerCase().includes(needle)) hits.push({ href: detailHref(slug, "schemes", s.id), title: pickText(pair(s.nameEn, s.nameMr), ui), snippet: snippet(text, query), kind: t("schemes") });
     }
     for (const p of prj?.data ?? []) {
       const text = [p.nameEn, p.nameMr, p.descriptionEn, p.descriptionMr, p.outcomeEn, p.outcomeMr].filter(Boolean).join(" ");
-      if (text.toLowerCase().includes(needle)) hits.push({ href: pageHref(slug, "projects"), title: pickText(pair(p.nameEn, p.nameMr), ui), snippet: snippet(text, query), kind: t("projects") });
+      if (text.toLowerCase().includes(needle)) hits.push({ href: detailHref(slug, "projects", p.id), title: pickText(pair(p.nameEn, p.nameMr), ui), snippet: snippet(text, query), kind: t("projects") });
     }
     hits = hits.slice(0, 50);
   }

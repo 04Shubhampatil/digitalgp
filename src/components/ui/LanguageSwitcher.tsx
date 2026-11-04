@@ -45,18 +45,18 @@ export function LanguageSwitcher({ className, variant = "segmented" }: { classNa
             onClick={() => choose(code)}
             className={cn(
               pill
-                ? "rounded-full border px-4 py-0.5 text-[12px] leading-[15px] transition-colors"
+                ? "inline-flex h-[19px] items-center justify-center rounded-full border px-4 text-[12px] leading-none transition-colors"
                 : "px-3 py-1.5 text-xs font-semibold leading-[18px] transition-colors",
               pill
                 ? active
-                  ? "border-primary-alt bg-white font-semibold text-primary-alt"
-                  : "border-white bg-transparent text-white hover:bg-white/10"
+                  ? "border-[0.5px] border-primary-alt bg-white font-semibold text-primary-alt"
+                  : "border-[0.5px] border-white bg-transparent text-white hover:bg-white/10"
                 : active
                   ? "bg-primary-alt text-white"
                   : "bg-surface text-ink/50 hover:text-ink",
             )}
           >
-            {t(LABEL_KEY[code])}
+            {pill ? t(code === "en" ? "english" : "marathiLatin") : t(LABEL_KEY[code])}
           </button>
         );
       })}

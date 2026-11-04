@@ -7,11 +7,11 @@ import type { ContentStatus } from "@/types/api";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { Textarea } from "@/components/ui/Textarea";
-import { announcements, availableActions, projects, schemes, type WorkflowAction } from "@/lib/api/admin";
+import { announcements, availableActions, projects, schemes, successStories, type WorkflowAction } from "@/lib/api/admin";
 import { isApiError } from "@/lib/api/client";
 
-export type WorkflowResourceKind = "announcements" | "schemes" | "projects";
-const RESOURCES = { announcements, schemes, projects } as const;
+export type WorkflowResourceKind = "announcements" | "schemes" | "projects" | "successStories";
+const RESOURCES = { announcements, schemes, projects, successStories } as const;
 const DESTRUCTIVE: WorkflowAction[] = ["reject", "archive", "unpublish"];
 
 /**

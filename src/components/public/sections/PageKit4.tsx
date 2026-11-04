@@ -34,10 +34,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
+import { pageHref } from "@/config/public-nav";
+import type { PublicAnnouncementCategoryDto } from "@/types/api";
 import { pair, pickText, type Bilingual } from "@/i18n/text";
-import { listPublicAnnouncements, publicMediaUrl } from "@/lib/api/public";
-import { resolveHref } from "@/lib/href";
+import { listPublicAnnouncementCategories, listPublicAnnouncements, publicMediaUrl } from "@/lib/api/public";
+import { detailHref, resolveHref } from "@/lib/href";
 import { CalendarCard, type CalendarEvent } from "./CalendarCard";
+import { CategoryFilteredList, UnfilteredList } from "./KitClient";
 import type { SectionProps } from "./index";
 
 type B = Bilingual | undefined;
@@ -59,23 +63,89 @@ const CAT_ICONS: { Icon: LucideIcon; fg: string }[] = [
   { Icon: CalendarDays, fg: "text-[#e8202a]" },
 ];
 
+/** Link that filters the live announcement list of the announcements page by category. */
+export function categoryHref(slug: string, category: string): string {
+  return `${pageHref(slug, "announcements")}?category=${encodeURIComponent(category)}#live-announcements`;
+}
+
+/** Categories of the live announcements with their counts (GET /public/:slug/announcements/categories); [] when unavailable. */
+export async function liveAnnouncementCategories(slug: string): Promise<PublicAnnouncementCategoryDto[]> {
+  return (await listPublicAnnouncementCategories(slug).catch(() => null)) ?? [];
+}
+
+const EVENT_COLOURS = ["#135130", "#f5871f", "#1a62e0", "#6a1b9a", "#e8202a"];
+const IST_DAY = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" });
+const isoDay = (d: Date) => IST_DAY.format(d);
+
 /**
- * `announce-categories`: six category shortcuts overlapping the hero (filled 44px icons). Each tile jumps to the
- * announcement list on this page (`page:announcements#announce-feed` by default) — the list has no category filter yet.
+ * Calendar events from published announcements (GET /public/:slug/announcements?events=true&from&to): about six months
+ * back and six months ahead, each linking to its announcement page.
  */
-export function AnnounceCategoriesSection({ slug, locale, data }: SectionProps) {
+export async function liveCalendarEvents(slug: string, locale: SectionProps["locale"]): Promise<CalendarEvent[]> {
+  const now = Date.now();
+  const res = await listPublicAnnouncements(slug, { events: "true", from: isoDay(new Date(now - 180 * 864e5)), to: isoDay(new Date(now + 200 * 864e5)), limit: 100 }).catch(() => null);
+  const time = new Intl.DateTimeFormat(locale === "mr" ? "mr-IN" : "en-IN", { timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit" });
+  return (res?.data ?? [])
+    .filter((a) => a.eventStartAt)
+    .map((a, i) => ({
+      date: isoDay(new Date(a.eventStartAt!)),
+      title: pickText(pair(a.titleEn, a.titleMr), locale),
+      time: [time.format(new Date(a.eventStartAt!)), a.eventEndAt ? time.format(new Date(a.eventEndAt)) : ""].filter(Boolean).join(" – "),
+      color: EVENT_COLOURS[i % EVENT_COLOURS.length],
+      location: pickText(pair(a.eventLocationEn, a.eventLocationMr), locale) || undefined,
+      href: detailHref(slug, "announcements", a.id),
+    }));
+}
+
+/** Downloads: published announcements that carry a file (GET /public/:slug/announcements?hasAttachment=true). */
+export async function liveDownloads(slug: string, locale: SectionProps["locale"]) {
+  const res = await listPublicAnnouncements(slug, { hasAttachment: "true", limit: 20 }).catch(() => null);
+  return (res?.data ?? [])
+    .filter((a) => a.attachment)
+    .map((a) => {
+      const f = a.attachment!;
+      const ext = f.name.includes(".") ? f.name.split(".").pop()!.toUpperCase() : (f.mimeType.split("/").pop() ?? "").toUpperCase();
+      return {
+        fileId: f.id,
+        name: pickText(pair(a.titleEn, a.titleMr), locale) || f.name,
+        type: ext,
+        size: formatBytes(f.sizeBytes),
+      };
+    });
+}
+
+/** "125 KB", "1.2 MB". */
+export function formatBytes(bytes: number | null | undefined): string {
+  if (!bytes || bytes < 0) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+/**
+ * `announce-categories`: six category shortcuts overlapping the hero (filled 44px icons). With published announcements
+ * the tiles are the live categories with their counts and filter the list below (?category=…#live-announcements);
+ * otherwise the design's labels, which jump to the list.
+ */
+export async function AnnounceCategoriesSection({ slug, locale, data }: SectionProps) {
+  const t = await getTranslations("public.detail");
   const d = data as { viewAll?: B; href?: string; items?: { label?: B; href?: string }[] };
+  const live = await liveAnnouncementCategories(slug);
+  const tiles =
+    live.length > 0
+      ? live.slice(0, 6).map((c) => ({ label: c.category, caption: t("announcementCount", { n: c.count }), href: categoryHref(slug, c.category) }))
+      : (d.items ?? []).map((it) => ({ label: pickText(it.label, locale), caption: pickText(d.viewAll, locale), href: resolveHref(it.href ?? d.href ?? "page:announcements#announce-feed", slug) }));
   return (
     <section className="relative z-10 mx-auto -mt-10 max-w-[1440px] px-4 sm:px-8 lg:-mt-[108px] lg:px-[60px]">
-      <ul className="grid grid-cols-2 gap-y-4 rounded-[20px] bg-white px-4 py-5 shadow-[0_2px_16px_rgba(0,0,0,0.18)] sm:grid-cols-3 lg:grid-cols-6 lg:divide-x lg:divide-black/15 lg:py-[22px]">
-        {(d.items ?? []).map((it, i) => {
+      <ul className={`grid grid-cols-2 gap-y-4 rounded-[20px] bg-white px-4 py-5 shadow-[0_2px_16px_rgba(0,0,0,0.18)] sm:grid-cols-3 lg:divide-x lg:divide-black/15 lg:py-[22px] ${tiles.length >= 6 ? "lg:grid-cols-6" : tiles.length === 5 ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
+        {tiles.map((it, i) => {
           const { Icon, fg } = CAT_ICONS[i % CAT_ICONS.length]!;
           return (
             <li key={i}>
-              <Link href={resolveHref(it.href ?? d.href ?? "page:announcements#announce-feed", slug)} className="group flex flex-col items-center gap-1 py-2 text-center">
+              <Link href={it.href} className="group flex flex-col items-center gap-1 py-2 text-center">
                 <Icon className={`size-11 ${fg}`} fill="currentColor" stroke="#fff" strokeWidth={1.4} aria-hidden />
-                <span className="mt-2 text-[22px] leading-7 font-semibold text-black group-hover:text-[#135130]">{pickText(it.label, locale)}</span>
-                <span className="text-[14px] text-[#333]">{pickText(d.viewAll, locale)}</span>
+                <span className="mt-2 text-[22px] leading-7 font-semibold text-black group-hover:text-[#135130]">{it.label}</span>
+                <span className="text-[14px] text-[#333]">{it.caption}</span>
               </Link>
             </li>
           );
@@ -95,9 +165,13 @@ const ROW_ICONS: { Icon: LucideIcon; bg: string; fg: string }[] = [
 
 const pill = "inline-flex items-center gap-2 rounded-full border border-[#135130] bg-white px-4 py-2 text-[14px] text-[#135130] hover:bg-[#135130]/5";
 
-/** `announce-feed`: latest announcements (published ones when present) beside the interactive calendar. */
+/**
+ * `announce-feed`: latest announcements (published ones when present, each opening its own page, filtered by the
+ * `category` query parameter) beside the interactive calendar (published events, else the design's sample events).
+ */
 export async function AnnounceFeedSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public");
+  const td = await getTranslations("public.detail");
   const d = data as {
     heading?: B;
     calendarTitle?: B;
@@ -107,7 +181,7 @@ export async function AnnounceFeedSection({ slug, locale, data }: SectionProps) 
     items?: { title?: B; body?: B; date?: B }[];
     events?: { date: string; title?: B; time?: string; color?: string }[];
   };
-  const live = await listPublicAnnouncements(slug, { limit: 8 }).catch(() => null);
+  const [live, liveEvents] = await Promise.all([listPublicAnnouncements(slug, { limit: 100 }).catch(() => null), liveCalendarEvents(slug, locale)]);
   const fmt = new Intl.DateTimeFormat(locale === "mr" ? "mr-IN" : "en-IN", { day: "numeric", month: "short", year: "numeric" });
   const rows =
     live && live.data.length > 0
@@ -116,16 +190,50 @@ export async function AnnounceFeedSection({ slug, locale, data }: SectionProps) 
           body: pickText(pair(a.bodyEn, a.bodyMr), locale),
           date: a.publishedAt ? fmt.format(new Date(a.publishedAt)) : "",
           isNew: a.publishedAt ? new Date().getTime() - new Date(a.publishedAt).getTime() < 7 * 24 * 3600 * 1000 : false,
-          href: a.attachmentId ? publicMediaUrl(slug, a.attachmentId) : undefined,
+          category: a.category,
+          href: detailHref(slug, "announcements", a.id) as string | undefined,
         }))
-      : (d.items ?? []).map((a, i) => ({ title: pickText(a.title, locale), body: pickText(a.body, locale), date: pickText(a.date, locale), isNew: i < 2, href: undefined as string | undefined }));
-  const events: CalendarEvent[] = (d.events ?? []).map((e) => ({ date: e.date, title: pickText(e.title, locale), time: e.time, color: e.color }));
+      : (d.items ?? []).map((a, i) => ({ title: pickText(a.title, locale), body: pickText(a.body, locale), date: pickText(a.date, locale), isNew: i < 2, category: "", href: undefined as string | undefined }));
+  const events: CalendarEvent[] = liveEvents.length > 0 ? liveEvents : (d.events ?? []).map((e) => ({ date: e.date, title: pickText(e.title, locale), time: e.time, color: e.color }));
   const weekdays = locale === "mr" ? ["र", "सो", "मं", "बु", "गु", "शु", "श"] : ["S", "M", "T", "W", "T", "F", "S"];
   const monthNames = Array.from({ length: 12 }, (_, m) => new Intl.DateTimeFormat(locale === "mr" ? "mr-IN" : "en-IN", { month: "long" }).format(new Date(2026, m, 1)));
+  const listClass = "mt-4 rounded-[8px] border border-black/15";
+  const nodes = rows.map((r, i) => {
+    const { Icon, bg, fg } = ROW_ICONS[i % ROW_ICONS.length]!;
+    const body = (
+      <>
+        <span aria-hidden className={`flex size-11 shrink-0 items-center justify-center self-start rounded-[8px] ${bg} ${fg}`}>
+          <Icon className="size-6" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="flex flex-wrap items-start gap-x-4 gap-y-1">
+            <span className="min-w-0 flex-1 text-[18px] leading-7 font-semibold text-black">{r.title}</span>
+            <span className="flex w-[148px] shrink-0 items-center justify-between gap-2 pt-1 text-[14px] text-[#333]">
+              {r.date}
+              {r.isNew && <span className="rounded-[2px] bg-[#ff0000] px-2 py-0.5 text-[13px] font-medium text-white">{pickText(d.newLabel, locale) || t("newBadge")}</span>}
+            </span>
+          </span>
+          {r.body && <span className="mt-1 line-clamp-2 block text-[14px] leading-6 text-[#333]">{r.body}</span>}
+        </span>
+      </>
+    );
+    return (
+      <li key={i}>
+        {r.href ? (
+          <Link href={r.href} className="flex items-center gap-5 px-4 py-4 hover:bg-black/[0.02]">
+            {body}
+          </Link>
+        ) : (
+          <div className="flex items-center gap-5 px-4 py-4">{body}</div>
+        )}
+      </li>
+    );
+  });
   return (
     <section className="bg-cream py-8">
       <div className="mx-auto grid max-w-[1440px] gap-5 px-4 sm:px-8 lg:grid-cols-[minmax(0,1fr)_330px] lg:px-[62px]">
-        <div className={`${card} p-5`}>
+        {/* Category tiles link to #live-announcements; this list is the page's live list while no CMS section is published. */}
+        <div id="live-announcements" className={`${card} scroll-mt-[180px] p-5`}>
           <div className="flex items-center justify-between">
             <h2 className="flex items-center gap-4 text-[22px] font-semibold text-black">
               <Megaphone className="size-8 -scale-x-100 text-[#135130]" fill="currentColor" aria-hidden /> {pickText(d.heading, locale)}
@@ -136,40 +244,31 @@ export async function AnnounceFeedSection({ slug, locale, data }: SectionProps) 
               </Link>
             )}
           </div>
-          <ul className="mt-4 rounded-[8px] border border-black/15">
-            {rows.length === 0 && <li className="p-6 text-center text-sm text-[#414141]">{t("noAnnouncements")}</li>}
-            {rows.map((r, i) => {
-              const { Icon, bg, fg } = ROW_ICONS[i % ROW_ICONS.length]!;
-              const body = (
-                <>
-                  <span aria-hidden className={`flex size-11 shrink-0 items-center justify-center self-start rounded-[8px] ${bg} ${fg}`}>
-                    <Icon className="size-6" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex flex-wrap items-start gap-x-4 gap-y-1">
-                      <span className="min-w-0 flex-1 text-[18px] leading-7 font-semibold text-black">{r.title}</span>
-                      <span className="flex w-[148px] shrink-0 items-center justify-between gap-2 pt-1 text-[14px] text-[#333]">
-                        {r.date}
-                        {r.isNew && <span className="rounded-[2px] bg-[#ff0000] px-2 py-0.5 text-[13px] font-medium text-white">{pickText(d.newLabel, locale) || t("newBadge")}</span>}
-                      </span>
-                    </span>
-                    {r.body && <span className="mt-1 block text-[14px] leading-6 text-[#333]">{r.body}</span>}
-                  </span>
-                </>
-              );
-              return (
-                <li key={i}>
-                  {r.href ? (
-                    <a href={r.href} className="flex items-center gap-5 px-4 py-4 hover:bg-black/[0.02]">
-                      {body}
-                    </a>
-                  ) : (
-                    <div className="flex items-center gap-5 px-4 py-4">{body}</div>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+          {rows.length === 0 ? (
+            <ul className={listClass}>
+              <li className="p-6 text-center text-sm text-[#414141]">{t("noAnnouncements")}</li>
+            </ul>
+          ) : (
+            <Suspense
+              fallback={
+                <UnfilteredList limit={8} listClassName={listClass}>
+                  {nodes}
+                </UnfilteredList>
+              }
+            >
+              <CategoryFilteredList
+                categories={rows.map((r) => r.category)}
+                limit={8}
+                listClassName={listClass}
+                emptyClassName="p-6 text-center text-sm text-[#414141]"
+                emptyLabel={td("noInCategory")}
+                filteredByLabel={td.raw("filteredBy") as string}
+                showAllLabel={td("showAll")}
+              >
+                {nodes}
+              </CategoryFilteredList>
+            </Suspense>
+          )}
           {d.viewAll?.href && (
             <div className="mt-4 flex justify-center">
               <Link href={resolveHref(d.viewAll.href, slug)} className={pill}>
@@ -211,6 +310,10 @@ export async function DeadlinesDownloadsSection({ slug, locale, data }: SectionP
   };
   const t = await getTranslations("public");
   const filesViewAll = d.downloadsViewAll ?? d.viewAll;
+  // Published announcements with a file replace the design's sample files (each downloads the file, with its size).
+  const live = await liveDownloads(slug, locale);
+  const files: { name?: B; type?: string; size?: string; fileId?: string; href?: string }[] =
+    live.length > 0 ? live.slice(0, 6).map((f) => ({ name: { en: f.name, mr: f.name }, type: f.type, size: f.size, fileId: f.fileId })) : (d.files ?? []);
   return (
     <section className="bg-cream py-4">
       <div className="mx-auto grid max-w-[1440px] gap-5 px-4 sm:px-8 lg:grid-cols-[minmax(0,835px)_minmax(0,1fr)] lg:px-[62px]">
@@ -253,7 +356,7 @@ export async function DeadlinesDownloadsSection({ slug, locale, data }: SectionP
             )}
           </div>
           <ul className="mt-5 space-y-1.5">
-            {(d.files ?? []).map((f, i) => {
+            {files.map((f, i) => {
               const file = f.fileId ? publicMediaUrl(slug, f.fileId) : undefined;
               const href = file ?? (f.href ? resolveHref(f.href, slug) : undefined);
               const name = pickText(f.name, locale);

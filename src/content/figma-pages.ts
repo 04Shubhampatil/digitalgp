@@ -62,8 +62,11 @@ export const FIGMA_PAGE_SECTIONS: Partial<Record<PageKey, FallbackSection[]>> = 
     {
       sectionKey: "before-after",
       sortOrder: 20,
+      skipIfPresent: ["before-after-gallery"],
       data: {
         eyebrow: t("Before & After Gallery"),
+        // Published projects with a before and an after picture replace the sample tiles.
+        source: "projects",
         // Figma uses the same before/after photo pair on all four tiles (nodes 375:14002–14068).
         items: ["Road Development", "Lake Restoration", "Street Lighting", "School Renovation"].map((label) => ({
           label: t(label),

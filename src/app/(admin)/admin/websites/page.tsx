@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import type { AdminUnitDto, TenantDto, TenantStatus } from "@/types/api";
+import { Download } from "lucide-react";
+import type { AdminUnitDto, TenantListItemDto, TenantStatus } from "@/types/api";
 import { CreateWebsiteDialog } from "@/components/admin/websites/CreateWebsiteDialog";
 import { Card, MetricCard, PageHeader } from "@/components/ui/Card";
 import { StatusPill, type PillStatus } from "@/components/ui/StatusPill";
@@ -40,7 +41,7 @@ export default async function WebsitesPage({ searchParams }: { searchParams: Sea
     tenants.list({ limit: 100 }, { cookie }),
   ]);
   const byId = new Map<string, AdminUnitDto>([...districts.data, ...talukas.data].map((u) => [u.id, u]));
-  const siteById = new Map<string, TenantDto>(sites.data.map((s) => [s.id, s]));
+  const siteById = new Map<string, TenantListItemDto>(sites.data.map((s) => [s.id, s]));
 
   const rows = gps.data.map((unit) => {
     const ids = unit.path.split("/").filter(Boolean);
@@ -73,6 +74,12 @@ export default async function WebsitesPage({ searchParams }: { searchParams: Sea
   // Block and taluka admins see only their own websites, with a shorter filter card and no totals.
   const role = primaryRole(user);
   const assignedView = role === "BLOCK_ADMIN" || role === "TALUKA_ADMIN";
+  // CSV of the created websites with the same filters (GPs without a website have no row in the export).
+  const exportHref = tenants.exportUrl({
+    status: sp.status && sp.status !== "NOT_CREATED" ? sp.status : undefined,
+    unitId: sp.taluka || sp.district || undefined,
+    q: sp.q?.trim() || undefined,
+  });
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -133,9 +140,16 @@ export default async function WebsitesPage({ searchParams }: { searchParams: Sea
       </form>
 
       <Card>
-        <div className="px-5 pt-5 pb-3">
-          <h2 className="text-[19px] font-bold text-ink">{assignedView ? t("dashboardUi.gpOverview") : t("websites.listTitle")}</h2>
-          <p className="mt-0.5 text-xs text-muted">{t("websites.showing", { shown: view.length, total: shown.length.toLocaleString() })}</p>
+        <div className="flex flex-wrap items-start justify-between gap-3 px-5 pt-5 pb-3">
+          <div>
+            <h2 className="text-[19px] font-bold text-ink">{assignedView ? t("dashboardUi.gpOverview") : t("websites.listTitle")}</h2>
+            <p className="mt-0.5 text-xs text-muted">{t("websites.showing", { shown: view.length, total: shown.length.toLocaleString() })}</p>
+          </div>
+          {sp.status !== "NOT_CREATED" && (
+            <a href={exportHref} download className="inline-flex h-9 items-center gap-1.5 rounded-button border border-line px-4 text-xs font-semibold text-primary hover:bg-surface-soft">
+              <Download className="size-3.5" aria-hidden /> {t("websites.export")}
+            </a>
+          )}
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-sm">
@@ -145,6 +159,7 @@ export default async function WebsitesPage({ searchParams }: { searchParams: Sea
                 <th className="px-3 py-2.5">{t("websites.gp")}</th>
                 <th className="px-3 py-2.5">{t("websites.districtTaluka")}</th>
                 <th className="px-3 py-2.5">{t("websites.website")}</th>
+                <th className="px-3 py-2.5">{t("websites.blockAdmin")}</th>
                 <th className="px-3 py-2.5">{t("websites.lastUpdated")}</th>
                 <th className="px-5 py-2.5 text-right">{tc("actions")}</th>
               </tr>
@@ -152,7 +167,7 @@ export default async function WebsitesPage({ searchParams }: { searchParams: Sea
             <tbody className="divide-y divide-line">
               {view.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-3 py-10 text-center text-muted">
+                  <td colSpan={7} className="px-3 py-10 text-center text-muted">
                     {tc("noResults")}
                   </td>
                 </tr>
@@ -169,6 +184,15 @@ export default async function WebsitesPage({ searchParams }: { searchParams: Sea
                   <td className="px-3 py-3.5 text-muted">{[r.district, r.taluka].filter(Boolean).map((u) => name(u!)).join(" / ") || "—"}</td>
                   <td className="px-3 py-3.5">
                     <StatusPill status={r.status as PillStatus} label={t(`tenantStatus.${r.status}`)} />
+                  </td>
+                  <td className="px-3 py-3.5">
+                    {r.site && r.site.blockAdmins.length > 0 ? (
+                      <span className="font-medium text-ink" title={r.site.blockAdmins.map((a) => a.email).join(", ")}>
+                        {r.site.blockAdmins.map((a) => a.name).join(", ")}
+                      </span>
+                    ) : (
+                      <span className="text-muted">{t("websites.unassigned")}</span>
+                    )}
                   </td>
                   <td className="px-3 py-3.5 text-muted">{r.site ? formatDate(r.site.updatedAt, ui) : "—"}</td>
                   <td className="px-5 py-3.5 text-right">

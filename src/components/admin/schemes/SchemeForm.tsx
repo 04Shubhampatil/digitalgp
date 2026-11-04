@@ -8,6 +8,7 @@ import { useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import type { AdminUnitDto, AssignmentDto, SchemeDto } from "@/types/api";
+import { MediaField } from "@/components/admin/editor/MediaField";
 import { TenantSelect } from "@/components/admin/TenantSelect";
 import { UnitPicker } from "@/components/admin/UnitPicker";
 import { Button } from "@/components/ui/Button";
@@ -37,6 +38,11 @@ const schema = z
     externalUrl: z.string().trim().url().max(2000).or(z.literal("")),
     beneficiaryCount: num.regex(/^\d*$/, "Whole number"),
     amountDisbursed: num.regex(/^(\d+(\.\d{1,2})?)?$/, "Amount with up to 2 decimals"),
+    disbursedFinancialYear: num
+      .regex(/^(\d{4}-\d{2})?$/, "Use the form 2026-27")
+      .refine((v) => !v || (Number(v.slice(0, 4)) + 1) % 100 === Number(v.slice(5)), "The second year must follow the first"),
+    category: z.string().trim().max(60),
+    mapImageId: z.string(),
   })
   .refine((v) => !!(v.nameEn || v.nameMr), { message: "A name in English or Marathi is required", path: ["nameEn"] })
   .refine((v) => (v.kind === "tenant" ? !!v.tenantId : !!v.ownerUnitId), { message: "Required", path: ["tenantId"] });
@@ -75,6 +81,9 @@ export function SchemeForm({ assignments, capabilities, existing }: { assignment
           externalUrl: existing.externalUrl ?? "",
           beneficiaryCount: existing.beneficiaryCount?.toString() ?? "",
           amountDisbursed: existing.amountDisbursed ?? "",
+          disbursedFinancialYear: existing.disbursedFinancialYear ?? "",
+          category: existing.category ?? "",
+          mapImageId: existing.mapImageId ?? "",
         }
       : {
           kind: canEditGp ? "tenant" : "shared",
@@ -92,10 +101,16 @@ export function SchemeForm({ assignments, capabilities, existing }: { assignment
           externalUrl: "",
           beneficiaryCount: "",
           amountDisbursed: "",
+          disbursedFinancialYear: "",
+          category: "",
+          mapImageId: "",
         },
   });
   const { register, handleSubmit, control, setValue, setError, formState } = form;
   const kind = useWatch({ control, name: "kind" });
+  const watchedTenant = useWatch({ control, name: "tenantId" });
+  // The media picker uploads to one website; shared schemes have no website of their own.
+  const mediaTenant = kind === "tenant" ? watchedTenant : "";
 
   async function onSubmit(v: FormValues) {
     setFormError(null);
@@ -112,6 +127,9 @@ export function SchemeForm({ assignments, capabilities, existing }: { assignment
       externalUrl: nz(v.externalUrl),
       beneficiaryCount: nn(v.beneficiaryCount),
       amountDisbursed: nn(v.amountDisbursed),
+      disbursedFinancialYear: nz(v.disbursedFinancialYear),
+      category: nz(v.category),
+      mapImageId: nz(v.mapImageId),
     };
     try {
       const saved = existing
@@ -185,6 +203,15 @@ export function SchemeForm({ assignments, capabilities, existing }: { assignment
           <Textarea label={t("schemesUi.processMr")} lang="mr" rows={3} {...register("processMr")} />
           <Input label={`${tp("beneficiaries")} (${tc("optional")})`} inputMode="numeric" hint={t("schemesUi.aggregateHint")} error={formState.errors.beneficiaryCount?.message} {...register("beneficiaryCount")} />
           <Input label={`${tp("amountDisbursed")} (₹, ${tc("optional")})`} inputMode="decimal" error={formState.errors.amountDisbursed?.message} {...register("amountDisbursed")} />
+          <Input label={`${t("schemesUi.category")} (${tc("optional")})`} hint={t("schemesUi.categoryHint")} maxLength={60} error={formState.errors.category?.message} {...register("category")} />
+          <Input label={`${t("schemesUi.financialYear")} (${tc("optional")})`} placeholder="2026-27" hint={t("schemesUi.financialYearHint")} error={formState.errors.disbursedFinancialYear?.message} {...register("disbursedFinancialYear")} />
+          <div className="sm:col-span-2">
+            {mediaTenant ? (
+              <Controller control={control} name="mapImageId" render={({ field }) => <MediaField label={`${t("schemesUi.mapImage")} (${tc("optional")})`} value={field.value} onChange={field.onChange} tenantId={mediaTenant} error={formState.errors.mapImageId?.message} />} />
+            ) : (
+              <p className="text-xs text-muted">{kind === "tenant" ? t("projectsUi.pickWebsiteFirst") : t("schemesUi.mapImageGpOnly")}</p>
+            )}
+          </div>
         </div>
       </section>
 

@@ -49,6 +49,8 @@ function sample(f: FieldSpec): unknown {
       return f.name === "videoUrl" ? "https://www.youtube.com/watch?v=abc123" : "https://example.com/page";
     default:
       if (f.name === "pinCode") return "411001";
+      if (f.name === "duration") return "02:34";
+      if (f.name === "storyId") return "clstory0000000001";
       if (f.name === "number") return "112";
       if (f.name === "mapEmbedUrl") return "https://www.google.com/maps/embed?pb=abc";
       if (f.name === "videoUrl") return "https://www.youtube.com/watch?v=abc123";

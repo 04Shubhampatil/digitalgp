@@ -7,7 +7,8 @@ import { ContentWorkflowBar } from "@/components/admin/ContentWorkflowBar";
 import { Card, CardHeader, PageHeader } from "@/components/ui/Card";
 import { StatusPill } from "@/components/ui/StatusPill";
 import type { UiLocale } from "@/i18n/config";
-import { EDITABLE_STATUSES, schemes } from "@/lib/api/admin";
+import { SchemeCoverageEditor } from "@/components/admin/schemes/SchemeCoverageEditor";
+import { EDITABLE_STATUSES, adminMediaUrl, schemes } from "@/lib/api/admin";
 import { isApiError } from "@/lib/api/client";
 import { cookieHeader } from "@/lib/api/server";
 import { formatDateTime } from "@/lib/format";
@@ -91,7 +92,21 @@ export default async function SchemeDetailPage({ params }: { params: Promise<{ i
             <dt className="text-muted">{tp("beneficiaries")}</dt>
             <dd className="text-ink">{s.beneficiaryCount?.toLocaleString("en-IN") ?? "—"}</dd>
             <dt className="text-muted">{tp("amountDisbursed")}</dt>
-            <dd className="text-ink">{s.amountDisbursed ? `₹ ${Number(s.amountDisbursed).toLocaleString("en-IN")}` : "—"}</dd>
+            <dd className="text-ink">
+              {s.amountDisbursed ? `₹ ${Number(s.amountDisbursed).toLocaleString("en-IN")}` : "—"}
+              {s.disbursedFinancialYear ? ` (${t("schemesUi.fyShort")} ${s.disbursedFinancialYear})` : ""}
+            </dd>
+            <dt className="text-muted">{t("schemesUi.category")}</dt>
+            <dd className="text-ink">{s.category ?? "—"}</dd>
+            {s.mapImageId && (
+              <>
+                <dt className="text-muted">{t("schemesUi.mapImage")}</dt>
+                <dd>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- admin-only media served by the backend */}
+                  <img src={adminMediaUrl(s.mapImageId)} alt="" className="max-h-48 rounded-input border border-line object-contain" />
+                </dd>
+              </>
+            )}
             <dt className="text-muted">{t("schemesUi.externalUrl")}</dt>
             <dd>
               {s.externalUrl ? (
@@ -111,6 +126,10 @@ export default async function SchemeDetailPage({ params }: { params: Promise<{ i
             <dt className="text-muted">{tc("updated")}</dt>
             <dd className="text-ink">{formatDateTime(s.updatedAt, ui)}</dd>
           </dl>
+        </Card>
+        <Card>
+          <CardHeader title={t("schemesUi.coverageTitle")} description={t("schemesUi.coverageDesc")} />
+          <SchemeCoverageEditor schemeId={s.id} tenantId={s.tenantId} canEdit={hasCapability(user, "content:edit")} />
         </Card>
       </div>
     </div>

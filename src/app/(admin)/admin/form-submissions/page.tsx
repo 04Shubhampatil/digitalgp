@@ -13,8 +13,19 @@ import { getCurrentUser, hasCapability } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Contact form submissions" };
 type Search = Promise<{ tenantId?: string; kind?: string; cursor?: string }>;
+const KINDS = ["FEEDBACK", "VOLUNTEER", "TREE_ADOPTION"] as const;
+type Kind = (typeof KINDS)[number];
+const KIND_LABEL: Record<Kind, string> = { FEEDBACK: "formSubmissions.feedback", VOLUNTEER: "formSubmissions.volunteer", TREE_ADOPTION: "formSubmissions.treeAdoption" };
 
-/** Feedback and volunteer applications from the public Contact page (GET /form-submissions). */
+/** Tree adoption `details` → readable pairs (treeCount, species, preferredLocation; anything else as-is). */
+function detailPairs(details: Record<string, unknown> | null): [string, string][] {
+  if (!details) return [];
+  return Object.entries(details)
+    .filter(([, v]) => v !== null && v !== undefined && v !== "")
+    .map(([k, v]) => [k, typeof v === "object" ? JSON.stringify(v) : String(v)]);
+}
+
+/** Feedback, volunteer applications and tree adoption requests from the public site (GET /form-submissions). */
 export default async function FormSubmissionsPage({ searchParams }: { searchParams: Search }) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
@@ -23,7 +34,8 @@ export default async function FormSubmissionsPage({ searchParams }: { searchPara
   const ui = locale as UiLocale;
   const sites = (await tenants.list({ limit: 100 }, { cookie })).data;
   const tenant = sites.find((s) => s.id === tenantParam) ?? sites[0];
-  const kind = kindParam === "VOLUNTEER" ? "VOLUNTEER" : "FEEDBACK";
+  const kind: Kind = (KINDS as readonly string[]).includes(kindParam ?? "") ? (kindParam as Kind) : "FEEDBACK";
+  const detailLabel = (k: string) => ((["treeCount", "species", "preferredLocation"] as const).includes(k as "treeCount") ? t(`formSubmissions.detail.${k as "treeCount"}`) : k);
 
   const [summary, page] = tenant
     ? await Promise.all([formSubmissions.summary(tenant.id, { cookie }), formSubmissions.list({ tenantId: tenant.id, kind, cursor, limit: 25 }, { cookie })])
@@ -41,8 +53,62 @@ export default async function FormSubmissionsPage({ searchParams }: { searchPara
         </div>
       ),
     },
-    ...(kind === "VOLUNTEER" ? [{ key: "category", header: t("formSubmissions.category"), cell: (s: FormSubmissionDto) => s.category ?? "—" }] : []),
-    { key: "message", header: t("formSubmissions.message"), cell: (s) => <p className="max-w-md whitespace-pre-line text-sm text-ink">{s.message ?? "—"}</p> },
+    ...(kind === "FEEDBACK"
+      ? [
+          { key: "subject", header: t("formSubmissions.subject"), cell: (s: FormSubmissionDto) => <span className="text-ink">{s.subject ?? "—"}</span> },
+          {
+            key: "rating",
+            header: t("formSubmissions.rating"),
+            cell: (s: FormSubmissionDto) =>
+              s.rating ? (
+                <span className="whitespace-nowrap text-warning" aria-label={`${s.rating} / 5`} title={`${s.rating} / 5`}>
+                  {"★".repeat(s.rating)}
+                  <span className="text-track">{"★".repeat(5 - s.rating)}</span>
+                </span>
+              ) : (
+                "—"
+              ),
+          },
+        ]
+      : []),
+    ...(kind === "VOLUNTEER"
+      ? [
+          { key: "category", header: t("formSubmissions.category"), cell: (s: FormSubmissionDto) => s.category ?? "—" },
+          { key: "area", header: t("formSubmissions.areaOfInterest"), cell: (s: FormSubmissionDto) => s.areaOfInterest ?? "—" },
+        ]
+      : []),
+    ...(kind === "TREE_ADOPTION"
+      ? [
+          {
+            key: "trees",
+            header: t("formSubmissions.trees"),
+            cell: (s: FormSubmissionDto) => (
+              <dl className="grid grid-cols-[auto_1fr] gap-x-2 text-xs">
+                {detailPairs(s.details).map(([k, v]) => (
+                  <div key={k} className="contents">
+                    <dt className="text-muted">{detailLabel(k)}</dt>
+                    <dd className="text-ink">{v}</dd>
+                  </div>
+                ))}
+              </dl>
+            ),
+          },
+        ]
+      : []),
+    ...(kind !== "FEEDBACK" ? [{ key: "address", header: t("formSubmissions.address"), cell: (s: FormSubmissionDto) => <p className="max-w-48 text-xs whitespace-pre-line text-muted">{s.address ?? "—"}</p> }] : []),
+    {
+      key: "message",
+      header: t("formSubmissions.message"),
+      cell: (s) =>
+        s.message && s.message.length > 140 ? (
+          <details className="max-w-md text-sm">
+            <summary className="cursor-pointer text-ink">{s.message.slice(0, 140)}…</summary>
+            <p className="mt-1 whitespace-pre-line text-ink">{s.message}</p>
+          </details>
+        ) : (
+          <p className="max-w-md whitespace-pre-line text-sm text-ink">{s.message ?? "—"}</p>
+        ),
+    },
     { key: "created", header: t("formSubmissions.received"), cell: (s) => formatDateTime(s.createdAt, ui), className: "text-muted" },
   ];
 
@@ -70,17 +136,18 @@ export default async function FormSubmissionsPage({ searchParams }: { searchPara
       {tenant && summary && page && (
         <>
           <div className="mb-5 flex flex-wrap gap-3">
-            {(["FEEDBACK", "VOLUNTEER"] as const).map((k) => {
-              const n = k === "FEEDBACK" ? summary.feedback : summary.volunteer;
+            {KINDS.map((k) => {
+              const n = k === "FEEDBACK" ? summary.feedback : k === "VOLUNTEER" ? summary.volunteer : summary.treeAdoption;
+              if (!n) return null;
               return (
                 <a key={k} href={`/admin/form-submissions?tenantId=${tenant.id}&kind=${k}`} className={tabClass(kind === k)}>
-                  {t(k === "FEEDBACK" ? "formSubmissions.feedback" : "formSubmissions.volunteer")} · {n.total} {t("formSubmissions.total")} ({n.last30Days} {t("formSubmissions.last30")})
+                  {t(KIND_LABEL[k])} · {n.total} {t("formSubmissions.total")} ({n.last30Days} {t("formSubmissions.last30")})
                 </a>
               );
             })}
           </div>
           <Card>
-            <CardHeader title={t(kind === "FEEDBACK" ? "formSubmissions.feedback" : "formSubmissions.volunteer")} />
+            <CardHeader title={t(KIND_LABEL[kind])} />
             <DataTable columns={columns} rows={page.data} rowKey={(s) => s.id} emptyMessage={t("formSubmissions.empty")} />
             <CursorPager basePath="/admin/form-submissions" params={{ tenantId: tenant.id, kind, cursor }} nextCursor={page.page.nextCursor} shown={page.data.length} labels={{ showing: tc.raw("showing") as string, first: tc("firstPage"), next: tc("nextPage") }} />
           </Card>

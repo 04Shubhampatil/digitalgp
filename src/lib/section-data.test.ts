@@ -30,7 +30,8 @@ describe("section-data", () => {
   it("keeps item arrays and reports required fields per row", () => {
     const form = toFormValues(stats, { items: [{ label: { en: "Population" }, value: "2,857" }, { label: {}, value: "" }] });
     expect(requiredErrors(stats, form)).toEqual({ "items.1.label": "required", "items.1.value": "required" });
-    expect(toApiData(stats, form).items).toEqual([{ label: { en: "Population" }, value: "2,857" }, {}]);
+    // Quick-stats rows carry `visible` (default true) so a tile can be hidden without deleting it.
+    expect(toApiData(stats, form).items).toEqual([{ label: { en: "Population" }, value: "2,857", visible: true }, { visible: true }]);
   });
 
   it("round-trips nested ward rows and flags missing nested fields", () => {

@@ -63,7 +63,8 @@ export async function HeroSection({ slug, locale, data, tenantName }: SectionPro
             </div>
           )}
         </div>
-        <div className="relative h-[300px] sm:h-[420px] lg:h-[539px]">
+        {/* Figma: the 933×539 photo runs to the right edge of the page (no right padding). */}
+        <div className="relative h-[300px] sm:-mr-8 sm:h-[420px] lg:-mr-[62px] lg:h-[539px]">
           {/* eslint-disable-next-line @next/next/no-img-element -- static design asset / backend-served media */}
           <img src={image} alt="" className="absolute inset-0 size-full object-cover object-right" />
         </div>

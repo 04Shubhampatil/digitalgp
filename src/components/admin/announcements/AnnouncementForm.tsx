@@ -41,6 +41,14 @@ const schema = z
     publishAt: z.string(),
     expiresAt: z.string(),
     attachmentId: z.string(),
+    eventStartAt: z.string(),
+    eventEndAt: z.string(),
+    eventLocationEn: z.string().trim().max(200),
+    eventLocationMr: z.string().trim().max(200),
+  })
+  .refine((v) => !v.eventEndAt || (!!v.eventStartAt && new Date(v.eventEndAt) >= new Date(v.eventStartAt)), {
+    message: "The event must end after it starts (and needs a start)",
+    path: ["eventEndAt"],
   })
   .refine((v) => !!(v.titleEn || v.titleMr), { message: "A title in English or Marathi is required", path: ["titleEn"] })
   .refine((v) => (v.kind === "tenant" ? !!v.tenantId : !!v.ownerUnitId), { message: "Required", path: ["tenantId"] });
@@ -122,6 +130,10 @@ export function AnnouncementForm({ capabilities, existing, targets }: Announceme
           publishAt: toDateTimeLocal(existing.publishAt),
           expiresAt: toDateTimeLocal(existing.expiresAt),
           attachmentId: existing.attachmentId ?? "",
+          eventStartAt: toDateTimeLocal(existing.eventStartAt),
+          eventEndAt: toDateTimeLocal(existing.eventEndAt),
+          eventLocationEn: existing.eventLocationEn ?? "",
+          eventLocationMr: existing.eventLocationMr ?? "",
         }
       : {
           kind: shared ? "shared" : "tenant",
@@ -137,6 +149,10 @@ export function AnnouncementForm({ capabilities, existing, targets }: Announceme
           publishAt: "",
           expiresAt: "",
           attachmentId: "",
+          eventStartAt: "",
+          eventEndAt: "",
+          eventLocationEn: "",
+          eventLocationMr: "",
         },
   });
   const { register, handleSubmit, control, setError, reset, formState } = form;
@@ -168,6 +184,10 @@ export function AnnouncementForm({ capabilities, existing, targets }: Announceme
       publishAt: fromDateTimeLocal(values.publishAt),
       expiresAt: fromDateTimeLocal(values.expiresAt),
       attachmentId: values.attachmentId || null,
+      eventStartAt: fromDateTimeLocal(values.eventStartAt),
+      eventEndAt: fromDateTimeLocal(values.eventEndAt),
+      eventLocationEn: values.eventLocationEn || null,
+      eventLocationMr: values.eventLocationMr || null,
     };
     try {
       let saved: AnnouncementDto;
@@ -358,6 +378,12 @@ export function AnnouncementForm({ capabilities, existing, targets }: Announceme
         )}
         <div className="grid gap-4 md:grid-cols-3">
           <Input label={`${t("announcements.expiresAt")} (${tc("optional")})`} type="datetime-local" {...register("expiresAt")} />
+          <Input label={`${t("announcements.eventStart")} (${tc("optional")})`} type="datetime-local" hint={t("announcements.eventHint")} error={formState.errors.eventStartAt?.message} {...register("eventStartAt")} />
+          <Input label={`${t("announcements.eventEnd")} (${tc("optional")})`} type="datetime-local" error={formState.errors.eventEndAt?.message} {...register("eventEndAt")} />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          {showEn && <Input label={`${t("announcements.eventLocation")} (${tc("english")}, ${tc("optional")})`} error={formState.errors.eventLocationEn?.message} {...register("eventLocationEn")} />}
+          {showMr && <Input label={`${t("announcements.eventLocation")} (${tc("marathi")}, ${tc("optional")})`} lang="mr" error={formState.errors.eventLocationMr?.message} {...register("eventLocationMr")} />}
         </div>
 
         {shared && (

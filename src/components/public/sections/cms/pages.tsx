@@ -1,8 +1,13 @@
 import { Download, ExternalLink, Play } from "lucide-react";
+import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
+import { detailHref } from "@/lib/href";
 import { pair, pickText } from "@/i18n/text";
 import { listPublicAnnouncements, publicMediaUrl } from "@/lib/api/public";
 import { CalendarCard, type CalendarEvent } from "../CalendarCard";
+import { CategoryFilteredList, UnfilteredList } from "../KitClient";
+import { categoryHref, liveAnnouncementCategories, liveCalendarEvents, liveDownloads } from "../PageKit4";
 import type { SectionProps } from "../index";
 import { PhotoGalleryClient, ThenNowClient } from "./client";
 import { Band, Icon, cardClass, externalProps, list, mediaUrl, plain, tx, videoEmbedUrl, type B } from "./kit";
@@ -13,21 +18,33 @@ const dateFmt = (locale: SectionProps["locale"], d: string) => new Date(`${d}T00
 
 // ------------------------------------------------------------------------------------ Announcements
 
-/** `announcement-categories`: category tiles under the banner. */
-export function AnnouncementCategoriesSection({ locale, data }: SectionProps) {
+/**
+ * `announcement-categories`: category tiles under the banner. Each tile shows how many live announcements it has
+ * (GET /public/:slug/announcements/categories, matched on the English or Marathi label) and filters the list.
+ */
+export async function AnnouncementCategoriesSection({ slug, locale, data }: SectionProps) {
+  const td = await getTranslations("public.detail");
   const items = list<{ label?: B; icon?: string }>((data as { items?: unknown }).items);
   if (items.length === 0) return null;
+  const counts = await liveAnnouncementCategories(slug);
+  const match = (c: { label?: B }) => counts.find((x) => [tx(c.label, "en"), tx(c.label, "mr")].some((l) => l && l.toLowerCase() === x.category.toLowerCase()));
   return (
     <Band tone="cream">
       <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-        {items.map((c, i) => (
-          <li key={i} className={`${cardClass} flex flex-col items-center text-center !p-4`}>
-            <span className="flex size-11 items-center justify-center rounded-full bg-[#135130]/10 text-[#135130]">
-              <Icon name={c.icon ?? "megaphone"} />
-            </span>
-            <span className="mt-2 text-[13px] font-semibold text-black">{tx(c.label, locale)}</span>
-          </li>
-        ))}
+        {items.map((c, i) => {
+          const hit = match(c);
+          return (
+            <li key={i}>
+              <Link href={categoryHref(slug, hit?.category ?? tx(c.label, "en"))} className={`${cardClass} flex h-full flex-col items-center text-center !p-4 hover:border-[#135130]/40`}>
+                <span className="flex size-11 items-center justify-center rounded-full bg-[#135130]/10 text-[#135130]">
+                  <Icon name={c.icon ?? "megaphone"} />
+                </span>
+                <span className="mt-2 text-[13px] font-semibold text-black">{tx(c.label, locale)}</span>
+                <span className="text-[12px] text-[#414141]">{td("announcementCount", { n: hit?.count ?? 0 })}</span>
+              </Link>
+            </li>
+          );
+        })}
       </ul>
     </Band>
   );
@@ -37,20 +54,19 @@ export function AnnouncementCategoriesSection({ locale, data }: SectionProps) {
 export async function LiveAnnouncementsSection({ slug, locale }: SectionProps) {
   const t = await getTranslations("public");
   const tc = await getTranslations("public.cms");
-  const live = await listPublicAnnouncements(slug, { limit: 8 }).catch(() => null);
+  const td = await getTranslations("public.detail");
+  // Up to 100 rows so the `?category=` filter (category tiles) works on the whole recent list; 8 are shown unfiltered.
+  const live = await listPublicAnnouncements(slug, { limit: 100 }).catch(() => null);
   const rows = live?.data ?? [];
   if (rows.length === 0) return null;
   const fmt = new Intl.DateTimeFormat(locale === "mr" ? "mr-IN" : "en-IN", { day: "numeric", month: "short", year: "numeric" });
-  return (
-    <div className={cardClass}>
-      <h2 className="mb-2 text-[18px] font-semibold text-black">{tc("latestAnnouncements")}</h2>
-      <ul className="divide-y divide-black/10">
-        {rows.map((a) => (
+  const listClass = "divide-y divide-black/10";
+  const nodes = rows.map((a) => (
           <li key={a.id} className="flex items-center gap-3 px-5 py-3">
-            <span className="min-w-0 flex-1">
+            <Link href={detailHref(slug, "announcements", a.id)} className="min-w-0 flex-1 hover:underline">
               <span className="block text-[14px] font-semibold text-black">{pickText(pair(a.titleEn, a.titleMr), locale)}</span>
               {pickText(pair(a.bodyEn, a.bodyMr), locale) && <span className="block truncate text-[12px] text-[#414141]">{pickText(pair(a.bodyEn, a.bodyMr), locale)}</span>}
-            </span>
+            </Link>
             {a.publishedAt && <span className="shrink-0 text-[12px] text-[#414141]">{fmt.format(new Date(a.publishedAt))}</span>}
             {a.attachmentId && (
               <a href={publicMediaUrl(slug, a.attachmentId)} download aria-label={t("downloadAttachment")} className="text-[#135130]">
@@ -58,14 +74,35 @@ export async function LiveAnnouncementsSection({ slug, locale }: SectionProps) {
               </a>
             )}
           </li>
-        ))}
-      </ul>
+  ));
+  return (
+    <div className={cardClass}>
+      <h2 className="mb-2 text-[18px] font-semibold text-black">{tc("latestAnnouncements")}</h2>
+      <Suspense
+        fallback={
+          <UnfilteredList limit={8} listClassName={listClass}>
+            {nodes}
+          </UnfilteredList>
+        }
+      >
+        <CategoryFilteredList
+          categories={rows.map((a) => a.category)}
+          limit={8}
+          listClassName={listClass}
+          emptyClassName="px-5 py-6 text-center text-[13px] text-[#414141]"
+          emptyLabel={td("noInCategory")}
+          filteredByLabel={td.raw("filteredBy") as string}
+          showAllLabel={td("showAll")}
+        >
+          {nodes}
+        </CategoryFilteredList>
+      </Suspense>
     </div>
   );
 }
 
 /** `calendar`: month calendar with the events the GP entered. */
-export async function CalendarSection({ locale, data }: SectionProps) {
+export async function CalendarSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public");
   const d = data as { title?: B; defaultMonthView?: "current" | "custom"; defaultMonth?: string; eventsToShow?: number; visible?: boolean; events?: unknown };
   if (d.visible === false) return null;
@@ -75,6 +112,8 @@ export async function CalendarSection({ locale, data }: SectionProps) {
     color: e.colour,
     time: [e.startTime, e.endTime].filter(Boolean).join(" – ") || undefined,
   }));
+  // Events of published announcements (eventStartAt / eventLocation) join the ones typed into the section.
+  events.push(...(await liveCalendarEvents(slug, locale)));
   const weekdays = locale === "mr" ? ["र", "सो", "मं", "बु", "गु", "शु", "श"] : ["S", "M", "T", "W", "T", "F", "S"];
   const monthNames = Array.from({ length: 12 }, (_, m) => new Intl.DateTimeFormat(locale === "mr" ? "mr-IN" : "en-IN", { month: "long" }).format(new Date(2026, m, 1)));
   const initial = d.defaultMonthView === "custom" && d.defaultMonth ? `${d.defaultMonth}-01T00:00:00` : new Date().toISOString();
@@ -110,7 +149,10 @@ export async function DeadlineCardsSection({ locale, data }: SectionProps) {
 /** `download-forms`: forms and circulars to download. */
 export async function DownloadFormsSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
-  const items = list<{ icon?: string; name?: B; description?: B; fileId?: string }>((data as { items?: unknown }).items).filter((f) => f.fileId);
+  const typed = list<{ icon?: string; name?: B; description?: B; fileId?: string }>((data as { items?: unknown }).items).filter((f) => f.fileId);
+  // Files attached to published announcements follow the forms typed into the section (type and size as caption).
+  const live = (await liveDownloads(slug, locale)).filter((f) => !typed.some((x) => x.fileId === f.fileId));
+  const items = [...typed, ...live.map((f) => ({ icon: "file", name: { en: f.name, mr: f.name } as B, description: { en: [f.type, f.size].filter(Boolean).join(" • ") } as B, fileId: f.fileId }))];
   if (items.length === 0) return null;
   return (
     <div className={cardClass}>

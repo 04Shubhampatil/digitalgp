@@ -1,4 +1,4 @@
-import { ArrowUp, Play } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, Play } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { FigmaIcon } from "@/components/ui/FigmaIcon";
 import { pickText, type Bilingual } from "@/i18n/text";
@@ -236,7 +236,7 @@ const KPI_ICONS = ["stat-population", "stat-literacy", "stat-population", "stat-
 
 /** `monthly-metrics`: 3-column KPI tiles with icon, value, monthly change and trend line (Figma 375:12550). */
 export function MonthlyMetricsSection({ locale, data }: SectionProps) {
-  const d = data as { heading?: Bilingual; period?: Bilingual; items?: { label?: Bilingual; caption?: Bilingual; value?: string; change?: string }[] };
+  const d = data as { heading?: Bilingual; period?: Bilingual; items?: { label?: Bilingual; caption?: Bilingual; value?: string; change?: string; trend?: "up" | "down" | "flat"; trendIsPositive?: boolean; comparedTo?: Bilingual }[] };
   const items = d.items ?? [];
   if (items.length === 0) return null;
   const period = pickText(d.period, locale);
@@ -259,12 +259,19 @@ export function MonthlyMetricsSection({ locale, data }: SectionProps) {
               </div>
               {/* Figma: "↑ 1.2% this month" on the left, the trend line right beside it on the same baseline. */}
               <div className="flex items-center gap-1">
-                {m.change && (
-                  <p className="inline-flex items-center gap-1 whitespace-nowrap text-[11px] leading-[19px]">
-                    <ArrowUp className="size-3.5 text-[#138808]" aria-hidden />
-                    <span className="text-[#138808]">{m.change.replace(/^\+/, "")}</span> {period && <span className="text-black">{period}</span>}
-                  </p>
-                )}
+                {m.change && (() => {
+                  // `trend` sets the arrow (default from the sign of `change`); `trendIsPositive: false` marks bad news in red.
+                  const trend = m.trend ?? (m.change.trim().startsWith("-") ? "down" : "up");
+                  const Arrow = trend === "down" ? ArrowDown : trend === "flat" ? ArrowRight : ArrowUp;
+                  const colour = trend === "flat" ? "text-[#414141]" : m.trendIsPositive === false ? "text-[#d92d20]" : "text-[#138808]";
+                  const when = pickText(m.comparedTo, locale) || period;
+                  return (
+                    <p className="inline-flex items-center gap-1 whitespace-nowrap text-[11px] leading-[19px]">
+                      <Arrow className={`size-3.5 ${colour}`} aria-hidden />
+                      <span className={colour}>{m.change.trim().replace(/^[+-]/, "")}</span> {when && <span className="text-black">{when}</span>}
+                    </p>
+                  );
+                })()}
                 <Sparkline id={`spark-${i}`} />
               </div>
             </li>

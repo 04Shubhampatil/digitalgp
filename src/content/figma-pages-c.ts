@@ -546,7 +546,7 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       eyebrow: t("Environment & Sustainability"),
       title: t("Building a Greener Savardari for a Sustainable Tomorrow"),
       body: t("We are committed to protecting our environment and building a sustainable future through community participation, innovation, and responsibility"),
-      actions: [{ label: t("Adopt a Tree Now"), href: "page:contact#volunteer-registration" }],
+      actions: [{ label: t("Adopt a Tree Now"), href: "page:environment#adopt-a-tree" }],
       imageUrl: P + "env-hero.png",
     }),
     {

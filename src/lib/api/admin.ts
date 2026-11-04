@@ -4,6 +4,8 @@ import type {
   AnnouncementDto,
   AuditLogDto,
   ContentStatus,
+  DashboardPendingItemDto,
+  DashboardWebsiteDto,
   FormSubmissionDto,
   FormSubmissionSummaryDto,
   GrievanceDto,
@@ -15,7 +17,10 @@ import type {
   ProjectStage,
   SchemeDto,
   SchemeLevel,
+  SchemeWardCoverageDto,
+  SuccessStoryDto,
   TenantDto,
+  TenantListItemDto,
   TenantStatus,
   UserDto,
 } from "@/types/api";
@@ -50,7 +55,9 @@ export function childLevels(level: AdminUnitLevel): AdminUnitLevel[] {
 
 // ------------------------------------------------------------------ tenants
 export const tenants = {
-  list: (query: ListQuery, o: Opts = {}) => apiFetchPage<TenantDto>("/tenants", { query, ...o }),
+  list: (query: ListQuery, o: Opts = {}) => apiFetchPage<TenantListItemDto>("/tenants", { query, ...o }),
+  /** Same-origin CSV download URL (GET /tenants/export?status&unitId&q); use as a plain link. */
+  exportUrl: (query: { status?: string; unitId?: string; q?: string }) => withQuery(`${API_BASE}/tenants/export`, query),
   get: (tenantId: string, o: Opts = {}) => apiFetch<TenantDto>(`/tenants/${tenantId}`, o),
   create: (body: CreateTenantInput, o: Opts = {}) => apiFetch<TenantDto>("/tenants", { method: "POST", body, ...o }),
   update: (tenantId: string, body: UpdateTenantInput, o: Opts = {}) =>
@@ -180,6 +187,10 @@ export interface SchemeBody {
   externalUrl?: string | null;
   beneficiaryCount?: number | null;
   amountDisbursed?: number | null;
+  /** "2026-27"; null = cumulative amount. */
+  disbursedFinancialYear?: string | null;
+  category?: string | null;
+  mapImageId?: string | null;
 }
 export type CreateSchemeBody = SchemeBody & ({ tenantId: string } | { ownerUnitId: string; targetUnitIds: string[] });
 
@@ -195,7 +206,11 @@ export interface ProjectBody {
   familiesBenefited?: number | null;
   outcomeEn?: string | null;
   outcomeMr?: string | null;
+  outcomeShortEn?: string | null;
+  outcomeShortMr?: string | null;
   coverImageId?: string | null;
+  beforeImageId?: string | null;
+  afterImageId?: string | null;
 }
 
 /** Content resources with the shared draft → review → publish workflow. */
@@ -246,7 +261,72 @@ export const GRIEVANCE_NEXT: Record<GrievanceStatus, ("IN_PROGRESS" | "RESOLVED"
 // ---------------------------------------------------------------- audit
 export const audit = {
   list: (query: ListQuery, o: Opts = {}) => apiFetchPage<AuditLogDto>("/audit-logs", { query, ...o }),
+  /** Same-origin CSV download URL with the list's filters (at most 5000 rows, no before/after payloads). */
+  exportUrl: (query: ListQuery) => withQuery(`${API_BASE}/audit-logs/export`, query),
 };
+
+// ---------------------------------------------------------------- dashboard
+export const dashboard = {
+  /** Per-website pending items, last update (and who) and setup progress, caller's area only. */
+  websites: (query: ListQuery, o: Opts = {}) => apiFetchPage<DashboardWebsiteDto>("/dashboard/websites", { query, ...o }),
+  /** Latest 20 items waiting for review. */
+  pendingUpdates: (query: ListQuery, o: Opts = {}) => apiFetch<DashboardPendingItemDto[]>("/dashboard/pending-updates", { query, ...o }),
+};
+
+// ---------------------------------------------------------- success stories
+export const STORY_PAGE_KEYS = ["home", "projects", "schemes", "employment", "education", "culture", "environment"] as const;
+export type StoryPageKey = (typeof STORY_PAGE_KEYS)[number];
+
+export interface SuccessStoryBody {
+  pageKey: StoryPageKey;
+  titleEn?: string | null;
+  titleMr?: string | null;
+  summaryEn?: string | null;
+  summaryMr?: string | null;
+  bodyEn?: string | null;
+  bodyMr?: string | null;
+  quoteEn?: string | null;
+  quoteMr?: string | null;
+  personName?: string | null;
+  personRoleEn?: string | null;
+  personRoleMr?: string | null;
+  location?: string | null;
+  photoId?: string | null;
+  projectId?: string | null;
+  schemeId?: string | null;
+  consentConfirmed?: boolean;
+  sortOrder?: number;
+}
+
+export const successStories = {
+  list: (query: ListQuery, o: Opts = {}) => apiFetchPage<SuccessStoryDto>("/success-stories", { query, ...o }),
+  get: (id: string, o: Opts = {}) => apiFetch<SuccessStoryDto>(`/success-stories/${id}`, o),
+  create: (body: SuccessStoryBody & { tenantId: string }, o: Opts = {}) => apiFetch<SuccessStoryDto>("/success-stories", { method: "POST", body, ...o }),
+  update: (id: string, body: Partial<SuccessStoryBody>, o: Opts = {}) => apiFetch<SuccessStoryDto>(`/success-stories/${id}`, { method: "PATCH", body, ...o }),
+  remove: (id: string, o: Opts = {}) => apiFetch<void>(`/success-stories/${id}`, { method: "DELETE", ...o }),
+  transition: (id: string, action: WorkflowAction, note?: string | null, o: Opts = {}) =>
+    apiFetch<SuccessStoryDto>(`/success-stories/${id}/${action}`, { method: "POST", body: { note: note ?? null }, ...o }),
+};
+
+// ---------------------------------------------------------- scheme coverage
+export interface CoverageRowBody {
+  wardNo: string;
+  households: number;
+  beneficiaries?: number | null;
+}
+export const schemeCoverage = {
+  get: (tenantId: string, schemeId: string, o: Opts = {}) => apiFetch<SchemeWardCoverageDto>(`/content/${tenantId}/scheme-coverage/${schemeId}`, o),
+  /** Replaces the whole list; `[]` clears it. */
+  put: (tenantId: string, schemeId: string, wards: CoverageRowBody[], o: Opts = {}) =>
+    apiFetch<SchemeWardCoverageDto>(`/content/${tenantId}/scheme-coverage/${schemeId}`, { method: "PUT", body: { wards }, ...o }),
+};
+
+function withQuery(path: string, query: Record<string, QueryValue>): string {
+  const p = new URLSearchParams();
+  for (const [k, v] of Object.entries(query)) if (v !== undefined && v !== null && v !== "") p.set(k, String(v));
+  const s = p.toString();
+  return s ? `${path}?${s}` : path;
+}
 
 // --------------------------------------------------------------- contact-page form submissions
 export const formSubmissions = {

@@ -42,7 +42,8 @@
     "showing": "Showing {count}",
     "firstPage": "First page",
     "nextPage": "Next",
-    "noResults": "No records found"
+    "noResults": "No records found",
+    "marathiLatin": "Marathi"
   },
   "auth": {
     "welcomeBack": "Welcome back",
@@ -202,7 +203,10 @@
       "createQuestion": "Create Gram Panchayat Website?",
       "createTemplate": "A ready-to-edit website will be generated using the existing Smart Village CMS template.",
       "templateUnlocked": "The complete 15-page CMS template will be unlocked",
-      "afterCreation": "After creation, the website will remain in Draft until its content is completed and published."
+      "afterCreation": "After creation, the website will remain in Draft until its content is completed and published.",
+      "export": "Export",
+      "blockAdmin": "Block Admin",
+      "unassigned": "Unassigned"
     },
     "users": {
       "title": "Users & Roles",
@@ -405,7 +409,12 @@
       "visibleOn": "Visible on:",
       "publishAnother": "Publish Another",
       "viewAnnouncement": "View Announcement",
-      "editLater": "You can edit or unpublish this announcement later from Announcements & Circulars."
+      "editLater": "You can edit or unpublish this announcement later from Announcements & Circulars.",
+      "eventStart": "Event starts",
+      "eventEnd": "Event ends",
+      "eventHint": "For events: shown in the website calendar.",
+      "eventLocation": "Event location",
+      "eventWhen": "Event"
     },
     "schemes": "Schemes",
     "projects": "Projects",
@@ -413,7 +422,7 @@
     "grievances": "Grievances",
     "formSubmissions": {
       "title": "Contact form submissions",
-      "subtitle": "Feedback and volunteer applications sent from the Contact page of a website.",
+      "subtitle": "Feedback, volunteer applications and tree adoption requests sent from the public website.",
       "website": "Website",
       "kind": "Type",
       "feedback": "Feedback",
@@ -426,7 +435,18 @@
       "message": "Message",
       "received": "Received",
       "empty": "No submissions yet.",
-      "retention": "Submissions are deleted automatically after the retention period."
+      "retention": "Submissions are deleted automatically after the retention period.",
+      "treeAdoption": "Tree adoption",
+      "subject": "Subject",
+      "rating": "Rating",
+      "areaOfInterest": "Area of interest",
+      "address": "Address",
+      "trees": "Trees",
+      "detail": {
+        "treeCount": "Trees",
+        "species": "Species",
+        "preferredLocation": "Preferred location"
+      }
     },
     "auditLogs": "Audit Logs",
     "roles": "Roles & Permissions",
@@ -525,7 +545,27 @@
       "managementTitle": "Featured schemes",
       "managementDesc": "Manage central, state and district level schemes shown on this website.",
       "showingFirst": "Showing the first {n} schemes.",
-      "viewAll": "View all schemes"
+      "viewAll": "View all schemes",
+      "category": "Category",
+      "categoryHint": "e.g. Agriculture, Housing, Health. Used by the public category filter.",
+      "financialYear": "Financial year of the amount",
+      "financialYearHint": "e.g. 2026-27. Leave empty when the amount is cumulative.",
+      "fyShort": "FY",
+      "mapImage": "Coverage map image",
+      "mapImageGpOnly": "A map image can be added to Gram Panchayat schemes only.",
+      "coverageTitle": "Ward coverage",
+      "coverageDesc": "Households and beneficiaries reached per ward (counts only, no personal details).",
+      "coveragePickWebsite": "Choose the website whose ward coverage you want to edit.",
+      "ward": "Ward",
+      "households": "Households",
+      "wardBeneficiaries": "Beneficiaries",
+      "noCoverage": "No ward figures yet.",
+      "total": "Total",
+      "addWard": "Add ward",
+      "duplicateWard": "Each ward can be listed once.",
+      "coverageInvalid": "Enter a ward and whole numbers.",
+      "coverageSaved": "Ward coverage saved.",
+      "coverageHint": "Saving replaces the whole list for this website."
     },
     "projectsUi": {
       "subtitle": "Development works of a Gram Panchayat: upcoming, ongoing and completed.",
@@ -540,7 +580,13 @@
       "managementTitle": "Key project management",
       "managementDesc": "Manage completed, ongoing and upcoming projects of this website.",
       "showingFirst": "Showing the first {n} projects.",
-      "viewAll": "View all projects"
+      "viewAll": "View all projects",
+      "outcomeShortEn": "Short outcome (English)",
+      "outcomeShortMr": "Short outcome (Marathi)",
+      "outcomeShortHint": "One line for project cards, up to 160 characters.",
+      "outcomeShort": "Short outcome",
+      "beforeImage": "Before photo",
+      "afterImage": "After photo"
     },
     "grievancesUi": {
       "subtitle": "Citizen complaints filed on the public websites. Assign, work and close them with a note the citizen can see.",
@@ -557,7 +603,10 @@
         "IN_PROGRESS": "Start working",
         "RESOLVED": "Mark resolved",
         "REJECTED": "Reject"
-      }
+      },
+      "complaintType": "Complaint type",
+      "subject": "Subject",
+      "location": "Location"
     },
     "mediaUi": {
       "subtitle": "Images, videos and PDFs used across a website's pages, projects and announcements.",
@@ -590,7 +639,16 @@
       "clear": "Clear",
       "overviewTitle": "User Overview",
       "role": "Role",
-      "target": "Target"
+      "target": "Target",
+      "export": "Export Logs",
+      "result": "Result",
+      "allResults": "All results",
+      "ipResult": "IP / Result",
+      "resultLabel": {
+        "SUCCESS": "Success",
+        "FAILURE": "Failed",
+        "DENIED": "Denied"
+      }
     },
     "rolesUi": {
       "subtitle": "Review what each role can do across the platform.",
@@ -654,7 +712,18 @@
       "editGp": "Edit a GP Website",
       "pendingUpdates": "Pending Updates",
       "gpOverview": "Gram Panchayat Overview",
-      "openCms": "Open CMS"
+      "openCms": "Open CMS",
+      "updatedBy": "Updated By",
+      "pendingCaption": "Waiting for review",
+      "pendingFeedHint": "Latest items submitted for review",
+      "noPending": "Nothing is waiting for review.",
+      "pendingType": {
+        "SECTION": "Page section",
+        "ANNOUNCEMENT": "Announcement",
+        "SCHEME": "Scheme",
+        "PROJECT": "Project",
+        "SUCCESS_STORY": "Success story"
+      }
     },
     "settingsUi": {
       "title": "Website settings",
@@ -669,7 +738,14 @@
       "branding": "Branding & search",
       "tagline": "Tagline",
       "seoTitle": "Search title",
-      "seoDescription": "Search description"
+      "seoDescription": "Search description",
+      "serviceStats": "Monthly service figures",
+      "serviceStatsHint": "Typed in by the GP office each month. The public statistics show them only while the month is the current one.",
+      "statsMonth": "Month",
+      "certificatesIssued": "Certificates issued",
+      "taxCollected": "Tax collected (₹)",
+      "satisfactionRate": "Citizen satisfaction (%)",
+      "satisfactionHint": "Used until at least 5 feedback ratings exist for the last 90 days."
     },
     "usersUi": {
       "profile": "Profile",
@@ -703,6 +779,38 @@
       "assignedWebsites": "Assigned GP Websites",
       "publishAnnouncement": "Publish Announcement",
       "logOut": "Log Out"
+    },
+    "storiesUi": {
+      "titlePlural": "Success stories",
+      "titleSingular": "Success story",
+      "subtitle": "Stories of citizens who benefited from a project or scheme, shown with Read Story on the website.",
+      "create": "New success story",
+      "placement": "Where it appears",
+      "page": "Page",
+      "pageHint": "The website page that shows this story.",
+      "project": "Linked project",
+      "scheme": "Linked scheme",
+      "sortOrder": "Display order",
+      "sortOrderHint": "Lower numbers are shown first.",
+      "story": "Story",
+      "title": "Title",
+      "summary": "Summary",
+      "summaryHint": "Short text for the story card.",
+      "body": "Full story",
+      "quote": "Quote",
+      "person": "Person",
+      "personName": "Name",
+      "personRole": "Role",
+      "personRolePlaceholder": "e.g. Farmer, SHG member",
+      "location": "Location",
+      "locationPlaceholder": "e.g. Ward 3, Savardari",
+      "photo": "Photo",
+      "pickWebsiteFirst": "Choose the website first to upload a photo.",
+      "consent": "The person agreed to be named and pictured on the website",
+      "consentHint": "A story that names or pictures a person cannot be submitted for review until this is ticked. Keep the signed consent at the GP office.",
+      "consentNeeded": "This story names or pictures a person: tick the consent box before submitting it.",
+      "consentShort": "Consent",
+      "consentMissing": "Missing"
     }
   },
   "public": {
@@ -834,7 +942,17 @@
         "complaint": "Complaint",
         "request": "Service Request",
         "suggestion": "Suggestion"
-      }
+      },
+      "trackLabelAny": "Enter Complaint ID / Mobile Number",
+      "trackPlaceholderAny": "Complaint ID (GRV-XXXXXXXX) or 10-digit mobile number",
+      "invalidCodeOrPhone": "Enter a complaint ID like GRV-XXXXXXXX or the 10-digit mobile number used on the complaint.",
+      "phoneNoResults": "No complaints were found for this mobile number in the last 12 months.",
+      "lookupRateLimited": "Too many lookups. Please wait a while and try again, or use your complaint ID.",
+      "phoneResults": "{count, plural, one {# complaint found for this mobile number} other {# complaints found for this mobile number}}",
+      "viewStatus": "View full status",
+      "filedOn": "Filed {date}",
+      "updatedOn": "Updated {date}",
+      "backToList": "Back to all complaints"
     },
     "openInMaps": "Open in Maps",
     "download": "Download",
@@ -1037,7 +1155,23 @@
       "facilityFilters": "Facility Filters",
       "mapZoomIn": "Zoom in",
       "mapZoomOut": "Zoom out",
-      "mapFullscreen": "Full screen"
+      "mapFullscreen": "Full screen",
+      "adoptTreeNow": "Adopt a Tree Now",
+      "treeFormTitle": "Tree Adoption Request",
+      "treeClose": "Close",
+      "treeCount": "Number of Trees",
+      "treeSpecies": "Preferred Tree Species",
+      "phTreeSpecies": "e.g. Neem, Banyan, Mango",
+      "treeLocation": "Preferred Location",
+      "phTreeLocation": "e.g. Ward 2, school ground",
+      "treeMessage": "Message (optional)",
+      "phTreeMessage": "Anything the Gram Panchayat should know",
+      "treeSubmit": "Submit Request",
+      "treeThanks": "Thank you! The Gram Panchayat will contact you about your tree adoption.",
+      "treeClosed": "Online tree adoption requests are not open right now. You can still register through the volunteer form.",
+      "treeUseVolunteer": "Open the volunteer form",
+      "formRateLimited": "Too many submissions from this network. Please try again later.",
+      "selectMarket": "Select Market"
     },
     "footerFeedback": "Feed back",
     "footerNotices": "Notices & GRs",
@@ -1045,6 +1179,52 @@
       "COMPLETED": "Completed",
       "ONGOING": "Ongoing",
       "UPCOMING": "Upcoming"
+    },
+    "detail": {
+      "back": "Back to {page}",
+      "overview": "Overview",
+      "keyFacts": "Key facts",
+      "stage": "Stage",
+      "year": "Year",
+      "beforeAfter": "Before and after",
+      "dragHint": "Drag the slider to compare",
+      "relatedStories": "Success stories",
+      "readStory": "Read Story",
+      "noDetails": "More details will be added soon.",
+      "aboutScheme": "About the scheme",
+      "category": "Category",
+      "level": "Level",
+      "benefits": "Benefits",
+      "amountDisbursedFy": "Amount disbursed ({fy})",
+      "noFigures": "Beneficiary figures will be published soon.",
+      "coverage": "Scheme Coverage Map",
+      "published": "Published",
+      "publishedOn": "Published on {date}",
+      "validUntil": "Valid until",
+      "priority": {
+        "NORMAL": "Normal",
+        "IMPORTANT": "Important",
+        "URGENT": "Urgent",
+        "EMERGENCY": "Emergency"
+      },
+      "event": "Event",
+      "eventDate": "Date & time",
+      "eventVenue": "Venue",
+      "attachment": "Attachment",
+      "successStory": "Success Story",
+      "relatedProject": "Related project",
+      "relatedScheme": "Related scheme",
+      "selectScheme": "Select Scheme",
+      "allSchemes": "All schemes",
+      "totalBeneficiaries": "Total beneficiaries",
+      "totalHouseholds": "Households covered",
+      "beneficiaryHouseholds": "Beneficiary Households",
+      "wardShort": "Ward {no}",
+      "noCoverage": "Ward-wise figures for this scheme have not been published yet.",
+      "filteredBy": "Category: {category}",
+      "showAll": "Show all",
+      "noInCategory": "No announcements in this category.",
+      "announcementCount": "{n, plural, one {# announcement} other {# announcements}}"
     }
   },
   "editor": {
@@ -1457,7 +1637,28 @@
       "statisticItem": "Figure",
       "geometry": "Ward boundary (GeoJSON)",
       "variant": "Look",
-      "charts": "Charts (JSON, one per tab)"
+      "charts": "Charts (JSON, one per tab)",
+      "viewAll": "View all button",
+      "viewAllLabel": "View all label",
+      "viewAllLink": "View all link",
+      "cardLink": "Card link",
+      "personName": "Person name",
+      "storyId": "Success story id",
+      "bookingLabel": "Booking button label",
+      "bookingLink": "Booking link",
+      "linkLabel": "Link label",
+      "cardImage": "Card image",
+      "author": "Author",
+      "marketKey": "Market key",
+      "market": "Markets",
+      "fileSize": "File size",
+      "pressCategory": "Category",
+      "thumbnailUrl": "Thumbnail URL",
+      "eyebrow": "Eyebrow text",
+      "actionButton": "Buttons",
+      "trend": "Trend",
+      "trendIsPositive": "Trend is good news",
+      "comparedTo": "Compared to"
     },
     "order": "Order",
     "addNew": "Add New {name}",
@@ -1517,7 +1718,9 @@
       "contactCard": "Contact card",
       "socialLink": "Social link",
       "partner": "Partner",
-      "volunteerCategory": "Category"
+      "volunteerCategory": "Category",
+      "market": "Market",
+      "actionButton": "Button"
     },
     "options": {
       "full-background": "Full background",
@@ -1572,7 +1775,17 @@
       "fire": "Fire",
       "disaster": "Disaster",
       "utility": "Utility",
-      "other": "Other"
+      "other": "Other",
+      "card": "Card",
+      "band": "Band",
+      "grid": "Grid",
+      "list": "List",
+      "contact": "Contact cards",
+      "cards": "Cards",
+      "quote": "Quote",
+      "up": "Up",
+      "down": "Down",
+      "flat": "No change"
     },
     "addEntry": "Add entry",
     "removeEntry": "Remove",

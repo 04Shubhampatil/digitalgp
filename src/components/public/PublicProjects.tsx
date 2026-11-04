@@ -1,4 +1,6 @@
 import { getTranslations } from "next-intl/server";
+import { detailHref } from "@/lib/href";
+import Link from "next/link";
 import type { ProjectStage } from "@/types/api";
 import type { UiLocale } from "@/i18n/config";
 import { pair, pickText } from "@/i18n/text";
@@ -32,7 +34,11 @@ export async function PublicProjects({ slug, locale }: { slug: string; locale: U
                     <img src={publicMediaUrl(slug, p.coverImageId)} alt="" className="aspect-[16/9] w-full object-cover" loading="lazy" />
                   )}
                   <div className="p-5">
-                    <h4 className="text-lg font-bold text-ink">{pickText(pair(p.nameEn, p.nameMr), locale)}</h4>
+                    <h4 className="text-lg font-bold text-ink">
+                      <Link href={detailHref(slug, "projects", p.id)} className="hover:text-primary hover:underline">
+                        {pickText(pair(p.nameEn, p.nameMr), locale)}
+                      </Link>
+                    </h4>
                     <p className="mt-1 text-xs text-muted">
                       {[p.year, p.wardNo ? `${t("ward")} ${p.wardNo}` : null].filter(Boolean).join(" · ")}
                     </p>

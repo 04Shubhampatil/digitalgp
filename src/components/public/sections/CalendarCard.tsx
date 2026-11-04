@@ -1,6 +1,7 @@
 "use client";
 
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { cn } from "@/lib/cn";
 
@@ -10,6 +11,10 @@ export interface CalendarEvent {
   title: string;
   time?: string;
   color?: string;
+  /** Venue (announcement `eventLocation`). */
+  location?: string;
+  /** Announcement page of a published event. */
+  href?: string;
 }
 
 /** Interactive month calendar with the month's events listed underneath (Figma "Interactive Calendar"). */
@@ -77,8 +82,8 @@ export function CalendarCard({
           </span>
         </div>
         <div className="mt-2 grid grid-cols-7 gap-y-1 text-center text-[11px]">
-          {weekdays.map((w) => (
-            <span key={w} className="py-1 text-[#414141]">
+          {weekdays.map((w, i) => (
+            <span key={i} className="py-1 text-[#414141]">
               {w}
             </span>
           ))}
@@ -111,13 +116,22 @@ export function CalendarCard({
       <ul className="mt-4 space-y-2 text-[11px]">
         {monthEvents.length === 0 && <li className="text-[#414141]">{emptyLabel}</li>}
         {monthEvents.map((e, i) => (
-          <li key={i} className="flex items-center gap-2">
-            <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ backgroundColor: e.color ?? "#135130" }} />
+          <li key={i} className="flex items-start gap-2">
+            <span aria-hidden className="mt-1 size-2 shrink-0 rounded-full" style={{ backgroundColor: e.color ?? "#135130" }} />
             <span className="w-12 shrink-0 text-[#414141]">
               {monthNames[Number(e.date.slice(5, 7)) - 1]?.slice(0, 3)} {Number(e.date.slice(8, 10))}
             </span>
-            <span className="flex-1 font-medium text-black">{e.title}</span>
-            {e.time && <span className="text-[#414141]">{e.time}</span>}
+            <span className="min-w-0 flex-1">
+              {e.href ? (
+                <Link href={e.href} className="font-medium text-black hover:text-[#135130] hover:underline">
+                  {e.title}
+                </Link>
+              ) : (
+                <span className="font-medium text-black">{e.title}</span>
+              )}
+              {(e.location || (e.href && e.time)) && <span className="block text-[10px] text-[#414141]">{[e.href ? e.time : "", e.location].filter(Boolean).join(" · ")}</span>}
+            </span>
+            {e.time && !e.href && <span className="text-[#414141]">{e.time}</span>}
           </li>
         ))}
       </ul>

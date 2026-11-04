@@ -2,8 +2,8 @@ import { ArrowRight, Building2, CircleCheck, ClipboardPlus, Droplet, GlassWater,
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { pair, pickText, type Bilingual } from "@/i18n/text";
-import { listPublicProjects, publicMediaUrl } from "@/lib/api/public";
-import { resolveHref } from "@/lib/href";
+import { listPublicProjects, listPublicSuccessStories, publicMediaUrl } from "@/lib/api/public";
+import { detailHref, resolveHref } from "@/lib/href";
 import { FigmaIcon } from "@/components/ui/FigmaIcon";
 import { BeforeAfterGrid, ProjectTabs, type ProjectCard } from "./KitClient";
 import type { SectionProps } from "./index";
@@ -43,12 +43,16 @@ export async function ProjectShowcaseSection({ slug, locale, data }: SectionProp
       ? live.data.map((p) => ({
           stage: p.stage,
           name: pickText(pair(p.nameEn, p.nameMr), locale),
-          location: p.wardNo ? `${t("ward")} ${p.wardNo}` : undefined,
+          location: pickText(pair(p.wardLabelEn, p.wardLabelMr), locale) || (p.wardNo ? `${t("ward")} ${p.wardNo}` : undefined),
           year: p.year ? String(p.year) : undefined,
           budget: p.budget ? fmt.format(Number(p.budget)) : undefined,
-          outcome: pickText(pair(p.outcomeEn, p.outcomeMr), locale) || undefined,
-          families: p.familiesBenefited !== null ? p.familiesBenefited.toLocaleString("en-IN") : undefined,
-          imageUrl: p.coverImageId ? publicMediaUrl(slug, p.coverImageId) : undefined,
+          // Cards show the one-line outcome; the full text is on the project page.
+          outcome: pickText(pair(p.outcomeShortEn, p.outcomeShortMr), locale) || pickText(pair(p.outcomeEn, p.outcomeMr), locale) || undefined,
+          families: p.familiesBenefited !== null ? p.familiesBenefited.toLocaleString(locale === "mr" ? "mr-IN" : "en-IN") : undefined,
+          imageUrl: p.coverImageId ? publicMediaUrl(slug, p.coverImageId) : p.afterImageId ? publicMediaUrl(slug, p.afterImageId) : undefined,
+          beforeUrl: p.beforeImageId && p.afterImageId ? publicMediaUrl(slug, p.beforeImageId) : undefined,
+          afterUrl: p.beforeImageId && p.afterImageId ? publicMediaUrl(slug, p.afterImageId) : undefined,
+          href: detailHref(slug, "projects", p.id),
         }))
       : (d.items ?? []).map((p) => ({
           stage: p.stage ?? "COMPLETED",
@@ -69,6 +73,8 @@ export async function ProjectShowcaseSection({ slug, locale, data }: SectionProp
     details: t("viewDetails"),
     stageLabel: { ONGOING: t("projectBadge.ONGOING"), COMPLETED: t("projectBadge.COMPLETED"), UPCOMING: t("projectBadge.UPCOMING") },
     empty: t("noProjects"),
+    before: t("before"),
+    after: t("after"),
   };
   return (
     <section className="bg-cream py-8">
@@ -89,30 +95,56 @@ export async function ProjectShowcaseSection({ slug, locale, data }: SectionProp
   );
 }
 
-/** `before-after`: draggable comparison tiles. */
+/**
+ * `before-after` (Figma placeholder) and `before-after-gallery` (backend section): draggable comparison tiles.
+ * Backend items carry media ids (`beforeImageId`, `afterImageId`, `title`, `description`); placeholder items carry
+ * picture paths. A placeholder with `source: "projects"` shows the published projects that have both pictures instead.
+ */
 export async function BeforeAfterSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public");
-  const d = data as { eyebrow?: B; heading?: B; items?: { label?: B; beforeUrl?: string; afterUrl?: string; height?: number }[]; viewAll?: Btn };
-  const items = (d.items ?? []).map((i) => ({
-    label: pickText(i.label, locale),
-    beforeUrl: i.beforeUrl ?? "/images/figma/about-aerial.png",
-    afterUrl: i.afterUrl ?? "/images/figma/about-road.png",
-    height: i.height,
-  }));
+  const d = data as {
+    eyebrow?: B;
+    heading?: B;
+    source?: "projects";
+    items?: { label?: B; title?: B; description?: B; beforeUrl?: string; afterUrl?: string; beforeImageId?: string; afterImageId?: string; height?: number; order?: number }[];
+    viewAll?: Btn;
+  };
+  const media = (id: string | undefined) => (id ? (id.startsWith("/") ? id : publicMediaUrl(slug, id)) : undefined);
+  let items = (d.items ?? [])
+    .slice()
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    .map((i) => ({
+      label: [pickText(i.label ?? i.title, locale), pickText(i.description, locale)].filter(Boolean).join(" — "),
+      beforeUrl: i.beforeUrl ?? media(i.beforeImageId) ?? (d.source ? "/images/figma/about-aerial.png" : ""),
+      afterUrl: i.afterUrl ?? media(i.afterImageId) ?? (d.source ? "/images/figma/about-road.png" : ""),
+      height: i.height,
+    }))
+    .filter((i) => i.beforeUrl && i.afterUrl);
+  if (d.source === "projects") {
+    const live = await listPublicProjects(slug, { limit: 100 }).catch(() => null);
+    const pairs = (live?.data ?? []).filter((p) => p.beforeImageId && p.afterImageId);
+    if (pairs.length > 0)
+      items = pairs.slice(0, 8).map((p) => ({
+        label: pickText(pair(p.nameEn, p.nameMr), locale),
+        beforeUrl: publicMediaUrl(slug, p.beforeImageId!),
+        afterUrl: publicMediaUrl(slug, p.afterImageId!),
+        height: undefined,
+      }));
+  }
   if (items.length === 0) return null;
   return (
     <section className="bg-cream py-8">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
         {pickText(d.heading, locale) && <h2 className="mb-6 text-center text-[30px] leading-[45px] font-semibold text-black">{pickText(d.heading, locale)}</h2>}
         <div className="mb-5 flex items-center justify-between">
-          <Eyebrow>{pickText(d.eyebrow, locale)}</Eyebrow>
+          <Eyebrow>{pickText(d.eyebrow, locale) || (pickText(d.heading, locale) ? "" : t("detail.beforeAfter"))}</Eyebrow>
           {d.viewAll?.href && (
             <Link href={resolveHref(d.viewAll.href, slug)} className="inline-flex items-center gap-2 text-[14px] text-[#135130] hover:underline">
               {pickText(d.viewAll.label, locale)} <ArrowRight className="size-4" aria-hidden />
             </Link>
           )}
         </div>
-        <BeforeAfterGrid items={items} before={t("before")} after={t("after")} />
+        <BeforeAfterGrid items={items} before={t("before")} after={t("after")} grid />
       </div>
     </section>
   );
@@ -120,24 +152,65 @@ export async function BeforeAfterSection({ slug, locale, data }: SectionProps) {
 
 const TRACKER_ICONS: LucideIcon[] = [Leaf, Droplet, Monitor, Zap, Leaf, Recycle, Building2, Droplet, TreePine, Building2];
 
-/** `progress-tracker`: "Village Resolution Tracker" — icon, label, bar and percentage rows. */
-export function ProgressTrackerSection({ locale, data }: SectionProps) {
-  const d = data as { title?: B; subtitle?: B; items?: { label?: B; percent?: number }[] };
+const RESOLUTION_STYLE: Record<string, { pill: string; bar: string; width: number }> = {
+  resolved: { pill: "bg-[#e3efe7] text-[#135130]", bar: "bg-[#135130]", width: 100 },
+  "in-progress": { pill: "bg-[#fdf3d6] text-[#9a6700]", bar: "bg-[#f5a03a]", width: 50 },
+  open: { pill: "bg-[#fde3e4] text-[#b42318]", bar: "bg-[#d92d20]", width: 8 },
+};
+
+/**
+ * `progress-tracker` (placeholder: `{ label, percent }` rows) and the backend `village-resolution-tracker`
+ * (`{ title, status, date?, wardNo?, updateNote? }`): "Village Resolution Tracker" — icon, label, bar and a percentage
+ * or the commitment's status.
+ */
+export async function ProgressTrackerSection({ locale, data }: SectionProps) {
+  const t = await getTranslations("public.cms");
+  const d = data as {
+    title?: B;
+    heading?: B;
+    subtitle?: B;
+    items?: { label?: B; title?: B; percent?: number; status?: string; date?: string; wardNo?: string; updateNote?: B }[];
+  };
+  const items = d.items ?? [];
+  if (items.length === 0) return null;
+  const withStatus = items.some((i) => i.status);
+  const count = (st: string) => items.filter((i) => i.status === st).length;
+  const subtitle = pickText(d.subtitle, locale) || (withStatus ? t("resolutionSummary", { resolved: count("resolved"), progress: count("in-progress"), open: count("open") }) : "");
   return (
     <div className={card}>
-      <h2 className="text-[22px] leading-[27px] font-semibold text-black uppercase">{pickText(d.title, locale)}</h2>
-      <p className="mt-2 text-[12px] text-[#414141]">{pickText(d.subtitle, locale)}</p>
+      <h2 className="text-[22px] leading-[27px] font-semibold text-black uppercase">{pickText(d.title ?? d.heading, locale) || t("resolutionTracker")}</h2>
+      {subtitle && <p className="mt-2 text-[12px] text-[#414141]">{subtitle}</p>}
       <ul className="mt-5 flex flex-col gap-[14px]">
-        {(d.items ?? []).map((it, i) => {
+        {items.map((it, i) => {
           const Icon = TRACKER_ICONS[i % TRACKER_ICONS.length]!;
+          const label = pickText(it.label ?? it.title, locale);
+          if (it.status) {
+            const st = RESOLUTION_STYLE[it.status] ?? RESOLUTION_STYLE.open!;
+            const note = [pickText(it.updateNote, locale), it.wardNo ? t("ward", { no: it.wardNo }) : "", it.date ?? ""].filter(Boolean).join(" · ");
+            return (
+              <li key={i} className="flex items-center gap-4 text-[13px]">
+                <span aria-hidden className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#135130] text-white">
+                  <Icon className="size-3.5" />
+                </span>
+                <span className="w-[150px] shrink-0 text-black">
+                  {label}
+                  {note && <span className="block text-[11px] text-[#414141]">{note}</span>}
+                </span>
+                <span aria-hidden className="h-[5px] flex-1 rounded-full bg-[#e6ede9]">
+                  <span className={`block h-full rounded-full ${st.bar}`} style={{ width: `${st.width}%` }} />
+                </span>
+                <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${st.pill}`}>{t(`status_${(RESOLUTION_STYLE[it.status] ? it.status : "open").replace("-", "_")}`)}</span>
+              </li>
+            );
+          }
           const pct = Math.max(0, Math.min(100, it.percent ?? 0));
           return (
             <li key={i} className="flex items-center gap-4 text-[13px]">
               <span aria-hidden className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#135130] text-white">
                 <Icon className="size-3.5" />
               </span>
-              <span className="w-[150px] shrink-0 text-black">{pickText(it.label, locale)}</span>
-              <span className="h-[5px] flex-1 rounded-full bg-[#e6ede9]" role="progressbar" aria-label={pickText(it.label, locale)} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
+              <span className="w-[150px] shrink-0 text-black">{label}</span>
+              <span className="h-[5px] flex-1 rounded-full bg-[#e6ede9]" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
                 <span className="block h-full rounded-full bg-[#135130]" style={{ width: `${pct}%` }} />
               </span>
               <span className="w-9 text-right text-[12px] text-black">{pct}%</span>
@@ -285,9 +358,24 @@ export function FinancialOverviewSection({ slug, locale, data }: SectionProps) {
   );
 }
 
-/** `success-stories`: quote cards with star ratings. */
-export function SuccessStoriesSection({ slug, locale, data }: SectionProps) {
-  const d = data as { title?: B; viewAll?: Btn; items?: { quote?: B; name?: B; role?: B; photoUrl?: string }[] };
+/**
+ * `stories-figma` (Key Projects placeholder): quote cards with star ratings. Published success stories of the page
+ * (GET /public/:slug/success-stories?page=projects) replace the sample cards and open their story page.
+ */
+export async function SuccessStoriesSection({ slug, locale, data, pageKey }: SectionProps) {
+  const td = await getTranslations("public.detail");
+  const d = data as { title?: B; viewAll?: Btn; items?: { quote?: B; name?: B; role?: B; photoUrl?: string; href?: string }[] };
+  const live = await listPublicSuccessStories(slug, { page: pageKey ?? "projects", limit: 6 }).catch(() => null);
+  const items =
+    live && live.data.length > 0
+      ? live.data.map((x) => ({
+          quote: pickText(pair(x.quoteEn, x.quoteMr), locale) ? pair(x.quoteEn, x.quoteMr) : pair(x.summaryEn ?? x.titleEn, x.summaryMr ?? x.titleMr),
+          name: { en: x.personName ?? pickText(pair(x.titleEn, x.titleMr), "en"), mr: x.personName ?? pickText(pair(x.titleEn, x.titleMr), "mr") },
+          role: pair(x.personRoleEn ?? x.location, x.personRoleMr ?? x.location),
+          photoUrl: x.photoId ? publicMediaUrl(slug, x.photoId) : undefined,
+          href: detailHref(slug, "success-stories", x.id) as string | undefined,
+        }))
+      : (d.items ?? []);
   return (
     <section className="bg-cream py-4">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
@@ -301,7 +389,7 @@ export function SuccessStoriesSection({ slug, locale, data }: SectionProps) {
             )}
           </div>
           <ul className="mt-4 grid gap-4 md:grid-cols-3">
-            {(d.items ?? []).map((s, i) => {
+            {items.map((s, i) => {
               const name = pickText(s.name, locale);
               return (
                 <li key={i} className="flex gap-6 rounded-[8px] border border-black/15 p-4 lg:gap-8 lg:px-5">
@@ -317,11 +405,17 @@ export function SuccessStoriesSection({ slug, locale, data }: SectionProps) {
                     <p className="leading-6 text-black">“{pickText(s.quote, locale)}”</p>
                     <p className="mt-2 font-medium text-[#135130]">— {name}</p>
                     <p className="text-[#414141]">{pickText(s.role, locale)}</p>
-                    <p className="mt-1 flex gap-1 text-[#135130]" aria-hidden>
-                      {Array.from({ length: 5 }).map((_, k) => (
-                        <Star key={k} className="size-3.5 fill-[#135130]" />
-                      ))}
-                    </p>
+                    {s.href ? (
+                      <Link href={s.href} className="mt-2 inline-flex items-center gap-1 font-semibold text-[#135130] hover:underline">
+                        {td("readStory")} <ArrowRight className="size-3.5" aria-hidden />
+                      </Link>
+                    ) : (
+                      <p className="mt-1 flex gap-1 text-[#135130]" aria-hidden>
+                        {Array.from({ length: 5 }).map((_, k) => (
+                          <Star key={k} className="size-3.5 fill-[#135130]" />
+                        ))}
+                      </p>
+                    )}
                   </div>
                 </li>
               );
