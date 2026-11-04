@@ -95,6 +95,17 @@ export default async function AnnouncementDetailPage({ params }: { params: Promi
             <dd className="text-ink">{a.publishedAt ? formatDateTime(a.publishedAt, ui) : a.publishAt ? `${formatDateTime(a.publishAt, ui)} (${t("announcements.scheduled")})` : "—"}</dd>
             <dt className="text-muted">{t("announcements.expiresAt")}</dt>
             <dd className="text-ink">{formatDateTime(a.expiresAt, ui)}</dd>
+            {a.eventStartAt && (
+              <>
+                <dt className="text-muted">{t("announcements.eventWhen")}</dt>
+                <dd className="text-ink">
+                  {formatDateTime(a.eventStartAt, ui)}
+                  {a.eventEndAt ? ` – ${formatDateTime(a.eventEndAt, ui)}` : ""}
+                </dd>
+                <dt className="text-muted">{t("announcements.eventLocation")}</dt>
+                <dd className="text-ink">{[a.eventLocationEn, a.eventLocationMr].filter(Boolean).join(" / ") || "—"}</dd>
+              </>
+            )}
             <dt className="text-muted">{tc("updated")}</dt>
             <dd className="text-ink">{formatDateTime(a.updatedAt, ui)}</dd>
           </dl>

@@ -16,7 +16,8 @@ import { tenants } from "@/lib/api/admin";
 import { isApiError } from "@/lib/api/client";
 import { cn } from "@/lib/cn";
 
-const schema = z.object({
+const schema = z
+  .object({
   nameEn: z.string().trim().min(1).max(200),
   nameMr: z.string().trim().min(1).max(200),
   slug: z.string().trim().min(2).max(63).regex(/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/),
@@ -29,19 +30,30 @@ const schema = z.object({
   facebook: z.string().trim().max(500),
   instagram: z.string().trim().max(500),
   youtube: z.string().trim().max(500),
+  twitter: z.string().trim().max(500),
+  statsMonth: z.string().trim().regex(/^(\d{4}-(0[1-9]|1[0-2]))?$/, "Use the form 2026-11"),
+  certificatesIssued: z.string().trim().regex(/^\d*$/, "Whole number"),
+  taxCollected: z.string().trim().regex(/^(\d+(\.\d{1,2})?)?$/, "Amount with up to 2 decimals"),
+  satisfactionRate: z
+    .string()
+    .trim()
+    .regex(/^(\d{1,3}(\.\d)?)?$/, "0–100")
+    .refine((v) => !v || Number(v) <= 100, "0–100"),
   taglineEn: z.string().trim().max(300),
   taglineMr: z.string().trim().max(300),
   seoTitleEn: z.string().trim().max(300),
   seoTitleMr: z.string().trim().max(300),
   seoDescEn: z.string().trim().max(300),
   seoDescMr: z.string().trim().max(300),
-});
+})
+  .refine((v) => v.statsMonth || (!v.certificatesIssued && !v.taxCollected && !v.satisfactionRate), { message: "Choose the month these figures belong to", path: ["statsMonth"] });
 type Values = z.infer<typeof schema>;
 
 const opt = (s: string) => (s ? s : undefined);
+const num = (s: string) => (s ? Number(s) : undefined);
 
-/** Flat form values → the nested Tenant settings shape (src/features/tenants/validators.ts). */
-function toPayload(v: Values) {
+/** Flat form values → the nested Tenant settings shape (src/features/tenants/validators.ts). The backend replaces each top-level key. */
+function toPayload(v: Values, before: TenantDto) {
   return {
     nameEn: v.nameEn,
     nameMr: v.nameMr,
@@ -50,8 +62,12 @@ function toPayload(v: Values) {
     defaultLocale: v.defaultLocale,
     settings: {
       contact: { address: opt(v.contactAddress), phone: opt(v.contactPhone), email: opt(v.contactEmail), hours: opt(v.contactHours) },
-      social: { facebook: opt(v.facebook), instagram: opt(v.instagram), youtube: opt(v.youtube) },
-      branding: { tagline: { en: opt(v.taglineEn), mr: opt(v.taglineMr) } },
+      social: { facebook: opt(v.facebook), instagram: opt(v.instagram), youtube: opt(v.youtube), twitter: opt(v.twitter) },
+      // Keep the logo (edited elsewhere): `branding` is replaced as a whole.
+      branding: { ...before.settings.branding, tagline: { en: opt(v.taglineEn), mr: opt(v.taglineMr) } },
+      ...(v.statsMonth
+        ? { serviceStats: { month: v.statsMonth, certificatesIssued: num(v.certificatesIssued), taxCollected: num(v.taxCollected), satisfactionRate: num(v.satisfactionRate) } }
+        : {}),
       seo: { title: { en: opt(v.seoTitleEn), mr: opt(v.seoTitleMr) }, description: { en: opt(v.seoDescEn), mr: opt(v.seoDescMr) } },
     },
   };
@@ -62,6 +78,7 @@ function defaults(tn: TenantDto): Values {
   const s = tn.settings.social ?? {};
   const b = tn.settings.branding?.tagline ?? {};
   const seo = tn.settings.seo ?? {};
+  const st = tn.settings.serviceStats;
   return {
     nameEn: tn.nameEn,
     nameMr: tn.nameMr,
@@ -75,6 +92,11 @@ function defaults(tn: TenantDto): Values {
     facebook: s.facebook ?? "",
     instagram: s.instagram ?? "",
     youtube: s.youtube ?? "",
+    twitter: s.twitter ?? "",
+    statsMonth: st?.month ?? "",
+    certificatesIssued: st?.certificatesIssued?.toString() ?? "",
+    taxCollected: st?.taxCollected?.toString() ?? "",
+    satisfactionRate: st?.satisfactionRate?.toString() ?? "",
     taglineEn: b.en ?? "",
     taglineMr: b.mr ?? "",
     seoTitleEn: seo.title?.en ?? "",
@@ -101,7 +123,7 @@ export function TenantSettingsForm({ tenant, canUpdate }: { tenant: TenantDto; c
     start(async () => {
       setMessage(null);
       try {
-        await tenants.update(tenant.id, toPayload(v));
+        await tenants.update(tenant.id, toPayload(v, tenant));
         setMessage({ kind: "ok", text: tc("saved") });
         router.refresh();
       } catch (err) {
@@ -145,11 +167,21 @@ export function TenantSettingsForm({ tenant, canUpdate }: { tenant: TenantDto; c
             <Input label={t("settingsUi.hours")} placeholder="Mon–Fri 9:45–18:15" error={errors.contactHours?.message} {...register("contactHours")} />
           </fieldset>
 
-          <fieldset className="grid gap-4 sm:grid-cols-3">
+          <fieldset className="grid gap-4 sm:grid-cols-2">
             <legend className="mb-2 text-xs font-semibold tracking-wide text-muted uppercase">{t("settingsUi.social")}</legend>
             <Input label="Facebook" type="url" placeholder="https://" error={errors.facebook?.message} {...register("facebook")} />
             <Input label="Instagram" type="url" placeholder="https://" error={errors.instagram?.message} {...register("instagram")} />
             <Input label="YouTube" type="url" placeholder="https://" error={errors.youtube?.message} {...register("youtube")} />
+            <Input label="X (Twitter)" type="url" placeholder="https://" error={errors.twitter?.message} {...register("twitter")} />
+          </fieldset>
+
+          <fieldset className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <legend className="mb-2 text-xs font-semibold tracking-wide text-muted uppercase">{t("settingsUi.serviceStats")}</legend>
+            <p className="-mt-1 text-xs text-muted sm:col-span-2 lg:col-span-4">{t("settingsUi.serviceStatsHint")}</p>
+            <Input label={t("settingsUi.statsMonth")} type="month" error={errors.statsMonth?.message} {...register("statsMonth")} />
+            <Input label={t("settingsUi.certificatesIssued")} inputMode="numeric" error={errors.certificatesIssued?.message} {...register("certificatesIssued")} />
+            <Input label={t("settingsUi.taxCollected")} inputMode="decimal" error={errors.taxCollected?.message} {...register("taxCollected")} />
+            <Input label={t("settingsUi.satisfactionRate")} inputMode="decimal" hint={t("settingsUi.satisfactionHint")} error={errors.satisfactionRate?.message} {...register("satisfactionRate")} />
           </fieldset>
 
           <fieldset className="grid gap-4 sm:grid-cols-2">

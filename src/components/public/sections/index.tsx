@@ -2,13 +2,13 @@ import type { PublicPageDto } from "@/types/api";
 import type { UiLocale } from "@/i18n/config";
 import { AboutEmergencySection, AboutHeroSection, AboutHistorySection, AboutRolesSection, AboutStructureSection, AboutVisionSection } from "./AboutFigma";
 import { LiveStatsSection } from "./cms/extra";
-import { BeforeAfterGallerySection, CategoryStripSection, CoverageMapSection, DevelopmentSuggestionsSection, EmergencyServicesSection, FinancialItemsView, ImpactDashboardSection, LeadersProfileGridSection, MonthlyReportSection, QuickActionsSection, ResolutionTrackerSection, RolesCardsSection } from "./cms/extra";
+import { CategoryStripSection, DevelopmentSuggestionsSection, EmergencyServicesSection, FinancialItemsView, ImpactDashboardSection, LeadersProfileGridSection, MonthlyReportSection, QuickActionsSection, RolesCardsSection } from "./cms/extra";
 import { BeforeAfterSection, CtaBannerSection, DevTimelineSection, FinancialOverviewSection, ImpactGridSection, FacilityGridSection, ImageCropsSection, ProgressTrackerSection, ProjectShowcaseSection, SuccessStoriesSection } from "./PageKit";
 import { LinkCardsSection, MediaCardsSection, StatCardsSection, TileGridSection, VideoFeatureSection } from "./PageKit2";
 import { CalloutSection, GrievanceRegisterSection, GrievanceTrackSection } from "./GrievanceSections";
 import { ContactCardsSection, ContactFeedbackSection, VolunteerFormSection } from "./ContactSections";
 import { AchievementsSection, WhatsNewSection } from "./HomeFeedSections";
-import { SchemeLevelsSection, SchemeShowcaseSection } from "./PageKit3";
+import { SchemeCoverageSection, SchemeLevelsSection, SchemeShowcaseSection } from "./PageKit3";
 import { ActionCardsSection, AnnounceCategoriesSection, AnnounceFeedSection, DeadlinesDownloadsSection, HelpCardSection, RtsGridSection, ServiceStripSection } from "./PageKit4";
 import { AboutCardsSection } from "./AboutCardsSection";
 import { BannerSection, CmsSuccessStoriesSection, SupportCardsSection, TopStatsSection } from "./cms/common";
@@ -93,6 +93,8 @@ export interface SectionProps {
   data: Record<string, unknown>;
   /** Data of the other published sections of the same page, by section key (e.g. form categories). */
   siblings?: Record<string, Record<string, unknown>>;
+  /** Page the section is on (e.g. success stories read the stories published for that page). */
+  pageKey?: string;
 }
 
 /**
@@ -118,9 +120,10 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
   statistics: (p) => <TopStatsSection {...p} data={{ ...(p.data as object), variant: "strip" }} />,
   "category-strip": CategoryStripSection,
   "quick-actions": QuickActionsSection,
-  "coverage-map": CoverageMapSection,
-  "before-after-gallery": BeforeAfterGallerySection,
-  "village-resolution-tracker": ResolutionTrackerSection,
+  // Backend keys drawn with the Figma renderers of their placeholder twins (before-after, progress-tracker).
+  "coverage-map": SchemeCoverageSection,
+  "before-after-gallery": BeforeAfterSection,
+  "village-resolution-tracker": ProgressTrackerSection,
   "impact-dashboard": ImpactDashboardSection,
   "development-suggestions": DevelopmentSuggestionsSection,
   "monthly-report": MonthlyReportSection,
@@ -240,6 +243,8 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
 const ROW_GROUPS: { keys: string[]; cols: string; all?: boolean }[] = [
   { keys: ["monthly-metrics", "ward-details"], cols: "lg:grid-cols-[683px_minmax(0,1fr)]" },
   { keys: ["progress-tracker", "impact-grid"], cols: "lg:grid-cols-[567px_minmax(0,1fr)]" },
+  // The backend tracker uses the same card renderer; on its own it gets the same cream band.
+  { keys: ["village-resolution-tracker"], cols: "lg:grid-cols-1" },
   { keys: ["dev-timeline", "financial-overview"], cols: "lg:grid-cols-[601px_minmax(0,1fr)]" },
   // Figma home: "What's New This Week?" on the left, "Top Five Achievements of the Ward" on the right (649 / 650px).
   { keys: ["whats-new", "achievements"], cols: "lg:grid-cols-2" },
@@ -276,7 +281,7 @@ export function renderSections(page: PublicPageDto, slug: string, locale: UiLoca
           <div className={`mx-auto grid max-w-[1440px] gap-5 px-4 sm:px-8 ${grp.cols} lg:gap-[20px] lg:px-[60px] [&>*:only-child]:lg:col-span-full`}>
             {members.map((m) => {
               const Card = RENDERERS[m.sectionKey]!;
-              return <Card key={m.sectionKey} slug={slug} locale={locale} data={m.data} tenantName={tenantName} siblings={siblings} />;
+              return <Card key={m.sectionKey} slug={slug} locale={locale} data={m.data} tenantName={tenantName} siblings={siblings} pageKey={page.pageKey} />;
             })}
           </div>
         </section>,
@@ -286,7 +291,7 @@ export function renderSections(page: PublicPageDto, slug: string, locale: UiLoca
     out.push(
       // Every section is an anchor target ("page:x#<sectionKey>") so hero buttons can jump to it.
       <div key={`${s.sectionKey}-${s.sortOrder}`} id={s.sectionKey} className="scroll-mt-[180px]">
-        <Section slug={slug} locale={locale} data={s.data} tenantName={tenantName} siblings={siblings} />
+        <Section slug={slug} locale={locale} data={s.data} tenantName={tenantName} siblings={siblings} pageKey={page.pageKey} />
       </div>,
     );
   }

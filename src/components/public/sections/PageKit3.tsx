@@ -2,8 +2,9 @@ import { ArrowRight, Building2, GraduationCap, House, Landmark, MapPinned, Sprou
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { pair, pickText, type Bilingual } from "@/i18n/text";
-import { listPublicSchemes } from "@/lib/api/public";
-import { resolveHref } from "@/lib/href";
+import { getPublicSchemeCoverage, listPublicSchemes, publicMediaUrl } from "@/lib/api/public";
+import { detailHref, resolveHref } from "@/lib/href";
+import { SchemeCoverageClient, type CoverageLabels, type CoverageView, type CoverageWard } from "./KitClient";
 import type { SectionProps } from "./index";
 
 type B = Bilingual | undefined;
@@ -65,6 +66,8 @@ interface SchemeCard {
   eligibility?: string;
   process?: string;
   href?: string;
+  /** Scheme page of a published record. */
+  detail?: string;
 }
 
 /**
@@ -87,6 +90,7 @@ export async function SchemeShowcaseSection({ slug, locale, data }: SectionProps
     live && live.data.length > 0
       ? live.data.map((s) => ({
           name: pickText(pair(s.nameEn, s.nameMr), locale),
+          category: s.category ?? undefined,
           level: t(`schemeLevel.${s.level}`),
           description: pickText(pair(s.descriptionEn, s.descriptionMr), locale),
           benefitValue: s.amountDisbursed ? fmt.format(Number(s.amountDisbursed)) : s.beneficiaryCount !== null ? s.beneficiaryCount.toLocaleString("en-IN") : undefined,
@@ -94,6 +98,7 @@ export async function SchemeShowcaseSection({ slug, locale, data }: SectionProps
           eligibility: pickText(pair(s.eligibilityEn, s.eligibilityMr), locale) || undefined,
           process: pickText(pair(s.processEn, s.processMr), locale) || undefined,
           href: s.externalUrl ?? undefined,
+          detail: detailHref(slug, "schemes", s.id),
         }))
       : (d.items ?? []).map((s) => ({
           name: pickText(s.name, locale),
@@ -131,7 +136,12 @@ export async function SchemeShowcaseSection({ slug, locale, data }: SectionProps
                   </div>
                 )}
                 <div className="mt-auto w-full pt-4">
-                  {c.eligibility || c.process ? (
+                  {c.detail ? (
+                    // Published scheme: its own page (eligibility, how to apply, apply link, coverage).
+                    <Link href={c.detail} className="inline-flex w-full items-center justify-center gap-2 rounded-full border-[0.6px] border-[#135130] px-4 py-1.5 text-[12px] text-[#135130] hover:bg-[#135130]/5">
+                      {t("viewDetails")} <ArrowRight className="size-3.5" aria-hidden />
+                    </Link>
+                  ) : c.eligibility || c.process ? (
                     <details className="text-left text-[12px]">
                       <summary className="mx-auto inline-flex w-full cursor-pointer list-none items-center justify-center gap-2 rounded-full border-[0.6px] border-[#135130] px-4 py-1.5 text-[#135130] [&::-webkit-details-marker]:hidden">
                         {t("viewDetails")} <ArrowRight className="size-3.5" aria-hidden />
@@ -177,6 +187,67 @@ export async function SchemeShowcaseSection({ slug, locale, data }: SectionProps
           </div>
         )}
       </div>
+    </section>
+  );
+}
+
+/**
+ * `coverage-map`: "Scheme Coverage Map". With published schemes the "Select Scheme" dropdown switches between them
+ * (GET /public/:slug/schemes/coverage?schemeId=: beneficiaries per ward, totalBeneficiaries, mapImageId); the first
+ * scheme is shown first. Without published schemes the section's own wards / picture are shown (the Figma picture
+ * for the placeholder).
+ */
+export async function SchemeCoverageSection({ slug, locale, data, siblings }: SectionProps) {
+  const t = await getTranslations("public.cms");
+  const td = await getTranslations("public.detail");
+  const d = data as { heading?: B; subheading?: B; mapImageId?: string; wards?: { wardNo?: string; households?: number; beneficiaries?: number; colour?: string }[] };
+  const live = await listPublicSchemes(slug, { limit: 100 }).catch(() => null);
+  const schemes = (live?.data ?? []).map((s) => ({ id: s.id, name: pickText(pair(s.nameEn, s.nameMr), locale) }));
+  const isDesignPicture = !!d.mapImageId?.startsWith("/");
+  const sectionMap = d.mapImageId ? (isDesignPicture ? d.mapImageId : publicMediaUrl(slug, d.mapImageId)) : undefined;
+  const sectionWards: CoverageWard[] = (d.wards ?? []).map((w) => ({ wardNo: w.wardNo ?? "", households: w.households ?? 0, beneficiaries: w.beneficiaries ?? null, colour: w.colour }));
+
+  let initialId = "";
+  let initial: CoverageView;
+  if (schemes.length > 0) {
+    initialId = schemes[0]!.id;
+    const cov = await getPublicSchemeCoverage(slug, initialId).catch(() => null);
+    initial = cov
+      ? { wards: cov.wards, totalHouseholds: cov.totalHouseholds, totalBeneficiaries: cov.totalBeneficiaries, mapUrl: cov.mapImageId ? publicMediaUrl(slug, cov.mapImageId) : undefined }
+      : { wards: [], totalHouseholds: 0, totalBeneficiaries: null };
+  } else {
+    if (sectionWards.length === 0 && !sectionMap) return null;
+    const benef = sectionWards.filter((w) => w.beneficiaries !== null);
+    initial = {
+      // The design picture already draws the sample wards; a backend section's wards are drawn as blocks.
+      wards: isDesignPicture ? [] : sectionWards,
+      totalHouseholds: isDesignPicture ? 0 : sectionWards.reduce((a, w) => a + w.households, 0),
+      totalBeneficiaries: isDesignPicture || benef.length === 0 ? null : benef.reduce((a, w) => a + (w.beneficiaries ?? 0), 0),
+      mapUrl: sectionMap,
+    };
+  }
+  const labels: CoverageLabels = {
+    heading: pickText(d.heading, locale) || t("coverageMap"),
+    subheading: pickText(d.subheading, locale) || t("coverageMapSub"),
+    selectScheme: td("selectScheme"),
+    allSchemes: td("allSchemes"),
+    ward: td.raw("wardShort") as string,
+    households: t("householdsCol"),
+    beneficiaries: t("beneficiariesCol"),
+    totalBeneficiaries: td("totalBeneficiaries"),
+    totalHouseholds: td("totalHouseholds"),
+    legend: td("beneficiaryHouseholds"),
+    empty: td("noCoverage"),
+  };
+  // A backend picture stays the fallback for a scheme without ward figures; the design picture never stands in for real data.
+  const fallbackPicture = isDesignPicture ? undefined : sectionMap;
+  const client = (
+    <SchemeCoverageClient slug={slug} schemes={schemes} initialSchemeId={initialId} initial={initial} sectionMapUrl={fallbackPicture} labels={labels} locale={locale} card={!!siblings?.["link-cards"]} />
+  );
+  if (siblings?.["link-cards"]) return client;
+  return (
+    <section className="bg-cream py-8">
+      <div className="mx-auto max-w-[1100px] px-4 sm:px-8">{client}</div>
     </section>
   );
 }

@@ -1,4 +1,4 @@
-import { ArrowRight, Bell, Cloud, CloudLightning, CloudRain, CloudSun, Download, ExternalLink, FileText, Store, Sun, TreePine } from "lucide-react";
+import { ArrowRight, Cloud, CloudLightning, CloudRain, CloudSun, Download, ExternalLink, FileText, Store, Sun, TreePine } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { getPublicWeather } from "@/lib/api/public";
@@ -6,6 +6,8 @@ import { resolveHref } from "@/lib/href";
 import type { SectionProps } from "../index";
 import { BudgetChartClient, type BudgetChartData } from "./client";
 import { InfraMapClient } from "./infra-map-client";
+import { TreeAdoptionButton } from "./TreeAdoptionForm";
+import { MarketPricesClient, type MarketView } from "./MarketPricesClient";
 import { Band, Icon, cardClass, externalProps, list, mediaUrl, plain, readableText, tx, type B } from "./kit";
 
 const inr = (n: number | string) => Number(n).toLocaleString("en-IN");
@@ -608,18 +610,21 @@ function CheckBullet() {
 /**
  * `key-initiatives` (Figma 375:11378 "Our Key Initiatives"): white panel overlapping the bottom of the
  * hero with icon tiles in rows of five, separated by thin dividers. Tiles with a link jump to the
- * matching section. Placeholder-only for now: the backend has no section for it yet.
+ * matching section. Backend section Environment › `key-initiatives` (heading / subheading / viewAll,
+ * items { icon, title, link?, active? }); the placeholder fills in while it is not published.
  */
 export async function KeyInitiativesSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
-  const d = data as { heading?: B; items?: unknown };
-  const items = list<{ icon?: string; title?: B; link?: string }>(d.items).filter((i) => tx(i.title, locale));
+  const d = data as { heading?: B; subheading?: B; viewAll?: { label?: B; href?: string }; items?: unknown };
+  const items = list<{ icon?: string; title?: B; link?: string; active?: boolean }>(d.items).filter((i) => i.active !== false && tx(i.title, locale));
   if (items.length === 0) return null;
+  const viewAll = d.viewAll?.href && tx(d.viewAll.label, locale) ? { href: d.viewAll.href, label: tx(d.viewAll.label, locale) } : null;
   return (
     <section className="relative z-10 mx-auto max-w-[1440px] px-4 sm:px-8 lg:-mt-[78px] lg:px-[62px]">
       <div className="rounded-[14px] bg-white px-4 pt-6 pb-4 shadow-[0_2px_14px_rgba(0,0,0,0.08)] sm:px-5">
         <h2 className="text-center text-[26px] leading-9 font-semibold text-black">{tx(d.heading, locale) || t("keyInitiatives")}</h2>
         <span aria-hidden className="mx-auto mt-2 block h-0.5 w-[50px] rounded bg-[#135130]" />
+        {tx(d.subheading, locale) && <p className="mx-auto mt-3 max-w-3xl text-center text-[15px] leading-6 text-[#414141]">{tx(d.subheading, locale)}</p>}
         <ul className="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
           {items.map((it, i) => {
             const body = (
@@ -633,7 +638,11 @@ export async function KeyInitiativesSection({ slug, locale, data }: SectionProps
             const cls = "flex h-full flex-col items-center px-3 py-4 text-center";
             return (
               <li key={i} className={`border-black/10 lg:border-l lg:[&:nth-child(5n+1)]:border-l-0 ${i >= 5 ? "lg:border-t" : ""}`}>
-                {it.link ? (
+                {it.link && /^https?:\/\//.test(it.link) ? (
+                  <a href={it.link} {...externalProps} className={`${cls} rounded-[10px] hover:bg-[#f4faf4]`}>
+                    {body}
+                  </a>
+                ) : it.link ? (
                   <Link href={resolveHref(it.link, slug)} className={`${cls} rounded-[10px] hover:bg-[#f4faf4]`}>
                     {body}
                   </Link>
@@ -644,6 +653,13 @@ export async function KeyInitiativesSection({ slug, locale, data }: SectionProps
             );
           })}
         </ul>
+        {viewAll && (
+          <p className="mt-2 text-center">
+            <a href={resolveHref(viewAll.href, slug)} {...(/^https?:\/\//.test(viewAll.href) ? externalProps : {})} className="inline-flex items-center gap-2 text-[14px] font-semibold text-[#135130] hover:underline">
+              {viewAll.label} <ArrowRight aria-hidden className="size-4" />
+            </a>
+          </p>
+        )}
       </div>
     </section>
   );
@@ -651,16 +667,20 @@ export async function KeyInitiativesSection({ slug, locale, data }: SectionProps
 
 /**
  * `tree-adoption` (Figma "Adopt a Tree"): one white card — illustration, title, text, check bullets and a
- * filled button on the left; the key figures as three cards in a row on the right.
+ * filled button on the left; the key figures as three cards in a row on the right. The button opens the
+ * adoption request form (POST /public/:slug/tree-adoptions); `buttonLink` is where the form sends
+ * visitors while requests are closed (default: the volunteer form).
  */
 export async function TreeAdoptionSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
-  const d = data as { enabled?: boolean; title?: B; description?: B; bullets?: unknown; illustrationId?: string; buttonText?: B; buttonLink?: string; stats?: unknown };
+  const d = data as { enabled?: boolean; title?: B; description?: B; bullets?: unknown; illustrationId?: string; buttonText?: B; buttonLink?: string; stats?: unknown; successMessage?: B };
   if (d.enabled === false) return null;
   const bullets = list<B>(d.bullets).filter((b) => tx(b, locale));
   const stats = list<{ icon?: string; title?: B; value?: string; subText?: B }>(d.stats);
   const image = mediaUrl(slug, d.illustrationId);
-  const external = !!d.buttonLink && /^https?:\/\//.test(d.buttonLink);
+  // A link back to this card (or its button) would loop: fall back to the volunteer form then.
+  const ownLink = !d.buttonLink || /^page:environment#(tree-adoption|adopt-a-tree)$/.test(d.buttonLink);
+  const fallback = resolveHref(ownLink ? "page:contact#volunteer-registration" : d.buttonLink!, slug);
   return (
     <section className="bg-cream py-8">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[62px]">
@@ -683,16 +703,7 @@ export async function TreeAdoptionSection({ slug, locale, data }: SectionProps) 
                   ))}
                 </ul>
               )}
-              {d.buttonLink && (
-                <a
-                  href={resolveHref(d.buttonLink, slug)}
-                  {...(external ? externalProps : {})}
-                  className="mt-5 inline-flex h-[44px] items-center gap-3 rounded-[8px] bg-[#135130] px-6 text-[15px] font-semibold text-white hover:opacity-90"
-                >
-                  {tx(d.buttonText, locale) || t("learnMore")}
-                  <Bell aria-hidden className="size-5" fill="currentColor" />
-                </a>
-              )}
+              <TreeAdoptionButton slug={slug} label={tx(d.buttonText, locale) || t("adoptTreeNow")} successMessage={tx(d.successMessage, locale) || undefined} fallbackHref={fallback} />
             </div>
           </div>
           {stats.length > 0 && (
@@ -714,8 +725,8 @@ export async function TreeAdoptionSection({ slug, locale, data }: SectionProps) 
 }
 
 /**
- * `sustainability-initiatives`: cards with a 100px round photo, title, description and "View Details →".
- * The backend item has no link field yet, so the link is shown only when the (placeholder) item has one.
+ * `sustainability-initiatives`: cards with a 100px round photo, title, description and "View Details →"
+ * (shown when the item has a `link`: a "page:<key>#<section>" link, a site path or an https URL).
  */
 export async function SustainabilityInitiativesSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
@@ -737,11 +748,16 @@ export async function SustainabilityInitiativesSection({ slug, locale, data }: S
                 <div className="min-w-0">
                   <p className="text-[16px] leading-[22px] font-semibold text-black">{tx(it.title, locale)}</p>
                   {tx(it.description, locale) && <p className="mt-2 text-[14px] leading-5 text-[#414141]">{tx(it.description, locale)}</p>}
-                  {it.link && (
-                    <Link href={resolveHref(it.link, slug)} className="mt-2 inline-flex items-center gap-2 text-[13px] font-semibold text-[#135130] hover:underline">
-                      {t("viewDetails")} <ArrowRight aria-hidden className="size-3.5" />
-                    </Link>
-                  )}
+                  {it.link &&
+                    (/^https?:\/\//.test(it.link) ? (
+                      <a href={it.link} {...externalProps} className="mt-2 inline-flex items-center gap-2 text-[13px] font-semibold text-[#135130] hover:underline">
+                        {t("viewDetails")} <ArrowRight aria-hidden className="size-3.5" />
+                      </a>
+                    ) : (
+                      <Link href={resolveHref(it.link, slug)} className="mt-2 inline-flex items-center gap-2 text-[13px] font-semibold text-[#135130] hover:underline">
+                        {t("viewDetails")} <ArrowRight aria-hidden className="size-3.5" />
+                      </Link>
+                    ))}
                 </div>
               </li>
             );
@@ -754,20 +770,59 @@ export async function SustainabilityInitiativesSection({ slug, locale, data }: S
 
 const STALE_DAYS = 7;
 
+type PriceRow = { commodity?: B; unit?: string; minPrice?: number; maxPrice?: number; modalPrice?: number };
+
 /**
- * `market-prices` (left card of a row with `weather-update`): commodity table, "Last Updated" line and a
- * right-aligned link. Stale real prices are flagged; the design's sample date (`designSample`, set only
+ * `market-prices` (left card of a row with `weather-update`): "Select Market" dropdown, commodity table,
+ * "Last Updated" line and a right-aligned link. Several markets come from `markets[]` (key, name,
+ * lastUpdatedAt, rows); the older single-market shape (`marketName` + `rows`) still works and is the
+ * default selection. Stale real prices are flagged; the design's sample date (`designSample`, set only
  * by the placeholder content) is not.
  */
 export async function MarketPricesSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
-  const d = data as { title?: B; lastUpdatedAt?: string; marketName?: B; currency?: string; rows?: unknown; note?: B; buttonText?: B; buttonLink?: string; designSample?: boolean };
-  const rows = list<{ commodity?: B; unit?: string; minPrice?: number; maxPrice?: number; modalPrice?: number }>(d.rows);
-  if (rows.length === 0) return null;
-  const updated = d.lastUpdatedAt ? new Date(d.lastUpdatedAt) : null;
-  const stale = !d.designSample && (updated ? new Date().getTime() - updated.getTime() > STALE_DAYS * 86_400_000 : true);
+  const d = data as {
+    title?: B;
+    lastUpdatedAt?: string;
+    marketName?: B;
+    currency?: string;
+    rows?: unknown;
+    markets?: unknown;
+    note?: B;
+    buttonText?: B;
+    buttonLink?: string;
+    designSample?: boolean;
+  };
   const sym = d.currency === "INR" || !d.currency ? "₹" : `${d.currency} `;
-  const when = updated ? updated.toLocaleString(locale === "mr" ? "mr-IN" : "en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" }) : "";
+  const view = (key: string, name: string, lastUpdatedAt: string | undefined, raw: unknown): MarketView => {
+    const updated = lastUpdatedAt ? new Date(lastUpdatedAt) : null;
+    const valid = updated && !Number.isNaN(updated.getTime()) ? updated : null;
+    const when = valid ? valid.toLocaleString(locale === "mr" ? "mr-IN" : "en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" }) : "";
+    return {
+      key,
+      name,
+      updated: when ? t("lastUpdated", { date: when }) : "",
+      stale: !d.designSample && (valid ? new Date().getTime() - valid.getTime() > STALE_DAYS * 86_400_000 : true),
+      rows: list<PriceRow>(raw).map((r) => ({
+        commodity: tx(r.commodity, locale),
+        unit: r.unit ?? "",
+        min: `${sym}${inr(r.minPrice ?? 0)}`,
+        max: `${sym}${inr(r.maxPrice ?? 0)}`,
+        modal: `${sym}${inr(r.modalPrice ?? 0)}`,
+      })),
+    };
+  };
+  const single = tx(d.marketName, locale);
+  const markets = list<{ key?: string; name?: B; lastUpdatedAt?: string; rows?: unknown }>(d.markets)
+    .filter((m) => m.key)
+    .map((m) => view(m.key!, tx(m.name, locale), m.lastUpdatedAt ?? d.lastUpdatedAt, m.rows));
+  // The single-market rows stay the default selection; they are listed first unless a market of the
+  // list already has that name.
+  const own = view("__default", single, d.lastUpdatedAt, d.rows);
+  const named = single ? markets.find((m) => m.name === single) : undefined;
+  const all = (own.rows.length && !named ? [own, ...markets] : markets.length ? markets : [own]).filter((m) => m.rows.length > 0);
+  if (all.length === 0) return null;
+  const initial = (named && named.rows.length ? named : all[0]!).key;
   const external = !!d.buttonLink && /^https?:\/\//.test(d.buttonLink);
   return (
     <div className="flex flex-col rounded-[10px] border border-black/10 bg-white p-5 shadow-[0_0_10px_rgba(0,0,0,0.05)]">
@@ -780,48 +835,28 @@ export async function MarketPricesSection({ slug, locale, data }: SectionProps) 
           <p className="text-[12px] text-[#414141]">{t("marketSub")}</p>
         </div>
       </div>
-      {tx(d.marketName, locale) && (
-        <p className="mt-3 flex items-center gap-3 text-[13px] font-semibold text-[#135130]">
-          {t("marketLabel")}
-          <span className="rounded-[6px] border border-black/15 px-3 py-1 font-normal text-black">{tx(d.marketName, locale)}</span>
-        </p>
-      )}
-      <div className="mt-3 overflow-x-auto rounded-[8px] border border-black/10">
-        <table className="w-full min-w-[26rem] text-left text-[12px]">
-          <thead className="text-[12px] text-black">
-            <tr className="border-b border-black/10">
-              <th className="px-3 py-2 font-semibold">{t("commodity")}</th>
-              <th className="px-3 py-2 font-semibold">{t("unit")}</th>
-              <th className="px-3 py-2 text-right font-semibold">{t("minPrice")}</th>
-              <th className="px-3 py-2 text-right font-semibold">{t("maxPrice")}</th>
-              <th className="px-3 py-2 text-right font-semibold">{t("modalPrice")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r, i) => (
-              <tr key={i}>
-                <td className="px-3 py-1.5 text-black">{tx(r.commodity, locale)}</td>
-                <td className="px-3 py-1.5 text-[#414141]">{r.unit}</td>
-                <td className="px-3 py-1.5 text-right">{sym}{inr(r.minPrice ?? 0)}</td>
-                <td className="px-3 py-1.5 text-right">{sym}{inr(r.maxPrice ?? 0)}</td>
-                <td className="px-3 py-1.5 text-right">{sym}{inr(r.modalPrice ?? 0)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {tx(d.note, locale) && <p className="mt-2 text-[12px] text-[#414141]">{tx(d.note, locale)}</p>}
-      <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-3">
-        <p className={`text-[12px] ${stale ? "font-medium text-[#c25f00]" : "text-[#414141]"}`}>
-          {when && t("lastUpdated", { date: when })}
-          {stale && ` · ${t("pricesStale")}`}
-        </p>
-        {d.buttonLink && (
-          <a href={resolveHref(d.buttonLink, slug)} {...(external ? externalProps : {})} className="inline-flex items-center gap-2 text-[13px] font-semibold text-[#135130] hover:underline">
-            {tx(d.buttonText, locale) || t("learnMore")} <ArrowRight aria-hidden className="size-3.5" />
-          </a>
-        )}
-      </div>
+      <MarketPricesClient
+        markets={all}
+        initialKey={initial}
+        note={tx(d.note, locale) || undefined}
+        labels={{
+          market: t("marketLabel"),
+          select: t("selectMarket"),
+          commodity: t("commodity"),
+          unit: t("unit"),
+          min: t("minPrice"),
+          max: t("maxPrice"),
+          modal: t("modalPrice"),
+          stale: t("pricesStale"),
+        }}
+        footer={
+          d.buttonLink ? (
+            <a href={resolveHref(d.buttonLink, slug)} {...(external ? externalProps : {})} className="inline-flex items-center gap-2 text-[13px] font-semibold text-[#135130] hover:underline">
+              {tx(d.buttonText, locale) || t("learnMore")} <ArrowRight aria-hidden className="size-3.5" />
+            </a>
+          ) : undefined
+        }
+      />
     </div>
   );
 }

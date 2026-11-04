@@ -85,9 +85,38 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <dd className="text-ink">{p.budget ? `₹ ${Number(p.budget).toLocaleString("en-IN")}` : "—"}</dd>
             <dt className="text-muted">{tp("familiesBenefited")}</dt>
             <dd className="text-ink">{p.familiesBenefited?.toLocaleString("en-IN") ?? "—"}</dd>
+            <dt className="text-muted">{t("projectsUi.outcomeShort")}</dt>
+            <dd className="text-ink">
+              {p.outcomeShortEn ?? "—"}
+              {p.outcomeShortMr && (
+                <span lang="mr" className="block">
+                  {p.outcomeShortMr}
+                </span>
+              )}
+            </dd>
             <dt className="text-muted">{tc("updated")}</dt>
             <dd className="text-ink">{formatDateTime(p.updatedAt, ui)}</dd>
           </dl>
+          {(p.beforeImageId || p.afterImageId) && (
+            <div className="grid grid-cols-2 gap-3 px-5 pb-5">
+              {(
+                [
+                  [p.beforeImageId, t("projectsUi.beforeImage")],
+                  [p.afterImageId, t("projectsUi.afterImage")],
+                ] as const
+              ).map(([mid, label]) => (
+                <figure key={label}>
+                  {mid ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- admin-only media served by the backend
+                    <img src={adminMediaUrl(mid)} alt="" className="aspect-[4/3] w-full rounded-input object-cover" />
+                  ) : (
+                    <div className="flex aspect-[4/3] items-center justify-center rounded-input bg-surface-soft text-xs text-muted">—</div>
+                  )}
+                  <figcaption className="mt-1 text-[11px] text-muted">{label}</figcaption>
+                </figure>
+              ))}
+            </div>
+          )}
         </Card>
       </div>
     </div>

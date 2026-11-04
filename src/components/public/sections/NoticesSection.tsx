@@ -3,7 +3,7 @@ import { pair, pickText, type Bilingual } from "@/i18n/text";
 import { listPublicAnnouncements, publicMediaUrl } from "@/lib/api/public";
 import type { Bilingual as BL } from "@/i18n/text";
 import { pageHref } from "@/config/public-nav";
-import { resolveHref } from "@/lib/href";
+import { detailHref, resolveHref } from "@/lib/href";
 import { NoticeTabs, type NoticeRow, type NoticeTab } from "./NoticeTabs";
 import type { SectionProps } from "./index";
 
@@ -67,9 +67,9 @@ export async function NoticesSection({ slug, locale, data, siblings }: SectionPr
         monthYear: when ? fmtMonth.format(when) : "",
         title: pickText(pair(a.titleEn, a.titleMr), locale),
         isNew: when ? new Date().getTime() - when.getTime() < 7 * 24 * 3600 * 1000 : false,
-        // Without an attachment, Download opens the announcements page (every control leads somewhere).
-        href: a.attachmentId ? publicMediaUrl(slug, a.attachmentId) : listHref,
-        titleHref: listHref,
+        // The title opens the announcement page; Download gets the file, or that page when there is none.
+        href: a.attachmentId ? publicMediaUrl(slug, a.attachmentId) : detailHref(slug, "announcements", a.id),
+        titleHref: detailHref(slug, "announcements", a.id),
       };
     });
     tabs[0] = { key: tabs[0]!.key, label: tabs[0]!.label, items: rows };

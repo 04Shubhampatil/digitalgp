@@ -306,16 +306,25 @@ export async function MonthlyReportSection({ slug, locale, data }: SectionProps)
   const stats = await getGrievanceStats(slug);
   if (!stats) return null;
   const num = (n: number) => n.toLocaleString(locale === "mr" ? "mr-IN" : "en-IN");
-  const change = stats.receivedChangePercent;
-  // Month-on-month change of resolved complaints (the API gives the two monthly counts, not the percentage).
-  const resolvedChange = stats.monthBefore.resolved > 0 ? Math.round(((stats.lastMonth.resolved - stats.monthBefore.resolved) / stats.monthBefore.resolved) * 1000) / 10 : null;
-  const note = (n: number | null) => (n === null ? "" : `${n > 0 ? "+" : ""}${n}% ${t("fromLastMonthShort")}`);
+  // Month-on-month changes computed by the backend (last month vs the month before); hidden while null.
+  // The resolution-rate change is in percentage points; the design writes it as "+2.8% from last month".
+  const note = (n: number | null | undefined) => (n === null || n === undefined ? "" : `${n > 0 ? "+" : ""}${n}% ${t("fromLastMonthShort")}`);
+  // Green when the change is good news (design colour), red when it is not (fewer resolved, more pending).
+  const tone = (n: number | null | undefined, goodWhenUp: boolean | null) => (n === null || n === undefined || goodWhenUp === null || n === 0 || n > 0 === goodWhenUp ? "text-[#2f8a3c]" : "text-[#b42318]");
   // Figma 375:11358: 48px pale circle with a coloured icon, label, 24px bold value and a change line.
   const cards = [
-    { label: tx(d.cardLabels?.total, locale) || t("statusTotal"), value: num(stats.total), note: note(change), icon: FileBarChart, fg: "#1a62e0", bg: "#dce9fc" },
-    { label: tx(d.cardLabels?.resolved, locale) || t("statusResolved"), value: num(stats.resolved), note: note(resolvedChange), icon: CircleCheck, fg: "#2f8a3c", bg: "#dcefdc" },
-    { label: tx(d.cardLabels?.pending, locale) || t("statusPending"), value: num(stats.pending), note: "", icon: Clock, fg: "#f5871f", bg: "#fde6cc" },
-    { label: tx(d.cardLabels?.resolutionRate, locale) || t("reportRatePct"), value: stats.resolutionRate === null ? "—" : `${stats.resolutionRate}%`, note: "", icon: ChartPie, fg: "#7b2cbf", bg: "#ecdffa" },
+    { label: tx(d.cardLabels?.total, locale) || t("statusTotal"), value: num(stats.total), note: note(stats.receivedChangePercent), noteCls: tone(stats.receivedChangePercent, null), icon: FileBarChart, fg: "#1a62e0", bg: "#dce9fc" },
+    { label: tx(d.cardLabels?.resolved, locale) || t("statusResolved"), value: num(stats.resolved), note: note(stats.resolvedChangePercent), noteCls: tone(stats.resolvedChangePercent, true), icon: CircleCheck, fg: "#2f8a3c", bg: "#dcefdc" },
+    { label: tx(d.cardLabels?.pending, locale) || t("statusPending"), value: num(stats.pending), note: note(stats.pendingChangePercent), noteCls: tone(stats.pendingChangePercent, false), icon: Clock, fg: "#f5871f", bg: "#fde6cc" },
+    {
+      label: tx(d.cardLabels?.resolutionRate, locale) || t("reportRatePct"),
+      value: stats.resolutionRate === null ? "—" : `${stats.resolutionRate}%`,
+      note: note(stats.resolutionRateChangePoints),
+      noteCls: tone(stats.resolutionRateChangePoints, true),
+      icon: ChartPie,
+      fg: "#7b2cbf",
+      bg: "#ecdffa",
+    },
   ];
   const series: BudgetChartData["series"] = [
     { name: t("received"), colour: "#1a62e0", values: stats.monthly.map((m) => m.received) },
@@ -338,7 +347,7 @@ export async function MonthlyReportSection({ slug, locale, data }: SectionProps)
             <span className="min-w-0">
               <span className="block text-[14px] text-[#414141]">{c.label}</span>
               <span className="block text-[24px] leading-8 font-bold text-black">{c.value}</span>
-              {c.note && <span className="block text-[13px] font-medium text-[#2f8a3c]">{c.note}</span>}
+              {c.note && <span className={`block text-[13px] font-medium ${c.noteCls}`}>{c.note}</span>}
             </span>
           </li>
         ))}

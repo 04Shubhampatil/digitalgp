@@ -9,7 +9,7 @@ import type { UiLocale } from "@/i18n/config";
 import { marathiFor } from "@/i18n/mr-fallback";
 import { pair, pickText } from "@/i18n/text";
 import { resolveHref } from "@/lib/href";
-import { FacebookIcon, InstagramIcon, YouTubeIcon } from "./SocialIcons";
+import { FacebookIcon, InstagramIcon, XIcon, YouTubeIcon } from "./SocialIcons";
 
 /** Placeholder contact details (shared with the header), shown only while the website's own settings are empty. */
 const FIGMA_CONTACT = FIGMA_CHROME;
@@ -105,7 +105,12 @@ export async function PublicFooter({ tenant }: { tenant: PublicTenantDto }) {
                   <YouTubeIcon className="h-[26px] w-[38px]" />
                 </a>
               )}
-              {!social.facebook && !social.instagram && !social.youtube && <p className="text-[12px] text-[#414141]">{email}</p>}
+              {social.twitter && (
+                <a href={social.twitter} target="_blank" rel="noopener" aria-label="X (Twitter)">
+                  <XIcon className="size-[34px]" />
+                </a>
+              )}
+              {!social.facebook && !social.instagram && !social.youtube && !social.twitter && <p className="text-[12px] text-[#414141]">{email}</p>}
             </div>
           </div>
 

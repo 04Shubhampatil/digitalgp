@@ -1,5 +1,9 @@
 import type {
+  PublicAnnouncementCategoryDto,
   PublicAnnouncementDto,
+  PublicSchemeCoverageDto,
+  PublicSuccessStoryDto,
+  PublicGrievanceLookupItemDto,
   PublicGrievanceReceiptDto,
   PublicGrievanceStatusDto,
   PublicPageDto,
@@ -80,6 +84,9 @@ export interface SubmitGrievanceInput {
   citizenPhone?: string | null;
   citizenEmail?: string | null;
   description: string;
+  complaintType?: string | null;
+  subject?: string | null;
+  location?: string | null;
 }
 
 export function submitGrievance(slug: string, body: SubmitGrievanceInput) {
@@ -122,4 +129,71 @@ export async function getPublicWeather(slug: string): Promise<PublicWeatherDto |
   } catch {
     return null;
   }
+}
+
+/** GET /public/:slug/grievances?phone= — the citizen's complaints of the last 12 months (minimal fields; 429 when rate limited). */
+export function lookupGrievancesByPhone(slug: string, phone: string) {
+  return apiFetch<PublicGrievanceLookupItemDto[]>(`/public/${encodeURIComponent(slug)}/grievances`, { query: { phone: phone.trim() } });
+}
+
+export interface SubmitTreeAdoptionInput {
+  name: string;
+  phone: string;
+  email?: string | null;
+  address?: string | null;
+  treeCount: number;
+  species?: string | null;
+  preferredLocation?: string | null;
+  message?: string | null;
+  /** Honeypot: always empty from real visitors. */
+  website: string;
+  turnstileToken?: string;
+}
+
+/** POST /public/:slug/tree-adoptions — open only while Environment › tree-adoption is published and enabled (else 404/403). */
+export function submitTreeAdoption(slug: string, body: SubmitTreeAdoptionInput) {
+  return apiFetch<{ message: string }>(`/public/${encodeURIComponent(slug)}/tree-adoptions`, { method: "POST", body });
+}
+
+// ---------------------------------------------------------------------------
+// Detail pages, success stories, announcement categories and scheme coverage (docs/api-contract.md,
+// "Public-site backend needs"). Published records only; cached like the other public reads.
+// ---------------------------------------------------------------------------
+
+const pub = (slug: string) => `/public/${encodeURIComponent(slug)}`;
+const cached = (slug: string) => ({ next: { revalidate: PUBLIC_REVALIDATE, tags: [`tenant:${slug}`] } });
+
+/** GET /public/:slug/projects/:projectId */
+export function getPublicProject(slug: string, projectId: string) {
+  return apiFetch<PublicProjectDto>(`${pub(slug)}/projects/${encodeURIComponent(projectId)}`, cached(slug));
+}
+
+/** GET /public/:slug/schemes/:schemeId */
+export function getPublicScheme(slug: string, schemeId: string) {
+  return apiFetch<PublicSchemeDto>(`${pub(slug)}/schemes/${encodeURIComponent(schemeId)}`, cached(slug));
+}
+
+/** GET /public/:slug/announcements/:announcementId */
+export function getPublicAnnouncement(slug: string, announcementId: string) {
+  return apiFetch<PublicAnnouncementDto>(`${pub(slug)}/announcements/${encodeURIComponent(announcementId)}`, cached(slug));
+}
+
+/** GET /public/:slug/announcements/categories?page= — categories of live announcements with counts. */
+export function listPublicAnnouncementCategories(slug: string, page?: string) {
+  return apiFetch<PublicAnnouncementCategoryDto[]>(`${pub(slug)}/announcements/categories`, { ...cached(slug), query: { page } });
+}
+
+/** GET /public/:slug/success-stories?page=&projectId=&schemeId=&limit&cursor */
+export function listPublicSuccessStories(slug: string, query: Record<string, QueryValue> = {}) {
+  return apiFetchPage<PublicSuccessStoryDto>(`${pub(slug)}/success-stories`, { query });
+}
+
+/** GET /public/:slug/success-stories/:storyId */
+export function getPublicSuccessStory(slug: string, storyId: string) {
+  return apiFetch<PublicSuccessStoryDto>(`${pub(slug)}/success-stories/${encodeURIComponent(storyId)}`, cached(slug));
+}
+
+/** GET /public/:slug/schemes/coverage?schemeId= — per-ward households / beneficiaries (all schemes without an id). */
+export function getPublicSchemeCoverage(slug: string, schemeId?: string | null) {
+  return apiFetch<PublicSchemeCoverageDto>(`${pub(slug)}/schemes/coverage`, { query: { schemeId: schemeId ?? undefined } });
 }

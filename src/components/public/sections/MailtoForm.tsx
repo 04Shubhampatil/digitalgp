@@ -17,17 +17,12 @@ export interface MailtoField {
   required?: boolean;
   /** Extra classes for the field's label wrapper (e.g. a 12-column span). */
   className?: string;
-  /**
-   * The API has no field for this value: it is sent as a "Label: value" line at the top of the named
-   * field (e.g. "message") instead of as its own field, so the design's extra inputs are not lost.
-   */
-  foldInto?: string;
 }
 
 export interface FormApi {
   slug: string;
   kind: "feedback" | "volunteers";
-  /** Form field name -> API field name, where they differ (e.g. area -> category). */
+  /** Form field name -> API field name, where they differ (e.g. area -> category, interest -> areaOfInterest). */
   map?: Record<string, string>;
 }
 
@@ -107,17 +102,10 @@ export function MailtoForm({
     try {
       const body: Record<string, string | null> = { website: String(fd.get("website") ?? "") };
       if (token) body.turnstileToken = token;
-      const folded: Record<string, string[]> = {};
+      // Every design field is an API field now (feedback `subject`, volunteer `address` / `areaOfInterest`).
       for (const f of fields) {
         const v = String(fd.get(f.name) ?? "").trim();
-        if (!v) continue;
-        if (f.foldInto) (folded[f.foldInto] ??= []).push(`${f.label}: ${v}`);
-        else body[api.map?.[f.name] ?? f.name] = v;
-      }
-      // Values without an API field go on top of their target field, separated by a blank line.
-      for (const [target, lines] of Object.entries(folded)) {
-        const key = api.map?.[target] ?? target;
-        body[key] = [lines.join("\n"), body[key]].filter(Boolean).join("\n\n");
+        if (v) body[api.map?.[f.name] ?? f.name] = v;
       }
       const r = await submitContactForm(api.slug, api.kind, body);
       setDone(r.message);

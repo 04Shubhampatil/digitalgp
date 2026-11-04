@@ -24,10 +24,14 @@ export function WelcomeSection(props: SectionProps) {
   const body = pickText(d.body, locale);
   if (!heading && !body) return null;
 
-  // The About layout colours the village name green inside the heading ("Welcome to Savardari", "About Savardari").
+  // The design's heading is "About <village>" (the name in green). An editor heading that is not an "About …"
+  // heading (e.g. "Welcome to Savardari", which is the video block's title) is replaced so the block is recognisable.
+  const name = props.tenantName ?? "";
+  const isAbout = /^about\b/i.test(heading) || /विषयी|बद्दल|माहिती/.test(heading);
+  const designHeading = locale === "mr" ? `${name} विषयी`.trim() : `About ${name}`.trim();
   const aboutData = {
     ...ABOUT_DESIGN,
-    heading: { [locale]: heading || (ABOUT_DESIGN.heading as Bilingual | undefined)?.en },
+    heading: { [locale]: isAbout ? heading : designHeading },
     subheading: body ? { [locale]: body } : ABOUT_DESIGN.subheading,
     cards: d.cards?.length ? d.cards : ABOUT_DESIGN.cards,
   };

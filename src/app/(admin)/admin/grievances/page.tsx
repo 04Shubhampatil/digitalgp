@@ -37,7 +37,26 @@ export default async function GrievancesPage({ searchParams }: { searchParams: S
         </Link>
       ),
     },
-    { key: "category", header: t("announcements.category"), cell: (g) => g.category, className: "text-muted" },
+    {
+      key: "category",
+      header: t("announcements.category"),
+      cell: (g) => (
+        <div className="max-w-xs">
+          <p className="text-ink">{g.category}</p>
+          {g.complaintType && <p className="text-xs text-muted">{g.complaintType}</p>}
+        </div>
+      ),
+    },
+    {
+      key: "subject",
+      header: t("grievancesUi.subject"),
+      cell: (g) => (
+        <div className="max-w-xs">
+          <p className="truncate text-ink">{g.subject ?? "—"}</p>
+          {g.location && <p className="truncate text-xs text-muted">{g.location}</p>}
+        </div>
+      ),
+    },
     {
       key: "citizen",
       header: t("grievancesUi.citizen"),

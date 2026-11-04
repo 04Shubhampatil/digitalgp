@@ -104,7 +104,13 @@ const home: SectionEditorSpec[] = [
       labelKey: "stat",
       min: 1,
       max: 8,
-      fields: [bilingual("label", "label", { required: true }), { name: "value", type: "text", labelKey: "value", max: 40, required: true }, { name: "icon", type: "text", labelKey: "icon", max: 40 }],
+      fields: [
+        bilingual("label", "label", { required: true }),
+        { name: "value", type: "text", labelKey: "value", max: 40, required: true },
+        bilingual("unit", "unit"),
+        { name: "icon", type: "text", labelKey: "icon", max: 40 },
+        { name: "visible", type: "boolean", labelKey: "visible", default: true },
+      ],
     },
   },
   {
@@ -137,6 +143,9 @@ const home: SectionEditorSpec[] = [
         bilingual("label", "label", { required: true }),
         { name: "value", type: "text", labelKey: "value", max: 40, required: true },
         { name: "change", type: "text", labelKey: "change", max: 40 },
+        { name: "trend", type: "select", labelKey: "trend", options: ["up", "down", "flat"] },
+        { name: "trendIsPositive", type: "boolean", labelKey: "trendIsPositive" },
+        bilingual("comparedTo", "comparedTo"),
       ],
     },
   },
@@ -211,7 +220,8 @@ const about: SectionEditorSpec[] = [
   {
     key: "overview",
     labelKey: "overview",
-    fields: [bilingual("heading", "heading", { required: true }), bilingualLong("body", "body", { required: true }), { name: "imageId", type: "image", labelKey: "image" }],
+    fields: [bilingual("eyebrow", "eyebrow"), bilingual("heading", "heading", { required: true }), bilingualLong("body", "body", { required: true }), { name: "imageId", type: "image", labelKey: "image" }],
+    items: { name: "actions", labelKey: "actionButton", min: 0, max: 3, fields: [bilingual("label", "buttonLabel", { required: true }), { name: "href", type: "href", labelKey: "link", required: true }] },
   },
   { key: "history", labelKey: "history", descriptionKey: "historyDesc", fields: [bilingual("heading", "heading"), bilingualLong("body", "body", { required: true })] },
   {

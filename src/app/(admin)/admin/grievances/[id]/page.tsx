@@ -33,8 +33,13 @@ export default async function GrievanceDetailPage({ params }: { params: Promise<
         <Card className="lg:col-span-2">
           <CardHeader title={t("grievancesUi.complaint")} />
           <div className="px-5 pb-5">
+            {g.subject && <p className="mb-2 text-[15px] font-bold text-ink">{g.subject}</p>}
             <p className="text-sm whitespace-pre-line text-ink">{g.description}</p>
             <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 border-t border-line pt-4 text-sm">
+              <dt className="text-muted">{t("grievancesUi.complaintType")}</dt>
+              <dd className="text-ink">{g.complaintType ?? "—"}</dd>
+              <dt className="text-muted">{t("grievancesUi.location")}</dt>
+              <dd className="text-ink whitespace-pre-line">{g.location ?? "—"}</dd>
               <dt className="text-muted">{t("grievancesUi.citizen")}</dt>
               <dd className="text-ink">{g.citizenName}</dd>
               <dt className="text-muted">{t("users.phone")}</dt>

@@ -15,3 +15,9 @@ export function resolveHref(href: string, slug: string): string {
   }
   return href;
 }
+
+/** Detail pages of published records (src/app/(public)/[tenant]/{projects,schemes,announcements,success-stories}/[id]). */
+export type DetailKind = "projects" | "schemes" | "announcements" | "success-stories";
+export function detailHref(slug: string, kind: DetailKind, id: string): string {
+  return `/${slug}/${kind}/${encodeURIComponent(id)}`;
+}

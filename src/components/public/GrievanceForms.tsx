@@ -6,18 +6,18 @@ import { useLocale, useTranslations } from "next-intl";
 import { forwardRef, useEffect, useId, useRef, useState, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import type { PublicGrievanceReceiptDto, PublicGrievanceStatusDto } from "@/types/api";
+import type { PublicGrievanceLookupItemDto, PublicGrievanceReceiptDto, PublicGrievanceStatusDto } from "@/types/api";
 import { StatusPill } from "@/components/ui/StatusPill";
 import type { UiLocale } from "@/i18n/config";
 import { isApiError } from "@/lib/api/client";
-import { getGrievanceFormSettings, submitGrievance, trackGrievance, uploadGrievanceAttachment } from "@/lib/api/public";
+import { getGrievanceFormSettings, lookupGrievancesByPhone, submitGrievance, trackGrievance, uploadGrievanceAttachment } from "@/lib/api/public";
 import { pickText } from "@/i18n/text";
 import { cn } from "@/lib/cn";
 import { Turnstile, TURNSTILE_SITE_KEY } from "./Turnstile";
 import { formatDateTime } from "@/lib/format";
 
 const CATEGORIES = ["water", "roads", "sanitation", "electricity", "health", "education", "certificates", "tax", "other"] as const;
-/** "Complaint Type" choices of the Figma form. Not an API field: folded into the description (see composeDescription). */
+/** "Complaint Type" choices of the Figma form, sent as `complaintType` (the key; shown translated on lookup). */
 const TYPES = ["complaint", "request", "suggestion"] as const;
 
 const submitSchema = z.object({
@@ -26,10 +26,9 @@ const submitSchema = z.object({
   citizenName: z.string().trim().min(2).max(120),
   citizenPhone: z.string().trim().regex(/^\+?[0-9]{10,15}$/, "Invalid phone number").or(z.literal("")),
   citizenEmail: z.string().trim().pipe(z.email()).or(z.literal("")),
-  location: z.string().trim().max(150),
-  subject: z.string().trim().max(150),
-  // The API allows 5000 characters in total; the folded type / location / subject lines need some of them.
-  description: z.string().trim().min(10).max(4500),
+  location: z.string().trim().min(2).max(300).or(z.literal("")),
+  subject: z.string().trim().min(3).max(200).or(z.literal("")),
+  description: z.string().trim().min(10).max(5000),
 });
 type SubmitValues = z.infer<typeof submitSchema>;
 
@@ -109,16 +108,6 @@ const AreaField = forwardRef<HTMLTextAreaElement, AreaProps>(function AreaField(
   );
 });
 
-/**
- * The complaint API (POST /public/:slug/grievances) has no complaint type, location or subject field.
- * The design asks for them, so their values are folded into the description text the office receives
- * instead of being dropped (see docs/backend-needs-public-site.md).
- */
-function composeDescription(v: SubmitValues, labels: { type: string; location: string; subject: string }, typeLabel: string): string {
-  const head = [v.complaintType && `${labels.type}: ${typeLabel}`, v.location && `${labels.location}: ${v.location}`, v.subject && `${labels.subject}: ${v.subject}`].filter(Boolean);
-  return head.length ? `${head.join("\n")}\n\n${v.description}` : v.description;
-}
-
 /** Figma "Register Your Complaint" → POST /public/:slug/grievances; shows the tracking code once. */
 export function GrievanceSubmitForm({ slug }: { slug: string }) {
   const t = useTranslations("public.grievanceForm");
@@ -196,7 +185,10 @@ export function GrievanceSubmitForm({ slug }: { slug: string }) {
         citizenName: values.citizenName,
         citizenPhone: values.citizenPhone || null,
         citizenEmail: values.citizenEmail || null,
-        description: composeDescription(values, { type: t("type"), location: t("location"), subject: t("subject") }, values.complaintType ? t(`types.${values.complaintType}`) : ""),
+        complaintType: values.complaintType || null,
+        subject: values.subject || null,
+        location: values.location || null,
+        description: values.description,
       });
       setReceipt(r);
     } catch (err) {
@@ -313,9 +305,16 @@ export function GrievanceSubmitForm({ slug }: { slug: string }) {
   );
 }
 
+/** A 10-digit Indian mobile number, optionally written with +91 / 91 / 0 and spaces or dashes; null otherwise. */
+function asMobile(input: string): string | null {
+  const digits = input.replace(/[\s-]/g, "");
+  const m = /^(?:\+?91|0)?([6-9][0-9]{9})$/.exec(digits);
+  return m ? m[1]! : null;
+}
+
 /**
- * Figma "Track Your Complaint" → GET /public/:slug/grievances/:trackingCode. The design also offers a
- * lookup by mobile number; the API only accepts the tracking code, so the field takes the code only.
+ * Figma "Track Your Complaint". The field takes either a tracking code (GET /public/:slug/grievances/:code)
+ * or the 10-digit mobile number used on the complaint (GET /public/:slug/grievances?phone=, last 12 months).
  */
 export function GrievanceTrackForm({ slug }: { slug: string }) {
   const t = useTranslations("public.grievanceForm");
@@ -324,19 +323,39 @@ export function GrievanceTrackForm({ slug }: { slug: string }) {
   const locale = useLocale() as UiLocale;
   const [code, setCode] = useState("");
   const [result, setResult] = useState<PublicGrievanceStatusDto | null>(null);
+  const [matches, setMatches] = useState<PublicGrievanceLookupItemDto[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const categoryLabel = (c: string) => ((CATEGORIES as readonly string[]).includes(c) ? t(`categories.${c}`) : c);
+  const typeLabel = (c: string | null) => (c && (TYPES as readonly string[]).includes(c) ? t(`types.${c}`) : c);
+
+  async function byCode(value: string) {
+    setLoading(true);
+    try {
+      setResult(await trackGrievance(slug, value));
+    } catch (err) {
+      setError(isApiError(err, "NOT_FOUND") ? t("notFound") : isApiError(err, "RATE_LIMITED") ? t("lookupRateLimited") : err instanceof Error ? err.message : tc("errorGeneric"));
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function lookup(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setResult(null);
-    if (!/^GRV-[A-Z0-9]{8}$/i.test(code.trim())) return setError(t("invalidCode"));
+    setMatches(null);
+    const value = code.trim();
+    if (/^GRV-[A-Z0-9]{8}$/i.test(value)) return byCode(value);
+    const phone = asMobile(value);
+    if (!phone) return setError(t("invalidCodeOrPhone"));
     setLoading(true);
     try {
-      setResult(await trackGrievance(slug, code));
+      const rows = await lookupGrievancesByPhone(slug, phone);
+      if (rows.length === 0) setError(t("phoneNoResults"));
+      else setMatches(rows);
     } catch (err) {
-      setError(isApiError(err, "NOT_FOUND") ? t("notFound") : err instanceof Error ? err.message : tc("errorGeneric"));
+      setError(isApiError(err, "RATE_LIMITED") ? t("lookupRateLimited") : isApiError(err, "VALIDATION_ERROR") ? t("invalidCodeOrPhone") : err instanceof Error ? err.message : tc("errorGeneric"));
     } finally {
       setLoading(false);
     }
@@ -346,15 +365,16 @@ export function GrievanceTrackForm({ slug }: { slug: string }) {
     <div className="h-full rounded-[10px] bg-white px-6 py-8 shadow-[0_0_10px_rgba(0,0,0,0.12)]">
       <form onSubmit={lookup} noValidate>
         <label htmlFor="grievance-track-code" className="text-[18px] font-semibold text-black">
-          {t("trackLabel")}
+          {t("trackLabelAny")}
         </label>
         <div className="mt-4 flex flex-col gap-4 sm:flex-row">
           <input
             id="grievance-track-code"
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
-            placeholder={t("trackPlaceholder")}
+            placeholder={t("trackPlaceholderAny")}
             aria-invalid={!!error}
+            inputMode="text"
             className="h-[58px] flex-1 rounded-[8px] border border-black/15 bg-white px-4 text-[16px] text-black placeholder:text-[#414141]/60 focus:border-[#135130] focus:outline-none"
           />
           <button type="submit" disabled={loading} className="inline-flex h-[58px] items-center justify-center gap-3 rounded-[8px] bg-[#135130] px-7 text-[18px] font-semibold text-white hover:opacity-90 disabled:opacity-60 sm:min-w-[204px]">
@@ -368,13 +388,73 @@ export function GrievanceTrackForm({ slug }: { slug: string }) {
           </p>
         )}
       </form>
+      {matches && !result && (
+        <div className="mt-5 border-t border-black/10 pt-5">
+          <p className="text-sm font-semibold text-black">{t("phoneResults", { count: matches.length })}</p>
+          <ul className="mt-3 grid gap-3">
+            {matches.map((m) => (
+              <li key={m.trackingCode} className="rounded-[8px] border border-black/10 px-4 py-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setError(null);
+                      setCode(m.trackingCode);
+                      void byCode(m.trackingCode);
+                    }}
+                    className="font-mono text-sm font-semibold text-[#135130] hover:underline"
+                    title={t("viewStatus")}
+                  >
+                    {m.trackingCode}
+                  </button>
+                  <StatusPill status={m.status} label={ta(`grievanceStatus.${m.status}`)} />
+                  <span className="text-xs text-[#414141]">
+                    {categoryLabel(m.category)}
+                    {m.complaintType && ` · ${typeLabel(m.complaintType)}`}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-[#414141]">
+                  {t("filedOn", { date: formatDateTime(m.createdAt, locale) })} · {t("updatedOn", { date: formatDateTime(m.updatedAt, locale) })}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {result && (
         <div className="mt-5 border-t border-black/10 pt-5">
+          {matches && (
+            <button type="button" onClick={() => setResult(null)} className="mb-3 text-xs font-semibold text-[#135130] hover:underline">
+              ← {t("backToList")}
+            </button>
+          )}
           <div className="flex flex-wrap items-center gap-3">
             <span className="font-mono text-sm font-semibold text-black">{result.trackingCode}</span>
             <StatusPill status={result.status} label={ta(`grievanceStatus.${result.status}`)} />
-            <span className="text-xs text-[#414141]">{(CATEGORIES as readonly string[]).includes(result.category) ? t(`categories.${result.category}`) : result.category}</span>
+            <span className="text-xs text-[#414141]">{categoryLabel(result.category)}</span>
           </div>
+          {(result.complaintType || result.subject || result.location) && (
+            <dl className="mt-3 grid gap-1 text-sm sm:grid-cols-[auto_1fr] sm:gap-x-4">
+              {result.complaintType && (
+                <>
+                  <dt className="font-semibold text-black">{t("type")}</dt>
+                  <dd className="text-[#414141]">{typeLabel(result.complaintType)}</dd>
+                </>
+              )}
+              {result.subject && (
+                <>
+                  <dt className="font-semibold text-black">{t("subject")}</dt>
+                  <dd className="break-words text-[#414141]">{result.subject}</dd>
+                </>
+              )}
+              {result.location && (
+                <>
+                  <dt className="font-semibold text-black">{t("location")}</dt>
+                  <dd className="break-words text-[#414141]">{result.location}</dd>
+                </>
+              )}
+            </dl>
+          )}
           {result.resolutionNote && <p className="mt-3 rounded-[8px] bg-[#eef5ee] px-4 py-3 text-sm text-black">{result.resolutionNote}</p>}
           <ol className="mt-4 grid gap-2 text-sm">
             {result.timeline.map((e, i) => (

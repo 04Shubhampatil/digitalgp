@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { pickText, type Bilingual } from "@/i18n/text";
+import { pair, pickText, type Bilingual } from "@/i18n/text";
 import { pageHref } from "@/config/public-nav";
-import { resolveHref } from "@/lib/href";
+import { listPublicAnnouncements, publicMediaUrl } from "@/lib/api/public";
+import { detailHref, resolveHref } from "@/lib/href";
 import { AchievementsCard } from "./HomeFeed";
 import type { SectionProps } from "./index";
 
@@ -29,11 +30,36 @@ const CHIP: Record<string, string> = {
   ongoing: "bg-[#fff0dc] text-[#f5871f]",
 };
 
-/** `whats-new`: "What's New This Week?" list with thumbnails and status chips (Figma 375:13391). */
+type NewsItem = { title?: B; date?: B | string; status?: string; imageUrl?: string; href?: string };
+
+/**
+ * `whats-new`: "What's New This Week?" list with thumbnails and status chips (Figma 375:13391). Each row opens its
+ * `href` (published items) or the list. The placeholder (`source: "announcements"`) shows the published announcements
+ * meant for the home page instead of its sample rows; each opens its announcement page.
+ */
 export async function WhatsNewSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public");
-  const d = data as { heading?: B; viewAll?: { label?: B; href?: string }; items?: { title?: B; date?: B | string; status?: string; imageUrl?: string; href?: string }[] };
-  const items = d.items ?? [];
+  const d = data as { heading?: B; source?: "announcements"; viewAll?: { label?: B; href?: string }; items?: NewsItem[] };
+  let items: NewsItem[] = d.items ?? [];
+  if (d.source === "announcements") {
+    const live = await listPublicAnnouncements(slug, { page: "home", limit: 5 }).catch(() => null);
+    if (live && live.data.length > 0) {
+      const fmt = new Intl.DateTimeFormat(locale === "mr" ? "mr-IN" : "en-IN", { day: "2-digit", month: "long", year: "numeric", timeZone: "Asia/Kolkata" });
+      // The design pictures belong to the sample rows; a published row keeps the picture of the sample with the same title.
+      const pictures = new Map(items.map((i) => [pickText(i.title, "en").toLowerCase(), i.imageUrl]));
+      items = live.data.map((a) => {
+        const title = pair(a.titleEn, a.titleMr);
+        const status = a.category.trim().toLowerCase();
+        return {
+          title,
+          date: a.publishedAt ? fmt.format(new Date(a.publishedAt)) : "",
+          status: status in CHIP ? status : a.category,
+          imageUrl: a.attachment?.kind === "IMAGE" ? publicMediaUrl(slug, a.attachment.id) : pictures.get(pickText(title, "en").toLowerCase()),
+          href: detailHref(slug, "announcements", a.id),
+        };
+      });
+    }
+  }
   if (items.length === 0) return null;
   return (
     <div className="rounded-[10px] border border-black/15 bg-white p-3">

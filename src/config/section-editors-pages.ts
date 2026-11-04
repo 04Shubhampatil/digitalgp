@@ -29,6 +29,14 @@ const bullets = (name: string, labelKey: string, max: number): FieldSpec => ({ n
 const group = (name: string, labelKey: string, fields: FieldSpec[], x: Partial<GroupSpec> = {}): GroupSpec => ({ name, labelKey, fields, ...x });
 const section = (key: string, labelKey: string, x: Partial<SectionEditorSpec>): SectionEditorSpec => ({ key, labelKey, fields: [], ...x });
 
+/** "View all" button under a list section (`viewAllSchema`); omitted while both inputs are empty. */
+const viewAll = group("viewAll", "viewAll", [bi("label", "viewAllLabel", { required: true }), link("href", "viewAllLink", { required: true })], { optional: true });
+/** Spec for a section that spreads `listHeader` (heading, subheading, viewAll) into its schema. */
+const listSection = (key: string, labelKey: string, x: Partial<SectionEditorSpec>): SectionEditorSpec =>
+  section(key, labelKey, { ...x, fields: [bi("heading", "heading"), bi("subheading", "subheading"), ...(x.fields ?? [])], groups: [...(x.groups ?? []), viewAll] });
+/** Market prices row (single market and each of `markets[]`). */
+const priceRowFields: FieldSpec[] = [bi("commodity", "commodity", { required: true }), txt("unit", "unit", 20, { required: true }), num("minPrice", "minPrice", { required: true }), num("maxPrice", "maxPrice", { required: true }), num("modalPrice", "modalPrice", { required: true })];
+
 // ---------------------------------------------------------------- shared sections
 /** Figma "Banner": layout, content, CTA buttons, image, text position, overlay, appearance. */
 const banner = section("banner", "banner", {
@@ -69,20 +77,40 @@ const banner = section("banner", "banner", {
 });
 
 const topStats = section("top-stats", "topStats", {
-  fields: [bi("heading", "heading"), bi("subheading", "subheading"), sel("variant", "variant", ["tiles", "strip"])],
+  fields: [bi("heading", "heading"), bi("subheading", "subheading"), sel("variant", "variant", ["tiles", "strip", "card", "band"])],
   items: list("items", "topStat", 8, [icon(), bi("title", "title", { required: true }), txt("value", "value", 40, { required: true }), bi("unit", "unit"), bi("description", "description"), colour("background", "backgroundColour"), on("visible", "visible", { default: true })]),
 });
 
 const supportCards = (key: string, labelKey: string) =>
-  section(key, labelKey, {
-    items: list("items", "supportCard", 12, [icon(), bi("title", "title", { required: true }), bi("description", "description"), txt("contactOrAction", "contactOrAction", 300), on("visible", "visible", { default: true })]),
+  listSection(key, labelKey, {
+    fields: [sel("layout", "layout", ["grid", "strip", "contact"], { segmented: true })],
+    items: list("items", "supportCard", 12, [
+      icon(),
+      bi("title", "title", { required: true }),
+      bi("description", "description"),
+      txt("contactOrAction", "contactOrAction", 300),
+      link("link", "cardLink", { placeholder: "page:contact, tel:…, https://…" }),
+      colour("colour", "accentColour"),
+      on("visible", "visible", { default: true }),
+    ]),
   });
 
-const successStories = section("success-stories", "successStories", {
-  items: list("items", "story", 30, [img("imageId"), bi("title", "title", { required: true }), bi("description", "description"), bi("buttonText", "buttonText"), link("buttonLink", "buttonLink"), int("order", "displayOrder", { required: true, default: 0 })]),
+const successStories = listSection("success-stories", "successStories", {
+  fields: [sel("layout", "layout", ["cards", "quote"], { segmented: true })],
+  items: list("items", "story", 30, [
+    img("imageId"),
+    bi("title", "title", { required: true }),
+    bi("description", "description"),
+    bi("quote", "quote"),
+    bi("personName", "personName"),
+    txt("storyId", "storyId", 40, { placeholder: "Success story id (Read Story page)" }),
+    bi("buttonText", "buttonText"),
+    link("buttonLink", "buttonLink"),
+    int("order", "displayOrder", { required: true, default: 0 }),
+  ]),
 });
 
-const trainingPrograms = section("training-programs", "trainingPrograms", {
+const trainingPrograms = listSection("training-programs", "trainingPrograms", {
   items: list("items", "program", 50, [
     img("thumbnailImageId", "thumbnail"),
     bi("title", "title", { required: true }),
@@ -96,7 +124,9 @@ const trainingPrograms = section("training-programs", "trainingPrograms", {
 });
 
 const iconCardList = (key: string, labelKey: string, itemKey: string, max: number) =>
-  section(key, labelKey, { items: list("items", itemKey, max, [icon(), bi("title", "title", { required: true }), link("link"), on("active", "active", { default: true })]) });
+  listSection(key, labelKey, {
+    items: list("items", itemKey, max, [icon(), bi("title", "title", { required: true }), bi("description", "description"), link("link"), colour("colour", "accentColour"), on("active", "active", { default: true })]),
+  });
 
 const supportCardBlock = (name: string, labelKey: string) =>
   group(name, labelKey, [on("enabled", "enabled", { default: true }), icon(), bi("title", "title", { required: true }), bi("description", "description"), bi("buttonText", "buttonText"), link("buttonLink", "buttonLink")], { optional: true });
@@ -176,7 +206,7 @@ const finance: SectionEditorSpec[] = [
   }),
   section("documents", "documents", {
     fields: [bi("heading", "heading", { required: true }), bi("subtitle", "subtitle"), bi("description", "description"), colour("backgroundColour", "backgroundColour", { required: true, default: "#FFFFFF" })],
-    items: list("items", "document", 50, [bi("title", "title", { required: true }), file("fileId", "pdfFile", { required: true }), bi("buttonText", "buttonText")]),
+    items: list("items", "document", 50, [bi("title", "title", { required: true }), file("fileId", "pdfFile", { required: true }), txt("fileSize", "fileSize", 20, { placeholder: "2.4 MB" }), bi("buttonText", "buttonText")]),
   }),
 ];
 
@@ -247,7 +277,15 @@ const culture: SectionEditorSpec[] = [
   section("heritage-cards", "heritageCards", { items: list("items", "heritageCard", 20, [bi("title", "title", { required: true }), bi("description", "description"), img("imageId")]) }),
   section("culture-cards", "cultureCards", { fields: [on("enabled", "enabled", { default: true })], items: list("items", "cultureCard", 12, [bi("title", "title", { required: true }), bi("description", "description"), img("imageId")]) }),
   section("homestay", "homestay", {
-    fields: [bi("heading", "heading", { required: true }), bi("description", "description"), bi("buttonLabel", "buttonLabel"), link("buttonLink", "buttonLink"), img("imageId")],
+    fields: [
+      bi("heading", "heading", { required: true }),
+      bi("description", "description"),
+      bi("buttonLabel", "buttonLabel"),
+      link("buttonLink", "buttonLink"),
+      bi("bookingLabel", "bookingLabel"),
+      link("bookingLink", "bookingLink"),
+      img("imageId"),
+    ],
     items: list("features", "feature", 8, [icon(), bi("title", "title", { required: true })]),
   }),
   trainingPrograms,
@@ -255,9 +293,17 @@ const culture: SectionEditorSpec[] = [
   section("fpo-gallery-voice", "fpoGalleryVoice", {
     fields: [on("enabled", "enabled", { default: true })],
     groups: [
-      group("fpo", "fpo", [img("iconId", "sectionIcon"), bi("title", "title", { required: true }), bi("description", "description"), bullets("points", "points", 10)]),
-      group("gallery", "virtualGallery", [bi("title", "title", { required: true }), bi("description", "description"), imgs("imageIds", "galleryImages", 30)]),
-      group("voice", "voiceOfVillage", [bi("title", "title", { required: true }), bi("description", "description"), file("videoId", "videoFile"), txt("videoUrl", "videoUrl", 2000, { placeholder: "https://www.youtube.com/watch?v=…" })]),
+      group("fpo", "fpo", [img("iconId", "sectionIcon"), bi("title", "title", { required: true }), bi("description", "description"), bullets("points", "points", 10), bi("linkLabel", "linkLabel"), link("link")]),
+      group("gallery", "virtualGallery", [bi("title", "title", { required: true }), bi("description", "description"), imgs("imageIds", "galleryImages", 30), bi("linkLabel", "linkLabel"), link("link")]),
+      group("voice", "voiceOfVillage", [
+        bi("title", "title", { required: true }),
+        bi("description", "description"),
+        img("imageId", "cardImage"),
+        file("videoId", "videoFile"),
+        txt("videoUrl", "videoUrl", 2000, { placeholder: "https://www.youtube.com/watch?v=…" }),
+        bi("linkLabel", "linkLabel"),
+        link("link"),
+      ]),
     ],
   }),
   successStories,
@@ -268,12 +314,12 @@ const employment: SectionEditorSpec[] = [
   banner,
   supportCards("support-cards", "supportCards"),
   supportCards("local-opportunities", "localOpportunities"),
-  section("skill-directory", "skillDirectory", {
+  listSection("skill-directory", "skillDirectory", {
     items: list("items", "skill", 30, [icon(), bi("skillName", "skillName", { required: true }), int("availableCount", "availableCount"), on("countIsApproximate", "countIsApproximate", { default: true }), link("link"), on("active", "active", { default: true })]),
   }),
   iconCardList("assistance-items", "assistanceItems", "assistanceItem", 30),
   trainingPrograms,
-  section("job-portals", "jobPortals", {
+  listSection("job-portals", "jobPortals", {
     items: list("items", "portal", 30, [img("logoId", "logo"), bi("name", "name", { required: true }), bi("description", "description"), link("websiteUrl", "websiteUrl", { required: true, placeholder: "https://" }), int("order", "displayOrder", { required: true, default: 0 }), on("active", "active", { default: true })]),
   }),
   successStories,
@@ -283,38 +329,72 @@ const employment: SectionEditorSpec[] = [
 const education: SectionEditorSpec[] = [
   banner,
   supportCards("support-cards", "supportCards"),
-  section("student-spotlight", "studentSpotlight", {
+  listSection("student-spotlight", "studentSpotlight", {
     descriptionKey: "studentSpotlightDesc",
     fields: [img("photoId", "studentPhoto"), bi("name", "studentName", { required: true }), bi("classAndSchool", "classAndSchool"), bl("achievements", "achievements"), bi("quote", "quote"), bi("buttonText", "buttonText"), link("buttonLink", "buttonLink")],
     groups: [group("guardianConsent", "guardianConsent", [on("confirmed", "guardianConfirmed"), txt("confirmedBy", "confirmedBy", 120, { required: true }), { name: "confirmedAt", type: "datetime", labelKey: "confirmedAt", required: true }], { optional: true })],
     items: list("achievementCards", "achievementCard", 6, [icon(), bi("title", "title", { required: true }), txt("value", "value", 40, { required: true })]),
   }),
   section("youth-speak-tabs", "youthSpeakTabs", { items: list("items", "tab", 10, [txt("tabKey", "tabKey", 40, { required: true }), bi("name", "name", { required: true }), on("active", "active", { default: true })]) }),
-  section("youth-posts", "youthPosts", {
-    items: list("items", "post", 300, [txt("tabKey", "tabKey", 40, { required: true }), sel("type", "postType", ["blog", "youtube", "reel", "idea"], { required: true }), bi("title", "title", { required: true }), img("coverImageId", "coverImage"), link("url", "postUrl")]),
+  listSection("youth-posts", "youthPosts", {
+    items: list("items", "post", 300, [
+      txt("tabKey", "tabKey", 40, { required: true }),
+      sel("type", "postType", ["blog", "youtube", "reel", "idea"], { required: true }),
+      bi("title", "title", { required: true }),
+      img("coverImageId", "coverImage"),
+      link("url", "postUrl"),
+      bi("author", "author"),
+      date("date", "date"),
+    ]),
   }),
-  section("scheme-cards", "schemeCards", { items: list("items", "schemeCard", 30, [icon(), bi("title", "title", { required: true }), bi("description", "description"), bi("buttonText", "buttonText"), link("buttonLink", "buttonLink"), on("active", "active", { default: true })]) }),
+  listSection("scheme-cards", "schemeCards", {
+    items: list("items", "schemeCard", 30, [
+      icon(),
+      bi("title", "title", { required: true }),
+      bi("description", "description"),
+      bi("buttonText", "buttonText"),
+      link("buttonLink", "buttonLink"),
+      link("link", "cardLink"),
+      colour("colour", "accentColour"),
+      on("active", "active", { default: true }),
+    ]),
+  }),
   successStories,
 ];
 
 // ---------------------------------------------------------------- Environment & Sustainability
 const environment: SectionEditorSpec[] = [
   banner,
-  section("key-initiatives", "keyInitiatives", {
-    fields: [bi("heading", "heading"), bi("subheading", "subheading")],
+  listSection("key-initiatives", "keyInitiatives", {
     items: list("items", "initiative", 20, [icon("icon", { required: true }), bi("title", "title", { required: true }), link("link"), on("active", "active", { default: true })]),
   }),
   topStats,
   section("green-scoreboard", "greenScoreboard", { items: list("items", "scoreItem", 12, [icon(), bi("title", "title", { required: true }), txt("value", "value", 40, { required: true }), bi("description", "description"), on("visible", "visible", { default: true })]) }),
   section("tree-adoption", "treeAdoption", {
-    fields: [on("enabled", "enabled", { default: true }), bi("title", "title", { required: true }), bi("description", "description"), bullets("bullets", "bulletPoints", 8), img("illustrationId", "illustration"), bi("buttonText", "buttonText"), link("buttonLink", "buttonLink")],
+    fields: [
+      on("enabled", "enabled", { default: true }),
+      bi("title", "title", { required: true }),
+      bi("description", "description"),
+      bullets("bullets", "bulletPoints", 8),
+      img("illustrationId", "illustration"),
+      bi("buttonText", "buttonText"),
+      link("buttonLink", "buttonLink"),
+      mail("recipientEmail", "recipientEmail", { placeholder: "gp-office@example.in" }),
+      bi("successMessage", "successMessage"),
+    ],
     items: list("stats", "stat", 6, [icon(), bi("title", "title", { required: true }), txt("value", "value", 40, { required: true }), bi("subText", "subText")]),
   }),
-  section("sustainability-initiatives", "sustainabilityInitiatives", { items: list("items", "initiative", 30, [img("imageId"), bi("title", "title", { required: true }), bi("description", "description"), on("active", "active", { default: true })]) }),
+  section("sustainability-initiatives", "sustainabilityInitiatives", { items: list("items", "initiative", 30, [img("imageId"), bi("title", "title", { required: true }), bi("description", "description"), link("link"), on("active", "active", { default: true })]) }),
   section("market-prices", "marketPrices", {
     descriptionKey: "marketPricesDesc",
     fields: [bi("title", "title", { required: true }), { name: "lastUpdatedAt", type: "datetime", labelKey: "lastUpdatedAt", required: true }, bi("marketName", "marketName"), txt("currency", "currency", 10, { required: true, default: "INR" }), bi("note", "note"), bi("buttonText", "buttonText"), link("buttonLink", "buttonLink")],
-    items: list("rows", "priceRow", 50, [bi("commodity", "commodity", { required: true }), txt("unit", "unit", 20, { required: true }), num("minPrice", "minPrice", { required: true }), num("maxPrice", "maxPrice", { required: true }), num("modalPrice", "modalPrice", { required: true })]),
+    items: list("rows", "priceRow", 50, priceRowFields),
+    // Several markets for the "Select Market" dropdown; the single-market rows above stay the default selection.
+    lists: [
+      list("markets", "market", 10, [txt("key", "marketKey", 40, { required: true, placeholder: "khed-apmc" }), bi("name", "marketName", { required: true }), { name: "lastUpdatedAt", type: "datetime", labelKey: "lastUpdatedAt" }], {
+        children: list("rows", "priceRow", 50, priceRowFields),
+      }),
+    ],
   }),
   section("weather-update", "weatherUpdate", {
     descriptionKey: "weatherUpdateDesc",
@@ -349,7 +429,7 @@ const gallery: SectionEditorSpec[] = [
     items: list("items", "video", 100, [img("thumbnailId", "thumbnail"), bi("title", "title", { required: true }), link("videoUrl", "videoUrl", { required: true, placeholder: "https://www.youtube.com/watch?v=…" }), date("date"), txt("duration", "duration", 20, { placeholder: "02:34" }), int("order", "displayOrder", { required: true, default: 0 })]),
   }),
   section("press-coverage", "pressCoverage", {
-    items: list("items", "pressItem", 50, [img("logoId", "logo"), txt("mediaName", "mediaName", 120, { required: true }), bi("title", "title", { required: true }), date("date", "date", { required: true }), link("url", "articleUrl", { required: true, placeholder: "https://" }), int("order", "displayOrder", { required: true, default: 0 })]),
+    items: list("items", "pressItem", 50, [img("logoId", "logo"), txt("mediaName", "mediaName", 120, { required: true }), bi("title", "title", { required: true }), bi("category", "pressCategory"), date("date", "date", { required: true }), link("url", "articleUrl", { required: true, placeholder: "https://" }), int("order", "displayOrder", { required: true, default: 0 })]),
   }),
   section("then-and-now", "thenAndNow", {
     fields: [bi("heading", "heading", { required: true }), on("autoPlay", "autoPlay", { default: true }), int("transitionMs", "transitionMs", { required: true, default: 3000 })],
@@ -362,6 +442,9 @@ const gallery: SectionEditorSpec[] = [
       bi("description", "description"),
       sel("source", "videoSource", ["upload", "link"], { required: true, segmented: true }),
       file("videoId", "videoFile"),
+      img("thumbnailId", "thumbnail"),
+      link("thumbnailUrl", "thumbnailUrl", { placeholder: "https://" }),
+      txt("duration", "duration", 20, { placeholder: "04:35" }),
       link("videoUrl", "videoUrl", { placeholder: "https://www.youtube.com/watch?v=…" }),
       date("publishedDate", "publishedDate", { required: true }),
       on("autoThumbnail", "autoThumbnail", { default: true }),
@@ -456,6 +539,8 @@ export const EXTRA_EDITORS: Partial<Record<PageKey, SectionEditorSpec[]>> = {
     banner,
     topStats,
     section("before-after-gallery", "beforeAfterGallery", {
+      fields: [bi("eyebrow", "eyebrow"), bi("heading", "heading")],
+      groups: [viewAll],
       items: list("items", "comparison", 20, [img("beforeImageId", "beforeImage", { required: true }), img("afterImageId", "afterImage", { required: true }), bi("title", "title", { required: true }), bi("description", "description"), int("order", "displayOrder", { required: true, default: 0 })]),
     }),
     section("village-resolution-tracker", "villageResolutionTracker", {
@@ -477,11 +562,12 @@ export const EXTRA_EDITORS: Partial<Record<PageKey, SectionEditorSpec[]>> = {
     banner,
     section("category-strip", "categoryStrip", { items: list("items", "categoryStripItem", 12, [icon("icon", { required: true }), bi("label", "label", { required: true }), txt("key", "keyName", 40, { required: true }), on("active", "active", { default: true })]) }),
     section("link-cards", "linkCards", {
-      fields: [bi("heading", "heading"), bi("subheading", "subheading"), sel("layout", "layout", ["grid", "list"])],
+      fields: [bi("heading", "heading"), bi("subheading", "subheading"), sel("layout", "layout", ["grid", "list"], { segmented: true })],
+      groups: [viewAll],
       items: list("items", "linkCard", 12, [icon(), img("iconId", "icon"), bi("title", "title", { required: true }), bi("body", "body"), bi("cta", "cta"), link("href", "link")]),
     }),
     section("coverage-map", "coverageMap", {
-      fields: [bi("heading", "heading"), img("mapImageId", "mapImage")],
+      fields: [bi("heading", "heading"), bi("subheading", "subheading"), img("mapImageId", "mapImage")],
       items: list("wards", "coverageWard", 60, [txt("wardNo", "wardNo", 20, { required: true }), int("households", "households", { required: true, default: 0 }), int("beneficiaries", "beneficiaries", { required: true, default: 0 }), colour("colour", "colour")]),
     }),
     section("statistics", "statistics", { items: list("items", "statisticItem", 12, [icon("icon", { required: true }), bi("title", "title", { required: true }), txt("value", "value", 40, { required: true }), bi("description", "description")]) }),

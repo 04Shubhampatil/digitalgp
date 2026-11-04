@@ -115,6 +115,8 @@ export const FIGMA_HOME_SECTIONS: FallbackSection[] = [
     data: {
       heading: { en: "What’s New This Week?" },
       viewAll: { label: { en: "View All" }, href: "page:announcements" },
+      // Published announcements shown on the home page replace the sample rows (each opens its announcement).
+      source: "announcements",
       items: [
         { title: { en: "New Water Pipeline Project Completed in Ward 2" }, date: { en: "08 July, 2026" }, status: "completed", imageUrl: "/images/figma/pages/news-1.png" },
         { title: { en: "450 Trees Planted in Village Plantation Drive" }, date: { en: "06 July, 2026" }, status: "completed", imageUrl: "/images/figma/pages/news-2.png" },

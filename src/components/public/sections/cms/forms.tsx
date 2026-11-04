@@ -255,12 +255,14 @@ export async function EscalationMatrixSection({ slug, locale, data }: SectionPro
   if (steps.length === 0 && statuses.length === 0) return null;
   const stats = await getGrievanceStats(slug);
   const num = (n: number) => n.toLocaleString(locale === "mr" ? "mr-IN" : "en-IN");
+  // Month-on-month change (last month vs the month before, from the backend); no line while it is null.
+  const change = (n: number | null | undefined) => (n === null || n === undefined ? "" : `${n > 0 ? "+" : ""}${n}% ${t("fromLastMonthShort")}`);
   const rows = stats
     ? [
-        { icon: FileBarChart, label: t("statusTotal"), value: num(stats.total), fg: "#1a62e0", bg: "#eaf2fd", border: "#b9d0f5", text: "text-black" },
-        { icon: CircleCheck, label: t("statusResolved"), value: num(stats.resolved), fg: "#2f8a3c", bg: "#eef7ee", border: "#cfe6cf", text: "text-black" },
-        { icon: Clock, label: t("statusPending"), value: num(stats.pending), fg: "#f5871f", bg: "#fef4e8", border: "#f8d9b5", text: "text-black" },
-        { icon: ChartLine, label: t("statusRate"), value: stats.resolutionRate === null ? "—" : `${stats.resolutionRate}%`, fg: "#7b2cbf", bg: "#f4ecfc", border: "#dcc8f2", text: "text-[#7b2cbf]" },
+        { icon: FileBarChart, label: t("statusTotal"), value: num(stats.total), change: change(stats.receivedChangePercent), fg: "#1a62e0", bg: "#eaf2fd", border: "#b9d0f5", text: "text-black" },
+        { icon: CircleCheck, label: t("statusResolved"), value: num(stats.resolved), change: change(stats.resolvedChangePercent), fg: "#2f8a3c", bg: "#eef7ee", border: "#cfe6cf", text: "text-black" },
+        { icon: Clock, label: t("statusPending"), value: num(stats.pending), change: change(stats.pendingChangePercent), fg: "#f5871f", bg: "#fef4e8", border: "#f8d9b5", text: "text-black" },
+        { icon: ChartLine, label: t("statusRate"), value: stats.resolutionRate === null ? "—" : `${stats.resolutionRate}%`, change: change(stats.resolutionRateChangePoints), fg: "#7b2cbf", bg: "#f4ecfc", border: "#dcc8f2", text: "text-[#7b2cbf]" },
       ]
     : [];
   return (
@@ -307,9 +309,12 @@ export async function EscalationMatrixSection({ slug, locale, data }: SectionPro
             <h2 className="text-[20px] leading-8 font-semibold text-black">{t("complaintStatus")}</h2>
             <ul className="mt-4 space-y-2.5">
               {rows.map((r) => (
-                <li key={r.label} className="flex h-[45px] items-center gap-4 rounded-[6px] border px-4" style={{ backgroundColor: r.bg, borderColor: r.border }}>
+                <li key={r.label} className="flex min-h-[45px] items-center gap-4 rounded-[6px] border px-4 py-1" style={{ backgroundColor: r.bg, borderColor: r.border }}>
                   <r.icon aria-hidden className="size-6 shrink-0" style={{ color: r.fg }} />
-                  <span className={`flex-1 text-[15px] ${r.text}`}>{r.label}</span>
+                  <span className={`flex-1 text-[15px] ${r.text}`}>
+                    {r.label}
+                    {r.change && <span className="block text-[11px] leading-4 font-medium text-[#414141]">{r.change}</span>}
+                  </span>
                   <span className="w-20 text-[16px] font-semibold text-black">{r.value}</span>
                 </li>
               ))}
@@ -435,8 +440,7 @@ export async function FeedbackFormSection({ slug, locale, data }: SectionProps) 
             { name: "name", label: t("fbName"), placeholder: t("phName"), required: true },
             { name: "email", label: t("fbEmail"), placeholder: t("phEmail"), type: "email" },
             { name: "phone", label: t("fbPhone"), placeholder: t("phPhone"), type: "tel" },
-            // The feedback API has no subject field: the subject is sent as the first line of the message.
-            { name: "subject", label: t("fbSubject"), placeholder: t("phSubject"), foldInto: "message" },
+            { name: "subject", label: t("fbSubject"), placeholder: t("phSubject") },
             { name: "message", label: t("fbMessage"), placeholder: t("phMessage"), type: "textarea", span: 4, required: true },
           ]}
         />
@@ -517,8 +521,7 @@ export async function VolunteerCategoriesSection({ slug, locale, data, siblings 
 
 /**
  * `volunteer-registration`: "Volunteer Registration Form" card (POST /public/:slug/volunteers, or the
- * mail app while placeholder). Name / email / phone / category are API fields; the design's Address
- * and Area of Interest are not, so they are sent as lines of the optional message.
+ * mail app while placeholder). Name / email / phone / category / address / areaOfInterest are API fields.
  */
 export async function VolunteerRegistrationSection({ slug, locale, data, siblings }: SectionProps) {
   const t = await getTranslations("public.cms");
@@ -545,7 +548,7 @@ export async function VolunteerRegistrationSection({ slug, locale, data, sibling
               subject={tx(d.heading, locale) || t("volunteer")}
               submitLabel={tx(d.submitButtonText, locale) || t("send")}
               hint={t("mailHint")}
-              api={{ slug, kind: "volunteers", map: { area: "category" } }}
+              api={{ slug, kind: "volunteers", map: { area: "category", interest: "areaOfInterest" } }}
               gridClass="sm:grid-cols-2 lg:grid-cols-12 lg:gap-x-7"
               labelClass="text-[18px] font-semibold text-black"
               inputClass={input}
@@ -558,9 +561,8 @@ export async function VolunteerRegistrationSection({ slug, locale, data, sibling
                 ...(categories.length
                   ? [{ name: "area", label: t("volCategory"), type: "select" as const, options: categories, placeholder: t("selectCategory"), required: true, className: "lg:col-span-3" }]
                   : []),
-                // Not API fields: sent as lines of the volunteer's message.
-                { name: "address", label: t("volAddress"), placeholder: t("phAddress"), foldInto: "message", className: "lg:col-span-5" },
-                { name: "interest", label: t("areaOfInterest"), placeholder: t("phArea"), foldInto: "message", className: "lg:col-span-4" },
+                { name: "address", label: t("volAddress"), placeholder: t("phAddress"), className: "lg:col-span-5" },
+                { name: "interest", label: t("areaOfInterest"), placeholder: t("phArea"), className: "lg:col-span-4" },
               ]}
             />
           </div>

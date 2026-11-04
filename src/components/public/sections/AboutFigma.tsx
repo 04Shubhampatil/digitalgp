@@ -173,7 +173,8 @@ export function AboutStructureSection({ locale, data }: SectionProps) {
 
 /** `about-roles`: "What Panchayat officials do" — six numbered cards. */
 export function AboutRolesSection({ locale, data }: SectionProps) {
-  const d = data as { eyebrow?: B; heading?: B; items?: { title?: B; body?: B }[] };
+  // Placeholder rows carry `body`; the backend roles-cards rows carry a list of `points` (responsibilities).
+  const d = data as { eyebrow?: B; heading?: B; items?: { title?: B; body?: B; points?: B[] }[] };
   return (
     <section className="bg-cream py-10">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
@@ -184,7 +185,15 @@ export function AboutRolesSection({ locale, data }: SectionProps) {
             <li key={i} className="min-h-[246px] rounded-[13.5px] bg-white px-7 py-10 shadow-[0_0_27px_rgba(0,0,0,0.25)]">
               <span className="inline-flex h-[49px] w-[54px] items-center justify-center rounded-full bg-[rgba(243,140,40,0.09)] text-[24px] font-bold text-[#f38c28]">{String(i + 1).padStart(2, "0")}</span>
               <h3 className="mt-3 text-[21.6px] leading-[34px] font-bold text-black">{pickText(it.title, locale)}</h3>
-              <p className="mt-3 text-[16.2px] leading-[27px] text-[#414141]">{pickText(it.body, locale)}</p>
+              {pickText(it.body, locale) && <p className="mt-3 text-[16.2px] leading-[27px] text-[#414141]">{pickText(it.body, locale)}</p>}
+              {(it.points?.length ?? 0) === 1 && <p className="mt-3 text-[16.2px] leading-[27px] text-[#414141]">{pickText(it.points![0], locale)}</p>}
+              {(it.points?.length ?? 0) > 1 && (
+                <ul className="mt-3 list-disc space-y-1 pl-5 text-[16.2px] leading-[27px] text-[#414141]">
+                  {it.points!.map((pt, k) => (
+                    <li key={k}>{pickText(pt, locale)}</li>
+                  ))}
+                </ul>
+              )}
             </li>
           ))}
         </ul>
@@ -197,7 +206,8 @@ const EMERGENCY_ICONS = ["total", "ambulance", "fire", "health", "disaster", "el
 
 /** `about-emergency`: important contact numbers grid with call pills. */
 export function AboutEmergencySection({ locale, data }: SectionProps) {
-  const d = data as { eyebrow?: B; heading?: B; items?: { label?: B; numbers?: string[] }[] };
+  // `icon` (set when the backend emergency-services section is merged in) picks the pictogram; else the design order.
+  const d = data as { eyebrow?: B; heading?: B; items?: { label?: B; numbers?: string[]; icon?: string }[] };
   return (
     <section className="bg-[rgba(34,138,83,0.05)] py-8">
       <div className="mx-auto max-w-[1326px] px-4 sm:px-8">
@@ -205,7 +215,7 @@ export function AboutEmergencySection({ locale, data }: SectionProps) {
         <h2 className="mt-3 text-center text-[35px] leading-[45px] font-semibold text-black">{pickText(d.heading, locale)}</h2>
         <ul className="mt-8 flex flex-wrap justify-center gap-5">
           {(d.items ?? []).map((it, i) => {
-            const icon = EMERGENCY_ICONS[i % EMERGENCY_ICONS.length]!;
+            const icon = it.icon && EMERGENCY_ICONS.includes(it.icon) ? it.icon : EMERGENCY_ICONS[i % EMERGENCY_ICONS.length]!;
             return (
               <li key={i} className="flex min-h-[199px] w-[203px] flex-col items-center gap-4 rounded-[10px] border border-black/15 bg-white px-6 py-6 shadow-[0_0_10px_rgba(0,0,0,0.25)]">
                 <FigmaIcon name={`emerg-${icon}`} width={88} height={76} />
@@ -228,7 +238,7 @@ export function AboutEmergencySection({ locale, data }: SectionProps) {
 
 /** `about-vision`: green band with vision, mission and core values cards over the village photo. */
 export function AboutVisionSection({ locale, data }: SectionProps) {
-  const d = data as { visionLabel?: B; vision?: B; visionBody?: B; missionLabel?: B; mission?: B; valuesLabel?: B; values?: B[] };
+  const d = data as { visionLabel?: B; vision?: B; visionBody?: B; missionLabel?: B; mission?: B; missionPoints?: B[]; valuesLabel?: B; values?: B[] };
   return (
     <section className="bg-cream py-8">
       <div className="relative mx-auto max-w-[1324px] overflow-hidden rounded-[10px] bg-[#135130]">
@@ -237,16 +247,23 @@ export function AboutVisionSection({ locale, data }: SectionProps) {
         <div aria-hidden className="absolute inset-0 bg-[rgba(19,81,48,0.9)]" />
         <div className="relative grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_313px_313px] lg:px-[110px] lg:py-[23px]">
           <div className="flex flex-col justify-center gap-6 py-6 lg:pr-10">
-            <p className="text-[22px] font-semibold text-[#f3d828]">{pickText(d.visionLabel, locale)}</p>
+            <p className="text-[22px] font-semibold text-[#f3d828] uppercase">{pickText(d.visionLabel, locale)}</p>
             <p className="text-[35px] leading-[50px] font-bold text-white">{pickText(d.vision, locale)}</p>
             <p className="text-[14px] text-white">{pickText(d.visionBody, locale)}</p>
           </div>
           <div className="rounded-[10px] border border-white/20 bg-white/10 p-6">
-            <p className="text-[22px] font-semibold text-[#f3d828]">{pickText(d.missionLabel, locale)}</p>
-            <p className="mt-6 text-[14px] leading-6 text-white">{pickText(d.mission, locale)}</p>
+            <p className="text-[22px] font-semibold text-[#f3d828] uppercase">{pickText(d.missionLabel, locale)}</p>
+            {pickText(d.mission, locale) && <p className="mt-6 text-[14px] leading-6 text-white">{pickText(d.mission, locale)}</p>}
+            {(d.missionPoints?.length ?? 0) > 0 && (
+              <ul className="mt-4 list-disc space-y-1 pl-5 text-[14px] leading-6 text-white">
+                {d.missionPoints!.map((v, i) => (
+                  <li key={i}>{pickText(v, locale)}</li>
+                ))}
+              </ul>
+            )}
           </div>
           <div className="rounded-[10px] border border-white/20 bg-white/10 p-6">
-            <p className="text-[22px] font-semibold text-[#f3d828]">{pickText(d.valuesLabel, locale)}</p>
+            <p className="text-[22px] font-semibold text-[#f3d828] uppercase">{pickText(d.valuesLabel, locale)}</p>
             <ul className="mt-6 list-disc space-y-1 pl-5 text-[14px] leading-6 text-white">
               {(d.values ?? []).map((v, i) => (
                 <li key={i}>{pickText(v, locale)}</li>

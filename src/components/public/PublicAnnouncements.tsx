@@ -1,4 +1,6 @@
 import { getTranslations } from "next-intl/server";
+import { detailHref } from "@/lib/href";
+import Link from "next/link";
 import type { PageKey } from "@/config/pages";
 import type { UiLocale } from "@/i18n/config";
 import { pair, pickText } from "@/i18n/text";
@@ -26,7 +28,11 @@ export async function PublicAnnouncements({ slug, locale, page, limit = 20, comp
               {pickText({ en: a.category }, locale)} · {formatDate(a.publishedAt, locale)}
             </span>
           </div>
-          <h3 className="mt-2 text-lg font-bold text-ink">{pickText(pair(a.titleEn, a.titleMr), locale)}</h3>
+          <h3 className="mt-2 text-lg font-bold text-ink">
+            <Link href={detailHref(slug, "announcements", a.id)} className="hover:text-primary hover:underline">
+              {pickText(pair(a.titleEn, a.titleMr), locale)}
+            </Link>
+          </h3>
           {!compact && pickText(pair(a.bodyEn, a.bodyMr), locale) && <p className="mt-2 text-sm leading-relaxed whitespace-pre-line text-muted">{pickText(pair(a.bodyEn, a.bodyMr), locale)}</p>}
           {a.attachmentId && (
             <a href={publicMediaUrl(slug, a.attachmentId)} target="_blank" rel="noopener" className="mt-3 inline-block text-sm font-semibold text-primary hover:underline">

@@ -1,7 +1,9 @@
 import { ArrowRight } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
-import { resolveHref } from "@/lib/href";
+import { pair } from "@/i18n/text";
+import { listPublicSuccessStories } from "@/lib/api/public";
+import { detailHref, resolveHref } from "@/lib/href";
 import type { SectionProps } from "../index";
 import { Band, FilledButton, Icon, LinkButton, TextLink, cardClass, externalProps, list, mediaUrl, plain, readableText, tx, withOpacity, type B } from "./kit";
 
@@ -419,15 +421,55 @@ interface StoryItem {
   name?: B;
   ward?: B;
   tag?: B;
+  /** Backend item fields: the person quoted, their words, and a SuccessStory record to open ("Read Story"). */
+  personName?: B;
+  quote?: B;
+  storyId?: string;
 }
 
 const byOrder = <T extends { order?: number }>(a: T, b: T) => (a.order ?? 0) - (b.order ?? 0);
 
+/**
+ * Stories for a `success-stories` block: the published SuccessStory records of the page
+ * (GET /public/:slug/success-stories?page=<pageKey>) when there are any, else the section's own items (an item with
+ * a `storyId` opens that story's page). Shared by the backend section and the Key Projects placeholder.
+ */
+export async function successStoryItems(slug: string, locale: SectionProps["locale"], pageKey: string | undefined, sectionItems: unknown): Promise<StoryItem[]> {
+  const td = await getTranslations("public.detail");
+  const read = { en: td("readStory"), mr: td("readStory") };
+  const live = pageKey ? await listPublicSuccessStories(slug, { page: pageKey, limit: 12 }).catch(() => null) : null;
+  if (live && live.data.length > 0) {
+    return live.data.map((x, i) => {
+      const quote = pair(x.quoteEn, x.quoteMr);
+      return {
+        imageId: x.photoId ?? undefined,
+        title: pair(x.titleEn, x.titleMr),
+        description: tx(quote, locale) ? { en: `“${tx(quote, "en")}”`, mr: `“${tx(quote, "mr")}”` } : pair(x.summaryEn, x.summaryMr),
+        quote,
+        name: x.personName ? { en: x.personName, mr: x.personName } : undefined,
+        ward: x.location ? { en: x.location, mr: x.location } : undefined,
+        tag: pair(x.personRoleEn, x.personRoleMr),
+        buttonText: read,
+        buttonLink: detailHref(slug, "success-stories", x.id),
+        order: i,
+      };
+    });
+  }
+  return list<StoryItem>(sectionItems)
+    .sort(byOrder)
+    .map((it) => ({
+      ...it,
+      name: it.name ?? it.personName,
+      buttonText: it.buttonText ?? (it.storyId ? read : undefined),
+      buttonLink: it.buttonLink ?? (it.storyId ? detailHref(slug, "success-stories", it.storyId) : undefined),
+    }));
+}
+
 /** `success-stories`: story cards with photo, text and an optional button. */
-export async function CmsSuccessStoriesSection({ slug, locale, data }: SectionProps) {
+export async function CmsSuccessStoriesSection({ slug, locale, data, pageKey }: SectionProps) {
   const t = await getTranslations("public.cms");
   const d = data as { items?: unknown; layout?: "cards" | "quote"; heading?: B; subheading?: B; viewAll?: { label?: B; href?: string } };
-  const items = list<StoryItem>(d.items).sort(byOrder);
+  const items = await successStoryItems(slug, locale, pageKey, d.items);
   if (items.length === 0) return null;
   if (d.layout === "quote") {
     // Figma Schemes "Success Stories": portrait photo on the left, quote mark, quote, story, name, ward and scheme chip.

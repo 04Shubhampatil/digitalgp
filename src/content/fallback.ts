@@ -110,7 +110,8 @@ const LIVE_EXTRAS: Partial<Record<PageKey, FallbackSection[]>> = {
  * Only their headings and labels come from the placeholder; the sample rows are dropped.
  */
 const LIVE_BLOCKS: Partial<Record<PageKey, string[]>> = {
-  projects: ["project-showcase"],
+  // "before-after" (source: projects) shows published projects that have before / after pictures.
+  projects: ["project-showcase", "before-after"],
   schemes: ["scheme-levels", "scheme-showcase"],
 };
 
@@ -137,32 +138,96 @@ function hasPublishedCms(pageKey: PageKey, published: { sectionKey: string }[]):
 }
 
 /**
- * About page: the backend publishes the legacy keys (overview, history, geography, members, office), which have no
- * Figma layout of their own. Their text is merged into the design's About sections instead of rendering beside them.
+ * About page: the backend publishes its own keys (overview, history, geography, members, office, vision-mission,
+ * roles-cards, emergency-services), which have no Figma layout of their own. Their content is merged into the design's
+ * About sections (about-hero, about-history, about-structure, about-vision, about-roles, about-emergency) instead of
+ * rendering beside them, so each block shows once, in the design layout, with the published data.
  */
-const ABOUT_LEGACY = new Set(["overview", "history", "geography", "members", "office"]);
+const ABOUT_LEGACY = new Set(["overview", "history", "geography", "members", "office", "vision-mission", "roles-cards", "emergency-services"]);
+
+/** Backend section key → the design section that shows it (anchors such as "page:about#members" follow the move). */
+const ABOUT_ANCHORS: Record<string, string> = {
+  overview: "about-hero",
+  history: "about-history",
+  // The hero's "Know Our Leaders" button points at #members; the leaders block is the design's answer to it.
+  members: "leaders",
+  office: "about-structure",
+  "vision-mission": "about-vision",
+  "roles-cards": "about-roles",
+  "emergency-services": "about-emergency",
+};
+function aboutHref(href: unknown): unknown {
+  if (typeof href !== "string") return href;
+  const m = /^(page:about#)(.+)$/.exec(href);
+  return m && ABOUT_ANCHORS[m[2]!] ? `${m[1]}${ABOUT_ANCHORS[m[2]!]}` : href;
+}
+
+const has = (v: unknown): boolean => {
+  if (v == null) return false;
+  if (typeof v === "string") return v.trim() !== "";
+  if (Array.isArray(v)) return v.length > 0;
+  if (typeof v === "object") return Object.values(v as Obj).some((x) => typeof x === "string" && x.trim() !== "");
+  return true;
+};
+/** Keep only the fields the backend actually filled (so the design's text stays where the backend has none). */
+const filled = (o: Obj): Obj => Object.fromEntries(Object.entries(o).filter(([, v]) => has(v)));
+
+/** Backend emergency icon / category → the design's emergency pictogram. */
+const EMERGENCY_ICON: Record<string, string> = { siren: "total", ambulance: "ambulance", flame: "fire", fire: "fire", health: "health", alert: "disaster", bolt: "electricity", tree: "forest", shield: "women" };
+const EMERGENCY_CATEGORY: Record<string, string> = { health: "health", police: "women", fire: "fire", disaster: "disaster", utility: "electricity", other: "total" };
+
 function mergeAbout(fallback: FallbackSection, legacy: Map<string, Obj>): Obj {
   const d = fallback.data;
-  if (fallback.sectionKey === "about-hero") {
-    const o = legacy.get("overview");
-    return o?.body ? { ...d, body: o.body } : d;
+  switch (fallback.sectionKey) {
+    case "about-hero": {
+      const o = legacy.get("overview");
+      if (!o) return d;
+      const actions = ((o.actions as Obj[] | undefined) ?? []).filter((a) => a.href).map((a) => ({ ...a, href: aboutHref(a.href) }));
+      return { ...d, ...filled({ eyebrow: o.eyebrow, title: o.heading, body: o.body }), ...(actions.length ? { actions } : {}) };
+    }
+    case "about-history": {
+      const h = legacy.get("history");
+      return h?.body ? { ...d, body: h.body } : d;
+    }
+    case "about-structure": {
+      const office = legacy.get("office") ?? {};
+      const membersSection = legacy.get("members") ?? {};
+      const people = ((membersSection.items as Obj[] | undefined) ?? []) as { name?: Obj; designation?: Obj }[];
+      const members = ((d.members as Obj[] | undefined) ?? []).map((m) => {
+        const hit = people.find((p) => labelOf(p.designation) === labelOf(m.role));
+        return hit?.name ? { ...m, title: hit.name } : m;
+      });
+      // Published members whose designation has no card in the design get a card of their own.
+      const extra = people.filter((p) => p.name && !members.some((m) => labelOf(m.role) === labelOf(p.designation))).map((p) => ({ role: p.designation, title: p.name }));
+      const base = (d.office as Obj | undefined) ?? {};
+      const keep = (k: string) => (office[k] ? { [k]: office[k] } : {});
+      return { ...d, ...filled({ heading: membersSection.heading }), members: [...members, ...extra], office: { ...base, ...keep("address"), ...keep("hours"), ...keep("phone"), ...keep("email") } };
+    }
+    case "about-vision": {
+      const v = legacy.get("vision-mission");
+      if (!v) return d;
+      const vision = (v.vision as Obj | undefined) ?? {};
+      const mission = (v.mission as Obj | undefined) ?? {};
+      return {
+        ...d,
+        ...filled({ vision: vision.title, visionBody: vision.body, missionLabel: mission.title, mission: mission.body, missionPoints: mission.points, valuesLabel: v.valuesTitle, values: v.values }),
+      };
+    }
+    case "about-roles": {
+      const r = legacy.get("roles-cards");
+      const items = ((r?.items as Obj[] | undefined) ?? []).map((i) => ({ title: i.title, icon: i.icon, points: i.responsibilities }));
+      return r && items.length ? { ...d, ...filled({ heading: r.heading }), items } : d;
+    }
+    case "about-emergency": {
+      const e = legacy.get("emergency-services");
+      const items = ((e?.items as Obj[] | undefined) ?? [])
+        .filter((i) => i.active !== false && i.number)
+        .map((i) => ({ label: i.title, numbers: [i.number], icon: EMERGENCY_ICON[String(i.icon)] ?? EMERGENCY_CATEGORY[String(i.category)] ?? "total" }));
+      return e && items.length ? { ...d, ...filled({ heading: e.heading }), items } : d;
+    }
+    default:
+      return d;
   }
-  if (fallback.sectionKey === "about-history") {
-    const h = legacy.get("history");
-    return h?.body ? { ...d, body: h.body } : d;
-  }
-  if (fallback.sectionKey === "about-structure") {
-    const office = legacy.get("office") ?? {};
-    const people = ((legacy.get("members")?.items as Obj[] | undefined) ?? []) as { name?: Obj; designation?: Obj }[];
-    const members = ((d.members as Obj[] | undefined) ?? []).map((m) => {
-      const hit = people.find((p) => labelOf(p.designation) === labelOf(m.role));
-      return hit?.name ? { ...m, title: hit.name } : m;
-    });
-    const base = (d.office as Obj | undefined) ?? {};
-    const keep = (k: string) => (office[k] ? { [k]: office[k] } : {});
-    return { ...d, members, office: { ...base, ...keep("address"), ...keep("hours"), ...keep("phone"), ...keep("email") } };
-  }
-  return d;
 }
 
 export function withFallback(pageKey: PageKey, page: PublicPageDto | null): PublicPageDto {
@@ -170,7 +235,8 @@ export function withFallback(pageKey: PageKey, page: PublicPageDto | null): Publ
     const legacy = new Map(page.sections.filter((s) => ABOUT_LEGACY.has(s.sectionKey)).map((s) => [s.sectionKey, s.data as Obj]));
     if (legacy.size > 0) {
       const rest = { ...page, sections: page.sections.filter((s) => !ABOUT_LEGACY.has(s.sectionKey)) };
-      const designed = (FALLBACK_SECTIONS.about ?? []).map((f) => ({ ...f, skipIfPresent: undefined, data: mergeAbout(f, legacy) }));
+      // skipIfPresent on the design blocks names the legacy keys merged here; other keys (e.g. leaders-profile-grid) still apply.
+      const designed = (FALLBACK_SECTIONS.about ?? []).map((f) => ({ ...f, skipIfPresent: f.skipIfPresent?.filter((k) => !ABOUT_LEGACY.has(k)), data: mergeAbout(f, legacy) }));
       return withSections(pageKey, rest, designed);
     }
   }

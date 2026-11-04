@@ -1,4 +1,6 @@
 import { ExternalLink } from "lucide-react";
+import { detailHref } from "@/lib/href";
+import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import type { UiLocale } from "@/i18n/config";
 import { pair, pickText } from "@/i18n/text";
@@ -32,7 +34,11 @@ export async function PublicSchemes({ slug, locale }: { slug: string; locale: Ui
               <span className="rounded-pill bg-success-soft px-2.5 py-1 text-success">{t(`schemeLevel.${s.level}`)}</span>
               {s.isShared && <span className="rounded-pill bg-info-soft px-2.5 py-1 text-info">{t("sharedScheme")}</span>}
             </div>
-            <h3 className="mt-3 text-lg font-bold text-ink">{pickText(pair(s.nameEn, s.nameMr), locale)}</h3>
+            <h3 className="mt-3 text-lg font-bold text-ink">
+              <Link href={detailHref(slug, "schemes", s.id)} className="hover:text-primary hover:underline">
+                {pickText(pair(s.nameEn, s.nameMr), locale)}
+              </Link>
+            </h3>
             <p className="mt-2 line-clamp-4 text-sm text-muted">{pickText(pair(s.descriptionEn, s.descriptionMr), locale)}</p>
             <dl className="mt-4 grid grid-cols-2 gap-2 text-xs">
               {s.beneficiaryCount !== null && (
