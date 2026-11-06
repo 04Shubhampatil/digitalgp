@@ -6,6 +6,7 @@ import { listPublicSuccessStories } from "@/lib/api/public";
 import { detailHref, resolveHref } from "@/lib/href";
 import type { SectionProps } from "../index";
 import { Band, FilledButton, Icon, LinkButton, TextLink, cardClass, externalProps, list, mediaUrl, plain, readableText, tx, withOpacity, type B } from "./kit";
+import { StoryDialog } from "./StoryDialog";
 
 // ------------------------------------------------------------------------------------ banner
 
@@ -465,10 +466,47 @@ export async function successStoryItems(slug: string, locale: SectionProps["loca
     }));
 }
 
+/** Opt-in card layouts of `success-stories` (data `variant`), measured on the Figma frames at 1440px. */
+const STORY_VARIANTS: Record<string, { tone?: "white" | "cream"; pad: string; headGap: string; imageH: number; body: string; title?: string; desc: string; link: string; viewAllGap: string }> = {
+  // Our Village: 315×283 cards, 145px photo.
+  village: {
+    pad: "py-8 lg:pt-[37px] lg:pb-[29px]",
+    headGap: "mb-6 lg:mb-[22px]",
+    imageH: 145,
+    body: "px-3.5 pt-3 pb-3.5",
+    desc: "mt-1 text-[13px] leading-[22px] text-[#414141]",
+    link: "pt-2.5",
+    viewAllGap: "mt-8 lg:mt-[37px]",
+  },
+  // Employment: 310×344 cards, 168px photo, three-line text.
+  employment: {
+    tone: "white",
+    pad: "py-8 lg:pt-[35px] lg:pb-[29px]",
+    headGap: "mb-6 lg:mb-1",
+    imageH: 168,
+    body: "px-4 pt-[18px] pb-5",
+    title: "text-[15.5px] leading-[22px]",
+    desc: "mt-2.5 text-[14.5px] leading-6 text-[#555]",
+    link: "pt-4",
+    viewAllGap: "mt-6 lg:mt-[11px]",
+  },
+  // Education: tall 315×439 cards, 186px photo, airy three-line text.
+  education: {
+    pad: "py-8 lg:pt-[50px] lg:pb-[27px]",
+    headGap: "mb-6 lg:mb-[39px]",
+    imageH: 186,
+    body: "px-4 pt-[22px] pb-[45px]",
+    title: "text-[16.5px] leading-6",
+    desc: "mt-4 text-[14px] leading-8 text-[#414141]",
+    link: "pt-6",
+    viewAllGap: "mt-6 lg:mt-[26px]",
+  },
+};
+
 /** `success-stories`: story cards with photo, text and an optional button. */
 export async function CmsSuccessStoriesSection({ slug, locale, data, pageKey }: SectionProps) {
   const t = await getTranslations("public.cms");
-  const d = data as { items?: unknown; layout?: "cards" | "quote"; heading?: B; subheading?: B; viewAll?: { label?: B; href?: string } };
+  const d = data as { items?: unknown; layout?: "cards" | "quote"; variant?: string; heading?: B; subheading?: B; viewAll?: { label?: B; href?: string } };
   const items = await successStoryItems(slug, locale, pageKey, d.items);
   if (items.length === 0) return null;
   if (d.layout === "quote") {
@@ -510,6 +548,62 @@ export async function CmsSuccessStoriesSection({ slug, locale, data, pageKey }: 
           </ul>
         </div>
       </section>
+    );
+  }
+  const v = d.variant ? STORY_VARIANTS[d.variant] : undefined;
+  if (v) {
+    const tc = await getTranslations("common");
+    // Opt-in (Our Village / Employment / Education): card sizes and spacing measured on each Figma frame. A story
+    // without a story page (placeholder content) opens in a dialog instead of linking back to this block.
+    return (
+      <Band heading={tx(d.heading, locale) || t("successStories")} subheading={tx(d.subheading, locale) || undefined} tone={v.tone ?? "cream"} pad={v.pad} headGap={v.headGap}>
+        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {items.map((s, i) => {
+            const img = mediaUrl(slug, s.imageId);
+            const label = tx(s.buttonText, locale);
+            return (
+              <li key={i} className="flex flex-col overflow-hidden rounded-[10px] border border-black/10 bg-white shadow-[0_0_10px_rgba(0,0,0,0.06)]">
+                {img && (
+                  // eslint-disable-next-line @next/next/no-img-element -- website media served by the backend
+                  <img src={img} alt="" loading="lazy" className="w-full object-cover" style={{ height: v.imageH }} />
+                )}
+                <div className={`flex flex-1 flex-col ${v.body}`}>
+                  <p className={`font-semibold text-black ${v.title ?? "text-[16px] leading-6"}`}>{tx(s.title, locale)}</p>
+                  {tx(s.description, locale) && <p className={v.desc}>{tx(s.description, locale)}</p>}
+                  {label && (
+                    <div className={`mt-auto ${v.link}`}>
+                      {s.buttonLink ? (
+                        <TextLink href={resolveHref(s.buttonLink, slug)} external={/^https?:\/\//.test(s.buttonLink)}>
+                          {label}
+                        </TextLink>
+                      ) : (
+                        <StoryDialog
+                          label={label}
+                          title={tx(s.title, locale)}
+                          text={tx(s.description, locale)}
+                          image={img}
+                          closeLabel={tc("close")}
+                          className="inline-flex cursor-pointer items-center gap-2 text-[14px] font-semibold text-[#135130] hover:underline"
+                        >
+                          <ArrowRight className="size-4" aria-hidden />
+                        </StoryDialog>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+        {d.viewAll?.href && tx(d.viewAll.label, locale) && (
+          <div className={`flex justify-center ${v.viewAllGap}`}>
+            {/* "list:success-stories" is the website's list of every success story (/<slug>/success-stories). */}
+            <FilledButton href={d.viewAll.href === "list:success-stories" ? `/${slug}/success-stories` : resolveHref(d.viewAll.href, slug)} external={/^https?:\/\//.test(d.viewAll.href)}>
+              {tx(d.viewAll.label, locale)}
+            </FilledButton>
+          </div>
+        )}
+      </Band>
     );
   }
   return (

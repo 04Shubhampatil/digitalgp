@@ -12,7 +12,11 @@ export interface HeritageSlide {
   image?: string;
 }
 
-/** Figma "Our Village History and Heritage": three temple cards at a time with prev / next arrows. */
+/**
+ * Figma "Our Village History and Heritage": three temple cards at a time with prev / next arrows. The arrows scroll
+ * the row while there is more to see, and otherwise rotate the cards by one, so they always move (the design shows
+ * three temples with both arrows active).
+ */
 export function HeritageCarousel({
   items,
   prevLabel,
@@ -37,21 +41,25 @@ export function HeritageCarousel({
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
   }, [update]);
+  const [offset, setOffset] = useState(0);
+  const n = items.length;
+  const shown = items.map((_, i) => items[(i + offset) % n]!);
   const go = (dir: 1 | -1) => {
     const el = track.current;
     const first = el?.firstElementChild as HTMLElement | null;
-    if (el && first)
+    if (el && first && !(dir === 1 ? edge.end : edge.start))
       el.scrollBy({ left: dir * (first.offsetWidth + 16), behavior: "smooth" });
+    else setOffset((o) => (o + dir + n) % n);
   };
   const arrow =
     "absolute top-[118px] z-10 flex size-12 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[#135130] shadow-[0_0_8px_rgba(0,0,0,0.18)] disabled:opacity-40";
   return (
-    <div className="relative h-full rounded-[10px] border border-black/10 bg-white/70 px-4 py-5 sm:px-[42px]">
+    <div className="relative h-full rounded-[10px] border border-black/10 bg-white/70 px-4 py-4 sm:px-[42px]">
       <button
         type="button"
         aria-label={prevLabel}
         onClick={() => go(-1)}
-        disabled={edge.start}
+        disabled={n < 2}
         className={cn(arrow, "left-0 sm:left-0")}
       >
         <ChevronLeft className="size-6" aria-hidden />
@@ -61,9 +69,9 @@ export function HeritageCarousel({
         onScroll={update}
         className="flex snap-x snap-mandatory gap-4 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        {items.map((it, i) => (
+        {shown.map((it, i) => (
           <li
-            key={i}
+            key={(i + offset) % n}
             className="w-[85%] shrink-0 snap-start sm:w-[calc((100%-16px)/2)] lg:w-[calc((100%-32px)/3)]"
           >
             {it.image && (
@@ -90,7 +98,7 @@ export function HeritageCarousel({
         type="button"
         aria-label={nextLabel}
         onClick={() => go(1)}
-        disabled={edge.end}
+        disabled={n < 2}
         className={cn(arrow, "right-0")}
       >
         <ChevronRight className="size-6" aria-hidden />

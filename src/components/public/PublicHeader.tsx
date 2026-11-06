@@ -85,7 +85,7 @@ export async function PublicHeader({ tenant }: { tenant: PublicTenantDto }) {
               {taglineText && <span className="text-[12px] leading-normal text-black">{taglineText}</span>}
             </span>
           </Link>
-          <PublicNavMenu groups={groups} menuLabel={t("public.menu")} />
+          <PublicNavMenu groups={groups} menuLabel={t("public.menu")} search={{ action: `/${tenant.slug}/search`, label: t("common.search"), placeholder: t("public.searchPlaceholder") }} />
         </div>
       </div>
     </header>

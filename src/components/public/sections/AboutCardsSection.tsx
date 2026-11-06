@@ -1,4 +1,3 @@
-import { Factory, Landmark, MapPin, Sprout } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { pickText, type Bilingual } from "@/i18n/text";
@@ -17,14 +16,21 @@ interface AboutCardsData {
 }
 
 /** Colours and icons per card tone (Figma: #ff9933, #000080, #138808 with matching icon circles). */
-const TONES: Record<Tone, { text: string; border: string; circle: string; Icon: typeof Landmark }> = {
-  orange: { text: "text-[#ff9933]", border: "border-[#ff9933]", circle: "bg-[#ff9933]/15 text-[#ff9933]", Icon: Landmark },
-  navy: { text: "text-[#000080]", border: "border-[#000080]", circle: "bg-[#000080]/10 text-[#000080]", Icon: Factory },
-  green: { text: "text-[#138808]", border: "border-[#138808]", circle: "bg-[#138808]/10 text-[#138808]", Icon: Sprout },
+const TONES: Record<Tone, { text: string; border: string; icon: string }> = {
+  orange: { text: "text-[#ff9933]", border: "border-[#ff9933]", icon: "/images/figma/pages/home-about-ic-vision.png" },
+  navy: { text: "text-[#000080]", border: "border-[#000080]", icon: "/images/figma/pages/home-about-ic-industry.png" },
+  green: { text: "text-[#138808]", border: "border-[#138808]", icon: "/images/figma/pages/home-about-ic-nature.png" },
 };
 
 /** Static Figma photos used until the Gram Panchayat uploads its own gallery. */
-const PHOTOS = { road: "/images/figma/about-road.png", aerial: "/images/figma/about-aerial.png", map: "/images/figma/about-map.png" };
+const PHOTOS = {
+  // Figma crops the road photo to the temple and lane (375:13460), without the welcome board on the left.
+  road: "/images/figma/pages/home-about-road.png",
+  aerial: "/images/figma/about-aerial.png",
+  map: "/images/figma/about-map.png",
+  pin: "/images/figma/pages/home-about-pin.png",
+  maps: "/images/figma/pages/home-about-maps.png",
+};
 
 /**
  * Home "About the village" block (Figma 375:12383 + 375:12671): centred heading with the village
@@ -37,6 +43,9 @@ export async function AboutCardsSection({ slug, locale, data, tenantName }: Sect
   const cards = d.cards ?? [];
   if (cards.length === 0) return null;
   const readMoreLabel = pickText(d.readMore?.label, locale);
+  const address = pickText(d.address, locale);
+  // The design always shows "Open in Maps"; without a configured link it searches the address on Google Maps.
+  const mapHref = d.mapUrl || (address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}` : "");
 
   return (
     <section className="bg-cream py-8">
@@ -66,44 +75,48 @@ export async function AboutCardsSection({ slug, locale, data, tenantName }: Sect
           {pickText(d.subheading, locale) && <p className="mt-4 text-[20px] leading-[30px] text-black">{pickText(d.subheading, locale)}</p>}
         </div>
 
-        <div className="grid w-full gap-[21px] lg:grid-cols-[427px_minmax(0,1fr)]">
+        {/* Figma 375:13049: 427px card column, 21px gap, then the 873px photo area with the 805×782 collage centred in it. */}
+        <div className="grid w-full items-center gap-[21px] lg:grid-cols-[427px_minmax(0,1fr)]">
           <ul className="flex flex-col gap-5">
             {cards.map((c, i) => {
               const tone = TONES[c.tone ?? "green"];
               return (
                 <li key={i} className="flex flex-col gap-[9px] rounded-[15px] bg-white px-[17px] py-4 shadow-[0_0_23px_2px_rgba(0,0,0,0.12)]">
                   <div className="flex items-center justify-center gap-4">
-                    <span aria-hidden className={`flex size-16 shrink-0 items-center justify-center rounded-full ${tone.circle}`}>
-                      <tone.Icon className="size-7" />
-                    </span>
+                    {/* eslint-disable-next-line @next/next/no-img-element -- static design icon */}
+                    <img src={tone.icon} alt="" width={64} height={64} className="size-16 shrink-0" />
                     <h3 className={`border-b border-dashed py-2.5 text-[18px] leading-[22px] font-semibold whitespace-nowrap ${tone.text} ${tone.border}`}>{pickText(c.title, locale)}</h3>
                   </div>
-                  <p className="text-center text-[13px] leading-[22px] text-black">{pickText(c.body, locale)}</p>
+                  {/* Figma: the first card's paragraph is left-aligned, the other two are centred. */}
+                  <p className={`text-[13px] leading-[22px] text-black ${i === 0 ? "text-left" : "text-center"}`}>{pickText(c.body, locale)}</p>
                 </li>
               );
             })}
           </ul>
 
-          <div className="grid gap-5">
+          <div className="grid gap-4 lg:px-[34px] lg:py-[22px]">
             {/* eslint-disable @next/next/no-img-element -- static design assets */}
             <div className="h-[260px] overflow-hidden rounded-[10px] bg-white sm:h-[383px]">
               <img src={PHOTOS.road} alt="" className="size-full object-cover" loading="lazy" />
             </div>
-            <div className="grid gap-5 sm:grid-cols-2">
-              <div className="h-[260px] overflow-hidden rounded-[10px] bg-white sm:h-[383px]">
-                <img src={PHOTOS.aerial} alt="" className="size-full object-cover" loading="lazy" />
+            <div className="grid gap-4 sm:grid-cols-[390fr_393fr] lg:gap-[22px]">
+              <div className="relative h-[260px] overflow-hidden rounded-[10px] bg-white sm:h-[383px]">
+                {/* Figma 375:13445: photo at full width, 181% high, shifted up 44%. */}
+                <img src={PHOTOS.aerial} alt="" className="absolute top-[-44.42%] left-0 h-[181.23%] w-full max-w-none" loading="lazy" />
               </div>
               <div className="relative h-[260px] overflow-hidden rounded-[10px] bg-[#ff9933] sm:h-[383px]">
-                <img src={PHOTOS.map} alt="" className="absolute inset-0 size-full object-cover" loading="lazy" />
-                {d.mapUrl && (
-                  <a href={d.mapUrl} target="_blank" rel="noopener" className="absolute top-3.5 right-4 inline-flex items-center gap-1.5 rounded-full bg-[#d9d9d9] px-4 py-1.5 text-[11.5px] font-medium text-black">
-                    <MapPin className="size-4 text-[#ea4335]" aria-hidden /> {t("openInMaps")}
+                <img src={PHOTOS.map} alt="" className="absolute top-[-3.13%] left-[-41.87%] h-[103.13%] w-[193.13%] max-w-none object-cover" loading="lazy" />
+                {mapHref && (
+                  <a href={mapHref} target="_blank" rel="noopener" className="absolute top-3.5 right-[19px] inline-flex h-[30px] w-[147px] items-center gap-[7px] rounded-full bg-[#d9d9d9] pl-[19px] text-[11.5px] leading-[20.7px] font-medium text-black">
+                    <img src={PHOTOS.maps} alt="" width={24} height={24} className="size-6" /> {t("openInMaps")}
                   </a>
                 )}
-                {pickText(d.address, locale) && (
-                  <div className="absolute inset-x-0 bottom-0 flex items-center gap-4 rounded-t-[15px] bg-cream/90 px-5 py-6">
-                    <MapPin className="size-8 shrink-0 text-[#ea4335]" aria-hidden />
-                    <p className="text-[11.5px] leading-5 font-medium text-black">{pickText(d.address, locale)}</p>
+                {address && (
+                  <div className="absolute inset-x-0 bottom-0 flex h-[100px] items-start justify-center rounded-t-[15px] bg-[rgba(252,247,238,0.88)] pt-[22px] pr-[43px]">
+                    <div className="flex w-[281px] items-center gap-4">
+                      <img src={PHOTOS.pin} alt="" width={24} height={35} className="h-[35px] w-6 shrink-0 mx-[9px]" />
+                      <p className="text-[11.5px] leading-[20.7px] font-medium text-black">{address}</p>
+                    </div>
                   </div>
                 )}
               </div>

@@ -223,6 +223,8 @@ export function Band({
   center = true,
   children,
   id,
+  pad,
+  headGap,
 }: {
   heading?: string;
   subheading?: string;
@@ -232,12 +234,16 @@ export function Band({
   center?: boolean;
   children: ReactNode;
   id?: string;
+  /** Opt-in vertical padding classes replacing the default `py-10` (pages tuned to their Figma spacing). */
+  pad?: string;
+  /** Opt-in margin classes under the heading block replacing the default `mb-6`. */
+  headGap?: string;
 }) {
   return (
-    <section id={id} className={tone === "cream" ? "bg-cream py-10" : "bg-white py-10"}>
+    <section id={id} className={`${tone === "cream" ? "bg-cream" : "bg-white"} ${pad ?? "py-10"}`}>
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
         {(heading || subheading || action) && (
-          <div className={`mb-6 flex flex-wrap items-end gap-3 ${center ? "justify-center text-center" : "justify-between"}`}>
+          <div className={`${headGap ?? "mb-6"} flex flex-wrap items-end gap-3 ${center ? "justify-center text-center" : "justify-between"}`}>
             <div className={center ? "mx-auto max-w-3xl" : "max-w-3xl"}>
               {heading && <h2 className="text-[26px] leading-tight font-semibold text-black lg:text-[30px] lg:leading-[45px]">{heading}</h2>}
               {subheading && <p className="mt-1 text-[14px] leading-6 text-[#414141]">{subheading}</p>}

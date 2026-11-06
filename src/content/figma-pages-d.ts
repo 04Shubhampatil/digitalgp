@@ -18,8 +18,10 @@ export const FIGMA_PAGE_SECTIONS_D: Partial<Record<PageKey, FallbackSection[]>> 
       eyebrow: t("Announcements & Circulars"),
       title: t("Stay Informed. Stay Connected."),
       titleAccent: t("Stay Savardari."),
+      titleLines: true,
       body: t("Find the latest announcements, circulars, notices and important updates from Gram Panchayat Savardari"),
-      imageUrl: P + "ann-hero.png",
+      imageUrl: P + "ann-hero-torn.png",
+      imageBleed: { left: 553, width: 887, height: 539 },
     }),
     {
       sectionKey: "announce-categories",
@@ -99,8 +101,10 @@ export const FIGMA_PAGE_SECTIONS_D: Partial<Record<PageKey, FallbackSection[]>> 
       eyebrow: t("Citizen Services & Online Forms"),
       title: t("Easy Access. Better Services."),
       titleAccent: t("Stronger Savardari."),
+      titleLines: true,
       body: t("Access essential services and online facilities from the comfort of your home"),
-      imageUrl: P + "svc-hero.png",
+      imageUrl: P + "svc-hero-torn.png",
+      imageBleed: { left: 553, width: 887, height: 539 },
     }),
     {
       sectionKey: "rts-grid",

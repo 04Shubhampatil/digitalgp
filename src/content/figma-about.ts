@@ -26,6 +26,8 @@ export const FIGMA_ABOUT_SECTIONS: FallbackSection[] = [
       ),
       primary: { label: t("Know Our Leaders"), href: "page:about#leaders" },
       secondary: { label: t("Emergency Contacts"), href: "page:about#about-emergency" },
+      imageUrl: "/images/figma/pages/about-hero-torn.png",
+      imageBleed: { left: 586, width: 853, height: 538, section: 539, textBox: 539 },
     },
   },
   {
@@ -36,7 +38,7 @@ export const FIGMA_ABOUT_SECTIONS: FallbackSection[] = [
       eyebrow: t("Village History"),
       heading: t("Rooted in agriculture, strengthened by the industry."),
       body: t(
-        "Savadari has grown from a close-knit farming settlement into a progressive village connected with education, industry, and improved public services. The village continues to value its traditional culture, temples, water resources, and community gatherings while steadily investing in roads, sanitation, digital literacy, and transparent service delivery. With the participation of Gram Sabha members, local committees, self-help groups, farmers, youth, and senior citizens, the Panchayat works to balance development with the village's environmental and social heritage.",
+        "Savadari has grown from a close-knit farming settlement into a progressive village connected with education, industry, and improved public services. The village continues to value its traditional culture, temples, water resources, and community gatherings while steadily investing in roads, sanitation, digital literacy, and transparent service delivery.\n\nWith the participation of Gram Sabha members, local committees, self-help groups, farmers, youth, and senior citizens, the Panchayat works to balance development with the village's environmental and social heritage.",
       ),
       cards: [
         { title: t("Official working hours:"), body: t("Monday to Friday: 9:45 am to 6:15 pm\nWeekends and Sundays: Closed") },

@@ -38,6 +38,9 @@ export interface ProjectLabels {
 }
 
 /** Key projects: stage tabs + project cards (Figma "3. Key Projects"). */
+/** Design photos used when a published project has no cover image. */
+const PROJECT_FALLBACK_PHOTOS = ["/images/figma/about-road.png", "/images/figma/about-aerial.png", "/images/figma/pages/prj-after.png"];
+
 export function ProjectTabs({
   tabs,
   items,
@@ -78,7 +81,7 @@ export function ProjectTabs({
           {labels.empty}
         </p>
       ) : (
-        <ul className="mt-5 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-5 grid gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-[18px]">
           {shown.map((p, i) => {
             // Published projects open their own page; placeholder cards jump to themselves (all their details are on the card).
             const id = `project-${p.stage.toLowerCase()}-${i + 1}`;
@@ -91,10 +94,11 @@ export function ProjectTabs({
                 <div className="relative h-[205px] bg-[#e8e4d9]">
                   {p.beforeUrl && p.afterUrl ? (
                     <Compare item={{ label: p.name, beforeUrl: p.beforeUrl, afterUrl: p.afterUrl, height: 205 }} before={labels.before ?? ""} after={labels.after ?? ""} bare />
-                  ) : p.imageUrl && (
+                  ) : (
+                    // A project without a cover photo shows one of the design's village photos, not an empty grey box.
                     // eslint-disable-next-line @next/next/no-img-element -- backend-served media / static design asset
                     <img
-                      src={p.imageUrl}
+                      src={p.imageUrl ?? PROJECT_FALLBACK_PHOTOS[i % PROJECT_FALLBACK_PHOTOS.length]}
                       alt=""
                       className="size-full object-cover"
                       loading="lazy"
@@ -113,7 +117,8 @@ export function ProjectTabs({
                       <MapPin className="size-4" aria-hidden /> {p.location}
                     </p>
                   )}
-                  <dl className="mt-5 grid grid-cols-[1fr_auto] gap-x-4 gap-y-2.5 text-[14px] text-[#414141]">
+                  {/* Figma 375:13936: values start 192px after the labels, rows 28px apart. */}
+                  <dl className="mt-6 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-4 gap-y-[9px] text-[14px] leading-[19px] text-[#414141] lg:grid-cols-[176px_minmax(0,1fr)]">
                     {p.year && (
                       <>
                         <dt>{labels.year}</dt>

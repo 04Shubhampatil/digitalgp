@@ -9,7 +9,7 @@ import { FIGMA_HOME_SECTIONS } from "./figma-home";
 
 const t = (en: string) => ({ en });
 const stats = FIGMA_HOME_SECTIONS.find((s) => s.sectionKey === "quick-stats")!;
-const statsStrip = (sortOrder: number): FallbackSection => ({ ...stats, sortOrder });
+const statsStrip = (sortOrder: number): FallbackSection => ({ ...stats, sortOrder, data: { ...stats.data, variant: "compact" } });
 
 const PROJECT = (stage: string, name: string, ward: string): Record<string, unknown> => ({
   stage,
@@ -36,7 +36,8 @@ export const FIGMA_PAGE_SECTIONS: Partial<Record<PageKey, FallbackSection[]>> = 
           { label: t("Explore Services"), href: "page:services" },
           { label: t("Register Complaint"), href: "page:grievance" },
         ],
-        imageUrl: "/images/figma/hero-projects.png",
+        imageUrl: "/images/figma/pages/prj-hero-torn.png",
+        imageBleed: { left: 597, width: 843, height: 539, textBox: 509 },
       },
     },
     statsStrip(5),

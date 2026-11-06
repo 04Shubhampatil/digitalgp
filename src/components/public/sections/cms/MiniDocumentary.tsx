@@ -64,7 +64,7 @@ export function MiniDocumentaryClient(p: MiniDocumentaryProps) {
         )}
       </div>
       <div>
-        <h3 className="text-[22px] leading-[27px] text-black">{p.title}</h3>
+        <h3 className="max-w-[533px] text-[22px] leading-[27px] text-black">{p.title}</h3>
         {p.description && <p className="mt-4 max-w-[430px] text-[14px] leading-[23px] text-[#414141]">{p.description}</p>}
         {(p.durationText || p.publishedText) && (
           <p className="mt-5 flex flex-wrap gap-x-9 gap-y-2 text-[13px] text-black">

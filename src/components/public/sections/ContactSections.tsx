@@ -39,7 +39,7 @@ export async function ContactCardsSection({ slug, locale, data }: SectionProps) 
   const address = c.address ? pickText({ en: c.address }, locale) : pickText(d.address, locale);
   const hours = c.hours ? pickText({ en: c.hours }, locale) : pickText(d.hours, locale);
   const L = d.labels ?? {};
-  const card = "flex min-h-[269px] flex-col items-center rounded-[10px] bg-white px-6 py-8 text-center shadow-[0_0_14px_rgba(0,0,0,0.2)]";
+  const card = "flex min-h-[269px] flex-col items-center rounded-[10px] bg-white px-3 py-8 text-center shadow-[0_0_14px_rgba(0,0,0,0.2)]";
   const ring = "flex size-[86px] items-center justify-center rounded-full bg-[#e9f4e9] text-[#135130]";
   return (
     <section className="bg-cream py-6">
@@ -52,13 +52,13 @@ export async function ContactCardsSection({ slug, locale, data }: SectionProps) 
             </span>
             <h3 className="mt-5 text-[20px] font-semibold text-[#135130]">{pickText(L.inquiries, locale)}</h3>
             {phone && (
-              <a href={`tel:${phone}`} className="mt-3 text-[15px] text-black hover:underline">
+              <a href={`tel:${phone.replace(/s+/g, "")}`} className="mt-6 text-[15px] font-semibold text-black hover:underline">
                 {phone}
               </a>
             )}
             {email && (
-              <a href={`mailto:${email}`} className="mt-1 text-[15px] break-all text-black hover:underline">
-                {email}
+              <a href={`mailto:${email}`} className="mt-1 max-w-[225px] text-[15px] font-semibold text-black hover:underline">
+                {email.split("@")[0]}@<wbr />{email.split("@")[1]}
               </a>
             )}
           </li>
@@ -67,14 +67,14 @@ export async function ContactCardsSection({ slug, locale, data }: SectionProps) 
               <Clock className="size-9" />
             </span>
             <h3 className="mt-5 text-[20px] font-semibold text-[#135130]">{pickText(L.hours, locale)}</h3>
-            <p className="mt-3 text-[15px] whitespace-pre-line text-black">{hours}</p>
+            <p className="mt-6 text-[14px] whitespace-pre-line text-black">{hours}</p>
           </li>
           <li className={card}>
             <span aria-hidden className={ring}>
               <MapPin className="size-9" />
             </span>
             <h3 className="mt-5 text-[20px] font-semibold text-[#135130]">{pickText(L.address, locale)}</h3>
-            <p className="mt-3 text-[15px] whitespace-pre-line text-black">{address}</p>
+            <p className="mt-6 text-[14px] whitespace-pre-line text-black">{address}</p>
           </li>
           <li className={card}>
             <span aria-hidden className={ring}>

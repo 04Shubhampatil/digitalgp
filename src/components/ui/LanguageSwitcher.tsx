@@ -35,6 +35,10 @@ export function LanguageSwitcher({ className, variant = "segmented" }: { classNa
     <div role="group" aria-label={t("language")} className={cn(pill ? "inline-flex items-center gap-3" : "inline-flex overflow-hidden rounded-[4px] border border-line-strong", className)}>
       {codes.map((code) => {
         const active = code === locale;
+        const label = pill ? t(code === "en" ? "english" : "marathiLatin") : t(LABEL_KEY[code]);
+        // Optical centring: Noto Sans places Latin ink ~0.5px and Devanagari ink ~2px above the middle of its line box,
+        // so each label gets a little top padding (it moves the text down by half of it inside the centred flex box).
+        const nudge = /[ऀ-ॿ]/.test(label) ? "pt-[4px]" : "pt-[1px]";
         return (
           <button
             key={code}
@@ -45,7 +49,7 @@ export function LanguageSwitcher({ className, variant = "segmented" }: { classNa
             onClick={() => choose(code)}
             className={cn(
               pill
-                ? "inline-flex h-[19px] items-center justify-center rounded-full border px-4 text-[12px] leading-none transition-colors"
+                ? cn("inline-flex h-[24px] min-w-[72px] items-center justify-center rounded-full border px-[18px] text-[12px] leading-none transition-colors", nudge)
                 : "px-3 py-1.5 text-xs font-semibold leading-[18px] transition-colors",
               pill
                 ? active
@@ -56,7 +60,7 @@ export function LanguageSwitcher({ className, variant = "segmented" }: { classNa
                   : "bg-surface text-ink/50 hover:text-ink",
             )}
           >
-            {pill ? t(code === "en" ? "english" : "marathiLatin") : t(LABEL_KEY[code])}
+            {label}
           </button>
         );
       })}

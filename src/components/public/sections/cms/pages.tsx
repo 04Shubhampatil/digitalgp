@@ -1,4 +1,4 @@
-import { Download, ExternalLink, Play } from "lucide-react";
+import { ArrowRight, Download, Play } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
@@ -14,7 +14,6 @@ import { Band, Icon, cardClass, externalProps, list, mediaUrl, plain, tx, videoE
 import { MiniDocumentaryClient } from "./MiniDocumentary";
 
 const byOrder = <T extends { order?: number }>(a: T, b: T) => (a.order ?? 0) - (b.order ?? 0);
-const dateFmt = (locale: SectionProps["locale"], d: string) => new Date(`${d}T00:00:00`).toLocaleDateString(locale === "mr" ? "mr-IN" : "en-IN", { day: "numeric", month: "short", year: "numeric" });
 
 // ------------------------------------------------------------------------------------ Announcements
 
@@ -269,9 +268,15 @@ export async function PressCoverageSection({ slug, locale, data }: SectionProps)
                 <span className="text-[16px] font-bold text-[#135130]">{p.mediaName}</span>
               )}
               <p className="mt-3 text-[14px] leading-5 font-medium text-black">{tx(p.title, locale)}</p>
-              {p.date && <p className="mt-2 text-[11px] text-[#414141]">{dateFmt(locale, p.date)}</p>}
-              <a href={p.url} {...externalProps} className="mt-auto inline-flex items-center gap-1 pt-3 text-[12px] font-semibold text-[#135130] hover:underline">
-                {t("readMore")} <ExternalLink className="size-3.5" aria-hidden />
+              {p.date && (
+                <p className="mt-2.5 text-[11.5px] text-[#414141]">
+                  {new Date(`${p.date}T00:00:00`).toLocaleDateString(locale === "mr" ? "mr-IN" : "en-US", { day: "numeric", month: "long", year: "numeric" })}
+                  <span className="mx-2 text-black/60">|</span>
+                  {t("pressNews")}
+                </p>
+              )}
+              <a href={p.url} {...externalProps} className="mt-auto inline-flex items-center gap-2 pt-3.5 text-[12px] font-semibold text-[#135130] hover:underline">
+                {t("readMoreCaps")} <ArrowRight className="size-3.5" aria-hidden />
               </a>
             </li>
           );

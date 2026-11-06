@@ -616,7 +616,7 @@ function CheckBullet() {
 export async function KeyInitiativesSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
   const d = data as { heading?: B; subheading?: B; viewAll?: { label?: B; href?: string }; items?: unknown };
-  const items = list<{ icon?: string; title?: B; link?: string; active?: boolean }>(d.items).filter((i) => i.active !== false && tx(i.title, locale));
+  const items = list<{ icon?: string; iconImage?: string; title?: B; link?: string; active?: boolean }>(d.items).filter((i) => i.active !== false && tx(i.title, locale));
   if (items.length === 0) return null;
   const viewAll = d.viewAll?.href && tx(d.viewAll.label, locale) ? { href: d.viewAll.href, label: tx(d.viewAll.label, locale) } : null;
   return (
@@ -629,10 +629,16 @@ export async function KeyInitiativesSection({ slug, locale, data }: SectionProps
           {items.map((it, i) => {
             const body = (
               <>
-                <span className="flex size-16 items-center justify-center rounded-full bg-[#e7f3e8] text-[#135130]">
-                  <Icon name={it.icon} className="size-8" />
-                </span>
-                <span className="mt-3 text-[16px] leading-[27px] font-semibold text-black">{tx(it.title, locale)}</span>
+                {it.iconImage ? (
+                  // Placeholder content: the Figma pictogram (filled glyph in its tinted circle), sliced from the design.
+                  // eslint-disable-next-line @next/next/no-img-element -- static design asset
+                  <img src={it.iconImage} alt="" width={64} height={64} className="size-16" />
+                ) : (
+                  <span className="flex size-16 items-center justify-center rounded-full bg-[#e7f3e8] text-[#135130]">
+                    <Icon name={it.icon} className="size-8" />
+                  </span>
+                )}
+                <span className="mt-3 max-w-[165px] text-[16px] leading-[27px] font-semibold whitespace-pre-line text-black">{tx(it.title, locale)}</span>
               </>
             );
             const cls = "flex h-full flex-col items-center px-3 py-4 text-center";
@@ -945,7 +951,7 @@ export async function WeatherUpdateSection({ slug, locale, data }: SectionProps)
 /** `green-scoreboard`: dark green panel with the headline environmental figures (Figma: 40px icons, 32px values). */
 export async function GreenScoreboardSection({ locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
-  const items = list<{ icon?: string; title?: B; value?: string; description?: B; visible?: boolean }>((data as { items?: unknown }).items).filter((i) => i.visible !== false);
+  const items = list<{ icon?: string; iconImage?: string; title?: B; value?: string; description?: B; visible?: boolean }>((data as { items?: unknown }).items).filter((i) => i.visible !== false);
   if (items.length === 0) return null;
   return (
     <section className="bg-cream py-8">
@@ -956,7 +962,12 @@ export async function GreenScoreboardSection({ locale, data }: SectionProps) {
           <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(170px,1fr))]">
             {items.map((s, i) => (
               <li key={i} className="flex flex-col items-center rounded-[8px] bg-[#1d5c37] px-4 py-5">
-                <Icon name={s.icon} className="size-10" />
+                {s.iconImage ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- static design asset
+                  <img src={s.iconImage} alt="" width={66} height={62} className="h-[50px] w-auto" />
+                ) : (
+                  <Icon name={s.icon} className="size-10" />
+                )}
                 <p className="mt-3 text-[32px] leading-10 font-bold">{s.value}</p>
                 <p className="mt-1 text-[16px] leading-6 font-semibold">{tx(s.title, locale)}</p>
                 {tx(s.description, locale) && <p className="mt-1 text-[14px] opacity-90">{tx(s.description, locale)}</p>}

@@ -31,6 +31,13 @@ const ROWS: { Icon: LucideIcon; bar: string; ring: string; fg: string }[] = [
   { Icon: ClipboardList, bar: "#e8202a", ring: "bg-[#fde3e4]", fg: "text-[#e8202a]" },
 ];
 
+/** Row style by what the row measures (so a ward without roads still shows the pipeline icon on "Water Pipeline"). */
+const ROW_KEYWORDS: RegExp[] = [/road|रस्ते|रस्ता/i, /water|pipe|पाणी|जल/i, /light|दिवे|दिवा/i, /drain|गटार|नाली/i, /plant|tree|वृक्ष|झाड/i, /project|प्रकल्प/i];
+function rowStyle(label: string, i: number) {
+  const hit = ROW_KEYWORDS.findIndex((re) => re.test(label));
+  return ROWS[hit >= 0 ? hit : i % ROWS.length]!;
+}
+
 function percentOf(r: WardRow): number {
   if (typeof r.percent === "number") return Math.max(0, Math.min(100, r.percent));
   const m = r.valueText.replace(/,/g, "").match(/([\d.]+)\D+([\d.]+)/);
@@ -130,7 +137,7 @@ export function WardDetailsCard({ heading, wards, mapSrc, viewAll }: { heading: 
         </div>
         <ul className="mt-1 flex flex-col gap-[2px]">
           {ward.items.map((r, i) => {
-            const s = ROWS[i % ROWS.length]!;
+            const s = rowStyle(r.label, i);
             return (
               <li key={i} className="flex h-[22px] items-center gap-2 text-[10px]">
                 <span aria-hidden className={`flex h-[19px] w-[21px] shrink-0 items-center justify-center rounded-full ${s.ring}`}>

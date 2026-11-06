@@ -28,13 +28,14 @@ export function AchievementsCard({ heading, selectLabel, allLabel, wards, items,
   const [ward, setWard] = useState("");
   const shown = items.filter((a) => !ward || !a.ward || a.ward === ward).slice(0, 5);
   return (
-    <div className="rounded-[10px] border border-black/15 bg-white p-3">
-      <div className="flex flex-wrap items-center justify-between gap-3 px-2 py-1.5">
+    // Figma 375:13333: 649×549 card, 623px list box 55px from the top, 93px rows split by 599px rules.
+    <div className="h-full rounded-[10px] border border-[#414141]/20 bg-white px-[13px] pt-[11px] pb-[21px]">
+      <div className="flex min-h-[34px] flex-wrap items-center justify-between gap-3 pl-[9px] pr-[10px]">
         <h2 className="text-[20px] leading-[27px] font-semibold text-black">{heading}</h2>
-        <label className="flex items-center gap-3 text-[12px] text-[#414141]">
+        <label className="flex items-center gap-[19px] text-[12px] leading-6 font-medium text-[#414141]">
           {selectLabel}
-          <span className="relative inline-flex items-center rounded-[4px] border border-[#135130] text-[12px] font-medium text-[#135130]">
-            <select value={ward} onChange={(e) => setWard(e.target.value)} className="appearance-none bg-transparent py-1.5 pr-8 pl-3 outline-none">
+          <span className="relative inline-flex items-center rounded-[6px] border-[0.6px] border-[#135130] text-[12px] font-normal text-[#135130]">
+            <select value={ward} onChange={(e) => setWard(e.target.value)} className="appearance-none bg-transparent py-2 pr-[34px] pl-4 leading-[normal] outline-none">
               <option value="">{allLabel}</option>
               {wards.map((w) => (
                 <option key={w} value={w}>
@@ -42,20 +43,22 @@ export function AchievementsCard({ heading, selectLabel, allLabel, wards, items,
                 </option>
               ))}
             </select>
-            <ChevronDown className="pointer-events-none absolute right-2 size-4" aria-hidden />
+            <ChevronDown className="pointer-events-none absolute right-4 size-3" aria-hidden />
           </span>
         </label>
       </div>
-      <ol className="mt-2 rounded-[10px] border border-black/15">
+      <ol className="mt-[10px] rounded-[10px] border border-[#414141]/20 px-3">
         {shown.map((a, i) => {
           return (
             <li key={i} className="border-b border-black last:border-b-0">
-              <Row href={href} className="flex items-center gap-5 px-5 py-4">
-                <FigmaIcon name={`medal-${(i % 5) + 1}`} width={62} />
+              <Row href={href} className="flex min-h-[93px] items-center gap-4 py-[6px]">
+                <span className="flex h-[68px] w-[92px] shrink-0 items-center justify-center">
+                  <FigmaIcon name={`medal-${(i % 5) + 1}`} width={62} />
+                </span>
                 <div>
-                  <p className="text-[18px] leading-[24px] font-semibold text-black">{a.title}</p>
-                  <p className="text-[13px] leading-[24px] text-[#414141]">{a.body}</p>
-                  <p className="text-[12px] leading-[24px] text-[#414141]">{a.completed}</p>
+                  <p className="text-[16px] leading-[24px] font-semibold text-black">{a.title}</p>
+                  <p className="text-[12px] leading-[24px] font-medium text-[#414141]">{a.body}</p>
+                  <p className="text-[12px] leading-[24px] font-medium text-[#414141]">{a.completed}</p>
                 </div>
               </Row>
             </li>

@@ -25,9 +25,9 @@ export async function AchievementsSection({ slug, locale, data }: SectionProps) 
 }
 
 const CHIP: Record<string, string> = {
-  completed: "bg-[#dcefdc] text-[#135130]",
-  event: "bg-[#dce9ff] text-[#1a62e0]",
-  ongoing: "bg-[#fff0dc] text-[#f5871f]",
+  completed: "bg-[#138808]/15 text-[#135130]",
+  event: "bg-[#0866ff]/15 text-[#0866ff]",
+  ongoing: "bg-[#ff9933]/15 text-[#ff9933]",
 };
 
 type NewsItem = { title?: B; date?: B | string; status?: string; imageUrl?: string; href?: string };
@@ -45,6 +45,11 @@ export async function WhatsNewSection({ slug, locale, data }: SectionProps) {
     const live = await listPublicAnnouncements(slug, { page: "home", limit: 5 }).catch(() => null);
     if (live && live.data.length > 0) {
       const fmt = new Intl.DateTimeFormat(locale === "mr" ? "mr-IN" : "en-IN", { day: "2-digit", month: "long", year: "numeric", timeZone: "Asia/Kolkata" });
+      // Figma writes the date as "08 July, 2026".
+      const fmtDate = (d: Date) => {
+        const p = Object.fromEntries(fmt.formatToParts(d).map((x) => [x.type, x.value]));
+        return `${p.day} ${p.month}, ${p.year}`;
+      };
       // The design pictures belong to the sample rows; a published row keeps the picture of the sample with the same title.
       const pictures = new Map(items.map((i) => [pickText(i.title, "en").toLowerCase(), i.imageUrl]));
       items = live.data.map((a) => {
@@ -52,7 +57,7 @@ export async function WhatsNewSection({ slug, locale, data }: SectionProps) {
         const status = a.category.trim().toLowerCase();
         return {
           title,
-          date: a.publishedAt ? fmt.format(new Date(a.publishedAt)) : "",
+          date: a.publishedAt ? fmtDate(new Date(a.publishedAt)) : "",
           status: status in CHIP ? status : a.category,
           imageUrl: a.attachment?.kind === "IMAGE" ? publicMediaUrl(slug, a.attachment.id) : pictures.get(pickText(title, "en").toLowerCase()),
           href: detailHref(slug, "announcements", a.id),
@@ -62,29 +67,31 @@ export async function WhatsNewSection({ slug, locale, data }: SectionProps) {
   }
   if (items.length === 0) return null;
   return (
-    <div className="rounded-[10px] border border-black/15 bg-white p-3">
-      <div className="flex items-center justify-between px-2 py-1.5">
+    // Figma 375:13391: 649×549 card, 623px list box 55px from the top, 94px rows split by 599px rules.
+    <div className="h-full rounded-[10px] border border-[#414141]/20 bg-white px-[13px] pt-[11px] pb-[21px]">
+      <div className="flex min-h-[34px] items-center justify-between pl-[9px] pr-[24px]">
         <h2 className="text-[20px] leading-[27px] font-semibold text-black">{pickText(d.heading, locale)}</h2>
         {d.viewAll?.href && (
-          <Link href={resolveHref(d.viewAll.href, slug)} className="rounded-full border-[0.6px] border-[#135130] px-4 py-1.5 text-[13.5px] text-[#135130] hover:bg-[#135130]/5">
+          <Link href={resolveHref(d.viewAll.href, slug)} className="rounded-full border-[0.6px] border-[#135130] px-4 py-2 text-[13.5px] leading-[normal] text-[#135130] hover:bg-[#135130]/5">
             {pickText(d.viewAll.label, locale) || t("viewAll")}
           </Link>
         )}
       </div>
-      <ul className="mt-2 rounded-[10px] border border-black/15">
+      <ul className="mt-[10px] rounded-[10px] border border-[#414141]/20 px-3">
         {items.map((n, i) => (
           <li key={i} className="border-b border-black last:border-b-0">
-            <Link href={n.href ? resolveHref(n.href, slug) : d.viewAll?.href ? resolveHref(d.viewAll.href, slug) : pageHref(slug, "announcements")} className="flex items-center gap-4 px-3 py-3 hover:bg-[#f4faf6]">
+            <Link href={n.href ? resolveHref(n.href, slug) : d.viewAll?.href ? resolveHref(d.viewAll.href, slug) : pageHref(slug, "announcements")} className="flex min-h-[94px] items-center gap-[14px] py-[13px] hover:bg-[#f4faf6]">
             {n.imageUrl && (
               // eslint-disable-next-line @next/next/no-img-element -- static design asset / backend media
               <img src={n.imageUrl} alt="" width={92} height={68} className="h-[68px] w-[92px] shrink-0 rounded-[10px] object-cover" loading="lazy" />
             )}
             <div>
               <p className="text-[16px] leading-[24px] font-semibold text-black">{pickText(n.title, locale)}</p>
-              <p className="mt-2 flex items-center gap-4 text-[12px] text-black">
-                {typeof n.date === "string" ? n.date : pickText(n.date, locale)}
+              <p className="mt-2 flex items-center text-[12px] leading-6 font-medium text-[#414141]">
+                {/* Figma: the status chip sits in a fixed column 88px after the date. */}
+                <span className="min-w-[88px] pr-2">{typeof n.date === "string" ? n.date : pickText(n.date, locale)}</span>
                 {n.status && (
-                  <span className={`rounded-full px-3 py-1 text-[12px] ${CHIP[n.status] ?? "bg-[#ececec] text-[#414141]"}`}>{n.status in CHIP ? t(`status.${n.status}`) : n.status}</span>
+                  <span className={`rounded-[27px] px-2.5 py-0.5 text-[12px] leading-6 font-medium ${CHIP[n.status] ?? "bg-[#ececec] text-[#414141]"}`}>{n.status in CHIP ? t(`status.${n.status}`) : n.status}</span>
                 )}
               </p>
             </div>
