@@ -43,13 +43,28 @@ function ViewAll({
   slug,
   locale,
   className,
+  small,
 }: {
   btn: Btn | undefined;
   slug: string;
   locale: Locale;
   className?: string;
+  /** Figma's small pill (12.5px, 33px tall) instead of the 14px / 39px one. */
+  small?: boolean;
 }) {
   if (!btn?.href || !tx(btn.label, locale)) return null;
+  if (small)
+    return (
+      <div className={`flex justify-center ${className ?? "mt-8"}`}>
+        <a
+          href={resolveHref(btn.href, slug)}
+          {...(isExternal(btn.href) ? externalProps : {})}
+          className="inline-flex items-center justify-center rounded-full border border-[#135130] bg-[#135130] px-4 py-2 text-[12.5px] font-semibold text-white hover:opacity-90"
+        >
+          {tx(btn.label, locale)}
+        </a>
+      </div>
+    );
   return (
     <div className={`flex justify-center ${className ?? "mt-8"}`}>
       <FilledButton
@@ -85,7 +100,7 @@ function HistoryCard({
 }) {
   const icon = mediaUrl(slug, d.iconId);
   return (
-    <div className="flex h-full flex-col items-start gap-6 rounded-[10px] border border-black/10 bg-white px-8 py-10 sm:flex-row sm:items-center">
+    <div className="flex h-full flex-col items-start gap-6 rounded-[10px] border border-black/10 bg-white px-8 py-6 sm:flex-row sm:items-center">
       {icon && (
         // eslint-disable-next-line @next/next/no-img-element -- website media served by the backend
         <img
@@ -140,7 +155,7 @@ export async function VillageIntroSection({
     );
   }
   return (
-    <Band tone="cream" heading={tx(d.heading, locale) || t("historyHeritage")}>
+    <Band tone="cream" heading={tx(d.heading, locale) || t("historyHeritage")} pad="pt-10 pb-10 lg:pt-[77px] lg:pb-[62px]" headGap="mb-2 lg:mb-0">
       <div className="grid gap-[9px] lg:grid-cols-[450px_minmax(0,1fr)]">
         <HistoryCard slug={slug} locale={locale} d={d} />
         <HeritageCarousel
@@ -194,7 +209,7 @@ export async function CultureCardsSection({
   const items = list<HeritageItem>(d.items);
   if (d.enabled === false || items.length === 0) return null;
   return (
-    <Band heading={tx(d.heading, locale) || t("culture")} tone="cream">
+    <Band heading={tx(d.heading, locale) || t("culture")} tone="cream" pad="pt-10 pb-6 lg:pt-[62px] lg:pb-[22px]" headGap="mb-6 lg:mb-[44px]">
       <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {items.map((c, i) => {
           const img = mediaUrl(slug, c.imageId);
@@ -212,12 +227,12 @@ export async function CultureCardsSection({
                   className="h-[275px] w-full object-cover"
                 />
               )}
-              <div className="px-5 pt-7 pb-8">
-                <p className="text-[20px] leading-7 font-semibold text-black">
+              <div className="px-5 pt-7 pb-[45px]">
+                <p className="text-[22px] leading-[30px] font-semibold text-black">
                   {tx(c.title, locale)}
                 </p>
                 {tx(c.description, locale) && (
-                  <p className="mt-3 text-[16px] leading-[30px] text-[#414141]">
+                  <p className="mt-3.5 text-[17px] leading-[33px] text-[#414141]">
                     {tx(c.description, locale)}
                   </p>
                 )}
@@ -243,7 +258,7 @@ export function HomestaySection({ slug, locale, data }: SectionProps) {
   const img = mediaUrl(slug, d.imageId);
   const features = list<{ icon?: string; title?: B }>(d.features);
   return (
-    <Band tone="cream">
+    <Band tone="cream" pad="py-6 lg:py-[22px]">
       <div
         className={`grid items-center overflow-hidden rounded-[10px] bg-[#f3f1ec] ${img ? "lg:grid-cols-[540px_minmax(0,1fr)_auto]" : "lg:grid-cols-[minmax(0,1fr)_auto]"}`}
       >
@@ -257,7 +272,7 @@ export function HomestaySection({ slug, locale, data }: SectionProps) {
           />
         )}
         <div className="px-6 py-6 lg:px-[45px]">
-          <h2 className="flex items-center gap-4 text-[20px] font-semibold text-[#135130]">
+          <h2 className="flex items-center gap-4 text-[18px] leading-6 font-semibold text-[#135130]">
             <span
               aria-hidden
               className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#135130]/10"
@@ -267,7 +282,7 @@ export function HomestaySection({ slug, locale, data }: SectionProps) {
             {tx(d.heading, locale)}
           </h2>
           {tx(d.description, locale) && (
-            <p className="mt-3 max-w-[300px] text-[14px] leading-[26px] text-[#414141]">
+            <p className="mt-3 max-w-[330px] text-[15px] leading-[25px] text-[#333]">
               {tx(d.description, locale)}
             </p>
           )}
@@ -282,15 +297,15 @@ export function HomestaySection({ slug, locale, data }: SectionProps) {
           )}
         </div>
         {features.length > 0 && (
-          <ul className="space-y-2 px-6 pb-6 lg:w-[300px] lg:px-0 lg:pr-[80px] lg:pb-0">
+          <ul className="space-y-[1px] px-6 pb-6 lg:w-[348px] lg:px-0 lg:pr-[80px] lg:pb-0">
             {features.map((f, i) => (
               <li
                 key={i}
-                className="flex items-center gap-4 rounded-[8px] bg-white px-6 py-2.5 text-[14px] text-black"
+                className="flex h-[46px] items-center gap-4 rounded-[8px] bg-white px-6 text-[14.5px] whitespace-nowrap text-black"
               >
                 <Icon
                   name={f.icon}
-                  className="size-6 shrink-0 text-[#135130]"
+                  className="size-7 shrink-0 text-[#135130]"
                 />
                 {tx(f.title, locale)}
               </li>
@@ -314,14 +329,14 @@ export async function LeaderCardsSection({ slug, locale, data }: SectionProps) {
   }>(d.items);
   if (items.length === 0) return null;
   return (
-    <Band heading={tx(d.heading, locale) || t("leaders")} tone="cream">
+    <Band heading={tx(d.heading, locale) || t("leaders")} tone="cream" pad="py-6 lg:pt-[22px] lg:pb-[25px]" headGap="mb-6 lg:mb-[35px]">
       <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {items.map((p, i) => {
           const photo = mediaUrl(slug, p.photoId);
           return (
             <li
               key={i}
-              className="rounded-[8px] bg-white px-4 pt-2 pb-7 text-center shadow-[0_0_10px_rgba(0,0,0,0.12)]"
+              className="rounded-[8px] bg-white px-4 pt-2 pb-6 text-center shadow-[0_0_10px_rgba(0,0,0,0.12)]"
             >
               {photo && (
                 // eslint-disable-next-line @next/next/no-img-element -- website media served by the backend
@@ -399,12 +414,12 @@ export async function FpoGalleryVoiceSection({
   const count = [showFpo, showGallery, showVoice].filter(Boolean).length;
   if (count === 0) return null;
   const card =
-    "flex flex-col rounded-[10px] bg-white px-7 py-7 shadow-[0_0_12px_rgba(0,0,0,0.12)]";
+    "flex flex-col rounded-[10px] bg-white px-6 py-6 shadow-[0_0_12px_rgba(0,0,0,0.12)] lg:min-h-[371px]";
   const title = "text-[20px] leading-7 font-semibold text-[#135130]";
   // Gallery link: the website's own Gallery page unless the data names another target.
   const galleryLink = d.gallery?.link ?? "page:gallery";
   return (
-    <Band tone="cream">
+    <Band tone="cream" pad="py-6 lg:pt-[24px] lg:pb-[38px]">
       <div
         className={`grid gap-[34px] ${count === 3 ? "lg:grid-cols-[441fr_402fr_403fr]" : count === 2 ? "lg:grid-cols-2" : ""}`}
       >
@@ -422,7 +437,7 @@ export async function FpoGalleryVoiceSection({
               )}
               <div className="min-w-0">
                 {tx(d.fpo?.description, locale) && (
-                  <p className="text-[15px] leading-[27px] text-[#414141]">
+                  <p className="text-[14px] leading-[27px] text-[#414141]">
                     {tx(d.fpo?.description, locale)}
                   </p>
                 )}
@@ -456,7 +471,7 @@ export async function FpoGalleryVoiceSection({
           <div className={card}>
             <h3 className={title}>{tx(d.gallery?.title, locale)}</h3>
             {tx(d.gallery?.description, locale) && (
-              <p className="mt-2 max-w-[260px] text-[15px] leading-[25px] text-[#414141]">
+              <p className="mt-1 max-w-[260px] text-[15px] leading-[25px] text-[#414141]">
                 {tx(d.gallery?.description, locale)}
               </p>
             )}
@@ -475,7 +490,7 @@ export async function FpoGalleryVoiceSection({
                           src={mediaUrl(slug, id)}
                           alt=""
                           loading="lazy"
-                          className="h-[104px] w-full rounded-[4px] object-cover"
+                          className="h-[98px] w-full rounded-[4px] object-cover"
                         />
                       ))}
                     </div>
@@ -543,6 +558,8 @@ export async function FpoGalleryVoiceSection({
 
 interface SupportItem {
   icon?: string;
+  /** Placeholder only: path of the Figma pictogram shown instead of `icon`. */
+  iconImage?: string;
   title?: B;
   description?: B;
   contactOrAction?: string;
@@ -556,21 +573,36 @@ export function SupportStripSection({ slug, locale, data }: SectionProps) {
     (i) => i.visible !== false,
   );
   if (items.length === 0) return null;
+  // Figma: the strip overlaps the hero by 72px (Employment) or 111px (Education); pictograms are 84 / 92px.
+  // `spacious` (Education): 280px strip with more air between pictogram, title and caption.
+  const opt = data as { overlap?: number; iconSize?: number; spacious?: boolean };
+  const sp = !!opt.spacious;
+  const overlap = opt.overlap ?? 72;
+  const iconSize = opt.iconSize ?? 84;
   return (
-    <section className="relative z-10 bg-cream pt-8 pb-4 lg:-mt-[72px] lg:bg-[linear-gradient(to_bottom,transparent_72px,var(--color-cream)_72px)] lg:pt-0">
+    <section
+      style={{ "--ov": `${overlap}px` } as React.CSSProperties}
+      className="relative z-10 bg-cream pt-8 pb-4 lg:-mt-[var(--ov)] lg:bg-[linear-gradient(to_bottom,transparent_var(--ov),var(--color-cream)_var(--ov))] lg:pt-0"
+    >
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
-        <ul className="grid grid-cols-2 gap-y-4 rounded-[16px] bg-white py-5 shadow-[0_0_14px_rgba(0,0,0,0.12)] sm:grid-cols-3 lg:grid-cols-6 lg:divide-x lg:divide-black/10">
+        <ul className={`grid grid-cols-2 gap-y-4 bg-white shadow-[0_0_14px_rgba(0,0,0,0.12)] sm:grid-cols-3 lg:grid-cols-6 lg:divide-x lg:divide-black/10 ${sp ? "rounded-[10px] pt-[18px] pb-[31px]" : "rounded-[16px] py-5"}`}>
           {items.map((c, i) => {
             const inner = (
               <>
-                <span className="flex size-[86px] items-center justify-center rounded-full bg-[#eef4ef] text-[#135130]">
-                  <Icon name={c.icon} className="size-11" />
-                </span>
-                <span className="mt-4 text-[16px] leading-6 font-semibold text-black">
+                {c.iconImage ? (
+                  // Placeholder content: the Figma pictogram (filled glyph in its tinted circle), sliced from the design.
+                  // eslint-disable-next-line @next/next/no-img-element -- static design asset
+                  <img src={c.iconImage} alt="" width={iconSize} height={iconSize} style={{ width: iconSize, height: iconSize }} />
+                ) : (
+                  <span className="flex size-[84px] items-center justify-center rounded-full bg-[#eef4ef] text-[#135130]">
+                    <Icon name={c.icon} className="size-11" />
+                  </span>
+                )}
+                <span className={`leading-6 font-semibold text-black ${sp ? "mt-[22px] text-[17px]" : "mt-4 text-[16px]"}`}>
                   {tx(c.title, locale)}
                 </span>
                 {tx(c.description, locale) && (
-                  <span className="mt-2 text-[14px] leading-[28px] text-[#414141]">
+                  <span className={`leading-[28px] text-[#414141] ${sp ? "mt-[21px] text-[15.5px]" : "mt-2 text-[15px]"}`}>
                     {tx(c.description, locale)}
                   </span>
                 )}
@@ -620,41 +652,50 @@ export async function LocalOpportunitiesSection({
     (i) => i.visible !== false,
   );
   if (items.length === 0) return null;
+  // Figma Employment "Local Opportunities": 314×288 cards, 92px pictogram, 40px green count, 20 / 17px text.
   return (
     <Band
       heading={tx(d.heading, locale) || t("localOpportunities")}
       tone="cream"
+      pad="py-8 lg:pt-[15px] lg:pb-[47px]"
+      headGap="mb-6 lg:mb-[31px]"
     >
       <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {items.map((c, i) => (
           <li
             key={i}
-            className="flex flex-col items-center rounded-[10px] bg-white px-4 pt-7 pb-8 text-center shadow-[0_0_10px_rgba(0,0,0,0.12)]"
+            className="flex flex-col items-center rounded-[12px] border-[1.2px] border-[#414141]/15 bg-white px-4 pt-5 pb-8 text-center shadow-[0_0_20px_rgba(0,0,0,0.25)] lg:h-[288px] lg:pb-0"
           >
-            <span
-              style={{
-                color: c.colour ?? ICON_COLOURS[i % ICON_COLOURS.length],
-              }}
-            >
-              <Icon name={c.icon} className="size-[60px]" />
-            </span>
+            {c.iconImage ? (
+              // eslint-disable-next-line @next/next/no-img-element -- static design asset
+              <img src={c.iconImage} alt="" width={92} height={91} className="h-[91px] w-[92px]" />
+            ) : (
+              <span
+                className="flex h-[91px] items-center"
+                style={{
+                  color: c.colour ?? ICON_COLOURS[i % ICON_COLOURS.length],
+                }}
+              >
+                <Icon name={c.icon} className="size-[60px]" />
+              </span>
+            )}
             {c.contactOrAction && (
-              <p className="mt-4 text-[30px] leading-9 font-bold text-[#135130]">
+              <p className="text-[39.5px] leading-[54px] font-bold text-[#135130]">
                 {plain(c.contactOrAction, locale)}
               </p>
             )}
-            <p className="mt-3 text-[18px] font-medium text-black">
+            <p className="mt-2.5 text-[19.7px] leading-[27px] font-semibold text-[#414141]">
               {tx(c.title, locale)}
             </p>
             {tx(c.description, locale) && (
-              <p className="mt-3 text-[16px] text-[#414141]">
+              <p className="mt-2 text-[17.3px] leading-6 text-[#414141]">
                 {tx(c.description, locale)}
               </p>
             )}
           </li>
         ))}
       </ul>
-      <ViewAll btn={d.viewAll} slug={slug} locale={locale} />
+      <ViewAll btn={d.viewAll} slug={slug} locale={locale} className="mt-8 lg:mt-[29px]" small />
     </Band>
   );
 }
@@ -674,6 +715,8 @@ export async function SkillDirectorySection({
   };
   const items = list<{
     icon?: string;
+    /** Placeholder only: the Figma pictogram shown instead of `icon`. */
+    iconImage?: string;
     skillName?: B;
     availableCount?: number;
     countIsApproximate?: boolean;
@@ -682,25 +725,31 @@ export async function SkillDirectorySection({
   }>(d.items).filter((s) => s.active !== false);
   if (items.length === 0) return null;
   return (
-    <div className="rounded-[10px] border border-black/15 bg-white px-5 py-6 sm:px-8">
-      <h2 className="text-center text-[26px] leading-tight font-semibold text-black lg:text-[30px] lg:leading-[45px]">
+    // Figma Employment "Village Talent Directory": 759×591 card, 4 × 2 tiles of 160×201 with 85px pictograms.
+    <div className="rounded-[10px] border border-black/15 bg-white px-5 pt-[17px] pb-[18px] sm:px-8">
+      <h2 className="text-center text-[26px] leading-tight font-semibold text-black lg:text-[30px] lg:leading-[53px]">
         {tx(d.heading, locale) || t("skillDirectory")}
       </h2>
-      <p className="mt-1 text-center text-[18px] text-black lg:text-[20px]">
+      <p className="text-center text-[18px] leading-[36px] text-black lg:text-[20px]">
         {tx(d.subheading, locale) || t("skillDirectorySub")}
       </p>
-      <ul className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <ul className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
         {items.map((s, i) => {
           const inner = (
             <>
-              <span className="flex size-[58px] items-center justify-center rounded-full bg-[#eef4ef] text-[#135130]">
-                <Icon name={s.icon} className="size-7" />
-              </span>
-              <span className="mt-5 text-[18px] font-semibold text-black lg:text-[20px]">
+              {s.iconImage ? (
+                // eslint-disable-next-line @next/next/no-img-element -- static design asset
+                <img src={s.iconImage} alt="" width={85} height={84} className="h-[84px] w-[85px]" />
+              ) : (
+                <span className="flex size-[84px] items-center justify-center rounded-full bg-[#eef4ef] text-[#135130]">
+                  <Icon name={s.icon} className="size-9" />
+                </span>
+              )}
+              <span className="mt-2.5 text-[18px] leading-[35px] font-semibold text-black lg:text-[19px]">
                 {tx(s.skillName, locale)}
               </span>
               {typeof s.availableCount === "number" ? (
-                <span className="mt-3 text-[11px] text-[#135130]">
+                <span className="mt-1.5 text-[10px] leading-[17px] text-[#135130]">
                   <b>
                     {s.countIsApproximate
                       ? `≈ ${s.availableCount}`
@@ -710,7 +759,7 @@ export async function SkillDirectorySection({
                 </span>
               ) : (
                 s.link && (
-                  <span className="mt-3 text-[11px] font-semibold text-[#135130]">
+                  <span className="mt-1.5 text-[10px] leading-[17px] font-semibold text-[#135130]">
                     {t("exploreAll")}
                   </span>
                 )
@@ -718,7 +767,7 @@ export async function SkillDirectorySection({
             </>
           );
           const cls =
-            "flex h-[200px] flex-col items-center justify-center rounded-[10px] border border-black/25 px-2 text-center";
+            "flex h-[201px] flex-col items-center justify-center rounded-[10px] border border-black/25 px-2 text-center";
           return (
             <li key={i}>
               {s.link ? (
@@ -736,7 +785,7 @@ export async function SkillDirectorySection({
           );
         })}
       </ul>
-      <ViewAll btn={d.viewAll} slug={slug} locale={locale} className="mt-4" />
+      <ViewAll btn={d.viewAll} slug={slug} locale={locale} className="mt-3" />
     </div>
   );
 }
@@ -756,6 +805,8 @@ export async function AssistanceItemsSection({
   };
   const items = list<{
     icon?: string;
+    /** Placeholder only: the Figma pictogram shown instead of `icon`. */
+    iconImage?: string;
     title?: B;
     description?: B;
     colour?: string;
@@ -767,9 +818,9 @@ export async function AssistanceItemsSection({
   return (
     <div
       id="farmer-assistance"
-      className="scroll-mt-[180px] rounded-[10px] border border-black/10 bg-white px-5 py-6 shadow-[0_0_10px_rgba(0,0,0,0.1)] sm:px-7"
+      className="scroll-mt-[180px] rounded-[10px] border border-black/10 bg-white px-5 pt-6 pb-[30px] shadow-[0_0_20px_rgba(0,0,0,0.25)] sm:px-7"
     >
-      <h2 className="text-center text-[22px] font-semibold text-black">
+      <h2 className="text-center text-[22px] leading-[33px] font-semibold text-black">
         {tx(d.heading, locale) || t("farmerCentre")}
       </h2>
       <p className="mt-1 text-center text-[15px] text-[#414141]">
@@ -779,15 +830,20 @@ export async function AssistanceItemsSection({
         {items.map((c, i) => {
           const inner = (
             <>
-              <span style={{ color: c.colour ?? colours[i % colours.length] }}>
-                <Icon name={c.icon} className="size-8" />
-              </span>
+              {c.iconImage ? (
+                // eslint-disable-next-line @next/next/no-img-element -- static design asset
+                <img src={c.iconImage} alt="" width={50} height={50} className="size-[50px] shrink-0" />
+              ) : (
+                <span className="flex size-[50px] shrink-0 items-center justify-center" style={{ color: c.colour ?? colours[i % colours.length] }}>
+                  <Icon name={c.icon} className="size-8" />
+                </span>
+              )}
               <span className="min-w-0 flex-1">
-                <span className="block text-[14px] font-semibold text-black">
+                <span className="block text-[15.5px] leading-6 font-semibold text-black">
                   {tx(c.title, locale)}
                 </span>
                 {tx(c.description, locale) && (
-                  <span className="mt-1 block text-[12px] text-[#414141]">
+                  <span className="mt-1 block text-[13.5px] leading-5 text-[#414141]">
                     {tx(c.description, locale)}
                   </span>
                 )}
@@ -801,7 +857,7 @@ export async function AssistanceItemsSection({
             </>
           );
           const cls =
-            "flex items-center gap-5 rounded-[8px] border border-black/10 bg-white px-6 py-3";
+            "flex min-h-[74px] items-center gap-5 rounded-[8px] border border-black/10 bg-white px-6 py-3";
           return (
             <li key={i}>
               {c.link ? (
@@ -867,7 +923,7 @@ async function ProgramsCard({
 }) {
   const t = await getTranslations("public.cms");
   return (
-    <ul className="rounded-[10px] border border-black/10 bg-white px-6 py-2 shadow-[0_0_10px_rgba(0,0,0,0.06)]">
+    <ul className="rounded-[10px] border border-black/10 bg-white px-6 shadow-[0_0_10px_rgba(0,0,0,0.06)]">
       {items.map((p, i) => {
         const img = mediaUrl(slug, p.thumbnailImageId);
         return (
@@ -878,7 +934,7 @@ async function ProgramsCard({
                 src={img}
                 alt=""
                 loading="lazy"
-                className="h-[90px] w-[130px] shrink-0 rounded-[6px] object-cover"
+                className="h-[88px] w-[128px] shrink-0 rounded-[6px] object-cover"
               />
             )}
             <div className="min-w-0">
@@ -887,11 +943,11 @@ async function ProgramsCard({
                   {t("featured")}
                 </span>
               )}
-              <p className="text-[18px] leading-7 font-semibold text-black">
+              <p className="text-[18px] leading-6 font-semibold text-black">
                 {tx(p.title, locale)}
               </p>
               {tx(p.shortDescription, locale) && (
-                <p className="text-[16px] leading-7 text-[#555]">
+                <p className="mt-0.5 text-[15.5px] leading-[26px] text-[#555]">
                   {tx(p.shortDescription, locale)}
                 </p>
               )}
@@ -927,15 +983,15 @@ async function PortalsCard({
   return (
     <div
       id="gov-job-portals"
-      className="scroll-mt-[180px] rounded-[10px] border border-black/10 bg-white px-6 py-6 shadow-[0_0_10px_rgba(0,0,0,0.06)] lg:px-[52px]"
+      className="scroll-mt-[180px] rounded-[10px] border border-black/10 bg-white px-6 pt-6 pb-5 shadow-[0_0_10px_rgba(0,0,0,0.06)] lg:pr-8 lg:pl-[52px]"
     >
-      <h3 className="text-[22px] font-semibold text-black">
+      <h3 className="text-[20px] leading-7 font-semibold text-black">
         {tx(d.heading, locale) || t("jobPortals")}
       </h3>
       <p className="mt-1 text-[15px] text-[#414141]">
         {tx(d.subheading, locale) || t("jobPortalsSub")}
       </p>
-      <ul className="mt-4 space-y-1.5">
+      <ul className="mt-3 space-y-0">
         {items.map((p, i) => {
           const logo = mediaUrl(slug, p.logoId);
           const inner = (
@@ -1019,7 +1075,7 @@ export async function TrainingProgramsSection({
     );
   }
   return (
-    <Band heading={heading || t("trainingDigital")}>
+    <Band heading={heading || t("trainingDigital")} pad="py-8 lg:pt-[23px] lg:pb-0">
       <div
         className={`grid items-stretch gap-6 ${items.length > 0 ? "lg:grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] lg:gap-[43px]" : ""}`}
       >
@@ -1092,6 +1148,8 @@ export async function StudentSpotlightSection({
   const photo = mediaUrl(slug, d.photoId);
   const cards = list<{
     icon?: string;
+    /** Placeholder only: the Figma pictogram shown instead of `icon`. */
+    iconImage?: string;
     title?: B;
     value?: string;
     colour?: string;
@@ -1108,23 +1166,24 @@ export async function StudentSpotlightSection({
     "#e2502b",
   ];
   return (
-    <Band tone="cream">
-      <div className="grid items-center gap-8 rounded-[10px] border border-black/15 bg-white p-6 lg:grid-cols-[230px_minmax(0,1fr)_minmax(0,500px)] lg:gap-10 lg:px-9 lg:py-7">
+    // Figma Education spotlight: 1318×374 card, 231×318 photo, 21.7 / 17.4px text, 234×128 stat boxes.
+    <Band tone="cream" pad="py-8 lg:pt-[46px] lg:pb-[13px]">
+      <div className="grid items-center gap-8 rounded-[11px] border border-[#414141]/20 bg-white p-6 lg:grid-cols-[231px_minmax(0,1fr)_minmax(0,498px)] lg:gap-10 lg:py-[26px] lg:pr-[38px] lg:pl-[35px]">
         {photo && (
           // eslint-disable-next-line @next/next/no-img-element -- website media served by the backend
           <img
             src={photo}
             alt={tx(d.name, locale)}
             loading="lazy"
-            className="mx-auto h-[316px] w-[230px] rounded-[10px] object-cover"
+            className="mx-auto h-[318px] w-[231px] rounded-[11px] object-cover"
           />
         )}
         <div>
-          <h2 className="text-[20px] font-semibold text-[#135130]">
+          <h2 className="text-[21.7px] leading-[26px] font-semibold text-[#135130]">
             {tx(d.name, locale)}
           </h2>
           {klass && (
-            <p className="mt-4 text-[16px] text-[#414141]">
+            <p className="mt-5 text-[17.35px] leading-[21px] text-[#414141]">
               {klass}
               {school.length > 0 && (
                 <span className="ml-2 border-l border-black/30 pl-2">
@@ -1134,7 +1193,7 @@ export async function StudentSpotlightSection({
             </p>
           )}
           {tx(d.achievements, locale) && (
-            <p className="mt-5 max-w-[360px] text-[16px] leading-[26px] text-[#414141]">
+            <p className="mt-[26px] max-w-[366px] text-[17.35px] leading-[26px] text-[#414141]">
               <span className="font-medium text-black">
                 {t("achievementsLabel")}
               </span>{" "}
@@ -1142,7 +1201,7 @@ export async function StudentSpotlightSection({
             </p>
           )}
           {tx(d.quote, locale) && (
-            <figure className="mt-8 max-w-[340px] text-[16px] leading-[26px] text-[#414141]">
+            <figure className="mt-[37px] max-w-[345px] text-[17.35px] leading-[26px] text-[#414141]">
               <blockquote>&ldquo;{tx(d.quote, locale)}&rdquo;</blockquote>
               <figcaption className="mt-1 pl-3">
                 &bull; {tx(d.name, locale)}
@@ -1150,36 +1209,42 @@ export async function StudentSpotlightSection({
             </figure>
           )}
           {d.buttonLink && tx(d.buttonText, locale) && (
-            <div className="mt-6">
-              <FilledButton
+            <div className="mt-[19px]">
+              <a
                 href={resolveHref(d.buttonLink, slug)}
-                external={isExternal(d.buttonLink)}
+                {...(isExternal(d.buttonLink) ? externalProps : {})}
+                className="inline-flex w-[188px] items-center justify-center rounded-full border border-[#135130] bg-[#135130] px-4 py-2 text-[13.5px] font-medium text-white hover:opacity-90"
               >
                 {tx(d.buttonText, locale)}
-              </FilledButton>
+              </a>
             </div>
           )}
         </div>
         {cards.length > 0 && (
-          <ul className="grid gap-x-8 gap-y-10 sm:grid-cols-2">
+          <ul className="grid gap-x-[30px] gap-y-[41px] sm:grid-cols-2">
             {cards.map((c, i) => {
               const colour = c.colour ?? colours[i % colours.length]!;
               return (
                 <li
                   key={i}
-                  className="flex h-[128px] items-center gap-4 rounded-[10px] border border-black/15 bg-white px-5"
+                  className="flex h-[128px] items-center gap-2 rounded-[11px] border border-[#414141]/15 bg-white pr-4 pl-2"
                 >
-                  <span
-                    className="flex size-10 shrink-0 items-center justify-center rounded-full"
-                    style={{ color: colour, backgroundColor: `${colour}14` }}
-                  >
-                    <Icon name={c.icon} className="size-6" />
-                  </span>
+                  {c.iconImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- static design asset
+                    <img src={c.iconImage} alt="" width={59} height={51} className="h-[51px] w-[59px] shrink-0" />
+                  ) : (
+                    <span
+                      className="mx-2 flex size-10 shrink-0 items-center justify-center rounded-full"
+                      style={{ color: colour, backgroundColor: `${colour}14` }}
+                    >
+                      <Icon name={c.icon} className="size-6" />
+                    </span>
+                  )}
                   <span className="min-w-0">
-                    <span className="block text-[13px] text-[#414141]">
+                    <span className="block text-[13.5px] font-medium text-[#414141]">
                       {tx(c.title, locale)}
                     </span>
-                    <span className="mt-2 block text-[16px] font-bold text-black">
+                    <span className="mt-5 block text-[15.2px] font-semibold text-black">
                       {c.value}
                     </span>
                   </span>
@@ -1285,14 +1350,14 @@ export async function SchemeCardsSection({ slug, locale, data }: SectionProps) {
   }>(d.items).filter((c) => c.active !== false);
   if (items.length === 0) return null;
   return (
-    <Band heading={tx(d.heading, locale) || t("schemeCards")} tone="cream">
+    <Band heading={tx(d.heading, locale) || t("schemeCards")} tone="cream" headGap="mb-6 lg:mb-[49px]">
       <ul className="grid gap-[14px] sm:grid-cols-2 lg:grid-cols-5">
         {items.map((c, i) => {
           const tint = SCHEME_TINTS[i % SCHEME_TINTS.length]!;
           return (
             <li
               key={i}
-              className="flex min-h-[285px] flex-col rounded-[10px] border px-6 py-7"
+              className="flex min-h-[286px] flex-col rounded-[10px] border px-6 py-7"
               style={{ backgroundColor: tint.bg, borderColor: tint.border }}
             >
               <span style={{ color: tint.fg }}>

@@ -23,7 +23,6 @@ interface NoticesData {
 export async function NoticesSection({ slug, locale, data, siblings }: SectionProps) {
   const listHref = pageHref(slug, "announcements");
   const t = await getTranslations("public");
-  const tc = await getTranslations("common");
   const d = data as NoticesData;
   const published = Array.isArray(d.items);
   let tabs: NoticeTab[] = (d.tabs ?? []).map((tab, i) => ({
@@ -77,16 +76,16 @@ export async function NoticesSection({ slug, locale, data, siblings }: SectionPr
 
   return (
     <section className="bg-cream py-8">
-      <div className="mx-auto max-w-[1377px] px-4 sm:px-8">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
         <div className="text-center">
           <h2 className="text-[30px] leading-[45px] font-semibold text-black">{pickText(d.heading, locale)}</h2>
-          {pickText(d.subheading, locale) && <p className="mt-3 text-[20px] leading-[30px] text-black">{pickText(d.subheading, locale)}</p>}
+          {pickText(d.subheading, locale) && <p className="mt-4 text-[20px] leading-[30px] text-black">{pickText(d.subheading, locale)}</p>}
         </div>
-        <div className="mx-auto mt-8 max-w-[1350px]">
+        <div className="mt-[19px]">
           <NoticeTabs
             tabs={tabs}
             downloadLabel={t("download")}
-            viewAllLabel={tc("viewAll")}
+            viewAllLabel={t("viewAll")}
             viewAllHref={d.viewAll?.href ? resolveHref(d.viewAll.href, slug) : listHref}
             emptyLabel={t("noAnnouncements")}
             newLabel={t("newBadge")}

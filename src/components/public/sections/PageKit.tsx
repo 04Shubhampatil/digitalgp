@@ -20,9 +20,11 @@ interface Btn {
  * src/content/figma-*.ts until the backend publishes matching sections.
  */
 
-const Eyebrow = ({ children }: { children: React.ReactNode }) => <p className="text-[20px] font-semibold tracking-wide text-[#ea7f14] uppercase">{children}</p>;
+/** Section label; `green` is the Key Projects style (Figma 375:13993: 20px semibold #135130, no letter-spacing). */
+const Eyebrow = ({ children, green }: { children: React.ReactNode; green?: boolean }) => (
+  <p className={green ? "text-[20px] leading-[27px] font-semibold text-[#135130] uppercase" : "text-[20px] font-semibold tracking-wide text-[#ea7f14] uppercase"}>{children}</p>
+);
 const ghostBtn = "inline-flex items-center gap-2 rounded-full border-[0.6px] border-[#135130] px-4 py-2 text-[13.5px] text-[#135130] hover:bg-[#135130]/5";
-const GREEN = "#135130";
 
 /** Card chrome used by tracker/impact/timeline/finance blocks that sit side by side. */
 const card = "rounded-[10px] border border-black/15 bg-white px-8 py-6";
@@ -77,10 +79,11 @@ export async function ProjectShowcaseSection({ slug, locale, data }: SectionProp
     after: t("after"),
   };
   return (
-    <section className="bg-cream py-8">
+    // Figma: "KEY PROJECTS" sits 94px below the stats card.
+    <section className="bg-cream py-8 lg:pt-[94px]">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
         <div className="mb-2 flex flex-wrap items-end justify-between gap-3">
-          <Eyebrow>{pickText(d.eyebrow, locale)}</Eyebrow>
+          <Eyebrow green>{pickText(d.eyebrow, locale)}</Eyebrow>
         </div>
         <ProjectTabs tabs={tabs} items={items} labels={labels} />
         {d.viewAll?.href && (
@@ -137,7 +140,7 @@ export async function BeforeAfterSection({ slug, locale, data }: SectionProps) {
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
         {pickText(d.heading, locale) && <h2 className="mb-6 text-center text-[30px] leading-[45px] font-semibold text-black">{pickText(d.heading, locale)}</h2>}
         <div className="mb-5 flex items-center justify-between">
-          <Eyebrow>{pickText(d.eyebrow, locale) || (pickText(d.heading, locale) ? "" : t("detail.beforeAfter"))}</Eyebrow>
+          <Eyebrow green={d.source === "projects"}>{pickText(d.eyebrow, locale) || (pickText(d.heading, locale) ? "" : t("detail.beforeAfter"))}</Eyebrow>
           {d.viewAll?.href && (
             <Link href={resolveHref(d.viewAll.href, slug)} className="inline-flex items-center gap-2 text-[14px] text-[#135130] hover:underline">
               {pickText(d.viewAll.label, locale)} <ArrowRight className="size-4" aria-hidden />
@@ -229,20 +232,21 @@ const IMPACT_ICONS: LucideIcon[] = [Toilet, Plug, GlassWater, House, Route, Ligh
 export function ImpactGridSection({ locale, data }: SectionProps) {
   const d = data as { title?: B; subtitle?: B; items?: { label?: B; value?: string; unit?: string }[] };
   return (
-    <div className={card}>
-      <h2 className="text-[22px] leading-[27px] font-semibold text-black uppercase">{pickText(d.title, locale)}</h2>
-      <p className="mt-2 text-[12px] text-[#414141]">{pickText(d.subtitle, locale)}</p>
-      <ul className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+    // Figma 375:14178: 736px card, 167×102 tiles 12px apart (inset 16px), 51px green line icon, 10px label over a 24px value.
+    <div className={`${card} xl:px-4`}>
+      <h2 className="text-[22px] leading-[27px] font-semibold text-black uppercase xl:px-[18px]">{pickText(d.title, locale)}</h2>
+      <p className="mt-2 text-[12px] text-[#414141] xl:px-[18px]">{pickText(d.subtitle, locale)}</p>
+      <ul className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4 xl:gap-x-3 xl:gap-y-5">
         {(d.items ?? []).map((it, i) => {
           const Icon = IMPACT_ICONS[i % IMPACT_ICONS.length]!;
           return (
-          <li key={i} className="flex items-center gap-3 rounded-[10px] border border-black/15 bg-white px-3 py-5">
-            <span aria-hidden className="flex size-[50px] shrink-0 items-center justify-center rounded-full bg-[#e9f4e9] text-[#135130]">
-              <Icon className="size-6" strokeWidth={1.6} />
+          <li key={i} className="flex min-h-[102px] items-center gap-2 rounded-[10px] border border-[#414141]/20 bg-white px-1.5">
+            <span aria-hidden className="flex size-[51px] shrink-0 items-center justify-center text-[#135130]">
+              <Icon className="size-[34px]" strokeWidth={1.5} />
             </span>
             <div>
-              <p className="text-[11px] font-medium text-[#135130]">{pickText(it.label, locale)}</p>
-              <p className="mt-1 whitespace-nowrap text-[22px] leading-[30px] font-bold text-black">
+              <p className="text-[10px] leading-[14px] font-semibold whitespace-nowrap text-[#135130]">{pickText(it.label, locale)}</p>
+              <p className="mt-1.5 whitespace-nowrap text-[24px] leading-[33px] font-semibold text-black">
                 {it.value}
                 {it.unit && <span className="ml-1 text-[14px] font-semibold">{pickText({ en: it.unit }, locale)}</span>}
               </p>
@@ -427,26 +431,31 @@ export async function SuccessStoriesSection({ slug, locale, data, pageKey }: Sec
   );
 }
 
-/** `cta-banner`: dark-green call-to-action band with two pill buttons. */
+/**
+ * `cta-banner` (Figma 375:14342): 110px #004a24 band, 135×100 illustration at 29px, 20px title / 16px line at 200px,
+ * white "Submit Suggestion" pill and an outlined green "Contact Panchayat" pill with arrows.
+ */
 export function CtaBannerSection({ slug, locale, data }: SectionProps) {
-  const d = data as { title?: B; body?: B; primary?: Btn; secondary?: Btn };
+  const d = data as { title?: B; body?: B; primary?: Btn; secondary?: Btn; imageUrl?: string };
   return (
     <section className="bg-cream py-6">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
-        <div className="flex flex-col items-center justify-between gap-4 rounded-[10px] bg-[#135130] px-8 py-7 text-white md:flex-row" style={{ backgroundColor: GREEN }}>
-          <div className="md:pl-24">
-            <p className="text-[20px] font-semibold">{pickText(d.title, locale)}</p>
-            <p className="mt-1 text-[14px] font-medium">{pickText(d.body, locale)}</p>
+        <div className="flex flex-col items-center gap-4 rounded-[10px] border border-[#414141]/20 bg-[#004a24] px-8 py-5 text-white md:min-h-[110px] md:flex-row md:py-0 md:pr-[42px] md:pl-[29px]">
+          {/* eslint-disable-next-line @next/next/no-img-element -- static design asset */}
+          <img src={d.imageUrl ?? "/images/figma/pages/prj-cta.png"} alt="" width={135} height={100} className="hidden h-[100px] w-[135px] shrink-0 md:block" />
+          <div className="md:ml-9">
+            <p className="text-[20px] leading-[27px] font-semibold">{pickText(d.title, locale)}</p>
+            <p className="mt-[5px] text-[16px] leading-[22px] font-semibold">{pickText(d.body, locale)}</p>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-4 md:ml-auto">
             {d.primary?.href && (
-              <Link href={resolveHref(d.primary.href, slug)} className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-2.5 text-[16px] text-[#135130] hover:opacity-90">
-                {pickText(d.primary.label, locale)} <ArrowRight className="size-4" aria-hidden />
+              <Link href={resolveHref(d.primary.href, slug)} className="inline-flex items-center gap-2 rounded-full border-[0.9px] border-[#135130] bg-white px-6 py-3 text-[20.25px] leading-[27px] text-[#135130] hover:opacity-90">
+                {pickText(d.primary.label, locale)} <ArrowRight className="size-6" aria-hidden />
               </Link>
             )}
             {d.secondary?.href && (
-              <Link href={resolveHref(d.secondary.href, slug)} className="inline-flex items-center gap-2 rounded-full border border-white px-6 py-2.5 text-[16px] text-white hover:bg-white/10">
-                {pickText(d.secondary.label, locale)} <ArrowRight className="size-4" aria-hidden />
+              <Link href={resolveHref(d.secondary.href, slug)} className="inline-flex items-center gap-2 rounded-full border-[1.5px] border-white bg-[#135130] px-6 py-3 text-[19px] leading-[26px] font-medium text-white hover:bg-white/10">
+                {pickText(d.secondary.label, locale)} <ArrowRight className="size-6" aria-hidden />
               </Link>
             )}
           </div>
@@ -470,8 +479,9 @@ export function FacilityGridSection({ locale, data }: SectionProps) {
             const icon = FACILITY_ICONS[i % FACILITY_ICONS.length]!;
             return (
               <li key={i} className="flex min-h-[202px] flex-col items-center rounded-[10px] border border-black/15 bg-white px-3 py-4 text-center shadow-[0_0_10px_rgba(0,0,0,0.12)]">
-                <FigmaIcon name={`fac-${icon}`} width={67} />
-                <p className="mt-4 text-[16px] leading-[22px] font-semibold text-black">{pickText(it.label, locale)}</p>
+                <FigmaIcon name={`fac-${icon}`} width={71} />
+                {/* Figma 375:14772: 20px labels on up to two lines (62px box), 12px value at the foot. */}
+                <p className="mt-3 min-h-[62px] text-[20px] leading-[21px] font-medium text-black">{pickText(it.label, locale)}</p>
                 <p className="mt-auto pt-3 text-[12px] text-[#414141]">{pickText(it.value, locale)}</p>
               </li>
             );

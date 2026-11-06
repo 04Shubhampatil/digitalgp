@@ -26,7 +26,8 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
         titleAccent: t("Building a Better Savardari"),
         accentBlock: true,
         body: t("Explore the infrastructure and public facilities available in our village that ensure a better quality of life and sustainable development for all"),
-        imageUrl: P + "infra-hero.png",
+        imageUrl: P + "infra-hero-torn.png",
+        imageBleed: { left: 553, width: 887, height: 539 },
       },
     },
     {
@@ -139,7 +140,8 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
         title: t("Transparent Today, Stronger Tomorrow —"),
         titleAccent: t("Savardari’s Commitment to Accountability"),
         body: t("We are committed to complete transparency in financial management and the responsible use of public funds for the development of our village"),
-        imageUrl: P + "fin-hero.png",
+        imageUrl: P + "fin-hero-torn.png",
+        imageBleed: { left: 553, width: 887, height: 513 },
       },
     },
     {
@@ -277,7 +279,8 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
           { label: t("View Homestay Options"), href: "page:culture#homestay" },
         ],
         // Figma: villagers making a rangoli in a temple courtyard.
-        imageUrl: P + "vil-hero-rangoli.png",
+        imageUrl: P + "vil-hero-torn.png",
+        imageBleed: { left: 553, width: 887, height: 513 },
       },
     },
     {
@@ -383,13 +386,14 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
       sortOrder: 80,
       data: {
         heading: b("Success Stories from Our People", "आपल्या लोकांच्या यशोगाथा"),
-        // No story pages yet: "Read Story" stays on this block, where each story is shown in full.
-        viewAll: { label: b("View All Success Stories", "सर्व यशोगाथा पहा"), href: "page:culture#success-stories" },
+        variant: "village",
+        // No story pages yet: "Read Story" opens the story in a dialog; "View All" opens the stories list page.
+        viewAll: { label: b("View All Success Stories", "सर्व यशोगाथा पहा"), href: "list:success-stories" },
         items: [
-          { imageId: PH + "vil-story-1.webp", title: b("From Farmer to Entrepreneur", "शेतकऱ्यापासून उद्योजकापर्यंत"), description: b("Ramesh transformed his farm into a successful organic farming business and inspires many.", "रमेश यांनी आपल्या शेतीचे रूपांतर यशस्वी सेंद्रिय शेती व्यवसायात केले आणि अनेकांना प्रेरणा दिली."), buttonText: b("Read Story", "कथा वाचा"), buttonLink: "page:culture#success-stories", order: 1 },
-          { imageId: PH + "vil-story-2.webp", title: b("Empowering Rural Women", "ग्रामीण महिलांचे सक्षमीकरण"), description: b("The SHG women of Savardari are creating handmade products and earning with pride.", "सावरदरीतील बचत गटाच्या महिला हस्तनिर्मित वस्तू बनवून अभिमानाने कमाई करतात."), buttonText: b("Read Story", "कथा वाचा"), buttonLink: "page:culture#success-stories", order: 2 },
-          { imageId: PH + "vil-story-3.webp", title: b("Youth Making a Difference", "बदल घडविणारे युवक"), description: b("Local youth are using digital skills to build careers and support the village.", "स्थानिक युवक डिजिटल कौशल्यांतून करिअर घडवून गावाला हातभार लावत आहेत."), buttonText: b("Read Story", "कथा वाचा"), buttonLink: "page:culture#success-stories", order: 3 },
-          { imageId: PH + "vil-story-4.webp", title: b("Preserving Our Heritage", "आपला वारसा जपताना"), description: b("Our community is working together to preserve our culture for future generations.", "आपला समाज पुढील पिढ्यांसाठी संस्कृती जपण्यासाठी एकत्र काम करत आहे."), buttonText: b("Read Story", "कथा वाचा"), buttonLink: "page:culture#success-stories", order: 4 },
+          { imageId: PH + "vil-story-1.webp", title: b("From Farmer to Entrepreneur", "शेतकऱ्यापासून उद्योजकापर्यंत"), description: b("Ramesh transformed his farm into a successful organic farming business and inspires many.", "रमेश यांनी आपल्या शेतीचे रूपांतर यशस्वी सेंद्रिय शेती व्यवसायात केले आणि अनेकांना प्रेरणा दिली."), buttonText: b("Read Story", "कथा वाचा"), order: 1 },
+          { imageId: PH + "vil-story-2.webp", title: b("Empowering Rural Women", "ग्रामीण महिलांचे सक्षमीकरण"), description: b("The SHG women of Savardari are creating handmade products and earning with pride.", "सावरदरीतील बचत गटाच्या महिला हस्तनिर्मित वस्तू बनवून अभिमानाने कमाई करतात."), buttonText: b("Read Story", "कथा वाचा"), order: 2 },
+          { imageId: PH + "vil-story-3.webp", title: b("Youth Making a Difference", "बदल घडविणारे युवक"), description: b("Local youth are using digital skills to build careers and support the village.", "स्थानिक युवक डिजिटल कौशल्यांतून करिअर घडवून गावाला हातभार लावत आहेत."), buttonText: b("Read Story", "कथा वाचा"), order: 3 },
+          { imageId: PH + "vil-story-4.webp", title: b("Preserving Our Heritage", "आपला वारसा जपताना"), description: b("Our community is working together to preserve our culture for future generations.", "आपला समाज पुढील पिढ्यांसाठी संस्कृती जपण्यासाठी एकत्र काम करत आहे."), buttonText: b("Read Story", "कथा वाचा"), order: 4 },
         ],
       },
     },

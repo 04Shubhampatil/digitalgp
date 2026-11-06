@@ -881,6 +881,10 @@
     "searchPlaceholder": "Search this website…",
     "searchResults": "{count} results for “{query}”",
     "searchKinds": {
+      "announcement": "Announcement",
+      "scheme": "Scheme",
+      "project": "Project",
+      "story": "Success story",
       "page": "Page"
     },
     "grievanceForm": {
@@ -1171,7 +1175,10 @@
       "treeClosed": "Online tree adoption requests are not open right now. You can still register through the volunteer form.",
       "treeUseVolunteer": "Open the volunteer form",
       "formRateLimited": "Too many submissions from this network. Please try again later.",
-      "selectMarket": "Select Market"
+      "selectMarket": "Select Market",
+      "allStoriesTitle": "Success Stories from Our People",
+      "pressNews": "News",
+      "readMoreCaps": "Read More"
     },
     "footerFeedback": "Feed back",
     "footerNotices": "Notices & GRs",
@@ -1225,7 +1232,16 @@
       "showAll": "Show all",
       "noInCategory": "No announcements in this category.",
       "announcementCount": "{n, plural, one {# announcement} other {# announcements}}"
-    }
+    },
+    "searchEyebrow": "Search the website",
+    "searchHeading": "Results for “{query}”",
+    "searchHint": "Type at least two letters to search pages, announcements, schemes, projects and success stories.",
+    "searchTooShort": "Please type at least two letters.",
+    "searchPopular": "Popular pages",
+    "searchFilter": "Filter results",
+    "searchAll": "All",
+    "searchEmpty": "Nothing found for “{query}”",
+    "searchEmptyHint": "Check the spelling, try fewer words, or open one of these pages."
   },
   "editor": {
     "subtitle": "Editing content for {name}. Each section has its own draft; publish when it is ready.",

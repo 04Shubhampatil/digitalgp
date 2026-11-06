@@ -240,16 +240,18 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
 };
 
 /** Sections that share one two-column row (card renderers only; the wrapper supplies the layout). */
-const ROW_GROUPS: { keys: string[]; cols: string; all?: boolean }[] = [
-  { keys: ["monthly-metrics", "ward-details"], cols: "lg:grid-cols-[683px_minmax(0,1fr)]" },
+const ROW_GROUPS: { keys: string[]; cols: string; all?: boolean; /** Vertical padding of the band (default py-8). */ pad?: string }[] = [
+  // Figma home: 683px KPI column, the 556px ward card flush right (80px apart).
+  // Home bands follow the Figma spacing: 38px below About, 20px to What's New, 53px to Weather, 64px to the video row.
+  { keys: ["monthly-metrics", "ward-details"], cols: "lg:grid-cols-[683px_minmax(0,556px)] lg:justify-between", pad: "py-8 lg:pt-[38px] lg:pb-0" },
   { keys: ["progress-tracker", "impact-grid"], cols: "lg:grid-cols-[567px_minmax(0,1fr)]" },
   // The backend tracker uses the same card renderer; on its own it gets the same cream band.
   { keys: ["village-resolution-tracker"], cols: "lg:grid-cols-1" },
   { keys: ["dev-timeline", "financial-overview"], cols: "lg:grid-cols-[601px_minmax(0,1fr)]" },
   // Figma home: "What's New This Week?" on the left, "Top Five Achievements of the Ward" on the right (649 / 650px).
-  { keys: ["whats-new", "achievements"], cols: "lg:grid-cols-2" },
-  { keys: ["weather", "sarpanch-message"], cols: "lg:grid-cols-2" },
-  { keys: ["welcome-video", "village-progress"], cols: "lg:grid-cols-2" },
+  { keys: ["whats-new", "achievements"], cols: "lg:grid-cols-2", pad: "py-8 lg:pt-5 lg:pb-0" },
+  { keys: ["weather", "sarpanch-message"], cols: "lg:grid-cols-2", pad: "py-8 lg:pt-[53px] lg:pb-0" },
+  { keys: ["welcome-video", "village-progress"], cols: "lg:grid-cols-2", pad: "py-8 lg:pt-16" },
   { keys: ["latest-announcements", "upcoming-events"], cols: "lg:grid-cols-2" },
   { keys: ["market-prices", "weather-update"], cols: "lg:grid-cols-2" },
   { keys: ["office-location", "feedback-form"], cols: "lg:grid-cols-2" },
@@ -277,7 +279,7 @@ export function renderSections(page: PublicPageDto, slug: string, locale: UiLoca
       const members = sorted.filter((m) => group.includes(m.sectionKey) && RENDERERS[m.sectionKey]).sort((a, b) => group.indexOf(a.sectionKey) - group.indexOf(b.sectionKey));
       members.forEach((m) => done.add(m.sectionKey));
       out.push(
-        <section key={group.join("+")} id={members[0]?.sectionKey} className="scroll-mt-[180px] bg-cream py-8">
+        <section key={group.join("+")} id={members[0]?.sectionKey} className={`scroll-mt-[180px] bg-cream ${grp.pad ?? "py-8"}`}>
           <div className={`mx-auto grid max-w-[1440px] gap-5 px-4 sm:px-8 ${grp.cols} lg:gap-[20px] lg:px-[60px] [&>*:only-child]:lg:col-span-full`}>
             {members.map((m) => {
               const Card = RENDERERS[m.sectionKey]!;

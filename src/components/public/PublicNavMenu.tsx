@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, X } from "lucide-react";
+import { Menu, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -20,7 +20,16 @@ export interface PublicNavGroupView {
  * Desktop: inline links + dropdowns. Only one dropdown is open at a time: it opens on hover or click and closes when
  * the pointer leaves, on an outside click, on Escape and on navigation. Mobile: toggle button + stacked list.
  */
-export function PublicNavMenu({ groups, menuLabel }: { groups: PublicNavGroupView[]; menuLabel: string }) {
+export function PublicNavMenu({
+  groups,
+  menuLabel,
+  search,
+}: {
+  groups: PublicNavGroupView[];
+  menuLabel: string;
+  /** Site search, shown at the top of the mobile menu (the desktop strip has its own search box). */
+  search?: { action: string; label: string; placeholder: string };
+}) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<number | null>(null);
@@ -146,6 +155,14 @@ export function PublicNavMenu({ groups, menuLabel }: { groups: PublicNavGroupVie
 
       {open && (
         <nav id="public-mobile-nav" aria-label="Primary" className="absolute inset-x-0 top-full border-b border-line bg-surface p-4 shadow-lg lg:hidden">
+          {search && (
+            <form action={search.action} method="get" role="search" className="mb-4 flex items-center rounded-full border border-[#135130]/40 pr-1 pl-4">
+              <input type="search" name="q" placeholder={search.placeholder} aria-label={search.label} className="h-10 min-w-0 flex-1 bg-transparent text-sm outline-none" />
+              <button type="submit" aria-label={search.label} className="flex size-9 items-center justify-center rounded-full text-[#135130] hover:bg-[#e3efe7]">
+                <Search className="size-5" aria-hidden />
+              </button>
+            </form>
+          )}
           {groups.map((g, i) => (
             <div key={i} className="mb-3">
               {g.label && <p className="mb-1 text-[11px] font-semibold tracking-wide text-muted uppercase">{g.label}</p>}

@@ -176,6 +176,15 @@ const filled = (o: Obj): Obj => Object.fromEntries(Object.entries(o).filter(([, 
 const EMERGENCY_ICON: Record<string, string> = { siren: "total", ambulance: "ambulance", flame: "fire", fire: "fire", health: "health", alert: "disaster", bolt: "electricity", tree: "forest", shield: "women" };
 const EMERGENCY_CATEGORY: Record<string, string> = { health: "health", police: "women", fire: "fire", disaster: "disaster", utility: "electricity", other: "total" };
 
+/** Design pictogram for a published emergency row: the title names the special tiles (toll-free line, state centre). */
+function emergencyIcon(i: Obj): string {
+  const title = labelOf(i.title);
+  if (/toll/.test(title)) return "tollfree";
+  if (/state emergency|operations cent/.test(title)) return "state";
+  if (/women|महिला/.test(title)) return "women";
+  return EMERGENCY_ICON[String(i.icon)] ?? EMERGENCY_CATEGORY[String(i.category)] ?? "total";
+}
+
 function mergeAbout(fallback: FallbackSection, legacy: Map<string, Obj>): Obj {
   const d = fallback.data;
   switch (fallback.sectionKey) {
@@ -220,9 +229,16 @@ function mergeAbout(fallback: FallbackSection, legacy: Map<string, Obj>): Obj {
     }
     case "about-emergency": {
       const e = legacy.get("emergency-services");
-      const items = ((e?.items as Obj[] | undefined) ?? [])
+      const rows = ((e?.items as Obj[] | undefined) ?? [])
         .filter((i) => i.active !== false && i.number)
-        .map((i) => ({ label: i.title, numbers: [i.number], icon: EMERGENCY_ICON[String(i.icon)] ?? EMERGENCY_CATEGORY[String(i.category)] ?? "total" }));
+        .map((i) => ({ label: i.title, numbers: [String(i.number)], icon: emergencyIcon(i) }));
+      // The design shows one "Women's Aid" tile with both women's helplines (1091 and 181).
+      const items: typeof rows = [];
+      for (const r of rows) {
+        const same = r.icon === "women" ? items.find((x) => x.icon === "women") : undefined;
+        if (same) same.numbers.push(...r.numbers);
+        else items.push(r);
+      }
       return e && items.length ? { ...d, ...filled({ heading: e.heading }), items } : d;
     }
     default:

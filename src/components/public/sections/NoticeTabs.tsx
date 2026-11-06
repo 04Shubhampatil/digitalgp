@@ -19,13 +19,16 @@ export interface NoticeTab {
   items: NoticeRow[];
 }
 
-/** Tabbed notice list (Figma 375:12300): blue active underline, dated rows, NEW badge, Download pill. */
+/**
+ * Tabbed notice list (Figma 375:12300 / home 375:12900): 57px tab bar with 16px labels, 78px dated rows (16px title,
+ * 92px date column with a divider), NEW badge, 110×34 Download button, "View All →" strip and a 35px white foot.
+ */
 export function NoticeTabs({ tabs, downloadLabel, viewAllLabel, viewAllHref, emptyLabel, newLabel }: { tabs: NoticeTab[]; downloadLabel: string; viewAllLabel: string; viewAllHref?: string; emptyLabel: string; newLabel: string }) {
   const [active, setActive] = useState(tabs[0]?.key ?? "");
   const current = tabs.find((t) => t.key === active) ?? tabs[0];
   if (!current) return null;
   return (
-    <div className="overflow-hidden rounded-[10px] bg-white shadow-[0_0_14px_rgba(0,0,0,0.15)]">
+    <div className="overflow-hidden rounded-[10px] bg-white pb-[35px] shadow-[0_0_20px_rgba(0,0,0,0.2)]">
       <div role="tablist" className="flex flex-wrap border-b border-[#e5e7eb]">
         {tabs.map((t) => (
           <button
@@ -35,7 +38,7 @@ export function NoticeTabs({ tabs, downloadLabel, viewAllLabel, viewAllHref, emp
             aria-selected={t.key === current.key}
             onClick={() => setActive(t.key)}
             className={cn(
-              "border-b-2 px-6 py-4 text-[19px] font-medium",
+              "border-b-2 px-[18px] py-[15px] text-[16px] leading-[25px] font-medium",
               t.key === current.key ? "border-[#1e4aa0] bg-[#eaf0fb] text-[#1e4aa0]" : "border-transparent text-[#5b6472] hover:text-[#1e4aa0]",
             )}
           >
@@ -48,12 +51,12 @@ export function NoticeTabs({ tabs, downloadLabel, viewAllLabel, viewAllHref, emp
       ) : (
         <ul role="tabpanel">
           {current.items.map((n, i) => (
-            <li key={i} className="flex items-center gap-5 border-b border-[#eceef2] px-6 py-5">
-              <div className="w-[84px] shrink-0 border-r border-[#d8dce3] pr-3 text-center">
-                <p className="text-[19px] leading-6 font-bold text-[#1e4aa0]">{n.day}</p>
-                <p className="text-[15px] leading-5 whitespace-nowrap text-[#5b6472]">{n.monthYear}</p>
+            <li key={i} className="flex min-h-[78px] items-center gap-[19px] border-b border-[#eceef2] py-[18px] pr-[23px] pl-[18px]">
+              <div className="w-[75px] shrink-0 self-start border-r border-[#d8dce3] pr-2 text-center">
+                <p className="text-[16px] leading-[21px] font-bold text-[#1e4aa0]">{n.day}</p>
+                <p className="text-[13px] leading-[21px] whitespace-nowrap text-[#5b6472]">{n.monthYear}</p>
               </div>
-              <p className="flex-1 text-[19px] font-medium text-[#1b2430]">
+              <p className="flex-1 self-start text-[16px] leading-[21px] font-medium text-[#1b2430]">
                 {n.titleHref ? (
                   <a href={n.titleHref} className="hover:text-[#1e4aa0] hover:underline">
                     {n.title}
@@ -61,14 +64,14 @@ export function NoticeTabs({ tabs, downloadLabel, viewAllLabel, viewAllHref, emp
                 ) : (
                   n.title
                 )}{" "}
-                {n.isNew && <span className="ml-1 rounded-[3px] bg-[#ff2d3d] px-2 py-0.5 align-middle text-[11px] font-bold text-white">{newLabel}</span>}
+                {n.isNew && <span className="ml-1 rounded-[3px] bg-[#ff2d3d] px-2 py-[3px] align-middle text-[11px] leading-[14px] font-bold text-white">{newLabel}</span>}
               </p>
               {n.href ? (
-                <a href={n.href} className="inline-flex shrink-0 items-center gap-1.5 rounded-[4px] border border-[#c3cbe0] px-4 py-2.5 text-[15px] text-[#1e4aa0] hover:bg-[#eaf0fb]">
+                <a href={n.href} className="inline-flex h-[34px] w-[110px] shrink-0 items-center justify-center gap-1.5 rounded-[4px] border border-[#c3cbe0] text-[13.5px] font-medium text-[#1e4aa0] hover:bg-[#eaf0fb]">
                   <Download className="size-3" aria-hidden /> {downloadLabel}
                 </a>
               ) : (
-                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-[4px] border border-[#c3cbe0] px-4 py-2.5 text-[15px] text-[#1e4aa0]">
+                <span className="inline-flex h-[34px] w-[110px] shrink-0 items-center justify-center gap-1.5 rounded-[4px] border border-[#c3cbe0] text-[13.5px] font-medium text-[#1e4aa0]">
                   <Download className="size-3" aria-hidden /> {downloadLabel}
                 </span>
               )}
@@ -77,8 +80,8 @@ export function NoticeTabs({ tabs, downloadLabel, viewAllLabel, viewAllHref, emp
         </ul>
       )}
       {viewAllHref && (
-        <div className="bg-[#f6f8fb] px-6 py-5 text-right">
-          <a href={viewAllHref} className="text-[19px] font-medium text-[#1e4aa0] hover:underline">
+        <div className="bg-[#f6f8fb] px-[23px] py-[13px] text-right">
+          <a href={viewAllHref} className="text-[16px] leading-6 font-semibold text-[#1e4aa0] hover:underline">
             {viewAllLabel} →
           </a>
         </div>

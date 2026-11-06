@@ -881,6 +881,10 @@
     "searchPlaceholder": "या संकेतस्थळावर शोधा…",
     "searchResults": "“{query}” साठी {count} निकाल",
     "searchKinds": {
+      "announcement": "सूचना",
+      "scheme": "योजना",
+      "project": "प्रकल्प",
+      "story": "यशोगाथा",
       "page": "पान"
     },
     "grievanceForm": {
@@ -1171,7 +1175,10 @@
       "treeClosed": "सध्या ऑनलाइन झाड दत्तक विनंत्या सुरू नाहीत. आपण स्वयंसेवक अर्जाद्वारे नोंदणी करू शकता.",
       "treeUseVolunteer": "स्वयंसेवक अर्ज उघडा",
       "formRateLimited": "या नेटवर्कवरून खूप अर्ज आले. कृपया थोड्या वेळाने पुन्हा प्रयत्न करा.",
-      "selectMarket": "बाजार निवडा"
+      "selectMarket": "बाजार निवडा",
+      "allStoriesTitle": "आपल्या लोकांच्या यशोगाथा",
+      "pressNews": "बातमी",
+      "readMoreCaps": "अधिक वाचा"
     },
     "footerFeedback": "अभिप्राय",
     "footerNotices": "सूचना व शासन निर्णय",
@@ -1225,7 +1232,16 @@
       "showAll": "सर्व दाखवा",
       "noInCategory": "या प्रवर्गात कोणतीही घोषणा नाही.",
       "announcementCount": "{n} घोषणा"
-    }
+    },
+    "searchEyebrow": "संकेतस्थळावर शोधा",
+    "searchHeading": "“{query}” साठी निकाल",
+    "searchHint": "पाने, सूचना, योजना, प्रकल्प आणि यशोगाथा शोधण्यासाठी किमान दोन अक्षरे लिहा.",
+    "searchTooShort": "कृपया किमान दोन अक्षरे लिहा.",
+    "searchPopular": "लोकप्रिय पाने",
+    "searchFilter": "निकाल गाळा",
+    "searchAll": "सर्व",
+    "searchEmpty": "“{query}” साठी काहीही सापडले नाही",
+    "searchEmptyHint": "शब्दलेखन तपासा, कमी शब्द वापरून पहा किंवा यापैकी एखादे पान उघडा."
   },
   "editor": {
     "subtitle": "{name} साठी सामग्री संपादित करत आहात. प्रत्येक विभागाचा स्वतंत्र मसुदा असतो; तयार झाल्यावर प्रकाशित करा.",

@@ -31,10 +31,10 @@ export async function QuickLinksSection({ slug, locale, data }: SectionProps) {
   const cls =
     "flex h-[164px] flex-col items-center rounded-[10px] border border-black/15 bg-white px-2 pt-6 text-center shadow-[0_0_20px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5";
   return (
-    <section className="bg-cream pt-[104px] pb-8 max-lg:pt-12">
+    <section className="bg-cream pt-[104px] pb-16 max-lg:pt-12">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
         <h2 className="text-center text-[30px] leading-[45px] font-semibold text-black">{pickText(d.heading, locale) || t("services")}</h2>
-        <ul className="mt-[12px] grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-6">
+        <ul className="mt-[44px] grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-6 lg:gap-y-4">
           {tiles.map((tile, i) => {
             const external = /^https?:\/\//.test(tile.href);
             const body = (
