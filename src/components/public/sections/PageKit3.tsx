@@ -1,10 +1,10 @@
-import { ArrowRight, Building2, GraduationCap, House, Landmark, MapPinned, Sprout, Users, type LucideIcon } from "lucide-react";
+import { Building2, Landmark, MapPinned, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { pair, pickText, type Bilingual } from "@/i18n/text";
 import { getPublicSchemeCoverage, listPublicSchemes, publicMediaUrl } from "@/lib/api/public";
 import { detailHref, resolveHref } from "@/lib/href";
-import { SchemeCoverageClient, type CoverageLabels, type CoverageView, type CoverageWard } from "./KitClient";
+import { SchemeCoverageClient, type CoverageLabels, type CoverageView, type CoverageWard } from "./CoverageMap";
 import type { SectionProps } from "./index";
 
 type B = Bilingual | undefined;
@@ -20,26 +20,45 @@ const LEVEL_ICONS: LucideIcon[] = [Landmark, MapPinned, Building2];
 /** `scheme-levels`: Central / State / District counts. Counts come from published schemes when any exist. */
 export async function SchemeLevelsSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public");
-  const d = data as { items?: { level?: "CENTRAL" | "STATE" | "DISTRICT"; label?: B; count?: number }[] };
+  const d = data as { items?: { level?: "CENTRAL" | "STATE" | "DISTRICT"; label?: B; count?: number; iconUrl?: string }[] };
   const live = await listPublicSchemes(slug, { limit: 100 }).catch(() => null);
   const counts: Record<string, number> = {};
   for (const s of live?.data ?? []) counts[s.level] = (counts[s.level] ?? 0) + 1;
   const hasLive = (live?.data.length ?? 0) > 0;
   return (
-    <section className="relative z-10 mx-auto -mt-10 max-w-[1440px] px-4 sm:px-8 lg:-mt-[69px] lg:px-[62px]">
-      <ul className="grid overflow-hidden rounded-[20px] bg-white shadow-[0_2px_16px_rgba(0,0,0,0.18)] md:grid-cols-3">
+    // Figma: one white card (62..1380, 138px tall, 16px radius), three equal cells; the first cell carries the 8px green underline.
+    <section className="relative z-10 mx-auto -mt-10 max-w-[1440px] px-4 sm:px-8 lg:-mt-[74px] lg:px-[62px]">
+      <ul className="grid overflow-hidden rounded-[16px] bg-white shadow-[0_0_16px_rgba(0,0,0,0.18)] md:grid-cols-3">
         {(d.items ?? []).map((it, i) => {
           const Icon = LEVEL_ICONS[i % LEVEL_ICONS.length]!;
           const n = hasLive ? (counts[it.level ?? ""] ?? 0) : (it.count ?? 0);
+          const msg = t("schemesAvailable", { n });
+          const at = msg.indexOf(String(n));
           return (
-            <li key={i} className={`flex items-center gap-5 px-8 py-6 ${i === 0 ? "border-b-[3px] border-[#135130] bg-[#f7f9fb]" : ""}`}>
-              <span aria-hidden className="flex size-[56px] shrink-0 items-center justify-center rounded-full bg-[#e9f4e9] text-[#135130]">
-                <Icon className="size-7" strokeWidth={1.7} />
-              </span>
-              <div>
-                <p className="text-[18px] leading-[26px] font-semibold text-black">{pickText(it.label, locale)}</p>
-                <p className="text-[14px] font-medium text-[#135130]">{t("schemesAvailable", { n })}</p>
+            <li key={i} className="relative flex h-[110px] items-center justify-center gap-[34px] md:h-[138px]">
+              {it.iconUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- static design asset
+                <img src={it.iconUrl} alt="" width={75} height={79} className="h-[79px] w-[75px] shrink-0" />
+              ) : (
+                <span aria-hidden className="flex size-[64px] shrink-0 items-center justify-center rounded-[14px] bg-[#e9f4e9] text-[#135130]">
+                  <Icon className="size-8" strokeWidth={1.7} />
+                </span>
+              )}
+              <div className="leading-[19px]">
+                <p className="text-[14px] font-bold whitespace-nowrap text-black">{pickText(it.label, locale)}</p>
+                <p className="mt-2 text-[14px] whitespace-nowrap text-black">
+                  {at >= 0 ? (
+                    <>
+                      {msg.slice(0, at)}
+                      <span className="font-semibold text-[#135130]">{n}</span>
+                      {msg.slice(at + String(n).length)}
+                    </>
+                  ) : (
+                    msg
+                  )}
+                </p>
               </div>
+              {i === 0 && <span aria-hidden className="absolute bottom-0 left-0 h-[7px] w-[93%] bg-[#135130]" />}
             </li>
           );
         })}
@@ -48,11 +67,12 @@ export async function SchemeLevelsSection({ slug, locale, data }: SectionProps) 
   );
 }
 
-const CATEGORY_ICONS: { re: RegExp; Icon: LucideIcon; bg: string; fg: string }[] = [
-  { re: /awas|house|housing|आवास/i, Icon: House, bg: "bg-[#fdeedd]", fg: "text-[#d9531e]" },
-  { re: /kisan|farm|agri|शेत|किसान/i, Icon: Sprout, bg: "bg-[#e3f1d4]", fg: "text-[#3f8f26]" },
-  { re: /scholar|educat|शिष्य|शिक्षण/i, Icon: GraduationCap, bg: "bg-[#e8eef6]", fg: "text-[#2a3f6f]" },
-  { re: /./, Icon: Users, bg: "bg-[#e9f4e9]", fg: "text-[#135130]" },
+/** Design pictures of the scheme cards (Figma: house, worker, farmer, house, graduation cap), picked by the scheme's category / name. */
+const CARD_PICTURES: { re: RegExp; src: string }[] = [
+  { re: /employ|mgnrega|nrega|job|रोजगार/i, src: "/images/figma/pages/sch-card-2.png" },
+  { re: /kisan|farm|agri|शेत|किसान|कृषी/i, src: "/images/figma/pages/sch-card-3.png" },
+  { re: /scholar|educat|शिष्य|शिक्षण/i, src: "/images/figma/pages/sch-card-5.png" },
+  { re: /./, src: "/images/figma/pages/sch-card-1.png" },
 ];
 
 interface SchemeCard {
@@ -91,7 +111,7 @@ export async function SchemeShowcaseSection({ slug, locale, data }: SectionProps
       ? live.data.map((s) => ({
           name: pickText(pair(s.nameEn, s.nameMr), locale),
           category: s.category ?? undefined,
-          level: t(`schemeLevel.${s.level}`),
+          level: t(`schemeLevelShort.${s.level}`),
           description: pickText(pair(s.descriptionEn, s.descriptionMr), locale),
           benefitValue: s.amountDisbursed ? fmt.format(Number(s.amountDisbursed)) : s.beneficiaryCount !== null ? s.beneficiaryCount.toLocaleString("en-IN") : undefined,
           benefitCaption: s.amountDisbursed ? t("amountDisbursed") : s.beneficiaryCount !== null ? t("beneficiaries") : undefined,
@@ -109,69 +129,49 @@ export async function SchemeShowcaseSection({ slug, locale, data }: SectionProps
           benefitCaption: pickText(s.benefitCaption, locale),
         }));
   if (cards.length === 0) return null;
+  const btn = "inline-flex h-[45px] w-[176px] items-center justify-center rounded-full border-[0.77px] border-[#135130] text-[18px] whitespace-nowrap text-[#135130] hover:bg-[#135130]/5";
   return (
-    <section className="bg-cream py-8">
+    <section className="bg-cream pt-8 pb-10 lg:pt-[51px] lg:pb-[47px]">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[62px]">
         <h2 className="text-center text-[30px] leading-[45px] font-semibold text-black">{pickText(d.heading, locale)}</h2>
-        <div aria-hidden className="mx-auto mt-1 h-0.5 w-16 bg-[#135130]" />
-        <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
+        <ul className="mt-5 flex flex-wrap justify-center gap-x-[9.5px] gap-y-5">
           {cards.map((c, i) => {
-            const k = CATEGORY_ICONS.find((x) => x.re.test(`${c.name} ${c.category ?? ""}`))!;
+            const pic = CARD_PICTURES.find((x) => x.re.test(`${c.name} ${c.category ?? ""}`))!.src;
             return (
-              <li key={i} className="flex flex-col items-center rounded-[10px] border border-black/15 bg-white px-5 pt-6 pb-5 text-center shadow-[0_0_14px_rgba(0,0,0,0.12)]">
-                <span aria-hidden className={`flex size-[64px] items-center justify-center rounded-full ${k.bg} ${k.fg}`}>
-                  <k.Icon className="size-8" strokeWidth={1.7} />
-                </span>
-                <h3 className="mt-3 text-[14px] leading-5 font-semibold text-black">{c.name}</h3>
-                <p className="mt-2 flex flex-wrap justify-center gap-2 text-[10px]">
-                  {c.category && <span className="rounded-full bg-[#dcefdc] px-2.5 py-0.5 text-[#135130]">{c.category}</span>}
-                  {c.level && <span className="rounded-full bg-[#fff0dc] px-2.5 py-0.5 text-[#f5871f]">{c.level}</span>}
+              <li key={i} className="flex min-h-[473px] w-[256px] flex-col items-center rounded-[18.4px] border-[1.84px] border-[#414141]/15 bg-white px-[29px] pt-[22px] pb-[34px]">
+                {/* eslint-disable-next-line @next/next/no-img-element -- static design asset */}
+                <img src={pic} alt="" width={87} height={79} className="h-[79px] w-[87px] shrink-0" />
+                <h3 className="mt-[21px] flex h-[45px] w-[226px] items-start justify-center pt-[7px] text-center text-[14px] leading-[21px] font-semibold text-black" title={c.name}>
+                  <span className="line-clamp-2">{c.name}</span>
+                </h3>
+                <p className="mt-[19px] flex h-[29px] w-full gap-5 self-start text-[12px] font-semibold">
+                  {c.category && <span className="inline-flex h-[29px] items-center rounded-full bg-[#135130]/10 px-1.5 whitespace-nowrap text-[#135130]">{c.category}</span>}
+                  {c.level && <span className="inline-flex h-[29px] items-center rounded-full bg-[#ff9933]/10 px-1.5 whitespace-nowrap text-[#ff9933]">{c.level}</span>}
                 </p>
-                <p className="mt-3 text-[11px] leading-[17px] text-[#414141]">{c.description}</p>
+                <p className="mt-[23px] line-clamp-2 h-[52px] w-full text-[14.7px] leading-[26px] text-[#414141]" title={c.description}>
+                  {c.description}
+                </p>
                 {c.benefitValue && (
-                  <div className="mt-4 w-full text-left text-[11px]">
-                    <p className="text-[#414141]">{pickText(d.benefitsLabel, locale)}</p>
-                    <p className="mt-1 text-[15px] font-bold text-black">{c.benefitValue}</p>
-                    <p className="text-[#414141]">{c.benefitCaption}</p>
+                  <div className="mt-[11px] w-full text-[14.7px] leading-[27.5px] text-[#414141]">
+                    <p className="font-medium">{pickText(d.benefitsLabel, locale)}</p>
+                    <p className="text-[18.4px] font-semibold">{c.benefitValue}</p>
+                    <p>{c.benefitCaption}</p>
                   </div>
                 )}
-                <div className="mt-auto w-full pt-4">
+                <div className="mt-auto pt-4">
                   {c.detail ? (
                     // Published scheme: its own page (eligibility, how to apply, apply link, coverage).
-                    <Link href={c.detail} className="inline-flex w-full items-center justify-center gap-2 rounded-full border-[0.6px] border-[#135130] px-4 py-1.5 text-[12px] text-[#135130] hover:bg-[#135130]/5">
-                      {t("viewDetails")} <ArrowRight className="size-3.5" aria-hidden />
+                    <Link href={c.detail} className={btn}>
+                      {t("viewDetails")}
                     </Link>
-                  ) : c.eligibility || c.process ? (
-                    <details className="text-left text-[12px]">
-                      <summary className="mx-auto inline-flex w-full cursor-pointer list-none items-center justify-center gap-2 rounded-full border-[0.6px] border-[#135130] px-4 py-1.5 text-[#135130] [&::-webkit-details-marker]:hidden">
-                        {t("viewDetails")} <ArrowRight className="size-3.5" aria-hidden />
-                      </summary>
-                      {c.eligibility && (
-                        <p className="mt-3 whitespace-pre-line text-[#414141]">
-                          <strong className="text-black">{t("eligibility")}: </strong>
-                          {c.eligibility}
-                        </p>
-                      )}
-                      {c.process && (
-                        <p className="mt-2 whitespace-pre-line text-[#414141]">
-                          <strong className="text-black">{t("howToApply")}: </strong>
-                          {c.process}
-                        </p>
-                      )}
-                      {c.href && (
-                        <a href={c.href} target="_blank" rel="noopener" className="mt-2 inline-block font-semibold text-[#135130] hover:underline">
-                          {t("applyOnline")}
-                        </a>
-                      )}
-                    </details>
                   ) : c.href ? (
-                    <a href={c.href} target="_blank" rel="noopener" className="inline-flex w-full items-center justify-center gap-2 rounded-full border-[0.6px] border-[#135130] px-4 py-1.5 text-[12px] text-[#135130] hover:bg-[#135130]/5">
-                      {t("viewDetails")} <ArrowRight className="size-3.5" aria-hidden />
+                    <a href={c.href} target="_blank" rel="noopener" className={btn}>
+                      {t("viewDetails")}
                     </a>
                   ) : (
                     // Placeholder card without a scheme record: open the page's "Scheme Information" block.
-                    <Link href={resolveHref(d.detailsHref ?? "page:schemes#link-cards", slug)} className="inline-flex w-full items-center justify-center gap-2 rounded-full border-[0.6px] border-[#135130] px-4 py-1.5 text-[12px] text-[#135130] hover:bg-[#135130]/5">
-                      {t("viewDetails")} <ArrowRight className="size-3.5" aria-hidden />
+                    <Link href={resolveHref(d.detailsHref ?? "page:schemes#link-cards", slug)} className={btn}>
+                      {t("viewDetails")}
                     </Link>
                   )}
                 </div>
@@ -180,8 +180,8 @@ export async function SchemeShowcaseSection({ slug, locale, data }: SectionProps
           })}
         </ul>
         {d.viewAll?.href && (
-          <div className="mt-8 flex justify-center">
-            <Link href={resolveHref(d.viewAll.href, slug)} className="inline-flex rounded-full border border-[#135130] bg-[#135130] px-5 py-2.5 text-[13px] font-medium text-white hover:opacity-90">
+          <div className="mt-[31px] flex justify-center">
+            <Link href={resolveHref(d.viewAll.href, slug)} className="inline-flex h-[33px] w-[135px] items-center justify-center rounded-[24px] border border-[#135130] bg-[#135130] text-[12.5px] font-medium whitespace-nowrap text-white hover:opacity-90">
               {pickText(d.viewAll.label, locale)}
             </Link>
           </div>
@@ -232,6 +232,11 @@ export async function SchemeCoverageSection({ slug, locale, data, siblings }: Se
     selectScheme: td("selectScheme"),
     allSchemes: td("allSchemes"),
     ward: td.raw("wardShort") as string,
+    wardNo: td.raw("wardNo") as string,
+    clickWard: td("clickWard"),
+    zoomIn: td("zoomIn"),
+    zoomOut: td("zoomOut"),
+    fullscreen: td("fullscreen"),
     households: t("householdsCol"),
     beneficiaries: t("beneficiariesCol"),
     totalBeneficiaries: td("totalBeneficiaries"),

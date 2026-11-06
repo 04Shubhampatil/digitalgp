@@ -60,6 +60,7 @@ import { pickText, type Bilingual } from "@/i18n/text";
 import { publicMediaUrl } from "@/lib/api/public";
 import { qrMatrix } from "@/lib/qr";
 import type { UiLocale } from "@/i18n/config";
+import { EXTRA_ICONS } from "./icons-extra";
 
 export type B = Bilingual | undefined;
 
@@ -172,7 +173,7 @@ const ICONS: Record<string, LucideIcon> = {
 /** Resolve a free-text icon name (`"Users"`, `"street-light"`, …) to an icon; unknown names get a neutral dot. */
 export function iconByName(name: string | undefined): LucideIcon {
   const key = (name ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
-  return ICONS[key] ?? CircleDot;
+  return ICONS[key] ?? EXTRA_ICONS[key] ?? CircleDot;
 }
 
 export function Icon({ name, className }: { name?: string; className?: string }) {

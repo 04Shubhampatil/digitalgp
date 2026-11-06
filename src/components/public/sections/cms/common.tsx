@@ -5,7 +5,8 @@ import { pair } from "@/i18n/text";
 import { listPublicSuccessStories } from "@/lib/api/public";
 import { detailHref, resolveHref } from "@/lib/href";
 import type { SectionProps } from "../index";
-import { Band, FilledButton, Icon, LinkButton, TextLink, cardClass, externalProps, list, mediaUrl, plain, readableText, tx, withOpacity, type B } from "./kit";
+import { Band, FilledButton, Icon, TextLink, cardClass, externalProps, list, mediaUrl, plain, readableText, tx, withOpacity, type B } from "./kit";
+import { ScrollRow } from "../ScrollRow";
 import { StoryDialog } from "./StoryDialog";
 
 // ------------------------------------------------------------------------------------ banner
@@ -164,24 +165,30 @@ export function TopStatsSection({ locale, data }: SectionProps) {
   const items = list<StatItem>(d.items).filter((i) => i.visible !== false);
   if (items.length === 0) return null;
   if (d.variant === "band") {
-    // Figma Services figures: one tinted band, four stats in a row with a 60px dark-green icon circle and dividers.
+    // Figma Services figures: one tinted band (1320×154, 10px radius), four stats with a 65px icon, 20px value, 14px label, and 104px dividers.
     return (
-      <section className="bg-cream py-8">
+      <section className="bg-cream pb-8 lg:pb-10">
         <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
-          <ul className="grid gap-y-6 rounded-[10px] bg-[#eff3ef] px-4 py-6 sm:grid-cols-2 lg:grid-cols-4 lg:divide-x lg:divide-black/15 lg:py-[26px]">
+          <ul className="grid gap-y-6 rounded-[10px] bg-[#135130]/5 px-4 py-6 sm:grid-cols-2 lg:min-h-[154px] lg:grid-cols-4 lg:px-0 lg:py-[29px]">
             {items.map((s, i) => (
-              <li key={i} className="flex items-center gap-5 px-4 lg:justify-center lg:px-6">
-                <span aria-hidden className="flex size-[60px] shrink-0 items-center justify-center rounded-full bg-[#1b5e3b] text-white">
-                  <Icon name={s.icon} className="size-7" />
-                </span>
+              <li key={i} className="relative flex items-start gap-5 px-4 lg:pl-[47px]">
+                {s.iconUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- static design asset
+                  <img src={s.iconUrl} alt="" width={65} height={65} className="mt-[15px] size-[65px] shrink-0" />
+                ) : (
+                  <span aria-hidden className="mt-[15px] flex size-[65px] shrink-0 items-center justify-center rounded-full bg-[#1b5e3b] text-white">
+                    <Icon name={s.icon} className="size-7" />
+                  </span>
+                )}
                 <span className="min-w-0">
-                  <span className="block text-[18px] leading-7 font-bold text-black">
+                  <span className="block text-[20px] leading-[30px] font-semibold whitespace-nowrap text-black">
                     {s.value}
                     {tx(s.unit, locale) && <span className="ml-1 text-[13px] font-medium text-[#414141]">{tx(s.unit, locale)}</span>}
                   </span>
-                  <span className="mt-1 block max-w-[150px] text-[14px] leading-[22px] text-black">{tx(s.title, locale)}</span>
+                  <span className="mt-[5px] block max-w-[144px] text-[14px] leading-6 text-black">{tx(s.title, locale)}</span>
                   {tx(s.description, locale) && <span className="block text-[12px] text-[#414141]">{tx(s.description, locale)}</span>}
                 </span>
+                {i < items.length - 1 && <span aria-hidden className="absolute top-[-4px] right-0 hidden h-[104px] w-px bg-black/20 lg:block" />}
               </li>
             ))}
           </ul>
@@ -190,14 +197,14 @@ export function TopStatsSection({ locale, data }: SectionProps) {
     );
   }
   if (d.variant === "card") {
-    // Figma Schemes totals: one white card, four stats in a row (coloured icon circle, bold title, 24px value, caption).
+    // Figma Schemes totals: one white card (1319×136, 10px radius), four cells with a 92×88 picture, bold title, 24px value, caption.
     return (
-      <Band tone="cream" heading={tx(d.heading, locale) || undefined} subheading={tx(d.subheading, locale) || undefined}>
-        <ul className="grid gap-6 rounded-[10px] border border-[#414141]/20 bg-white px-7 py-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-[56px]">
+      <Band tone="cream" heading={tx(d.heading, locale) || undefined} subheading={tx(d.subheading, locale) || undefined} pad="pt-0 pb-10 lg:pb-[72px]">
+        <ul className="grid rounded-[10px] border border-[#414141]/20 bg-white py-6 sm:grid-cols-2 lg:grid-cols-4">
           {items.map((s, i) => {
             const tint = CARD_TINTS[i % CARD_TINTS.length]!;
             return (
-              <li key={i} className="flex min-w-0 items-center gap-4">
+              <li key={i} className="flex min-w-0 items-center gap-4 px-4 py-2 lg:py-0 lg:pl-[27px]">
                 {s.iconUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element -- static design asset
                   <img src={s.iconUrl} alt="" width={92} height={88} className="h-[88px] w-[92px] shrink-0" />
@@ -207,12 +214,12 @@ export function TopStatsSection({ locale, data }: SectionProps) {
                   </span>
                 )}
                 <span className="flex min-w-0 flex-col gap-2 leading-6">
-                  <span className="text-[14px] font-bold text-black">{tx(s.title, locale)}</span>
-                  <span className="text-[24px] font-bold text-black">
+                  <span className="truncate text-[14px] font-bold text-black">{tx(s.title, locale)}</span>
+                  <span className="truncate text-[24px] font-bold text-black">
                     {s.value}
                     {tx(s.unit, locale) && <span className="ml-1 text-[14px] font-medium text-[#414141]">{tx(s.unit, locale)}</span>}
                   </span>
-                  {tx(s.description, locale) && <span className="text-[14px] text-[#414141]">{tx(s.description, locale)}</span>}
+                  {tx(s.description, locale) && <span className="truncate text-[14px] text-[#414141]">{tx(s.description, locale)}</span>}
                 </span>
               </li>
             );
@@ -227,28 +234,31 @@ export function TopStatsSection({ locale, data }: SectionProps) {
     // tinted icon circle, uppercase label, green value and the change line ("↑ 5.2%  vs LM"), with dividers.
     return (
       <section className="relative z-10 bg-cream px-4 sm:px-8 lg:px-[60px]">
-        <ul className="relative -top-8 mx-auto -mb-8 grid max-w-[805px] lg:-top-[45px] lg:-mb-[45px] divide-black/10 rounded-[10px] bg-white py-[18px] shadow-[0_0_14px_rgba(0,0,0,0.12)] sm:grid-cols-2 lg:grid-cols-4 lg:divide-x">
+        <ul className="relative -top-8 mx-auto -mb-8 grid max-w-[805px] divide-black/10 rounded-[11px] border border-black/10 bg-white py-[18px] shadow-[0_0_14px_rgba(0,0,0,0.12)] sm:grid-cols-2 lg:-top-[45px] lg:-mb-[45px] lg:flex lg:h-[133px] lg:py-0">
           {items.map((s, i) => {
             const tint = STRIP_TINTS[i % STRIP_TINTS.length]!;
             const change = tx(s.description, locale);
             const up = change.match(/^\s*([↑↓])\s*(\S+)\s*(.*)$/);
             return (
-              <li key={i} className="flex items-center gap-3 px-4 py-2">
-                <span aria-hidden className="flex size-[50px] shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: tint.bg, color: tint.fg }}>
-                  <Icon name={s.icon} className="size-6" />
+              // Figma 375:12126 strip: 805x133, 60px icon circle, 13px label, 25px bold value, 14px change line; items size to
+              // their content and are parted by 84px dividers.
+              <li key={i} className="relative flex min-w-0 items-start gap-[14px] px-4 py-3 lg:flex-auto lg:px-[16px] lg:pt-[27px] lg:pb-0">
+                {i > 0 && <span aria-hidden className="absolute top-6 left-0 hidden h-[84px] w-px bg-[#dcdcdc] lg:block" />}
+                <span aria-hidden className="flex size-[60px] shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: tint.bg, color: tint.fg }}>
+                  <Icon name={s.icon} className="size-[30px]" />
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-[11px] leading-4 font-medium text-black uppercase">{tx(s.title, locale)}</span>
-                  <span className="mt-1 block text-[21px] leading-7 font-semibold whitespace-nowrap text-[#135130]">
+                  <span className="block text-[12px] leading-[18px] whitespace-nowrap text-[#1a1a1a] uppercase">{tx(s.title, locale)}</span>
+                  <span className="mt-[3px] block text-[22.5px] leading-[34px] font-bold whitespace-nowrap text-[#0f5a2e]">
                     {s.value}
                     {tx(s.unit, locale) && <span className="ml-1 text-[12px] font-medium text-[#414141]">{tx(s.unit, locale)}</span>}
                   </span>
                   {change && (
-                    <span className="mt-1 block text-[11px] leading-4 text-[#414141]">
+                    <span className={`mt-[6px] block text-[14px] leading-5 text-[#333] ${locale === "mr" ? "" : "lg:whitespace-nowrap"}`}>
                       {up ? (
                         <>
-                          <span className={up[1] === "↓" ? "text-[#dc2626]" : "text-[#16a34a]"}>{up[1]}</span> {up[2]}
-                          <span className="ml-3">{up[3]}</span>
+                          <span className={`font-bold ${up[1] === "↓" ? "text-[#dc2626]" : "text-[#16a34a]"}`}>{up[1]}</span> {up[2]}
+                          <span className="ml-3 text-[#777]">{up[3]}</span>
                         </>
                       ) : (
                         change
@@ -510,42 +520,53 @@ export async function CmsSuccessStoriesSection({ slug, locale, data, pageKey }: 
   const items = await successStoryItems(slug, locale, pageKey, d.items);
   if (items.length === 0) return null;
   if (d.layout === "quote") {
-    // Figma Schemes "Success Stories": portrait photo on the left, quote mark, quote, story, name, ward and scheme chip.
+    // Figma Schemes "Success Stories": 315×280 cards (4 per row), 116×250 portrait on the left, quote mark, quote, story,
+    // name, ward and scheme chip. A story with a page opens it from anywhere on the card; more than four scroll with arrows.
+    const tn = await getTranslations("public");
     return (
-      <section className="bg-white py-10">
+      <section className="bg-white pt-[13px] pb-8 lg:pb-[64px]">
         <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
           <h2 className="text-center text-[30px] leading-[45px] font-semibold text-black">{tx(d.heading, locale) || t("successStories")}</h2>
-          {tx(d.subheading, locale) && <p className="mt-1 text-center text-[20px] leading-[30px] text-black">{tx(d.subheading, locale)}</p>}
-          <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {items.map((s, i) => {
-              const img = mediaUrl(slug, s.imageId);
-              return (
-                <li key={i} className="flex min-h-[280px] gap-4 rounded-[10px] border border-[#414141]/20 bg-white p-3">
-                  {img && (
-                    // eslint-disable-next-line @next/next/no-img-element -- website media served by the backend
-                    <img src={img} alt="" loading="lazy" className="h-[250px] w-[116px] shrink-0 rounded-[4px] object-cover" />
-                  )}
-                  <div className="flex min-w-0 flex-1 flex-col pt-[18px]">
-                    <span aria-hidden className="h-5 font-serif text-[56px] leading-[44px] font-bold text-[#135130]">&ldquo;</span>
-                    <p className="mt-1 text-[12px] leading-6 font-semibold text-[#135130]">{tx(s.title, locale)}</p>
-                    {tx(s.description, locale) && <p className="mt-1.5 text-[10px] leading-5 text-[#414141]">{tx(s.description, locale)}</p>}
-                    <div className="mt-auto pt-3">
-                      {tx(s.name, locale) && <p className="text-[10px] leading-4 font-medium text-[#0866ff]">{tx(s.name, locale)}</p>}
-                      {tx(s.ward, locale) && <p className="text-[10px] leading-5 font-medium text-[#414141]">{tx(s.ward, locale)}</p>}
-                      {tx(s.tag, locale) && <span className="mt-2 inline-flex rounded-full bg-[#138808]/5 px-2.5 py-[3px] text-[10px] leading-5 font-medium text-[#138808]">{tx(s.tag, locale)}</span>}
-                      {s.buttonLink && tx(s.buttonText, locale) && (
-                        <div className="pt-2">
-                          <LinkButton href={resolveHref(s.buttonLink, slug)} external={/^https?:\/\//.test(s.buttonLink)}>
-                            {tx(s.buttonText, locale)} <ArrowRight className="size-3.5" aria-hidden />
-                          </LinkButton>
-                        </div>
-                      )}
+          {tx(d.subheading, locale) && <p className="text-center text-[20px] leading-[30px] text-black">{tx(d.subheading, locale)}</p>}
+          <div className="mt-9">
+            <ScrollRow count={items.length} perView={4} prevLabel={tn("scrollPrev")} nextLabel={tn("scrollNext")} className="flex gap-5 py-px">
+              {items.map((s, i) => {
+                const img = mediaUrl(slug, s.imageId);
+                const link = s.buttonLink ? resolveHref(s.buttonLink, slug) : undefined;
+                const title = (
+                  <p className="min-h-12 text-[12px] leading-6 font-semibold text-[#135130]">
+                    {link ? (
+                      <Link href={link} className="after:absolute after:inset-0 after:content-['']" {...(link.startsWith("http") ? externalProps : {})}>
+                        {tx(s.title, locale)}
+                      </Link>
+                    ) : (
+                      tx(s.title, locale)
+                    )}
+                  </p>
+                );
+                return (
+                  <li key={i} className="relative flex h-[280px] w-[315px] shrink-0 gap-[18px] rounded-[10px] border border-[#414141]/20 bg-white p-[13px]">
+                    {img ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- website media served by the backend
+                      <img src={img} alt="" loading="lazy" className="h-[250px] w-[116px] shrink-0 rounded-[4px] object-cover" />
+                    ) : (
+                      <span aria-hidden className="h-[250px] w-[116px] shrink-0 rounded-[4px] bg-[#e9f4e9]" />
+                    )}
+                    <div className="flex min-w-0 flex-1 flex-col pt-[17px]">
+                      <span aria-hidden className="h-[22px] font-serif text-[64px] leading-[56px] font-bold text-[#135130]">&ldquo;</span>
+                      <div className="mt-[3px]">{title}</div>
+                      {tx(s.description, locale) && <p className="mt-[6px] line-clamp-4 text-[10px] leading-5 text-[#414141]">{tx(s.description, locale)}</p>}
+                      <div className="mt-auto">
+                        {tx(s.name, locale) && <p className="truncate text-[10px] leading-6 font-medium text-[#0866ff]">{tx(s.name, locale)}</p>}
+                        {tx(s.ward, locale) && <p className="truncate text-[10px] leading-5 font-medium text-[#414141]">{tx(s.ward, locale)}</p>}
+                        {tx(s.tag, locale) && <span className="mt-2 inline-flex h-[26px] max-w-full items-center truncate rounded-full bg-[#138808]/5 px-2.5 text-[10px] leading-5 font-medium text-[#138808]">{tx(s.tag, locale)}</span>}
+                      </div>
                     </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+                  </li>
+                );
+              })}
+            </ScrollRow>
+          </div>
         </div>
       </section>
     );

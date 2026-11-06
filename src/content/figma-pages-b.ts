@@ -10,7 +10,8 @@ import type { FallbackSection } from "./fallback";
 const t = (en: string) => ({ en });
 const P = "/images/figma/pages/";
 
-const FAC = (label: string, value: string) => ({ label: t(label), value: t(value) });
+/** Facility tile; `w` is the design's name-box width where it is wider than the tile's 148.6px. */
+const FAC = (label: string, value: string, w?: number) => ({ label: t(label), value: t(value), ...(w ? { labelWidth: w } : {}) });
 /** Bilingual text with an explicit Marathi translation. */
 const b = (en: string, mr: string) => ({ en, mr });
 const PH = "/images/figma/photos/";
@@ -36,17 +37,17 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
       data: {
         heading: t("Public Facilities Overview"),
         items: [
-          FAC("Drinking Water Supply", "100% Coverage"),
+          FAC("Drinking Water Supply", "100% Coverage", 182),
           FAC("Sanitation Facilities", "98% Coverage"),
           FAC("Road & Streets", "45.6 km"),
           FAC("Street Lighting", "100% LED"),
           FAC("Schools", "2 Schools"),
           FAC("Anganwadi Centres", "2 Centres"),
-          FAC("Primary Health Centre", "1 PHC"),
+          FAC("Primary Health Centre", "1 PHC", 178),
           FAC("Public Library", "1 Library"),
           FAC("Playground", "1 Playground"),
-          FAC("SHG Centres", "5 Centres"),
-          FAC("Bus Stop & Transport Facilities", "3 Bus Stops"),
+          FAC("SHG Centres", "5 Centres", 120),
+          FAC("Bus Stop & Transport Facilities", "3 Bus Stops", 221),
           FAC("Health Camps", "12 Camps (FY 24-25)"),
           FAC("Vaccination Programmes", "100% Coverage"),
           FAC("Community Halls", "2 Halls"),
@@ -61,7 +62,7 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
       data: {
         heading: b("Village Infrastructure Map", "गावाचा पायाभूत सुविधा नकाशा"),
         subheading: b("Explore our village map to locate public facilities and infrastructure.", "सार्वजनिक सुविधा व पायाभूत सुविधा शोधण्यासाठी गावाचा नकाशा पहा."),
-        mapImageId: PH + "infra-map.webp",
+        mapImageId: P + "infra-map-view.webp",
         markers: [],
       },
     },
@@ -70,15 +71,15 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
       sortOrder: 15,
       data: {
         items: [
-          { icon: "water", name: b("Drinking Water", "पिण्याचे पाणी"), colour: "#0A84FF", visible: true },
-          { icon: "sanitation", name: b("Sanitation", "स्वच्छता"), colour: "#16A34A", visible: true },
-          { icon: "road", name: b("Roads", "रस्ते"), colour: "#F59E0B", visible: true },
+          { icon: "drop", name: b("Drinking Water", "पिण्याचे पाणी"), colour: "#0A84FF", visible: true },
+          { icon: "toilet", name: b("Sanitation", "स्वच्छता"), colour: "#16A34A", visible: true },
+          { icon: "route", name: b("Roads", "रस्ते"), colour: "#F97316", visible: true },
           { icon: "light", name: b("Street Lighting", "पथदिवे"), colour: "#22C55E", visible: true },
-          { icon: "school", name: b("Education", "शिक्षण"), colour: "#3B82F6", visible: true },
-          { icon: "health", name: b("Health", "आरोग्य"), colour: "#EF4444", visible: true },
+          { icon: "book", name: b("Education", "शिक्षण"), colour: "#3B82F6", visible: true },
+          { icon: "cross", name: b("Health", "आरोग्य"), colour: "#EF4444", visible: true },
           { icon: "bus", name: b("Transport", "वाहतूक"), colour: "#2563EB", visible: true },
           { icon: "users", name: b("Community", "समाज"), colour: "#EC4899", visible: true },
-          { icon: "info", name: b("Others", "इतर"), colour: "#6B7280", visible: true },
+          { icon: "ellipsis", name: b("Others", "इतर"), colour: "#6B7280", visible: true },
         ],
       },
     },
@@ -87,11 +88,11 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
       sortOrder: 20,
       data: {
         items: [
-          { icon: "water", title: b("Water Supply", "पाणी पुरवठा"), smallLabel: b("Supply Availability", "पुरवठ्याची उपलब्धता"), primaryValue: "98%", statusText: b("Sufficient", "पुरेसा"), bottomLabel: b("Villages with Full Supply", "पूर्ण पुरवठा असलेली गावे"), bottomValue: "5 / 5", buttonText: b("View Details", "तपशील पहा"), buttonLink: "page:infrastructure#facility-grid", theme: "blue" },
-          { icon: "zap", title: b("Electricity Supply", "वीज पुरवठा"), smallLabel: b("Current Status", "सध्याची स्थिती"), primaryValue: "24x7", statusText: b("Normal", "सामान्य"), bottomLabel: b("Power Outages (This Month)", "वीज खंडित (या महिन्यात)"), bottomValue: "0", buttonText: b("View Details", "तपशील पहा"), buttonLink: "page:infrastructure#facility-grid", theme: "orange" },
-          { icon: "sanitation", title: b("Sanitation Services", "स्वच्छता सेवा"), smallLabel: b("Toilet Utilization", "शौचालय वापर"), primaryValue: "100%", statusText: b("Active", "सक्रिय"), bottomLabel: b("Waste Collected (Today)", "कचरा संकलन (आज)"), bottomValue: "1.2 Ton", buttonText: b("View Details", "तपशील पहा"), buttonLink: "page:infrastructure#facility-grid", theme: "green" },
-          { icon: "light", title: b("Street Lighting", "पथदिवे"), smallLabel: b("Operational Status", "कार्यरत स्थिती"), primaryValue: "100%", statusText: b("All Lights Functional", "सर्व दिवे सुरू"), bottomLabel: b("Total LED Lights", "एकूण LED दिवे"), bottomValue: "250", buttonText: b("View Details", "तपशील पहा"), buttonLink: "page:infrastructure#facility-grid", theme: "orange" },
-          { icon: "road", title: b("Road Maintenance", "रस्ते देखभाल"), smallLabel: b("This Month", "या महिन्यात"), primaryValue: "12 km", statusText: b("Roads Maintained", "रस्ते दुरुस्त"), bottomLabel: b("Potholes Repaired", "खड्डे दुरुस्त"), bottomValue: "18", buttonText: b("View Details", "तपशील पहा"), buttonLink: "page:infrastructure#facility-grid", theme: "orange" },
+          { icon: "drop", valueIcon: "water", title: b("Water Supply", "पाणी पुरवठा"), smallLabel: b("Supply Availability", "पुरवठ्याची उपलब्धता"), primaryValue: "98%", statusText: b("Sufficient", "पुरेसा"), bottomLabel: b("Villages with Full Supply", "पूर्ण पुरवठा असलेली गावे"), bottomValue: "5 / 5", buttonText: b("View Details", "तपशील पहा"), buttonLink: "page:infrastructure#facility-grid", theme: "blue" },
+          { icon: "zap", valueIcon: "zap", title: b("Electricity Supply", "वीज पुरवठा"), smallLabel: b("Current Status", "सध्याची स्थिती"), primaryValue: "24x7", statusText: b("Normal", "सामान्य"), bottomLabel: b("Power Outages (This Month)", "वीज खंडित (या महिन्यात)"), bottomValue: "0", buttonText: b("View Details", "तपशील पहा"), buttonLink: "page:infrastructure#facility-grid", theme: "orange" },
+          { icon: "toilet", valueIcon: "recycle", title: b("Sanitation Services", "स्वच्छता सेवा"), smallLabel: b("Toilet Utilization", "शौचालय वापर"), primaryValue: "100%", statusText: b("Active", "सक्रिय"), bottomLabel: b("Waste Collected (Today)", "कचरा संकलन (आज)"), bottomValue: "1.2 Ton", buttonText: b("View Details", "तपशील पहा"), buttonLink: "page:infrastructure#facility-grid", theme: "green" },
+          { icon: "light", valueIcon: "sun", title: b("Street Lighting", "पथदिवे"), smallLabel: b("Operational Status", "कार्यरत स्थिती"), primaryValue: "100%", statusText: b("All Lights Functional", "सर्व दिवे सुरू"), bottomLabel: b("Total LED Lights", "एकूण LED दिवे"), bottomValue: "250", buttonText: b("View Details", "तपशील पहा"), buttonLink: "page:infrastructure#facility-grid", theme: "orange" },
+          { icon: "route", valueIcon: "route", title: b("Road Maintenance", "रस्ते देखभाल"), smallLabel: b("This Month", "या महिन्यात"), primaryValue: "12 km", statusText: b("Roads Maintained", "रस्ते दुरुस्त"), bottomLabel: b("Potholes Repaired", "खड्डे दुरुस्त"), bottomValue: "18", buttonText: b("View Details", "तपशील पहा"), buttonLink: "page:infrastructure#facility-grid", theme: "orange" },
         ],
       },
     },
@@ -105,10 +106,10 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
         buttonLink: "page:announcements",
         items: [
           { icon: "megaphone", title: b("Swachhata Abhiyan Launch in Ward 7", "वॉर्ड ७ मध्ये स्वच्छता अभियानाचा शुभारंभ"), date: b("May 10, 2024", "१० मे, २०२४") },
-          { icon: "water", title: b("UE Zone: Water Interruption this Week", "या आठवड्यात पाणीपुरवठा खंडित"), date: b("May 08, 2024", "८ मे, २०२४") },
+          { icon: "drop", title: b("UE Zone: Water Interruption this Week", "या आठवड्यात पाणीपुरवठा खंडित"), date: b("May 08, 2024", "८ मे, २०२४") },
           { icon: "health", title: b("Free Health Checkup Camp on Sunday", "रविवारी मोफत आरोग्य तपासणी शिबिर"), date: b("Apr 30, 2024", "३० एप्रिल, २०२४") },
-          { icon: "school", title: b("Skill Development Workshop: May 10–15", "कौशल्य विकास कार्यशाळा: १०–१५ मे"), date: b("Apr 28, 2024", "२८ एप्रिल, २०२४") },
-          { icon: "road", title: b("Maintenance Work: Drainage in Sai Enclave", "देखभाल काम: साई एन्क्लेव्हमधील गटार"), date: b("Apr 25, 2024", "२५ एप्रिल, २०२४") },
+          { icon: "presentation", title: b("Skill Development Workshop: May 10–15", "कौशल्य विकास कार्यशाळा: १०–१५ मे"), date: b("Apr 28, 2024", "२८ एप्रिल, २०२४") },
+          { icon: "cone", title: b("Maintenance Work: Drainage in Sai Enclave", "देखभाल काम: साई एन्क्लेव्हमधील गटार"), date: b("Apr 25, 2024", "२५ एप्रिल, २०२४") },
         ],
       },
     },
@@ -121,11 +122,11 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
         buttonText: b("View All Events", "सर्व कार्यक्रम पहा"),
         buttonLink: "page:announcements",
         items: [
-          { icon: "leaf", title: b("Community Cleanliness Drive in Sector 5", "सेक्टर ५ मध्ये सामुदायिक स्वच्छता मोहीम"), date: b("Jun 5, 2024", "५ जून, २०२४") },
-          { icon: "sprout", title: b("Green Marathon Awareness Program", "ग्रीन मॅरेथॉन जनजागृती कार्यक्रम"), date: b("Jun 12, 2024", "१२ जून, २०२४") },
-          { icon: "tree", title: b("Tree Plantation Drive in Urban Park", "शहरी उद्यानात वृक्षारोपण मोहीम"), date: b("Jun 18, 2024", "१८ जून, २०२४") },
-          { icon: "award", title: b("Rajyotsava Celebration — Cultural Program", "राज्योत्सव — सांस्कृतिक कार्यक्रम"), date: b("Jun 22, 2024", "२२ जून, २०२४") },
-          { icon: "file", title: b("Pre-Monsoon Building Check-up Camp", "मान्सूनपूर्व इमारत तपासणी शिबिर"), date: b("Jun 28, 2024", "२८ जून, २०२४") },
+          { icon: "sparkles", title: b("Community Cleanliness Drive in Sector 5", "सेक्टर ५ मध्ये सामुदायिक स्वच्छता मोहीम"), date: b("Jun 5, 2024", "५ जून, २०२४") },
+          { icon: "footprints", title: b("Green Marathon Awareness Program", "ग्रीन मॅरेथॉन जनजागृती कार्यक्रम"), date: b("Jun 12, 2024", "१२ जून, २०२४") },
+          { icon: "sprout", title: b("Tree Plantation Drive in Urban Park", "शहरी उद्यानात वृक्षारोपण मोहीम"), date: b("Jun 18, 2024", "१८ जून, २०२४") },
+          { icon: "flower", title: b("Rajyotsava Celebration — Cultural Program", "राज्योत्सव — सांस्कृतिक कार्यक्रम"), date: b("Jun 22, 2024", "२२ जून, २०२४") },
+          { icon: "clipboard", title: b("Pre-Monsoon Building Check-up Camp", "मान्सूनपूर्व इमारत तपासणी शिबिर"), date: b("Jun 28, 2024", "२८ जून, २०२४") },
         ],
       },
     },
@@ -152,10 +153,10 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
         variant: "strip",
         overlap: true,
         items: [
-          { icon: "wallet", title: b("Total Balance", "एकूण शिल्लक"), value: "₹12,567", description: b("↑ 5.2% vs LM", "↑ ५.२% मागील महिन्याच्या तुलनेत"), visible: true },
-          { icon: "growth", title: b("Growth", "वाढ"), value: "₹2,345", description: b("↑ 8.1% vs LM", "↑ ८.१% मागील महिन्याच्या तुलनेत"), visible: true },
-          { icon: "file", title: b("Total Sales", "एकूण विक्री"), value: "₹1,24,567", description: b("↑ 10.2% vs LM", "↑ १०.२% मागील महिन्याच्या तुलनेत"), visible: true },
-          { icon: "rupee", title: b("New Members", "नवीन सदस्य"), value: "₹3,456", description: b("↑ 4.7% vs LM", "↑ ४.७% मागील महिन्याच्या तुलनेत"), visible: true },
+          { icon: "wallet", title: b("Total Balance", "एकूण शिल्लक"), value: "₹ 12,567", description: b("↑ 5.2% vs LM", "↑ ५.२% मागील महिन्याच्या तुलनेत"), visible: true },
+          { icon: "growthbars", title: b("Growth", "वाढ"), value: "₹ 2,345", description: b("↑ 8.1% vs LM", "↑ ८.१% मागील महिन्याच्या तुलनेत"), visible: true },
+          { icon: "file", title: b("Total Sales", "एकूण विक्री"), value: "₹ 1,24,567", description: b("↑ 10.2% vs LM", "↑ १०.२% मागील महिन्याच्या तुलनेत"), visible: true },
+          { icon: "rupeebox", title: b("New Members", "नवीन सदस्य"), value: "₹ 3,456", description: b("↑ 4.7% vs LM", "↑ ४.७% मागील महिन्याच्या तुलनेत"), visible: true },
         ],
       },
     },
@@ -164,6 +165,7 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
       sortOrder: 10,
       data: {
         enabled: true,
+        backgroundColour: "#FDF9F2",
         heading: b("Sources of Income", "उत्पन्नाचे स्रोत"),
         categories: [
           { name: b("Government Grants", "शासकीय अनुदान"), amount: "18000000.00", percentage: 61.6 },
@@ -173,7 +175,7 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
           { name: b("Donations & Contributions", "देणग्या आणि योगदान"), amount: "1000000.00", percentage: 3.4 },
           { name: b("Other Income", "इतर उत्पन्न"), amount: "700000.00", percentage: 2.5 },
         ],
-        supportCard: { enabled: true, icon: "rupee", title: b("Government Support", "शासकीय सहाय्य"), description: b("61.6% of our income comes from government grants and funding.", "आमच्या उत्पन्नाचा ६१.६% भाग शासकीय अनुदान आणि निधीतून येतो."), buttonText: b("View Income Details", "उत्पन्न तपशील पहा"), buttonLink: "page:finance#budget-visualizer" },
+        supportCard: { enabled: true, icon: "handcoins", title: b("Government Support", "शासकीय सहाय्य"), description: b("61.6% of our income comes from government grants and funding.", "आमच्या उत्पन्नाचा ६१.६% भाग शासकीय अनुदान आणि निधीतून येतो."), buttonText: b("View Income Details", "उत्पन्न तपशील पहा"), buttonLink: "page:finance#budget-visualizer" },
       },
     },
     {
@@ -182,17 +184,17 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
       data: {
         heading: b("Where Your Money Goes", "तुमचा पैसा कुठे जातो"),
         subtitle: b("See how public funds are utilized for the development and welfare of Savardari", "सवरदरीच्या विकासासाठी आणि कल्याणासाठी सार्वजनिक निधी कसा वापरला जातो ते पहा"),
-        backgroundColour: "#FCF7EE",
+        backgroundColour: "#FDFBF6",
         categories: [
-          { name: b("Infrastructure Development", "पायाभूत सुविधा विकास"), amount: "7200000.00", percentage: 30, colour: "#16A34A" },
-          { name: b("Sanitation & Cleanliness", "स्वच्छता आणि सफाई"), amount: "4800000.00", percentage: 20, colour: "#2563EB" },
-          { name: b("Education", "शिक्षण"), amount: "3600000.00", percentage: 15, colour: "#F97316" },
-          { name: b("Water Supply", "पाणी पुरवठा"), amount: "2400000.00", percentage: 10, colour: "#7C3AED" },
-          { name: b("Health & Nutrition", "आरोग्य आणि पोषण"), amount: "2400000.00", percentage: 10, colour: "#14B8A6" },
-          { name: b("Agriculture & Livelihood", "शेती आणि उपजीविका"), amount: "1900000.00", percentage: 8, colour: "#EAB308" },
-          { name: b("Others / Administration", "इतर / प्रशासन"), amount: "1700000.00", percentage: 7, colour: "#6B7280" },
+          { name: b("Infrastructure Development", "पायाभूत सुविधा विकास"), amount: "7200000.00", percentage: 30, colour: "#0A6B35" },
+          { name: b("Sanitation & Cleanliness", "स्वच्छता आणि सफाई"), amount: "4800000.00", percentage: 20, colour: "#3576C2" },
+          { name: b("Education", "शिक्षण"), amount: "3600000.00", percentage: 15, colour: "#FE7724" },
+          { name: b("Water Supply", "पाणी पुरवठा"), amount: "2400000.00", percentage: 10, colour: "#7A5DB6" },
+          { name: b("Health & Nutrition", "आरोग्य आणि पोषण"), amount: "2410000.00", percentage: 10, colour: "#24A2A1" },
+          { name: b("Agriculture & Livelihood", "शेती आणि उपजीविका"), amount: "1940000.00", percentage: 8, colour: "#FDA713" },
+          { name: b("Others / Administration", "इतर / प्रशासन"), amount: "1740000.00", percentage: 7, colour: "#89929C" },
         ],
-        sideCard: { enabled: true, icon: "chart", title: b("Our Focus", "आमचे लक्ष"), description: b("Maximum investment in infrastructure, sanitation, and education for a better tomorrow.", "उत्तम उद्यासाठी पायाभूत सुविधा, स्वच्छता आणि शिक्षणात सर्वाधिक गुंतवणूक."), buttonText: b("View Expenditure Details", "खर्च तपशील पहा"), buttonLink: "page:finance#budget-visualizer" },
+        sideCard: { enabled: true, icon: "barsfilled", title: b("Our Focus", "आमचे लक्ष"), description: b("Maximum investment in infrastructure, sanitation, and education for a better tomorrow.", "उत्तम उद्यासाठी पायाभूत सुविधा, स्वच्छता आणि शिक्षणात सर्वाधिक गुंतवणूक."), buttonText: b("View Expenditure Details", "खर्च तपशील पहा"), buttonLink: "page:finance#budget-visualizer" },
       },
     },
     {
@@ -202,7 +204,7 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
         enabled: true,
         heading: b("Interactive Budget Visualizer", "परस्परसंवादी अंदाजपत्रक दर्शक"),
         subtitle: b("Explore our budget data through interactive charts and graphs", "आकृत्या आणि आलेखांद्वारे अंदाजपत्रकाची माहिती पहा"),
-        backgroundColour: "#FFFFFF",
+        backgroundColour: "#FEFCF9",
         tabs: [
           { tabKey: "sector", name: b("Expenditure by Sector", "क्षेत्रानुसार खर्च"), enabled: true },
           { tabKey: "income-expense", name: b("Income vs Expenditure", "उत्पन्न विरुद्ध खर्च"), enabled: true },
@@ -211,10 +213,10 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
         overviewCard: {
           title: b("Budget Overview (FY 2024-25)", "अंदाजपत्रक आढावा (आ.व. २०२४-२५)"),
           fields: [
-            { label: b("Total Income", "एकूण उत्पन्न"), valueType: "dynamic", prefixSuffix: "₹", colour: "#135130" },
-            { label: b("Total Expenditure", "एकूण खर्च"), valueType: "dynamic", prefixSuffix: "₹", colour: "#DC2626" },
-            { label: b("Surplus / Balance", "शिल्लक"), valueType: "auto", prefixSuffix: "₹", colour: "#7C3AED" },
-            { label: b("Budget Utilization", "अंदाजपत्रक वापर"), valueType: "auto", prefixSuffix: "%", colour: "#2563EB" },
+            { label: b("Total Income", "एकूण उत्पन्न"), valueType: "dynamic", prefixSuffix: "₹", colour: "#0F5A2E" },
+            { label: b("Total Expenditure", "एकूण खर्च"), valueType: "dynamic", prefixSuffix: "₹", colour: "#F04E23" },
+            { label: b("Surplus / Balance", "शिल्लक"), valueType: "auto", prefixSuffix: "₹", colour: "#6D3FB5" },
+            { label: b("Budget Utilization", "अंदाजपत्रक वापर"), valueType: "auto", prefixSuffix: "%", colour: "#1D6FDB" },
           ],
         },
         charts: [
@@ -222,7 +224,7 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
             tabKey: "sector",
             type: "bar",
             labels: ["Infrastructure", "Sanitation", "Education", "Water Supply", "Health", "Agriculture", "Others"],
-            series: [{ name: b("Expenditure", "खर्च"), colour: "#16A34A", values: [7200000, 4800000, 3600000, 2400000, 2400000, 1900000, 1700000] }],
+            series: [{ name: b("Expenditure", "खर्च"), colour: "#1C7C3B", colours: ["#1C7C3B", "#1E70C8", "#FE5D00", "#734BB7", "#039DA5", "#FEAC02", "#828A93"], values: [7200000, 4800000, 3600000, 2400000, 2410000, 1940000, 1740000] }],
           },
           {
             tabKey: "income-expense",
@@ -243,7 +245,8 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
             ],
           },
         ],
-        downloadReport: { enabled: false, buttonText: b("Download Budget Report", "अंदाजपत्रक अहवाल डाउनलोड"), icon: "download" },
+        // No report file yet: the button opens the Announcements downloads until one is uploaded.
+        downloadReport: { enabled: true, buttonText: b("Download Budget Report", "अंदाजपत्रक अहवाल डाउनलोड"), icon: "download", fallbackLink: "page:announcements#deadlines-downloads" },
       },
     },
     {
@@ -252,7 +255,7 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
       data: {
         heading: b("Plans, Reports & Documents", "आराखडे, अहवाल आणि दस्तऐवज"),
         subtitle: b("Access important plans, reports, and documents", "महत्त्वाचे आराखडे, अहवाल आणि दस्तऐवज पहा"),
-        backgroundColour: "#FFFFFF",
+        backgroundColour: "#FEFDFC",
         // Placeholder entries have no file yet: "Download" opens the Announcements downloads until one is uploaded.
         fallbackLink: "page:announcements#deadlines-downloads",
         items: [

@@ -90,7 +90,7 @@ export function AboutHeroSection({ slug, locale, data, tenantName }: SectionProp
                   (d.titleLines ? (
                     <>
                       {rawTitle
-                        .split(/(?<=[.!?])s+/)
+                        .split(/(?<=[.!?])\s+/)
                         .filter(Boolean)
                         .map((line, i) => (
                           <span key={i} className="block">

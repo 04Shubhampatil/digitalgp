@@ -1231,7 +1231,14 @@
       "filteredBy": "प्रवर्ग: {category}",
       "showAll": "सर्व दाखवा",
       "noInCategory": "या प्रवर्गात कोणतीही घोषणा नाही.",
-      "announcementCount": "{n} घोषणा"
+      "announcementCount": "{n} घोषणा",
+      "clickWard": "अधिक माहितीसाठी प्रभागावर क्लिक करा",
+      "wardNo": "प्रभाग क्र. {no}",
+      "zoomIn": "मोठे करा",
+      "zoomOut": "लहान करा",
+      "fullscreen": "पूर्ण स्क्रीन",
+      "householdsLabel": "कुटुंबे",
+      "beneficiariesLabel": "लाभार्थी"
     },
     "searchEyebrow": "संकेतस्थळावर शोधा",
     "searchHeading": "“{query}” साठी निकाल",
@@ -1241,7 +1248,15 @@
     "searchFilter": "निकाल गाळा",
     "searchAll": "सर्व",
     "searchEmpty": "“{query}” साठी काहीही सापडले नाही",
-    "searchEmptyHint": "शब्दलेखन तपासा, कमी शब्द वापरून पहा किंवा यापैकी एखादे पान उघडा."
+    "searchEmptyHint": "शब्दलेखन तपासा, कमी शब्द वापरून पहा किंवा यापैकी एखादे पान उघडा.",
+    "schemeLevelShort": {
+      "CENTRAL": "केंद्र",
+      "STATE": "राज्य",
+      "DISTRICT": "जिल्हा",
+      "GRAM_PANCHAYAT": "ग्रामपंचायत"
+    },
+    "scrollPrev": "मागे",
+    "scrollNext": "पुढे"
   },
   "editor": {
     "subtitle": "{name} साठी सामग्री संपादित करत आहात. प्रत्येक विभागाचा स्वतंत्र मसुदा असतो; तयार झाल्यावर प्रकाशित करा.",
