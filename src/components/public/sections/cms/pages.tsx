@@ -14,7 +14,6 @@ import { Band, Icon, cardClass, externalProps, list, mediaUrl, plain, tx, videoE
 import { MiniDocumentaryClient } from "./MiniDocumentary";
 
 const byOrder = <T extends { order?: number }>(a: T, b: T) => (a.order ?? 0) - (b.order ?? 0);
-const dateFmt = (locale: SectionProps["locale"], d: string) => new Date(`${d}T00:00:00`).toLocaleDateString(locale === "mr" ? "mr-IN" : "en-IN", { day: "numeric", month: "short", year: "numeric" });
 
 // ------------------------------------------------------------------------------------ Announcements
 
