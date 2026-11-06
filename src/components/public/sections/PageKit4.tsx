@@ -1,3 +1,4 @@
+import { marathiFor } from "@/i18n/mr-fallback";
 import {
   ArrowRight,
   ChevronRight,
@@ -95,12 +96,10 @@ export async function liveCalendarEvents(
     .map((a, i) => ({
       date: isoDay(new Date(a.eventStartAt!)),
       title: pickText(pair(a.titleEn, a.titleMr), locale),
-      time: [
-        time.format(new Date(a.eventStartAt!)),
-        a.eventEndAt ? time.format(new Date(a.eventEndAt)) : "",
-      ]
-        .filter(Boolean)
-        .join(" – "),
+      time: mrTimeFor(
+        locale,
+        [time.format(new Date(a.eventStartAt!)), a.eventEndAt ? time.format(new Date(a.eventEndAt)) : ""].filter(Boolean).join(" – "),
+      ),
       color: EVENT_COLOURS[i % EVENT_COLOURS.length],
       location:
         pickText(pair(a.eventLocationEn, a.eventLocationMr), locale) ||
@@ -154,6 +153,20 @@ const CAT_THEMES: [RegExp, number][] = [
   [/event|कार्यक्र|उपक्रम/i, 5],
 ];
 
+/** "10:00 AM - 12:00 PM" or "१०:०० AM – १:०० PM" → "सकाळी १०:०० - दुपारी १२:००" (Marathi day-part words). */
+const mrTimeFor = (locale: string, t?: string) => (locale === "mr" ? mrTime(t) : t);
+function mrTime(t?: string) {
+  if (!t) return t;
+  const DEV = "०१२३४५६७८९";
+  const dev = (n: string) => n.replace(/\d/g, (c) => DEV[Number(c)] ?? c);
+  const latin = (n: string) => n.replace(/[०-९]/g, (c) => String(DEV.indexOf(c)));
+  return t.replace(/([\d०-९]{1,2}:[\d०-९]{2})\s*(AM|PM)/gi, (_m: string, hm: string, ap: string) => {
+    const h = Number(latin(hm).split(":")[0]);
+    const part = ap.toUpperCase() === "AM" ? "सकाळी" : h === 12 || h < 4 ? "दुपारी" : "सायं.";
+    return `${part} ${dev(latin(hm))}`;
+  });
+}
+
 /**
  * `announce-categories`: category shortcuts in one white card overlapping the hero (Figma 1318×178: 220×135 tiles with a 67px
  * picture, 23px label, "View All" line). With published announcements the tiles are the live categories with their counts and
@@ -165,7 +178,7 @@ export async function AnnounceCategoriesSection({ slug, locale, data }: SectionP
   const live = await liveAnnouncementCategories(slug);
   const tiles =
     live.length > 0
-      ? live.slice(0, 6).map((c) => ({ label: c.category, caption: t("announcementCount", { n: c.count }), href: categoryHref(slug, c.category) }))
+      ? live.slice(0, 6).map((c) => ({ label: locale === "mr" ? (marathiFor(c.category) ?? c.category) : c.category, caption: t("announcementCount", { n: c.count }), href: categoryHref(slug, c.category) }))
       : (d.items ?? []).map((it) => ({ label: pickText(it.label, locale), caption: pickText(d.viewAll, locale), href: resolveHref(it.href ?? d.href ?? "page:announcements#announce-feed", slug) }));
   const taken = new Set<number>();
   const themed = tiles.map((it) => {
@@ -235,7 +248,7 @@ export async function AnnounceFeedSection({ slug, locale, data }: SectionProps) 
           href: detailHref(slug, "announcements", a.id) as string | undefined,
         }))
       : (d.items ?? []).map((a, i) => ({ title: pickText(a.title, locale), body: pickText(a.body, locale), date: pickText(a.date, locale), isNew: i < 2, category: "", href: undefined as string | undefined }));
-  const events: CalendarEvent[] = liveEvents.length > 0 ? liveEvents : (d.events ?? []).map((e) => ({ date: e.date, title: pickText(e.title, locale), time: e.time, color: e.color }));
+  const events: CalendarEvent[] = liveEvents.length > 0 ? liveEvents : (d.events ?? []).map((e) => ({ date: e.date, title: pickText(e.title, locale), time: mrTimeFor(locale, e.time), color: e.color }));
   const weekdays = locale === "mr" ? ["र", "सो", "मं", "बु", "गु", "शु", "श"] : ["S", "M", "T", "W", "T", "F", "S"];
   const monthNames = Array.from({ length: 12 }, (_, m) => new Intl.DateTimeFormat(locale === "mr" ? "mr-IN" : "en-IN", { month: "long" }).format(new Date(2026, m, 1)));
   const listClass = "mt-[10px] rounded-[10px] border border-[#414141]/20";

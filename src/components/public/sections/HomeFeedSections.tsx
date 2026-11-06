@@ -1,3 +1,4 @@
+import { marathiFor } from "@/i18n/mr-fallback";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { pair, pickText, type Bilingual } from "@/i18n/text";
@@ -91,7 +92,7 @@ export async function WhatsNewSection({ slug, locale, data }: SectionProps) {
                 {/* Figma: the status chip sits in a fixed column 88px after the date. */}
                 <span className="min-w-[88px] pr-2">{typeof n.date === "string" ? n.date : pickText(n.date, locale)}</span>
                 {n.status && (
-                  <span className={`rounded-[27px] px-2.5 py-0.5 text-[12px] leading-6 font-medium ${CHIP[n.status] ?? "bg-[#ececec] text-[#414141]"}`}>{n.status in CHIP ? t(`status.${n.status}`) : n.status}</span>
+                  <span className={`rounded-[27px] px-2.5 py-0.5 text-[12px] leading-6 font-medium ${CHIP[n.status] ?? "bg-[#ececec] text-[#414141]"}`}>{n.status in CHIP ? t(`status.${n.status}`) : locale === "mr" ? (marathiFor(n.status) ?? n.status) : n.status}</span>
                 )}
               </p>
             </div>
