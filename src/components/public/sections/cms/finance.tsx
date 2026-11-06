@@ -1,3 +1,4 @@
+import { marathiFor } from "@/i18n/mr-fallback";
 import { ArrowRight, Download } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
@@ -448,7 +449,7 @@ export async function BudgetVisualizerSection({
     .map((c) => ({
       tabKey: c.tabKey!,
       type: c.type === "line" ? "line" : "bar",
-      labels: list<string>(c.labels),
+      labels: list<string>(c.labels).map((l) => (locale === "mr" ? (marathiFor(l) ?? l) : l)),
       series: list<{
         name?: B;
         colour?: string;
