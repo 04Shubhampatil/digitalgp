@@ -49,6 +49,21 @@ function normaliseWeather(data: unknown, live: PublicWeatherDto | null, locale: 
   };
 }
 
+/** Marathi form of the placeholder weather values: Devanagari digits, day-part words, month and unit names. */
+function mrWeather(v: string | undefined, locale: string): string | undefined {
+  if (!v || locale !== "mr") return v;
+  const DEV = "०१२३४५६७८९";
+  const MONTHS: Record<string, string> = { Jan: "जाने.", Feb: "फेब्रु.", Mar: "मार्च", Apr: "एप्रि.", May: "मे", Jun: "जून", Jul: "जुलै", Aug: "ऑग.", Sep: "सप्टें.", Oct: "ऑक्टो.", Nov: "नोव्हें.", Dec: "डिसें." };
+  const DIRS: Record<string, string> = { N: "उ", S: "द", E: "पू", W: "प", NW: "वायव्य", NE: "ईशान्य", SW: "नैऋत्य", SE: "आग्नेय" };
+  return v
+    .replace(/(\d{1,2}):(\d{2}) (AM|PM)/g, (_m, h: string, mi: string, ap: string) => (ap === "AM" ? "सकाळी" : "सायं.") + " " + h + ":" + mi)
+    .replace(/km\/hr/g, "किमी/तास")
+    .replace(/\bkm\b/g, "किमी")
+    .replace(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/g, (m) => MONTHS[m] ?? m)
+    .replace(/\b(NW|NE|SW|SE|N|S|E|W)\b/g, (m) => DIRS[m] ?? m)
+    .replace(/\d/g, (c) => DEV[Number(c)] ?? c);
+}
+
 /**
  * `weather`: today's weather card (Figma 375:12414). Frontend-only placeholder — the backend has
  * no weather section; values here come from the design until a weather source is wired in.
@@ -100,8 +115,8 @@ export async function WeatherSection({ slug, locale, data }: SectionProps) {
           <div className="mt-[15px] grid grid-cols-[225px_auto] gap-y-[11px]">
             {stat(tw("feelsLike"), d.feelsLike)}
             {stat(tw("humidity"), d.humidity)}
-            {stat(tw("wind"), d.wind)}
-            {stat(tw("visibility"), d.visibility)}
+            {stat(tw("wind"), mrWeather(d.wind, locale))}
+            {stat(tw("visibility"), mrWeather(d.visibility, locale))}
           </div>
         </div>
       </div>
@@ -115,9 +130,9 @@ export async function WeatherSection({ slug, locale, data }: SectionProps) {
         </ul>
       )}
       <div className="mt-[30px] grid grid-cols-[257px_253px_auto] border-t border-white/40 pt-4 pl-[29px] text-[12px] leading-4 max-sm:grid-cols-1 max-sm:gap-1">
-        <span>{d.sunrise ? `${tw("sunrise")}: ${d.sunrise}` : ""}</span>
-        <span>{d.sunset ? `${tw("sunset")}: ${d.sunset}` : ""}</span>
-        <span className="whitespace-nowrap">{d.date}</span>
+        <span>{d.sunrise ? `${tw("sunrise")}: ${mrWeather(d.sunrise, locale)}` : ""}</span>
+        <span>{d.sunset ? `${tw("sunset")}: ${mrWeather(d.sunset, locale)}` : ""}</span>
+        <span className="whitespace-nowrap">{mrWeather(d.date, locale)}</span>
       </div>
     </div>
   );
