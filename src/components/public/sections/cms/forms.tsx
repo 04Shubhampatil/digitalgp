@@ -111,11 +111,16 @@ export function ServiceCategoriesSection({ slug, locale, data }: SectionProps) {
 
 /** Badge colours of the QR cards, in the Figma order. */
 const QR_COLOURS = ["#1b7a3a", "#7b3fc4", "#f5871f", "#1a6fe0", "#1b9a3a", "#8a3fc4"];
+/** The design's badge pictures (RTS, grievance, tax, feedback, village website, help), used when a card has no colour / icon of its own. */
+const QR_BADGES = Array.from({ length: 6 }, (_, i) => `/images/figma/pages/svc-badge-${i + 1}.png`);
 
-/** `qr-codes`: a QR code (generated from the link) with the service icon, title and description. */
+/**
+ * `qr-codes`: a QR code (generated from the link) with the service badge, title and description. Figma: 203×311 cards, 20px
+ * apart; the code is 138px wide with a 52px badge hanging over its lower edge.
+ */
 export async function QrCodesSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
-  const raw = list<{ title?: B; description?: B; serviceIcon?: string; buttonText?: B; linkUrl?: string; colour?: string }>((data as { items?: unknown }).items).filter((i) => i.linkUrl);
+  const raw = list<{ title?: B; description?: B; serviceIcon?: string; buttonText?: B; linkUrl?: string; colour?: string; badgeUrl?: string }>((data as { items?: unknown }).items).filter((i) => i.linkUrl);
   if (raw.length === 0) return null;
   // Published links are absolute https addresses. Placeholder links may point at the site's own pages
   // ("page:grievance"); those are turned into full addresses here, because a QR code needs one to scan.
@@ -127,23 +132,42 @@ export async function QrCodesSection({ slug, locale, data }: SectionProps) {
     return { ...i, linkUrl: /^https?:\/\//.test(href) || !host ? href : `${proto}://${host}${href}` };
   });
   return (
-    <Band heading={t("quickAccess")} subheading={t("quickAccessSub")} center>
-      <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-[repeat(auto-fit,minmax(150px,1fr))]">
-        {items.map((q, i) => (
-          <li key={i}>
-            <a href={q.linkUrl} {...externalProps} aria-label={`${tx(q.title, locale)}: ${tx(q.buttonText, locale) || t("open")}`} className={`${cardClass} flex h-full flex-col items-center text-center hover:shadow-md`}>
-              <QrCode text={q.linkUrl!} label={tx(q.title, locale)} className="w-full max-w-[140px]" />
-              {/* Figma Services: each badge has its own colour (green, purple, orange, blue, green, purple). */}
-              <span className="relative -mt-7 flex size-[54px] items-center justify-center rounded-full border-2 border-white text-white shadow" style={{ backgroundColor: q.colour ?? QR_COLOURS[i % QR_COLOURS.length] }}>
-                <Icon name={q.serviceIcon} className="size-6" />
-              </span>
-              <span className="mt-2 text-[16px] font-semibold text-black">{tx(q.title, locale)}</span>
-              {tx(q.description, locale) && <span className="text-[12px] text-[#414141]">{tx(q.description, locale)}</span>}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </Band>
+    <section className="bg-cream pb-8 lg:pb-[42px]">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
+        <h2 className="text-center text-[26px] leading-tight font-semibold text-black lg:text-[30px] lg:leading-[45px]">{t("quickAccess")}</h2>
+        <p className="mt-4 text-center text-[16px] leading-[30px] text-black lg:text-[20px]">{t("quickAccessSub")}</p>
+        <ul className="mt-[17px] grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6 lg:gap-x-5">
+          {items.map((q, i) => {
+            const badge = q.badgeUrl ?? (!q.colour && !q.serviceIcon ? QR_BADGES[i] : undefined);
+            return (
+              <li key={i}>
+                <a
+                  href={q.linkUrl}
+                  {...externalProps}
+                  aria-label={`${tx(q.title, locale)}: ${tx(q.buttonText, locale) || t("open")}`}
+                  className="flex h-full min-h-[311px] flex-col items-center rounded-[11px] border-[1.09px] border-black/20 bg-white px-3 pt-[25px] pb-5 text-center hover:shadow-md"
+                >
+                  <span className="relative block h-[186px] w-[153px] shrink-0">
+                    <QrCode text={q.linkUrl!} label={tx(q.title, locale)} className="absolute top-2 left-2 size-[138px]" />
+                    {/* Figma Services: each badge has its own picture / colour (green, purple, orange, blue, green, purple). */}
+                    {badge ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- static design asset
+                      <img src={badge} alt="" width={52} height={52} className="absolute top-[121px] left-[50px] size-[52px]" />
+                    ) : (
+                      <span className="absolute top-[121px] left-[50px] flex size-[52px] items-center justify-center rounded-full border-2 border-white text-white shadow" style={{ backgroundColor: q.colour ?? QR_COLOURS[i % QR_COLOURS.length] }}>
+                        <Icon name={q.serviceIcon} className="size-6" />
+                      </span>
+                    )}
+                  </span>
+                  <span className="mt-[18px] text-[17.5px] leading-6 font-semibold whitespace-nowrap text-black">{tx(q.title, locale)}</span>
+                  {tx(q.description, locale) && <span className="mt-[15px] text-[15.3px] leading-[21px] whitespace-nowrap text-[#414141]">{tx(q.description, locale)}</span>}
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </section>
   );
 }
 

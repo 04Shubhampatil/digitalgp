@@ -48,9 +48,9 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       sortOrder: 5,
       data: {
         items: [
-          { level: "CENTRAL", label: t("Central Government Schemes"), count: 48 },
-          { level: "STATE", label: t("State Government Schemes"), count: 36 },
-          { level: "DISTRICT", label: t("District Level Schemes"), count: 22 },
+          { level: "CENTRAL", label: t("Central Government Schemes"), count: 48, iconUrl: P + "sch-level-1.png" },
+          { level: "STATE", label: t("State Government Schemes"), count: 36, iconUrl: P + "sch-level-2.png" },
+          { level: "DISTRICT", label: t("District Level Schemes"), count: 22, iconUrl: P + "sch-level-3.png" },
         ],
       },
     },
@@ -136,13 +136,13 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
       sectionKey: "service-strip",
       sortOrder: 50,
       data: {
-        heading: b("Scheme Services", "योजना सेवा"),
+        spaceAfter: 29,
         items: [
-          { label: b("Check Application Status", "अर्जाची स्थिती तपासा"), caption: b("Track your application", "आपल्या अर्जाचा मागोवा घ्या"), href: "page:grievance" },
-          { label: b("Apply Online", "ऑनलाइन अर्ज करा"), caption: b("Apply for schemes", "योजनांसाठी अर्ज करा"), href: "page:services" },
-          { label: b("Download Forms", "अर्ज डाउनलोड करा"), caption: b("Get application forms", "अर्जाचे नमुने मिळवा"), href: "page:announcements" },
-          { label: b("Grievance Redressal", "तक्रार निवारण"), caption: b("Lodge a complaint", "तक्रार नोंदवा"), href: "page:grievance" },
-          { label: b("Helpline Support", "हेल्पलाइन सहाय्य"), caption: b("Get help & support", "मदत व सहाय्य मिळवा"), href: "page:contact" },
+          { label: b("Check Application Status", "अर्जाची स्थिती तपासा"), caption: b("Track your applications", "आपल्या अर्जांचा मागोवा घ्या"), href: "page:grievance#grievance-track", iconUrl: P + "sch-svc-1.png" },
+          { label: b("Apply Online", "ऑनलाइन अर्ज करा"), caption: b("Apply for schemes", "योजनांसाठी अर्ज करा"), href: "page:services", iconUrl: P + "sch-svc-2.png" },
+          { label: b("Download Forms", "अर्ज डाउनलोड करा"), caption: b("Get application forms", "अर्जाचे नमुने मिळवा"), href: "page:announcements", iconUrl: P + "sch-svc-3.png" },
+          { label: b("Grievance Redressal", "तक्रार निवारण"), caption: b("Lodge a complaint", "तक्रार नोंदवा"), href: "page:grievance", iconUrl: P + "sch-svc-4.png" },
+          { label: b("Helpline Support", "हेल्पलाइन सहाय्य"), caption: b("Get help & support", "मदत व सहाय्य मिळवा"), href: "page:contact", iconUrl: P + "sch-svc-5.png" },
         ],
       },
     },

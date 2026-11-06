@@ -3,7 +3,7 @@ import type { UiLocale } from "@/i18n/config";
 import { AboutEmergencySection, AboutHeroSection, AboutHistorySection, AboutRolesSection, AboutStructureSection, AboutVisionSection } from "./AboutFigma";
 import { LiveStatsSection } from "./cms/extra";
 import { CategoryStripSection, DevelopmentSuggestionsSection, EmergencyServicesSection, FinancialItemsView, ImpactDashboardSection, LeadersProfileGridSection, MonthlyReportSection, QuickActionsSection, RolesCardsSection } from "./cms/extra";
-import { BeforeAfterSection, CtaBannerSection, DevTimelineSection, FinancialOverviewSection, ImpactGridSection, FacilityGridSection, ImageCropsSection, ProgressTrackerSection, ProjectShowcaseSection, SuccessStoriesSection } from "./PageKit";
+import { BeforeAfterSection, CtaBannerSection, DevTimelineSection, FinancialOverviewSection, ImpactGridSection, ImageCropsSection, ProgressTrackerSection, ProjectShowcaseSection, SuccessStoriesSection } from "./PageKit";
 import { LinkCardsSection, MediaCardsSection, StatCardsSection, TileGridSection, VideoFeatureSection } from "./PageKit2";
 import { CalloutSection, GrievanceRegisterSection, GrievanceTrackSection } from "./GrievanceSections";
 import { ContactCardsSection, ContactFeedbackSection, VolunteerFormSection } from "./ContactSections";
@@ -30,23 +30,9 @@ import {
   YouthPostsSection,
   YouthSpeakTabsSection,
 } from "./cms/village";
-import {
-  BudgetVisualizerSection,
-  DocumentsSection,
-  ExpenditureSection,
-  IncomeSourcesSection,
-  GreenScoreboardSection,
-  KeyInitiativesSection,
-  InfraMapSection,
-  LatestAnnouncementsCard,
-  MapFiltersSection,
-  MarketPricesSection,
-  StatusCardsSection,
-  SustainabilityInitiativesSection,
-  TreeAdoptionSection,
-  UpcomingEventsCard,
-  WeatherUpdateSection,
-} from "./cms/data";
+import { GreenScoreboardSection, KeyInitiativesSection, MapFiltersSection, MarketPricesSection, SustainabilityInitiativesSection, TreeAdoptionSection, WeatherUpdateSection } from "./cms/data";
+import { BudgetVisualizerSection, DocumentsSection, ExpenditureSection, IncomeSourcesSection } from "./cms/finance";
+import { FacilityGridSection, InfraMapSection, LatestAnnouncementsCard, StatusCardsSection, UpcomingEventsCard } from "./cms/infra";
 import {
   CmsContactCardsSection,
   ComplaintFormSection,
@@ -252,7 +238,8 @@ const ROW_GROUPS: { keys: string[]; cols: string; all?: boolean; /** Vertical pa
   { keys: ["whats-new", "achievements"], cols: "lg:grid-cols-2", pad: "py-8 lg:pt-5 lg:pb-0" },
   { keys: ["weather", "sarpanch-message"], cols: "lg:grid-cols-2", pad: "py-8 lg:pt-[53px] lg:pb-0" },
   { keys: ["welcome-video", "village-progress"], cols: "lg:grid-cols-2", pad: "py-8 lg:pt-16" },
-  { keys: ["latest-announcements", "upcoming-events"], cols: "lg:grid-cols-2" },
+  // Figma Infrastructure: the two 570px cards (644 / 649px) 27px apart, 88px under the dashboard.
+  { keys: ["latest-announcements", "upcoming-events"], cols: "lg:grid-cols-[644fr_649fr] lg:gap-x-[27px]", pad: "py-8 lg:pt-[88px] lg:pb-[106px]" },
   { keys: ["market-prices", "weather-update"], cols: "lg:grid-cols-2" },
   { keys: ["office-location", "feedback-form"], cols: "lg:grid-cols-2" },
   { keys: ["live-announcements", "calendar"], cols: "lg:grid-cols-[minmax(0,1fr)_340px]" },

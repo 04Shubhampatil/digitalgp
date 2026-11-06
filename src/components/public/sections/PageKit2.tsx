@@ -95,8 +95,8 @@ export function LinkCardsSection({ slug, locale, data }: SectionProps) {
     // Rendered as a card only: the page puts it beside the coverage map (ROW_GROUPS in index.tsx).
     return (
       <div className="flex min-w-0 flex-col">
-        <h2 className="text-[30px] leading-[45px] font-semibold text-black">{pickText(d.heading, locale)}</h2>
-        <ul className="mt-5 flex flex-1 flex-col justify-between gap-2 rounded-[10px] bg-white px-6 py-[37px] shadow-[0_0_10px_rgba(0,0,0,0.05)] lg:mt-[22px]">
+        <h2 className="text-[30px] leading-[45px] font-semibold text-black lg:pl-[11px]">{pickText(d.heading, locale)}</h2>
+        <ul className="mt-5 flex flex-1 flex-col justify-between gap-6 rounded-[20px] bg-white px-6 py-[37px] lg:mt-[38px] lg:min-h-[553px]">
           {(d.items ?? []).map((it, i) => (
             <li key={i}>
               <Link href={resolveHref(it.href ?? "#scheme-showcase", slug)} className="group flex items-center gap-[18px] rounded-[10px] py-1 hover:bg-[#135130]/[0.04]">
@@ -109,8 +109,8 @@ export function LinkCardsSection({ slug, locale, data }: SectionProps) {
                   </span>
                 )}
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[18px] leading-6 font-semibold text-black group-hover:text-[#135130]">{pickText(it.title, locale)}</span>
-                  <span className="mt-1.5 block text-[14px] leading-6 font-medium text-[#414141]">{pickText(it.body, locale)}</span>
+                  <span className="block text-[18px] leading-6 font-semibold whitespace-nowrap text-black group-hover:text-[#135130]">{pickText(it.title, locale)}</span>
+                  <span className="mt-1.5 block text-[14px] leading-6 font-medium whitespace-nowrap text-[#414141]">{pickText(it.body, locale)}</span>
                 </span>
                 <ChevronRight aria-hidden className="size-6 shrink-0 text-black" />
               </Link>

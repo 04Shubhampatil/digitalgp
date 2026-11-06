@@ -1034,8 +1034,8 @@
       "pressCoverage": "Press coverage & media reports",
       "pricesStale": "These prices may be out of date",
       "pricesUpdated": "Updated {date}",
-      "quickAccess": "Scan QR codes for quick access",
-      "quickAccessSub": "Scan the QR codes below to quickly access our online services.",
+      "quickAccess": "Scan QR Codes for Quick Access",
+      "quickAccessSub": "Scan the QR codes below to quickly access our online services",
       "schemeCards": "Schemes & Opportunities for Youth",
       "send": "Send",
       "serviceLinks": "Right to Service: apply online",
@@ -1231,7 +1231,14 @@
       "filteredBy": "Category: {category}",
       "showAll": "Show all",
       "noInCategory": "No announcements in this category.",
-      "announcementCount": "{n, plural, one {# announcement} other {# announcements}}"
+      "announcementCount": "{n, plural, one {# announcement} other {# announcements}}",
+      "clickWard": "Click on a ward to view more details",
+      "wardNo": "Ward No. {no}",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "fullscreen": "Full screen",
+      "householdsLabel": "Households",
+      "beneficiariesLabel": "Beneficiaries"
     },
     "searchEyebrow": "Search the website",
     "searchHeading": "Results for “{query}”",
@@ -1241,7 +1248,15 @@
     "searchFilter": "Filter results",
     "searchAll": "All",
     "searchEmpty": "Nothing found for “{query}”",
-    "searchEmptyHint": "Check the spelling, try fewer words, or open one of these pages."
+    "searchEmptyHint": "Check the spelling, try fewer words, or open one of these pages.",
+    "schemeLevelShort": {
+      "CENTRAL": "Central",
+      "STATE": "State",
+      "DISTRICT": "District",
+      "GRAM_PANCHAYAT": "Gram Panchayat"
+    },
+    "scrollPrev": "Previous",
+    "scrollNext": "Next"
   },
   "editor": {
     "subtitle": "Editing content for {name}. Each section has its own draft; publish when it is ready.",
