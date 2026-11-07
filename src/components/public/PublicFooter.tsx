@@ -29,7 +29,6 @@ export async function PublicFooter({ tenant }: { tenant: PublicTenantDto }) {
   const phone = contact.phone || FIGMA_CONTACT.phone;
   const email = contact.email || FIGMA_CONTACT.email;
   const year = new Date().getFullYear();
-  const hasSocial = !!(social.facebook || social.instagram || social.youtube || social.twitter);
 
   // Figma quick links, row by row in two columns (Home | About Us, Citizen Services | Notices & GRs, …).
   const quick = [
@@ -49,24 +48,24 @@ export async function PublicFooter({ tenant }: { tenant: PublicTenantDto }) {
       {/* Figma "image 127": tricolour wash with the faded Ashoka chakra top-right (60% opacity). */}
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[257px] bg-[url('/images/figma/pages/footer-bg.png')] bg-[length:1440px_auto] bg-top bg-no-repeat opacity-60 xl:bg-[length:100%_auto]" />
       <div className="relative mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[46px]">
-        <div className="grid gap-10 py-8 lg:grid-cols-[456px_401px_minmax(0,1fr)] lg:gap-0 lg:divide-x lg:divide-black/15 lg:min-h-[308px] lg:pt-[40px] lg:pb-[58px]">
+        <div className="grid gap-10 py-8 lg:grid-cols-[456px_401px_minmax(0,1fr)] lg:gap-0 lg:divide-x lg:divide-black/15 lg:min-h-[308px] lg:pt-[40px] lg:pb-[28px]">
           <div className="lg:pr-10 lg:pl-0">
             <div className="flex items-center gap-4">
               <Emblem size={58} />
               <div>
-                <p className="text-[21px] leading-7 font-bold text-[#135130]">
+                <p className="text-[20px] leading-[21px] font-bold text-[#135130]">
                   {t("common.gramPanchayat")} {name}
                 </p>
-                <p className="text-[14.5px] text-[#135130]">{t("common.govt")}</p>
+                <p className="text-[14px] leading-[21px] text-[#135130]">{t("common.govt")}</p>
               </div>
             </div>
-            <address className="mt-5 text-[15px] leading-[21px] not-italic whitespace-pre-line">{address}</address>
+            <address className="mt-5 text-[14px] leading-[21px] not-italic whitespace-pre-line">{address}</address>
           </div>
 
           <div className="lg:pr-6 lg:pl-9">
             <h2 className="text-[14px] font-bold tracking-wide text-[#135130] uppercase">{t("public.contactUs")}</h2>
-            <ul className="mt-4 space-y-3.5 text-[15px] leading-[21px]">
-              <li className="flex items-start gap-3">
+            <ul className="mt-3 space-y-[11px] text-[14px] leading-[21px]">
+              <li className="flex items-start gap-3 mb-[14px]">
                 <MapPin className="mt-0.5 size-5 shrink-0 text-[#135130]" aria-hidden />
                 <span className="whitespace-pre-line">{address}</span>
               </li>
@@ -83,35 +82,29 @@ export async function PublicFooter({ tenant }: { tenant: PublicTenantDto }) {
                 </a>
               </li>
             </ul>
-            {hasSocial && <h2 className="mt-5 text-[14px] font-bold tracking-wide text-[#135130] uppercase">{t("public.followUs")}</h2>}
-            {/* Only networks with a URL in the website settings are shown; a dead "#" icon is worse than none. */}
-            {hasSocial && <div className="mt-2 flex items-center gap-3">
-              {social.facebook && (
-                <a href={social.facebook} target="_blank" rel="noopener" aria-label="Facebook">
-                  <FacebookIcon className="size-[34px]" />
-                </a>
-              )}
-              {social.instagram && (
-                <a href={social.instagram} target="_blank" rel="noopener" aria-label="Instagram">
-                  <InstagramIcon className="size-[34px]" gradientId="ig-footer" />
-                </a>
-              )}
-              {social.youtube && (
-                <a href={social.youtube} target="_blank" rel="noopener" aria-label="YouTube">
-                  <YouTubeIcon className="h-[26px] w-[38px]" />
-                </a>
-              )}
+            <h2 className="mt-3.5 text-[14px] font-bold tracking-wide text-[#135130] uppercase">{t("public.followUs")}</h2>
+            {/* Figma always shows Facebook, Instagram and YouTube; until the website settings hold its own URLs they open the networks' home pages. */}
+            <div className="mt-[9px] flex items-center gap-1.5">
+              <a href={social.facebook || "https://www.facebook.com"} target="_blank" rel="noopener" aria-label="Facebook">
+                <FacebookIcon className="size-[34px]" />
+              </a>
+              <a href={social.instagram || "https://www.instagram.com"} target="_blank" rel="noopener" aria-label="Instagram">
+                <InstagramIcon className="size-[34px]" gradientId="ig-footer" />
+              </a>
+              <a href={social.youtube || "https://www.youtube.com"} target="_blank" rel="noopener" aria-label="YouTube" className="ml-[7px]">
+                <YouTubeIcon className="h-[26px] w-[38px]" />
+              </a>
               {social.twitter && (
-                <a href={social.twitter} target="_blank" rel="noopener" aria-label="X (Twitter)">
+                <a href={social.twitter} target="_blank" rel="noopener" aria-label="X (Twitter)" className="ml-[7px]">
                   <XIcon className="size-[34px]" />
                 </a>
               )}
-            </div>}
+            </div>
           </div>
 
           <nav aria-label={t("public.quickLinks")} className="lg:pl-11">
             <h2 className="text-[14px] font-bold tracking-wide text-[#135130] uppercase">{t("public.quickLinks")}</h2>
-            <ul className="mt-5 grid grid-cols-2 gap-x-6 gap-y-[13px] text-[15px] lg:grid-cols-[250px_1fr]">
+            <ul className="mt-5 grid grid-cols-2 gap-x-6 gap-y-[13px] text-[14px] lg:grid-cols-[250px_1fr]">
               {quick.map((l, i) => (
                 <li key={i}>
                   <Link href={l.href} className="inline-flex items-center gap-2 hover:underline">
@@ -123,7 +116,7 @@ export async function PublicFooter({ tenant }: { tenant: PublicTenantDto }) {
           </nav>
         </div>
 
-        <div className="flex flex-col items-center justify-between gap-3 border-t border-black/10 py-4 text-[15px] sm:flex-row">
+        <div className="flex flex-col items-center justify-between gap-3 border-t border-black/10 py-4 text-[14px] sm:flex-row">
           <p>
             © {year} {t("common.gramPanchayat")} {name}. {t("public.allRightsReserved")}
           </p>
