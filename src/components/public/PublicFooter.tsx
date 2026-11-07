@@ -49,7 +49,7 @@ export async function PublicFooter({ tenant }: { tenant: PublicTenantDto }) {
       {/* Figma "image 127": tricolour wash with the faded Ashoka chakra top-right (60% opacity). */}
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[257px] bg-[url('/images/figma/pages/footer-bg.png')] bg-[length:1440px_auto] bg-top bg-no-repeat opacity-60 xl:bg-[length:100%_auto]" />
       <div className="relative mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[46px]">
-        <div className="grid gap-10 py-8 lg:grid-cols-[456px_401px_minmax(0,1fr)] lg:gap-0 lg:divide-x lg:divide-black/15 lg:pt-[30px] lg:pb-[58px]">
+        <div className="grid gap-10 py-8 lg:grid-cols-[456px_401px_minmax(0,1fr)] lg:gap-0 lg:divide-x lg:divide-black/15 lg:min-h-[308px] lg:pt-[40px] lg:pb-[58px]">
           <div className="lg:pr-10 lg:pl-0">
             <div className="flex items-center gap-4">
               <Emblem size={58} />
