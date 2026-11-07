@@ -491,9 +491,9 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
         buttonLink: "page:education#youth-posts",
         achievementCards: [
           { icon: "book", iconImage: P + "edu-stat-0.png", title: b("Academic Excellence", "शैक्षणिक प्रावीण्य"), value: "95.6%" },
-          { icon: "sports", iconImage: P + "edu-stat-1.png", title: b("Sports Achievement", "क्रीडा कामगिरी"), value: "State Level Runner" },
-          { icon: "users", iconImage: P + "edu-stat-2.png", title: b("Cultural Participation", "सांस्कृतिक सहभाग"), value: "Active Participants" },
-          { icon: "target", iconImage: P + "edu-stat-3.png", title: b("Future Goal", "भविष्यातील ध्येय"), value: "IAS Officer" },
+          { icon: "sports", iconImage: P + "edu-stat-1.png", title: b("Sports Achievement", "क्रीडा कामगिरी"), value: b("State Level Runner", "राज्यस्तरीय धावपटू") },
+          { icon: "users", iconImage: P + "edu-stat-2.png", title: b("Cultural Participation", "सांस्कृतिक सहभाग"), value: b("Active Participants", "सक्रिय सहभागी") },
+          { icon: "target", iconImage: P + "edu-stat-3.png", title: b("Future Goal", "भविष्यातील ध्येय"), value: b("IAS Officer", "आयएएस अधिकारी") },
         ],
         guardianConsent: { confirmed: true, confirmedBy: "Design placeholder", confirmedAt: "2024-01-01T00:00:00.000Z" },
       },
