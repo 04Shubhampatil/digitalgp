@@ -811,7 +811,7 @@ export async function MarketPricesSection({ slug, locale, data }: SectionProps) 
       stale: !d.designSample && (valid ? new Date().getTime() - valid.getTime() > STALE_DAYS * 86_400_000 : true),
       rows: list<PriceRow>(raw).map((r) => ({
         commodity: tx(r.commodity, locale),
-        unit: r.unit ?? "",
+        unit: locale === "mr" ? (r.unit === "Quintal" ? "क्विंटल" : (r.unit ?? "")) : (r.unit ?? ""),
         min: `${sym}${inr(r.minPrice ?? 0)}`,
         max: `${sym}${inr(r.maxPrice ?? 0)}`,
         modal: `${sym}${inr(r.modalPrice ?? 0)}`,
@@ -951,7 +951,7 @@ export async function WeatherUpdateSection({ slug, locale, data }: SectionProps)
 /** `green-scoreboard`: dark green panel with the headline environmental figures (Figma: 40px icons, 32px values). */
 export async function GreenScoreboardSection({ locale, data }: SectionProps) {
   const t = await getTranslations("public.cms");
-  const items = list<{ icon?: string; iconImage?: string; title?: B; value?: string; description?: B; visible?: boolean }>((data as { items?: unknown }).items).filter((i) => i.visible !== false);
+  const items = list<{ icon?: string; iconImage?: string; title?: B; value?: B | string; description?: B; visible?: boolean }>((data as { items?: unknown }).items).filter((i) => i.visible !== false);
   if (items.length === 0) return null;
   return (
     <section className="bg-cream py-8">
@@ -968,7 +968,7 @@ export async function GreenScoreboardSection({ locale, data }: SectionProps) {
                 ) : (
                   <Icon name={s.icon} className="size-10" />
                 )}
-                <p className="mt-3 text-[32px] leading-10 font-bold">{s.value}</p>
+                <p className="mt-3 text-[32px] leading-10 font-bold">{typeof s.value === "string" ? s.value : tx(s.value, locale)}</p>
                 <p className="mt-1 text-[16px] leading-6 font-semibold">{tx(s.title, locale)}</p>
                 {tx(s.description, locale) && <p className="mt-1 text-[14px] opacity-90">{tx(s.description, locale)}</p>}
               </li>

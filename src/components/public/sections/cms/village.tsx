@@ -1151,7 +1151,7 @@ export async function StudentSpotlightSection({
     /** Placeholder only: the Figma pictogram shown instead of `icon`. */
     iconImage?: string;
     title?: B;
-    value?: string;
+    value?: B | string;
     colour?: string;
   }>(d.achievementCards);
   const [klass, ...school] = tx(d.classAndSchool, locale)
@@ -1245,7 +1245,7 @@ export async function StudentSpotlightSection({
                       {tx(c.title, locale)}
                     </span>
                     <span className="mt-5 block text-[15.2px] font-semibold text-black">
-                      {c.value}
+                      {typeof c.value === "string" ? c.value : tx(c.value, locale)}
                     </span>
                   </span>
                 </li>
