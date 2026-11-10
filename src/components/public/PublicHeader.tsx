@@ -44,7 +44,7 @@ export async function PublicHeader({ tenant }: { tenant: PublicTenantDto }) {
             {contact.phone && (
               <>
                 {divider}
-                <a href={`tel:${contact.phone}`} className="hidden text-[12px] font-medium hover:underline md:block">
+                <a href={`tel:${contact.phone}`} className="hidden text-[12px] font-medium whitespace-nowrap hover:underline md:block">
                   {contact.phone}
                 </a>
               </>

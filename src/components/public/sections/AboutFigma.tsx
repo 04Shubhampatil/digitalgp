@@ -213,7 +213,7 @@ export async function AboutHistorySection({ locale, data }: SectionProps) {
   return (
     <section className="bg-cream pt-[100px] pb-[66px] max-lg:py-10">
       <div className="mx-auto grid max-w-[1440px] gap-8 px-4 sm:px-8 lg:grid-cols-[540px_650px] lg:justify-between lg:px-[62px] lg:pr-[62px]">
-        <div className="lg:pt-0.5">
+        <div className="min-w-0 lg:pt-0.5">
           <p className="text-[22px] leading-[30px] font-semibold text-[#135130] uppercase">{pickText(d.eyebrow, locale)}</p>
           <h2 className="mt-[41px] max-w-[536px] text-[30px] leading-[50px] font-bold text-black lg:text-[35px]">{pickText(d.heading, locale)}</h2>
           <p className="mt-[41px] text-[15px] leading-[25px] whitespace-pre-line text-[#414141]">{pickText(d.body, locale)}</p>

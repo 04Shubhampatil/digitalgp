@@ -831,7 +831,7 @@ export async function MarketPricesSection({ slug, locale, data }: SectionProps) 
   const initial = (named && named.rows.length ? named : all[0]!).key;
   const external = !!d.buttonLink && /^https?:\/\//.test(d.buttonLink);
   return (
-    <div className="flex flex-col rounded-[10px] border border-black/10 bg-white p-5 shadow-[0_0_10px_rgba(0,0,0,0.05)]">
+    <div className="flex min-w-0 flex-col rounded-[10px] border border-black/10 bg-white p-5 shadow-[0_0_10px_rgba(0,0,0,0.05)]">
       <div className="flex items-center gap-3">
         <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#e7f3e8] text-[#135130]">
           <Store aria-hidden className="size-6" />
@@ -898,7 +898,7 @@ export async function WeatherUpdateSection({ slug, locale, data }: SectionProps)
   const loc = locale === "mr" ? "mr-IN" : "en-IN";
   return (
     // The row wrapper carries only the first section's id, so this card carries its own anchor.
-    <div id="weather-update" className="flex scroll-mt-[180px] flex-col rounded-[10px] border border-black/10 bg-white p-5 shadow-[0_0_10px_rgba(0,0,0,0.05)]">
+    <div id="weather-update" className="flex min-w-0 scroll-mt-[180px] flex-col rounded-[10px] border border-black/10 bg-white p-5 shadow-[0_0_10px_rgba(0,0,0,0.05)]">
       <div className="flex items-center gap-3">
         <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#e7f3e8] text-[#135130]">
           <TreePine aria-hidden className="size-6" />

@@ -83,7 +83,7 @@ export function PublicNavMenu({
   return (
     <>
       {/* Figma navbar (375:13489): each item is a 135px slot, 14px semibold #414141, no chevrons. */}
-      <nav ref={navRef} aria-label="Primary" className="hidden items-start lg:flex">
+      <nav ref={navRef} aria-label="Primary" className="hidden items-start xl:flex">
         {groups.map((g, i) =>
           g.label === null ? (
             g.links.map((l) => (
@@ -144,7 +144,7 @@ export function PublicNavMenu({
 
       <button
         type="button"
-        className="rounded p-2 text-ink hover:bg-surface-soft lg:hidden"
+        className="rounded p-2 text-ink hover:bg-surface-soft xl:hidden"
         aria-expanded={open}
         aria-controls="public-mobile-nav"
         aria-label={menuLabel}
@@ -154,7 +154,7 @@ export function PublicNavMenu({
       </button>
 
       {open && (
-        <nav id="public-mobile-nav" aria-label="Primary" className="absolute inset-x-0 top-full border-b border-line bg-surface p-4 shadow-lg lg:hidden">
+        <nav id="public-mobile-nav" aria-label="Primary" className="absolute inset-x-0 top-full border-b border-line bg-surface p-4 shadow-lg xl:hidden">
           {search && (
             <form action={search.action} method="get" role="search" className="mb-4 flex items-center rounded-full border border-[#135130]/40 pr-1 pl-4">
               <input type="search" name="q" placeholder={search.placeholder} aria-label={search.label} className="h-10 min-w-0 flex-1 bg-transparent text-sm outline-none" />
