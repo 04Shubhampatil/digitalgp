@@ -11,7 +11,7 @@ Status column: **done** = rebuilt to match; **partial** = layout follows the fra
 | GP website management | 375:21076, 375:21231 | done: metrics, filter card, GP and status table with Block Admin column (`blockAdmins` on GET /tenants), pagination, Export (GET /tenants/export with the district / taluka, status and search filters; hidden for "Not created", which has no website rows) |
 | Create GP website (confirm dialog) | 375:21430 | done: GP, District and Taluka read-only boxes, template note |
 | District and taluka management | 375:21620 | done (overview for the super admin) |
-| Add new taluka (modal) | 375:22361 | todo: existing dialog works, layout not restyled |
+| Add new taluka (modal) | 375:22361 | done: icon header, inset divider, 590px card, note and full-width Cancel / Save follow the frame; no District select (the parent is chosen on the page), Active status or office address because the backend unit has no such fields |
 | Block admin management | 375:21730 | done (Active vs Pending Invite is derived from last login; GP Access counts websites under the assigned unit) |
 | Create block admin | 375:21832 | done: two columns with steps and security note |
 | Assign district, taluka and GP access | 375:21903 | done: area (district, taluka / block) and the websites it covers, Save & Continue. Access is granted per area, so the website list is read-only (the backend has no per-website assignment). The assignment manager stays on the profile for other roles |
