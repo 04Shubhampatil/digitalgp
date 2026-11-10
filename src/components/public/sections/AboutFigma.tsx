@@ -212,7 +212,7 @@ export async function AboutHistorySection({ locale, data }: SectionProps) {
   const mapHref = d.mapUrl || (address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}` : "");
   return (
     <section className="bg-cream pt-[100px] pb-[66px] max-lg:py-10">
-      <div className="mx-auto grid max-w-[1440px] gap-8 px-4 sm:px-8 lg:grid-cols-[540px_650px] lg:justify-between lg:px-[62px] lg:pr-[62px]">
+      <div className="mx-auto grid max-w-[1440px] gap-8 px-4 sm:px-8 lg:grid-cols-[minmax(0,540px)_minmax(0,650px)] lg:justify-between lg:px-[62px] lg:pr-[62px]">
         <div className="min-w-0 lg:pt-0.5">
           <p className="text-[22px] leading-[30px] font-semibold text-[#135130] uppercase">{pickText(d.eyebrow, locale)}</p>
           <h2 className="mt-[41px] max-w-[536px] text-[30px] leading-[50px] font-bold text-black lg:text-[35px]">{pickText(d.heading, locale)}</h2>
@@ -275,7 +275,7 @@ export function AboutStructureSection({ locale, data }: SectionProps) {
   return (
     // Figma 375:13650: 746×534 structure card (four 306×176 cards, 24px / 17px apart) and the 535px office card, 35px apart.
     <section className="bg-cream py-8">
-      <div className="mx-auto grid max-w-[1440px] gap-6 px-4 sm:px-8 lg:grid-cols-[746px_minmax(0,1fr)] lg:gap-[35px] lg:px-[62px]">
+      <div className="mx-auto grid max-w-[1440px] gap-6 px-4 sm:px-8 xl:grid-cols-[746px_minmax(0,1fr)] xl:gap-[35px] lg:px-[62px]">
         <div className="rounded-[11.5px] bg-white p-7 shadow-[0_0_23px_rgba(0,0,0,0.25)] lg:min-h-[534px] lg:px-[29px] lg:pt-[13px] lg:pb-8">
           <p className="text-[18px] leading-[25px] font-semibold text-[#135130] uppercase">{pickText(d.eyebrow, locale)}</p>
           <h2 className="mt-0.5 text-[34px] leading-[58px] font-bold text-black">{pickText(d.heading, locale)}</h2>

@@ -379,7 +379,7 @@ export async function DeadlinesDownloadsSection({ slug, locale, data }: SectionP
     live.length > 0 ? live.slice(0, 5).map((f) => ({ name: { en: f.name, mr: f.name }, type: f.type, size: f.size, fileId: f.fileId })) : (d.files ?? []).slice(0, 5);
   return (
     <section className="bg-cream pt-5 pb-8 lg:pt-[29px] lg:pb-[46px]">
-      <div className="mx-auto grid max-w-[1440px] grid-cols-[minmax(0,1fr)] gap-5 px-4 sm:px-8 lg:grid-cols-[minmax(0,835px)_minmax(0,1fr)] lg:px-[61px]">
+      <div className="mx-auto grid max-w-[1440px] grid-cols-[minmax(0,1fr)] gap-5 px-4 sm:px-8 xl:grid-cols-[minmax(0,835px)_minmax(0,1fr)] lg:px-[61px]">
         <div className="min-w-0 rounded-[10px] border border-[#414141]/20 bg-white px-[19px] pt-[28px] pb-8">
           <div className="flex h-10 items-center justify-between gap-3 lg:pl-[6px]">
             <h2 className="flex items-center gap-[11px] text-[20px] leading-6 font-semibold text-black">

@@ -16,7 +16,7 @@ export function QuickStatsSection({ locale, data, pageKey }: SectionProps) {
   if ((data as QuickStatsData).variant === "compact") {
     return (
       <section className="relative z-10 mx-auto -mt-10 max-w-[1440px] px-4 sm:px-8 lg:-mt-[69px] lg:px-[62px]">
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-6 rounded-[16px] bg-white px-6 py-6 shadow-[0_0_16px_rgba(0,0,0,0.25)] sm:grid-cols-4 lg:flex lg:h-[138px] lg:items-center lg:justify-between lg:gap-2 lg:py-0 lg:pr-3 lg:pl-6">
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-6 rounded-[16px] bg-white px-6 py-6 shadow-[0_0_16px_rgba(0,0,0,0.25)] sm:grid-cols-4 xl:flex xl:h-[138px] xl:items-center xl:justify-between xl:gap-2 xl:py-0 xl:pr-3 xl:pl-6">
           {items.map(({ item, i }) => {
             const unit = pickText(item.unit, locale);
             const label = pickText(item.label, locale);
@@ -42,7 +42,7 @@ export function QuickStatsSection({ locale, data, pageKey }: SectionProps) {
     // Home (375:12978): the 138px card overlaps the hero by 69px and the next section starts at the hero's bottom edge,
     // so its cream band runs behind the card's lower half (no white strip).
     <section className={`relative z-10 mx-auto -mt-10 max-w-[1440px] px-4 sm:px-8 lg:-mt-[69px] lg:px-[62px] ${pageKey === "home" ? "lg:-mb-[69px]" : ""}`}>
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-6 rounded-[16px] bg-white px-6 py-6 shadow-[0_0_16px_rgba(0,0,0,0.25)] sm:grid-cols-4 lg:flex lg:justify-around lg:gap-4 lg:px-8 lg:pt-[11px] lg:pb-[22px]">
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-6 rounded-[16px] bg-white px-6 py-6 shadow-[0_0_16px_rgba(0,0,0,0.25)] sm:grid-cols-4 xl:flex xl:justify-around xl:gap-4 xl:px-8 xl:pt-[11px] xl:pb-[22px]">
         {items.map(({ item, i }) => {
           const unit = pickText(item.unit, locale);
           return (
