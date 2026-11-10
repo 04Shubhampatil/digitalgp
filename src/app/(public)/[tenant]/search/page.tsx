@@ -12,7 +12,10 @@ import { detailHref } from "@/lib/href";
 import { loadTenant } from "@/lib/public-tenant";
 import { cn } from "@/lib/cn";
 
-export const metadata: Metadata = { title: "Search" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("common");
+  return { title: t("search") };
+}
 
 type Kind = "page" | "announcement" | "scheme" | "project" | "story";
 const KINDS: Kind[] = ["page", "announcement", "scheme", "project", "story"];

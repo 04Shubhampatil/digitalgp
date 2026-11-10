@@ -107,7 +107,7 @@ export function AboutHeroSection({ slug, locale, data, tenantName }: SectionProp
                 )}
               </h1>
             </div>
-            <p className="text-[15px] leading-[25px] text-[#414141]" style={d.bodyGap != null ? { marginTop: d.bodyGap - 40 } : undefined}>
+            <p className="text-[15px] leading-[25px] text-pretty text-[#414141]" style={d.bodyGap != null ? { marginTop: d.bodyGap - 40 } : undefined}>
               {pickText(d.body, locale)}
             </p>
             <div className="flex flex-wrap items-center gap-2">
