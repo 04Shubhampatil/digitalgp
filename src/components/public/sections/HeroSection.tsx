@@ -41,7 +41,7 @@ export async function HeroSection({ slug, locale, data, tenantName }: SectionPro
       <div className="mx-auto grid max-w-[1440px] items-center gap-8 px-4 sm:px-8 lg:grid-cols-[444px_minmax(0,1fr)] lg:gap-0 lg:px-[62px]">
         <div className="flex flex-col gap-10 py-12 lg:py-0">
           <div className="flex flex-col gap-8">
-            {eyebrow && <p className="text-[22px] leading-normal font-medium whitespace-nowrap text-black">{eyebrow}</p>}
+            {eyebrow && <p className="text-[18px] leading-normal font-medium sm:text-[22px] sm:whitespace-nowrap text-black">{eyebrow}</p>}
             <h1 className="max-w-[444px] text-[30px] leading-[45px] font-semibold text-black">{title}</h1>
             {subtitle && <p className="max-w-[444px] text-[15px] leading-[25px] text-[#414141]">{subtitle}</p>}
           </div>

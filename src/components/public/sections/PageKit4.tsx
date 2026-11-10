@@ -290,9 +290,9 @@ export async function AnnounceFeedSection({ slug, locale, data }: SectionProps) 
   });
   return (
     <section className="bg-cream pt-8 lg:pt-[82px]">
-      <div className="mx-auto grid max-w-[1440px] gap-5 px-4 sm:px-8 lg:grid-cols-[minmax(0,1fr)_431px] lg:gap-6 lg:px-[61px]">
+      <div className="mx-auto grid max-w-[1440px] grid-cols-[minmax(0,1fr)] gap-5 px-4 sm:px-8 lg:grid-cols-[minmax(0,1fr)_431px] lg:gap-6 lg:px-[61px]">
         {/* Category tiles link to #live-announcements; this list is the page's live list while no CMS section is published. */}
-        <div id="live-announcements" className="flex scroll-mt-[180px] flex-col rounded-[10px] border border-[#414141]/20 bg-white px-[18px] pt-[17px] pb-[21px] lg:min-h-[616px]">
+        <div id="live-announcements" className="flex min-w-0 scroll-mt-[180px] flex-col rounded-[10px] border border-[#414141]/20 bg-white px-[18px] pt-[17px] pb-[21px] lg:min-h-[616px]">
           <div className="flex h-[49px] items-center justify-between">
             <h2 className="flex items-center gap-[13px] text-[20px] leading-6 font-semibold text-black">
               {/* eslint-disable-next-line @next/next/no-img-element -- static design asset */}
@@ -379,8 +379,8 @@ export async function DeadlinesDownloadsSection({ slug, locale, data }: SectionP
     live.length > 0 ? live.slice(0, 5).map((f) => ({ name: { en: f.name, mr: f.name }, type: f.type, size: f.size, fileId: f.fileId })) : (d.files ?? []).slice(0, 5);
   return (
     <section className="bg-cream pt-5 pb-8 lg:pt-[29px] lg:pb-[46px]">
-      <div className="mx-auto grid max-w-[1440px] gap-5 px-4 sm:px-8 lg:grid-cols-[minmax(0,835px)_minmax(0,1fr)] lg:px-[61px]">
-        <div className="rounded-[10px] border border-[#414141]/20 bg-white px-[19px] pt-[28px] pb-8">
+      <div className="mx-auto grid max-w-[1440px] grid-cols-[minmax(0,1fr)] gap-5 px-4 sm:px-8 lg:grid-cols-[minmax(0,835px)_minmax(0,1fr)] lg:px-[61px]">
+        <div className="min-w-0 rounded-[10px] border border-[#414141]/20 bg-white px-[19px] pt-[28px] pb-8">
           <div className="flex h-10 items-center justify-between gap-3 lg:pl-[6px]">
             <h2 className="flex items-center gap-[11px] text-[20px] leading-6 font-semibold text-black">
               {/* eslint-disable-next-line @next/next/no-img-element -- static design asset */}

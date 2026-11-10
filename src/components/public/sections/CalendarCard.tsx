@@ -82,7 +82,7 @@ export function CalendarCard({
     const rows = Math.ceil((first + days) / 7);
     const cells = Array.from({ length: rows * 7 }, (_, i) => i - first + 1);
     return (
-      <div id={figma.id} className="flex scroll-mt-[180px] flex-col rounded-[10px] border border-[#414141]/20 bg-white px-[18px] pt-[22px] pb-[30px]">
+      <div id={figma.id} className="flex min-w-0 scroll-mt-[180px] flex-col rounded-[10px] border border-[#414141]/20 bg-white px-[18px] pt-[22px] pb-[30px]">
         <h2 className="flex items-center gap-[11px] text-[20px] leading-6 font-semibold text-black">
           {figma.iconUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- static design asset

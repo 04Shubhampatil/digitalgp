@@ -88,7 +88,7 @@ export async function WeatherSection({ slug, locale, data }: SectionProps) {
   if (!d.temperature) return null;
   const stat = (label: string, value?: string) =>
     value ? (
-      <p className="text-[12px] leading-4 whitespace-nowrap text-white">
+      <p className="text-[12px] leading-4 sm:whitespace-nowrap text-white">
         {label}: <strong className="font-bold">{value}</strong>
       </p>
     ) : null;
@@ -96,7 +96,7 @@ export async function WeatherSection({ slug, locale, data }: SectionProps) {
     // Figma 375:13077: 650×263; title row at 35px, 64px temperature centred at 96px, details column at 223px,
     // a 591px rule at 182px and the sunrise / sunset / date row 16px below it.
     <div
-      className="flex h-full min-h-[263px] flex-col rounded-[10px] px-[29px] pt-[35px] pb-5 text-white"
+      className="flex h-full min-h-[263px] min-w-0 flex-col rounded-[10px] px-[29px] pt-[35px] pb-5 text-white"
       style={{ backgroundImage: "linear-gradient(-62.82deg, #0950aa 38%, #002f6b 98.15%)" }}
     >
       <div className="flex items-start justify-between gap-4 pl-8 text-[12px] leading-4 sm:-mr-3">
@@ -112,7 +112,7 @@ export async function WeatherSection({ slug, locale, data }: SectionProps) {
         </p>
         <div className="pt-5">
           <p className="text-[14px] leading-[19px] font-bold text-[#ffc769]">{pickText(d.condition, locale)}</p>
-          <div className="mt-[15px] grid grid-cols-[225px_auto] gap-y-[11px]">
+          <div className="mt-[15px] grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 sm:grid-cols-[225px_auto] gap-y-[11px]">
             {stat(tw("feelsLike"), d.feelsLike)}
             {stat(tw("humidity"), d.humidity)}
             {stat(tw("wind"), mrWeather(d.wind, locale))}
@@ -147,7 +147,7 @@ export function SarpanchMessageSection({ slug, locale, data }: SectionProps) {
   const initials = name.replace(/^(Smt\.?|Shri\.?|Mr\.?|Mrs\.?)\s*/i, "").split(/\s+/).slice(0, 2).map((p) => p.charAt(0)).join("").toUpperCase();
   return (
         // Figma 375:13092: 5px orange bar, 10% orange tint, heading at 18px, 50px avatar at 57px, quote at 121px.
-    <figure className="flex h-full min-h-[263px] flex-col rounded-[10px] border-l-[5px] border-[#ff9933] bg-[#ff9933]/10 pt-[18px] pr-6 pb-4 pl-[46px] shadow-[0_0_8.6px_rgba(255,153,51,0.45)]">
+    <figure className="flex h-full min-h-[263px] min-w-0 flex-col rounded-[10px] border-l-[5px] border-[#ff9933] bg-[#ff9933]/10 pt-[18px] pr-6 pb-4 pl-[46px] shadow-[0_0_8.6px_rgba(255,153,51,0.45)]">
       {pickText(d.heading, locale) && <h2 className="mb-5 text-[14px] leading-[19px] font-bold text-[#000080]">{pickText(d.heading, locale)}</h2>}
       {d.photoId ? (
         // eslint-disable-next-line @next/next/no-img-element -- backend-served media

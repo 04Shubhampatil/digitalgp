@@ -27,7 +27,7 @@ const Eyebrow = ({ children, green }: { children: React.ReactNode; green?: boole
 const ghostBtn = "inline-flex items-center gap-2 rounded-full border-[0.6px] border-[#135130] px-4 py-2 text-[13.5px] text-[#135130] hover:bg-[#135130]/5";
 
 /** Card chrome used by tracker/impact/timeline/finance blocks that sit side by side. */
-const card = "rounded-[10px] border border-black/15 bg-white px-8 py-6";
+const card = "min-w-0 rounded-[10px] border border-black/15 bg-white px-8 py-6";
 
 /** `project-showcase`: stage tabs + cards. Real published projects replace the placeholders. */
 export async function ProjectShowcaseSection({ slug, locale, data }: SectionProps) {
@@ -314,7 +314,7 @@ export function FinancialOverviewSection({ slug, locale, data }: SectionProps) {
   return (
     <div className={card}>
       <h2 className="text-[22px] leading-[27px] font-semibold text-black uppercase">{pickText(d.title, locale)}</h2>
-      <div className="mt-4 grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div>
           <p className="text-[12px] text-[#414141]">{pickText(d.budgetLabel, locale)}</p>
           <ul className="mt-3 flex flex-col gap-2">
@@ -342,8 +342,8 @@ export function FinancialOverviewSection({ slug, locale, data }: SectionProps) {
                 {sources.map((s, i) => (
                   <li key={i} className="flex items-center gap-2">
                     <span aria-hidden className="size-3 rounded-full" style={{ backgroundColor: SOURCE_COLORS[i % SOURCE_COLORS.length] }} />
-                    <span className="flex-1 text-black">{pickText(s.label, locale)}</span>
-                    <span className="text-[#414141]">{s.amount}</span>
+                    <span className="min-w-0 flex-1 text-black">{pickText(s.label, locale)}</span>
+                    <span className="shrink-0 text-[#414141]">{s.amount}</span>
                   </li>
                 ))}
               </ul>
