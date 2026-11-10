@@ -76,7 +76,7 @@ export function AboutHeroSection({ slug, locale, data, tenantName }: SectionProp
         <div className="relative mx-auto h-full max-w-[1440px] px-4 sm:px-8 lg:px-[62px]">
           <div className="relative z-[1] flex max-w-[491px] flex-col justify-center gap-10 py-12 lg:h-[var(--ht)] lg:py-0">
             <div className="flex flex-col gap-8">
-              <p className={`text-[22px] font-semibold whitespace-nowrap text-[#ea7f14] ${d.eyebrowAsTyped ? "" : "uppercase"}`}>{pickText(d.eyebrow, locale)}</p>
+              <p className={`text-[17px] font-semibold text-[#ea7f14] sm:text-[22px] sm:whitespace-nowrap ${d.eyebrowAsTyped ? "" : "uppercase"}`}>{pickText(d.eyebrow, locale)}</p>
               <h1 className={`text-[36px] leading-[50px] font-bold text-black lg:w-[547px] ${d.titleLarge ? "lg:text-[45px]" : "lg:text-[40px]"}`}>
                 {parts.length > 0 ? (
                   parts.map((p, i) => (

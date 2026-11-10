@@ -76,3 +76,32 @@
     outline-offset: 2px;
   }
 }
+
+/* Public website: responsive safety nets. */
+.public-site {
+  /* Never allow sideways page scroll; `clip` (unlike `hidden`) keeps position: sticky working. */
+  overflow-x: clip;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Figma uses 8-10.5px labels in dense cards; on phones they are unreadable, so floor them at 11px. */
+@media (max-width: 639px) {
+  .public-site [class*="text-[8px]"],
+  .public-site [class*="text-[8.5px]"],
+  .public-site [class*="text-[9px]"],
+  .public-site [class*="text-[9.3px]"],
+  .public-site [class*="text-[9.5px]"],
+  .public-site [class*="text-[10px]"],
+  .public-site [class*="text-[10.5px]"] {
+    font-size: 11px !important;
+  }
+}
+
+/* Touch screens: give icon-only controls a comfortable hit area without changing their look. */
+@media (pointer: coarse) {
+  .public-site button:not([class*="min-h"]):not([class*="h-"]):not([class*="size-"]) {
+    min-height: 32px;
+    min-width: 32px;
+  }
+}

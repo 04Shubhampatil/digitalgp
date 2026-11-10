@@ -257,13 +257,13 @@ export async function AnnounceFeedSection({ slug, locale, data }: SectionProps) 
     const body = (
       <>
         {/* eslint-disable-next-line @next/next/no-img-element -- static design asset */}
-        <img src={ROW_PICTURES[i % ROW_PICTURES.length]} alt="" width={64} height={64} className="size-16 shrink-0" />
+        <img src={ROW_PICTURES[i % ROW_PICTURES.length]} alt="" width={64} height={64} className="size-12 shrink-0 sm:size-16" />
         <span className="min-w-0 flex-1">
-          <span className="flex items-start gap-x-4">
-            <span className="block min-w-0 flex-1 truncate text-[18px] leading-6 font-semibold text-black" title={r.title}>
+          <span className="flex flex-col gap-y-1 sm:flex-row sm:items-start sm:gap-x-4">
+            <span className="line-clamp-2 min-w-0 flex-1 text-[16px] leading-6 font-semibold text-black sm:line-clamp-none sm:block sm:truncate sm:text-[18px]" title={r.title}>
               {r.title}
             </span>
-            <span className="flex w-[148px] shrink-0 items-center justify-between gap-2 text-[14px] leading-6 font-medium whitespace-nowrap text-[#414141]">
+            <span className="flex shrink-0 items-center gap-2 sm:w-[148px] sm:justify-between text-[14px] leading-6 font-medium whitespace-nowrap text-[#414141]">
               {r.date}
               {r.isNew && <span className="inline-flex h-6 w-[46px] items-center justify-center rounded-[2px] bg-[#ff0000] text-[14px] font-medium text-white">{pickText(d.newLabel, locale) || t("newBadge")}</span>}
             </span>
@@ -638,10 +638,10 @@ export function RtsGridSection({ slug, locale, data }: SectionProps) {
                       <Icon className="size-8" strokeWidth={2.2} />
                     </span>
                   )}
-                  <span className="mt-4 text-[16px] leading-6 font-bold whitespace-nowrap text-black">
+                  <span className="mt-4 text-center text-[16px] leading-6 font-bold text-black sm:whitespace-nowrap">
                     {pickText(it.label, locale)}
                   </span>
-                  <span className="mt-[7px] text-[13px] leading-5 whitespace-nowrap text-[#333]">
+                  <span className="mt-[7px] text-center text-[13px] leading-5 text-[#333] sm:whitespace-nowrap">
                     {pickText(it.caption, locale)}
                   </span>
                 </Link>
