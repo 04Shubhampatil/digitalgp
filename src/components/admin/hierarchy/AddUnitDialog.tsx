@@ -71,17 +71,21 @@ export function AddUnitDialog({ parent }: { parent: AdminUnitDto | null }) {
       <Dialog
         open={open}
         onClose={close}
-        title={t("hierarchy.addUnit")}
+        title={t("hierarchy.addLevel", { level: t(`level.${levels[0]}`) })}
+        size="figma"
+        icon={<Plus className="size-5" aria-hidden />}
         description={parent ? `${t("hierarchy.parent")}: ${parent.nameEn}` : undefined}
         closeLabel={tc("close")}
         footer={
           <>
-            <Button variant="secondary" onClick={close}>
+            <div className="grid w-full grid-cols-2 gap-4">
+            <Button variant="secondary" size="lg" className="h-[46px] w-full text-[13px] text-ink-strong" onClick={close}>
               {tc("cancel")}
             </Button>
-            <Button type="submit" form="add-unit-form" loading={isSubmitting}>
+            <Button type="submit" form="add-unit-form" size="lg" className="h-[46px] w-full text-[13px]" loading={isSubmitting}>
               {tc("save")}
             </Button>
+            </div>
           </>
         }
       >
@@ -98,6 +102,9 @@ export function AddUnitDialog({ parent }: { parent: AdminUnitDto | null }) {
           <div className="sm:col-span-2">
             <Input label={t("hierarchy.slug")} hint={t("hierarchy.slugHint")} error={errors.slug?.message} {...register("slug")} />
           </div>
+          {levels[0] !== "GRAM_PANCHAYAT" && (
+            <p className="rounded-[8px] bg-[#f4faf6] px-4 py-[18px] text-center text-[12px] font-medium text-[#034f3c] sm:col-span-2">{t("hierarchy.gpNote")}</p>
+          )}
           {formError && (
             <p role="alert" className="rounded-input bg-danger-soft px-4 py-3 text-sm text-danger sm:col-span-2">
               {formError}

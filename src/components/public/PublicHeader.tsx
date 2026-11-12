@@ -32,9 +32,9 @@ export async function PublicHeader({ tenant }: { tenant: PublicTenantDto }) {
   const divider = <span aria-hidden className="hidden h-[39px] w-px bg-white/60 md:block" />;
 
   return (
-    <header className="sticky top-0 z-30">
+    <header className="sticky -top-11 z-30 md:-top-[70px] xl:top-0">
       <div className="bg-primary-alt text-white">
-        <div className="mx-auto flex h-[70px] max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-8 lg:px-[81px]">
+        <div className="mx-auto flex h-11 max-w-[1440px] items-center md:h-[70px] justify-between gap-4 px-4 sm:px-8 lg:px-[81px]">
           <div className="flex items-center gap-4">
             <Emblem size={32} framed />
             <span className="text-[12px] font-semibold uppercase">{t("common.govt")}</span>
@@ -78,10 +78,10 @@ export async function PublicHeader({ tenant }: { tenant: PublicTenantDto }) {
         <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-6 px-4 py-1 sm:px-8 lg:px-[52px]">
           <Link href={`/${tenant.slug}`} className="flex items-center">
             <Emblem size={105} framed className="hidden lg:block" />
-            <Emblem size={64} framed className="lg:hidden" />
+            <Emblem size={52} framed className="lg:hidden" />
             <span className="flex flex-col gap-1 p-2">
               <span className="text-[16px] leading-normal text-black">{t("common.gramPanchayat")}</span>
-              <span className="text-[28px] leading-normal font-medium text-primary-alt lg:text-[32px]">{name}</span>
+              <span className="text-[24px] leading-normal font-medium text-primary-alt sm:text-[28px] lg:text-[32px]">{name}</span>
               {taglineText && <span className="text-[12px] leading-normal text-black">{taglineText}</span>}
             </span>
           </Link>

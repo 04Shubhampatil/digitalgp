@@ -4,7 +4,10 @@ import Link from "next/link";
 import { PUBLIC_NAV, pageHref } from "@/config/public-nav";
 import { loadTenant } from "@/lib/public-tenant";
 
-export const metadata: Metadata = { title: "Sitemap" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("public");
+  return { title: t("sitemap") };
+}
 
 /** Circular rule 7: a content index of every page on the website. */
 export default async function SitemapPage({ params }: { params: Promise<{ tenant: string }> }) {

@@ -48,8 +48,8 @@ export async function PublicFooter({ tenant }: { tenant: PublicTenantDto }) {
       {/* Figma "image 127": tricolour wash with the faded Ashoka chakra top-right (60% opacity). */}
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[257px] bg-[url('/images/figma/pages/footer-bg.png')] bg-[length:1440px_auto] bg-top bg-no-repeat opacity-60 xl:bg-[length:100%_auto]" />
       <div className="relative mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[46px]">
-        <div className="grid gap-10 py-8 lg:grid-cols-[456px_401px_minmax(0,1fr)] lg:gap-0 lg:divide-x lg:divide-black/15 lg:min-h-[308px] lg:pt-[40px] lg:pb-[28px]">
-          <div className="lg:pr-10 lg:pl-0">
+        <div className="grid gap-10 py-8 md:grid-cols-2 xl:grid-cols-[456px_401px_minmax(0,1fr)] xl:gap-0 xl:divide-x xl:divide-black/15 xl:min-h-[308px] xl:pt-[40px] xl:pb-[28px]">
+          <div className="xl:pr-10 xl:pl-0">
             <div className="flex items-center gap-4">
               <Emblem size={58} />
               <div>
@@ -62,7 +62,7 @@ export async function PublicFooter({ tenant }: { tenant: PublicTenantDto }) {
             <address className="mt-5 text-[14px] leading-[21px] not-italic whitespace-pre-line">{address}</address>
           </div>
 
-          <div className="lg:pr-6 lg:pl-9">
+          <div className="xl:pr-6 xl:pl-9">
             <h2 className="text-[14px] font-bold tracking-wide text-[#135130] uppercase">{t("public.contactUs")}</h2>
             <ul className="mt-3 space-y-[11px] text-[14px] leading-[21px]">
               <li className="flex items-start gap-3 mb-[14px]">
@@ -102,9 +102,9 @@ export async function PublicFooter({ tenant }: { tenant: PublicTenantDto }) {
             </div>
           </div>
 
-          <nav aria-label={t("public.quickLinks")} className="lg:pl-11">
+          <nav aria-label={t("public.quickLinks")} className="md:col-span-2 xl:col-span-1 xl:pl-11">
             <h2 className="text-[14px] font-bold tracking-wide text-[#135130] uppercase">{t("public.quickLinks")}</h2>
-            <ul className="mt-5 grid grid-cols-2 gap-x-6 gap-y-[13px] text-[14px] lg:grid-cols-[250px_1fr]">
+            <ul className="mt-5 grid grid-cols-2 gap-x-6 gap-y-[13px] text-[14px] xl:grid-cols-[250px_1fr]">
               {quick.map((l, i) => (
                 <li key={i}>
                   <Link href={l.href} className="inline-flex items-center gap-2 hover:underline">

@@ -80,9 +80,9 @@ export function FacilityGridSection({ locale, data }: SectionProps) {
                   </span>
                   <div className="flex w-full flex-col items-center gap-2 p-[9.2px]">
                     <p
-                      className="min-h-[62px] w-[148.6px] max-w-none text-[23px] leading-[31.3px] font-semibold whitespace-pre-line text-black"
+                      className="w-full text-[17px] leading-[23px] font-semibold whitespace-pre-line text-black xl:min-h-[62px] xl:w-[var(--lw,148.6px)] xl:max-w-none xl:text-[23px] xl:leading-[31.3px]"
                       style={
-                        it.labelWidth ? { width: it.labelWidth } : undefined
+                        it.labelWidth ? ({ "--lw": `${it.labelWidth}px` } as React.CSSProperties) : undefined
                       }
                     >
                       {pickText(it.label, locale)}

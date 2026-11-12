@@ -68,7 +68,8 @@ export default async function TenantPage({ params }: { params: Params }) {
           </div>
         </header>
       )}
-      {sections}
+      {/* Figma leaves about 29px less between the last block and the footer on these two pages. */}
+      {pageKey === "schemes" || pageKey === "announcements" ? <div className="-mb-[29px]">{sections}</div> : sections}
       {dataBlock && <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6">{dataBlock}</div>}
       {sections.length === 0 && !dataBlock && (
         <p className="mx-auto max-w-7xl px-4 py-16 text-center text-muted sm:px-6">{t("noContent")}</p>

@@ -23,7 +23,7 @@ export default async function TenantLayout({ children, params }: { children: Rea
   const { tenant: slug } = await params;
   const tenant = await loadTenant(slug);
   return (
-    <div className="flex min-h-dvh flex-col bg-surface">
+    <div className="public-site flex min-h-dvh flex-col bg-surface">
       <PublicHeader tenant={tenant} />
       <div className="flex-1">{children}</div>
       <PublicFooter tenant={tenant} />

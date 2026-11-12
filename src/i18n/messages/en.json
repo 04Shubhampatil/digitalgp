@@ -104,6 +104,7 @@
       "subtitle": "Manage Maharashtra’s administrative hierarchy and Gram Panchayat records.",
       "addUnit": "Add unit",
       "addLevel": "Add {level}",
+      "gpNote": "Gram Panchayats can be added or mapped after the unit is created.",
       "children": "{level} units",
       "unitCode": "Official code",
       "slug": "Slug",
