@@ -27,8 +27,8 @@ export function SectionHighlight() {
           frame.dataset.sectionHighlight = key;
           frame.style.cssText = `position:absolute;left:${r.left + window.scrollX + 6}px;top:${r.top + window.scrollY + 4}px;width:${r.width - 12}px;height:${r.height - 8}px;border:3px solid #ff9933;border-radius:12px;box-shadow:0 0 0 6px rgba(255,153,51,.25);pointer-events:none;z-index:25;transition:opacity .6s`;
           document.body.appendChild(frame);
-          timers.push(window.setTimeout(() => frame && (frame.style.opacity = "0"), 6000));
-          timers.push(window.setTimeout(() => frame?.remove(), 6700));
+          timers.push(window.setTimeout(() => frame && (frame.style.opacity = "0"), 9000));
+          timers.push(window.setTimeout(() => frame?.remove(), 9700));
         }, 700),
       );
     };

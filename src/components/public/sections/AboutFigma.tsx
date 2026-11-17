@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { FigmaIcon } from "@/components/ui/FigmaIcon";
 import { pickText, type Bilingual } from "@/i18n/text";
+import { publicMediaUrl } from "@/lib/api/public";
 import { resolveHref } from "@/lib/href";
 import type { SectionProps } from "./index";
 
@@ -35,6 +36,8 @@ export function AboutHeroSection({ slug, locale, data, tenantName }: SectionProp
     secondary?: Btn;
     actions?: Btn[];
     imageUrl?: string;
+    /** Uploaded hero photo (About "overview" section). */
+    imageId?: string;
     /**
      * Opt-in (Our Village, Employment, …): the cut-out picture sits at its Figma position and natural size and runs to
      * the right edge. `true` = Our Village (x=592, 848×533, 513px hero); an object gives the frame's own numbers.
@@ -54,6 +57,7 @@ export function AboutHeroSection({ slug, locale, data, tenantName }: SectionProp
     titleLines?: boolean;
   };
   const buttons = (d.actions?.length ? d.actions : [d.primary, d.secondary]).filter((b): b is Btn => !!b?.href);
+  const heroImage = d.imageId ? publicMediaUrl(slug, d.imageId) : d.imageUrl;
   const rawTitle = pickText(d.title, locale);
   // A published heading may already contain the village name: render it once, in green, where it is.
   const nameAt = tenantName && !d.titleAccent && !d.titleParts ? rawTitle.indexOf(tenantName) : -1;
@@ -130,7 +134,7 @@ export function AboutHeroSection({ slug, locale, data, tenantName }: SectionProp
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element -- static design asset */}
           <img
-            src={d.imageUrl ?? "/images/figma/about-hero.png"}
+            src={heroImage ?? "/images/figma/about-hero.png"}
             alt=""
             className="mt-2 h-auto w-full lg:absolute lg:top-0 lg:left-[var(--hx)] lg:mt-0 lg:h-[var(--hh)] lg:w-[var(--hw)] lg:max-w-none"
           />
@@ -172,7 +176,7 @@ export function AboutHeroSection({ slug, locale, data, tenantName }: SectionProp
         <div className="relative flex items-center lg:-mr-[62px]">
           {/* Natural aspect, never cropped (a published photo or the Figma torn-edge picture). */}
           {/* eslint-disable-next-line @next/next/no-img-element -- static design asset */}
-          <img src={d.imageUrl ?? "/images/figma/pages/about-hero-torn.png"} alt="" className="block h-auto max-h-[640px] w-full object-contain object-right" />
+          <img src={heroImage ?? "/images/figma/pages/about-hero-torn.png"} alt="" className="block h-auto max-h-[640px] w-full object-contain object-right" />
         </div>
       </div>
     </section>
@@ -206,10 +210,12 @@ function LabelledLines({ text }: { text: string }) {
  * `about-history` (Figma "2. About us" 375:13784 – 375:13791, 375:13718): green eyebrow, 35px heading, the history text
  * in a 540px column with the two info cards below it; the 648px photo + photo/map collage on the right (x=728).
  */
-export async function AboutHistorySection({ locale, data }: SectionProps) {
+export async function AboutHistorySection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public");
-  const d = data as { eyebrow?: B; heading?: B; body?: B; cards?: { title?: B; body?: B }[]; photos?: string[]; mapUrl?: string; address?: B };
-  const photos = d.photos ?? ["/images/figma/pages/home-about-road.png", "/images/figma/about-aerial.png", "/images/figma/about-map.png"];
+  const d = data as { eyebrow?: B; heading?: B; body?: B; cards?: { title?: B; body?: B }[]; photos?: string[]; mapUrl?: string; address?: B; mainImageId?: string; secondImageId?: string; mapImageId?: string };
+  const design = d.photos ?? ["/images/figma/pages/home-about-road.png", "/images/figma/about-aerial.png", "/images/figma/about-map.png"];
+  // Uploaded pictures (About "history" section) take the place of the design photos one by one.
+  const photos = [d.mainImageId, d.secondImageId, d.mapImageId].map((id, i) => (id ? publicMediaUrl(slug, id) : design[i]!));
   const address = pickText(d.address, locale);
   const mapHref = d.mapUrl || (address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}` : "");
   return (
@@ -237,10 +243,10 @@ export async function AboutHistorySection({ locale, data }: SectionProps) {
           </div>
           <div className="grid gap-4 sm:grid-cols-[315fr_317fr]">
             <div className="relative h-[260px] overflow-hidden rounded-[10px] bg-white lg:h-[309px]">
-              <img src={photos[1]} alt="" className="absolute top-[-44.42%] left-0 h-[181.23%] w-full max-w-none" loading="lazy" />
+              <img src={photos[1]} alt="" className={d.secondImageId ? "size-full object-cover" : "absolute top-[-44.42%] left-0 h-[181.23%] w-full max-w-none"} loading="lazy" />
             </div>
             <div className="relative h-[260px] overflow-hidden rounded-[10px] bg-[#f93] lg:h-[309px]">
-              <img src={photos[2]} alt="" className="absolute top-[-3.13%] left-[-41.87%] h-[103.13%] w-[193.13%] max-w-none object-cover" loading="lazy" />
+              <img src={photos[2]} alt="" className={d.mapImageId ? "size-full object-cover" : "absolute top-[-3.13%] left-[-41.87%] h-[103.13%] w-[193.13%] max-w-none object-cover"} loading="lazy" />
               {mapHref && (
                 <a href={mapHref} target="_blank" rel="noopener" className="absolute top-[11px] right-[15px] inline-flex h-6 w-[119px] items-center gap-[6px] rounded-full bg-[#d9d9d9] pl-[15px] text-[9.3px] leading-[17px] font-medium text-black">
                   <img src="/images/figma/pages/home-about-maps.png" alt="" width={19} height={19} className="size-[19px]" /> {t("openInMaps")}
@@ -264,11 +270,11 @@ export async function AboutHistorySection({ locale, data }: SectionProps) {
 }
 
 /** `about-structure`: panchayat structure org chart card + green office information card. */
-export function AboutStructureSection({ locale, data }: SectionProps) {
+export function AboutStructureSection({ slug, locale, data }: SectionProps) {
   const d = data as {
     eyebrow?: B;
     heading?: B;
-    members?: { role?: B; title?: B; body?: B; accent?: string }[];
+    members?: { role?: B; title?: B; body?: B; accent?: string; photoId?: string }[];
     office?: { eyebrow?: B; heading?: B; addressLabel?: B; address?: B; hoursLabel?: B; hours?: B; phoneLabel?: B; phone?: string; emailLabel?: B; email?: string };
   };
   const o = d.office ?? {};
@@ -286,7 +292,7 @@ export function AboutStructureSection({ locale, data }: SectionProps) {
               <li key={i} className="flex min-h-[176px] gap-[10px] rounded-[10px] border border-black/15 bg-white py-[13px] pr-3 pl-[11px]" style={{ borderTop: `3px solid ${m.accent ?? "#ff9933"}` }}>
                 <span className="relative block h-[146px] w-[122px] shrink-0 overflow-hidden rounded-[8px] bg-[#f4f1ea]">
                   {/* eslint-disable-next-line @next/next/no-img-element -- static design asset */}
-                  <img src="/images/figma/about-person.png" alt="" className="absolute top-0 -left-[30px] h-[145px] w-[182px] max-w-none object-cover" loading="lazy" />
+                  {m.photoId ? <img src={publicMediaUrl(slug, m.photoId)} alt="" className="size-full object-cover" loading="lazy" /> : <img src="/images/figma/about-person.png" alt="" className="absolute top-0 -left-[30px] h-[145px] w-[182px] max-w-none object-cover" loading="lazy" />}
                 </span>
                 <div>
                   <p className="pt-0.5 text-[15.2px] leading-[21px] font-bold text-[#f38c28] uppercase">{pickText(m.role, locale)}</p>
@@ -400,14 +406,14 @@ export function AboutEmergencySection({ locale, data }: SectionProps) {
 }
 
 /** `about-vision`: green band with vision, mission and core values cards over the village photo. */
-export function AboutVisionSection({ locale, data }: SectionProps) {
-  const d = data as { visionLabel?: B; vision?: B; visionBody?: B; missionLabel?: B; mission?: B; missionPoints?: B[]; valuesLabel?: B; values?: B[] };
+export function AboutVisionSection({ slug, locale, data }: SectionProps) {
+  const d = data as { imageId?: string; visionLabel?: B; vision?: B; visionBody?: B; missionLabel?: B; mission?: B; missionPoints?: B[]; valuesLabel?: B; values?: B[] };
   return (
     // Figma: the vision band sits 63px below the emergency tint.
     <section className="bg-cream py-8 lg:pt-[63px]">
       <div className="relative mx-auto max-w-[1324px] overflow-hidden rounded-[10px] bg-[#135130]">
         {/* eslint-disable-next-line @next/next/no-img-element -- static design asset */}
-        <img src="/images/figma/about-vision.png" alt="" className="absolute inset-0 size-full object-cover" loading="lazy" />
+        <img src={d.imageId ? publicMediaUrl(slug, d.imageId) : "/images/figma/about-vision.png"} alt="" className="absolute inset-0 size-full object-cover" loading="lazy" />
         <div aria-hidden className="absolute inset-0 bg-[rgba(19,81,48,0.9)]" />
         <div className="relative grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_313px_313px] lg:px-[110px] lg:py-[23px]">
           <div className="flex flex-col justify-center gap-6 py-6 lg:pr-10">

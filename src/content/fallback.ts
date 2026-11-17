@@ -205,22 +205,31 @@ function mergeAbout(fallback: FallbackSection, legacy: Map<string, Obj>): Obj {
       const o = legacy.get("overview");
       if (!o) return d;
       const actions = ((o.actions as Obj[] | undefined) ?? []).filter((a) => a.href).map((a) => ({ ...a, href: aboutHref(a.href) }));
-      return { ...d, ...filled({ eyebrow: o.eyebrow, title: o.heading, body: o.body }), ...(actions.length ? { actions } : {}) };
+      return { ...d, ...filled({ eyebrow: o.eyebrow, title: o.heading, body: o.body, imageId: o.imageId }), ...(actions.length ? { actions } : {}) };
     }
     case "about-history": {
-      const h = legacy.get("history");
-      return h?.body ? { ...d, body: h.body } : d;
+      const h = legacy.get("history") ?? {};
+      const office = legacy.get("office") ?? {};
+      // The two info cards under the text show the published office hours and contact details.
+      const designCards = (d.cards as Obj[] | undefined) ?? [];
+      const contact = [office.phone ? `Phone number: ${String(office.phone)}` : "", office.email ? `Email id: ${String(office.email)}` : ""].filter(Boolean).join("\n");
+      const cards = designCards.map((c, i) => (i === 0 && has(office.hours) ? { ...c, body: office.hours } : i === 1 && contact ? { ...c, body: { en: contact } } : c));
+      return {
+        ...d,
+        cards,
+        ...filled({ heading: h.heading, body: h.body, mainImageId: h.mainImageId, secondImageId: h.secondImageId, mapImageId: h.mapImageId, mapUrl: office.mapUrl, address: office.address }),
+      };
     }
     case "about-structure": {
       const office = legacy.get("office") ?? {};
       const membersSection = legacy.get("members") ?? {};
-      const people = ((membersSection.items as Obj[] | undefined) ?? []) as { name?: Obj; designation?: Obj }[];
+      const people = ((membersSection.items as Obj[] | undefined) ?? []) as { name?: Obj; designation?: Obj; photoId?: string }[];
       const members = ((d.members as Obj[] | undefined) ?? []).map((m) => {
         const hit = people.find((p) => labelOf(p.designation) === labelOf(m.role));
-        return hit?.name ? { ...m, title: hit.name } : m;
+        return hit?.name ? { ...m, title: hit.name, ...(hit.photoId ? { photoId: hit.photoId } : {}) } : m;
       });
       // Published members whose designation has no card in the design get a card of their own.
-      const extra = people.filter((p) => p.name && !members.some((m) => labelOf(m.role) === labelOf(p.designation))).map((p) => ({ role: p.designation, title: p.name }));
+      const extra = people.filter((p) => p.name && !members.some((m) => labelOf(m.role) === labelOf(p.designation))).map((p) => ({ role: p.designation, title: p.name, ...(p.photoId ? { photoId: p.photoId } : {}) }));
       const base = (d.office as Obj | undefined) ?? {};
       const keep = (k: string) => (office[k] ? { [k]: office[k] } : {});
       return { ...d, ...filled({ heading: membersSection.heading }), members: [...members, ...extra], office: { ...base, ...keep("address"), ...keep("hours"), ...keep("phone"), ...keep("email") } };
@@ -232,7 +241,7 @@ function mergeAbout(fallback: FallbackSection, legacy: Map<string, Obj>): Obj {
       const mission = (v.mission as Obj | undefined) ?? {};
       return {
         ...d,
-        ...filled({ vision: vision.title, visionBody: vision.body, missionLabel: mission.title, mission: mission.body, missionPoints: mission.points, valuesLabel: v.valuesTitle, values: v.values }),
+        ...filled({ vision: vision.title, visionBody: vision.body, missionLabel: mission.title, mission: mission.body, missionPoints: mission.points, valuesLabel: v.valuesTitle, values: v.values, imageId: v.imageId }),
       };
     }
     case "about-roles": {

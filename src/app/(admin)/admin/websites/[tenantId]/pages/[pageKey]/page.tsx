@@ -32,7 +32,6 @@ const HOME_BLOCKS: string[][] = [["banner"], ["quick-stats"], ["about-cards"], [
 const PUBLIC_ANCHOR: Record<string, string> = {
   overview: "about-hero",
   history: "about-history",
-  geography: "about-history",
   members: "about-structure",
   office: "about-structure",
   "vision-mission": "about-vision",
@@ -103,6 +102,8 @@ export default async function PageEditor({ params, searchParams }: { params: Pro
     if (hasBanner && section.sectionKey === "hero") return null;
     // "Our leaders" is not shown on the home page (it lives on About), so its card would change nothing here.
     if (pageKey === "home" && section.sectionKey === "leaders") return null;
+    // The About design has no block for the geography figures, so that card would change nothing on the website.
+    if (pageKey === "about" && section.sectionKey === "geography") return null;
     // The home About block is edited in the "About the village cards" card; the older "welcome" card fed the same block.
     if (pageKey === "home" && section.sectionKey === "welcome" && hasAboutCards) return null;
     return (

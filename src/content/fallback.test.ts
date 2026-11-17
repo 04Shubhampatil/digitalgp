@@ -142,3 +142,32 @@ describe("home About block: one block from the welcome section and the About car
     expect(d).toMatchObject({ subheading: { en: "Intro" }, mainImageId: "media000009" });
   });
 });
+
+describe("About page: published sections inside the design blocks", () => {
+  const out = withFallback("about", page("about", [
+    { sectionKey: "overview", data: { heading: { en: "About us" }, body: { en: "Text" }, imageId: "media000011" } },
+    { sectionKey: "history", data: { heading: { en: "Our story" }, body: { en: "Long ago" }, mainImageId: "media000012" } },
+    { sectionKey: "members", data: { items: [{ name: { en: "Asha Patil" }, designation: { en: "Sarpanch" }, photoId: "media000013" }] } },
+    { sectionKey: "office", data: { address: { en: "Main road" }, hours: { en: "10 to 5" }, phone: "9999999999", email: "gp@example.org" } },
+    { sectionKey: "vision-mission", data: { vision: { body: { en: "Vision" } }, mission: {}, imageId: "media000014" } },
+  ]));
+  const sec = (key: string) => out.sections.find((s) => s.sectionKey === key)!.data as Record<string, unknown>;
+
+  it("uses the uploaded hero, history, member and vision pictures", () => {
+    expect(sec("about-hero").imageId).toBe("media000011");
+    expect(sec("about-history")).toMatchObject({ heading: { en: "Our story" }, mainImageId: "media000012" });
+    expect((sec("about-structure").members as { photoId?: string }[])[0]!.photoId).toBe("media000013");
+    expect(sec("about-vision").imageId).toBe("media000014");
+  });
+
+  it("shows the published office hours and contact details in the history cards", () => {
+    const cards = sec("about-history").cards as { body: { en: string } }[];
+    expect(cards[0]!.body).toEqual({ en: "10 to 5" });
+    expect(cards[1]!.body.en).toContain("9999999999");
+    expect(cards[1]!.body.en).toContain("gp@example.org");
+  });
+
+  it("does not draw the published sections a second time", () => {
+    for (const k of ["overview", "history", "members", "office", "vision-mission"]) expect(keys(out)).not.toContain(k);
+  });
+});
