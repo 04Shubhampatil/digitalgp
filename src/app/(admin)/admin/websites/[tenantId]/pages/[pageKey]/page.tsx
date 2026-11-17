@@ -15,7 +15,7 @@ import { ProjectsManager } from "@/components/admin/websites/ProjectsManager";
 import { SchemesManager } from "@/components/admin/websites/SchemesManager";
 import { PageEditorHeader } from "@/components/admin/editor/PageEditorHeader";
 import { content, tenants } from "@/lib/api/admin";
-import { bannerSeed } from "@/lib/banner-seed";
+import { bannerSeed, sectionSeed } from "@/lib/banner-seed";
 import { isApiError } from "@/lib/api/client";
 import { cookieHeader } from "@/lib/api/server";
 import { getCurrentUser, hasCapability } from "@/lib/session";
@@ -24,6 +24,21 @@ export const metadata: Metadata = { title: "Page editor" };
 
 /** Home editor order and side-by-side pairs, as in the design. Sections not listed follow in their usual order. */
 const HOME_BLOCKS: string[][] = [["banner"], ["quick-stats"], ["about-cards"], ["monthly-metrics"], ["ward-details"], ["whats-new"], ["achievements"], ["weather", "sarpanch-message"], ["notice-categories"], ["notices"]];
+
+/**
+ * "View on website": where a section shows on the public page when that is not a block with the section's own key
+ * (the About page draws its published sections inside the design's blocks).
+ */
+const PUBLIC_ANCHOR: Record<string, string> = {
+  overview: "about-hero",
+  history: "about-history",
+  geography: "about-history",
+  members: "about-structure",
+  office: "about-structure",
+  "vision-mission": "about-vision",
+  "roles-cards": "about-roles",
+  "emergency-services": "about-emergency",
+};
 
 function editorBlocks<T extends { sectionKey: string }>(pageKey: string, sections: T[]): T[][] {
   if (pageKey !== "home") return sections.map((s) => [s]);
@@ -77,6 +92,8 @@ export default async function PageEditor({ params, searchParams }: { params: Pro
   const heroData = (heroSection?.draft?.data ?? heroSection?.published?.data) as Record<string, unknown> | undefined;
   const seed = hasBanner ? bannerSeed(pageKey, heroData) : undefined;
 
+  const sitePublic = tenant.status === "PUBLISHED" && page.isEnabled;
+
   const renderSection = (section: (typeof ordered)[number]) => {
     const spec = editorSpec(pageKey, section.sectionKey);
     if (!spec) return null;
@@ -90,7 +107,8 @@ export default async function PageEditor({ params, searchParams }: { params: Pro
         section={section}
         capabilities={user.capabilities}
         defaultOpen
-        initialData={section.sectionKey === "banner" ? seed : undefined}
+        initialData={section.sectionKey === "banner" ? seed : sectionSeed(pageKey, section.sectionKey)}
+        viewHref={sitePublic ? `${pageHref(tenant.slug, pageKey)}?highlight=${PUBLIC_ANCHOR[section.sectionKey] ?? section.sectionKey}` : undefined}
       />
     );
   };

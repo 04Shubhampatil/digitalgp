@@ -81,3 +81,22 @@ describe("bannerSeed (what the Banner card shows before it is saved)", () => {
     expect((seed.heading as { en: string }).en).toContain("Accountability");
   });
 });
+
+describe("home About block (about-cards)", () => {
+  const about = (out: PublicPageDto) => out.sections.find((s) => s.sectionKey === "about-cards")!.data as Record<string, unknown>;
+
+  it("published cards keep the design heading, address and Read More until the editor sets them", () => {
+    const out = withFallback("home", page("home", [{ sectionKey: "about-cards", data: { items: [{ icon: "leaf", title: { en: "My card" }, description: { en: "Text" } }] } }]));
+    expect((about(out).items as unknown[]).length).toBe(1);
+    expect(about(out).heading).toEqual({ en: "About" });
+    expect(about(out).readMore).toBeDefined();
+  });
+
+  it("a published heading and picture replace the design values", () => {
+    const out = withFallback("home", page("home", [{ sectionKey: "about-cards", data: { heading: { en: "Our village" }, mainImageId: "media000001", items: [] } }]));
+    expect(about(out).heading).toEqual({ en: "Our village" });
+    expect(about(out).mainImageId).toBe("media000001");
+    // No published cards: the design's three cards stay.
+    expect((about(out).cards as unknown[]).length).toBe(3);
+  });
+});

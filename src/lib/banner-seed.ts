@@ -31,6 +31,26 @@ function buttons(list: unknown): Obj[] {
 }
 
 /**
+ * What a section card shows before it has been saved, for sections whose design content the website already shows
+ * (today: the home About block). Same rule as the banner: nothing is stored until the editor saves.
+ */
+export function sectionSeed(pageKey: PageKey, sectionKey: string): Obj | undefined {
+  if (pageKey !== "home" || sectionKey !== "about-cards") return undefined;
+  const d = (FALLBACK_SECTIONS.home ?? []).find((s) => s.sectionKey === "about-cards")?.data;
+  if (!d) return undefined;
+  const icons = ["landmark", "factory", "leaf"];
+  const readMore = (d.readMore ?? {}) as Obj;
+  return {
+    heading: text(d.heading),
+    subheading: text(d.subheading),
+    address: text(d.address),
+    buttonText: text(readMore.label),
+    ...(typeof readMore.href === "string" ? { buttonLink: readMore.href } : {}),
+    items: (Array.isArray(d.cards) ? (d.cards as Obj[]) : []).map((c, i) => ({ icon: icons[i % icons.length], title: text(c.title), description: text(c.body) })),
+  };
+}
+
+/**
  * What the Banner card of the page editor shows before the banner has been saved: the hero the public page shows
  * today (the home `hero` section if it has content, else the design's hero for the page). Nothing is stored until
  * the editor saves, so the website does not change by opening the editor.

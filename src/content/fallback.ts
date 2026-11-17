@@ -88,6 +88,10 @@ function fillLabels(sectionKey: string, data: Obj, fallback: Obj): Obj {
       }),
     };
   }
+  if (sectionKey === "about-cards") {
+    // Published cards and pictures on top of the design block: what the editor left empty keeps the design value.
+    return { ...fallback, ...filled(data) };
+  }
   if (sectionKey === "ward-details") return { ...data, viewAll: data.viewAll ?? fallback.viewAll };
   if (sectionKey === "village-progress") {
     // An indicator the editor listed without a value shows the design's value for that label until one is entered.
@@ -269,7 +273,8 @@ function withSections(pageKey: PageKey, page: PublicPageDto | null, override: Fa
   const published = (page?.sections ?? [])
     .filter((s) => pageKey !== "home" || !HOME_HIDDEN.has(s.sectionKey))
     .map((s) => {
-    const f = fallbacks.find((x) => x.sectionKey === s.sectionKey);
+    // The home About block always sits on its design block, also when other sections of the page are published.
+    const f = fallbacks.find((x) => x.sectionKey === s.sectionKey) ?? (s.sectionKey === "about-cards" ? (FALLBACK_SECTIONS[pageKey] ?? []).find((x) => x.sectionKey === s.sectionKey) : undefined);
     return f ? { ...s, data: fillLabels(s.sectionKey, s.data as Obj, f.data) } : s;
   });
   // The Banner card of the editor is the page's hero. A filled-in banner replaces the hero (it is not added under

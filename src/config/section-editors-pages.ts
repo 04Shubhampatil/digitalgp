@@ -500,7 +500,7 @@ const successStoriesSpec = successStories;
 export const EXTRA_EDITORS: Partial<Record<PageKey, SectionEditorSpec[]>> = {
   home: [
     banner,
-    section("about-cards", "aboutCards", { items: list("items", "aboutCard", 8, [icon(), bi("title", "title", { required: true }), bi("description", "description"), bi("buttonText", "buttonText"), link("buttonLink", "buttonLink")]) }),
+    section("about-cards", "aboutCards", { fields: [bi("heading", "heading"), bl("subheading", "subheading"), img("mainImageId", "mainImage"), img("secondImageId", "secondImage"), img("mapImageId", "mapImage"), bi("address", "address"), link("mapUrl", "mapUrl"), bi("buttonText", "buttonText"), link("buttonLink", "buttonLink")], items: list("items", "aboutCard", 8, [icon(), bi("title", "title", { required: true }), bl("description", "description"), bi("buttonText", "buttonText"), link("buttonLink", "buttonLink")]) }),
     section("weather", "weather", {
       fields: [txt("location", "location", 120)],
       groups: [group("current", "currentWeather", [txt("temperature", "temperature", 20, { required: true }), txt("humidity", "humidity", 20, { required: true }), txt("wind", "wind", 40, { required: true }), txt("feelsLike", "feelsLike", 20, { required: true }), txt("condition", "condition", 120, { required: true })])],

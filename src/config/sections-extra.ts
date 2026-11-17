@@ -232,7 +232,18 @@ export const HOME_EXTRA_SECTIONS: SectionDefinition[] = [
     key: "about-cards",
     sortOrder: 12,
     schema: strict({
-      items: list(strict({ icon: iconName, title: bilingualSchema, description: bilingualSchema.optional(), buttonText: bilingualSchema.optional(), buttonLink: href.optional() }), 8),
+      // Block heading and intro, the three pictures of the collage (large photo, small photo, map picture), the
+      // address on the map with its link, and the Read More button. All optional: the design values show until set.
+      heading: bilingualSchema.optional(),
+      subheading: bilingualLongSchema.optional(),
+      mainImageId: mediaId.optional(),
+      secondImageId: mediaId.optional(),
+      mapImageId: mediaId.optional(),
+      address: bilingualSchema.optional(),
+      mapUrl: href.optional(),
+      buttonText: bilingualSchema.optional(),
+      buttonLink: href.optional(),
+      items: list(strict({ icon: iconName, title: bilingualSchema, description: bilingualLongSchema.optional(), buttonText: bilingualSchema.optional(), buttonLink: href.optional() }), 8),
     }),
   },
   {

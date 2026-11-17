@@ -13,6 +13,7 @@ import {
   Home,
   ImageIcon,
   Info,
+  ExternalLink,
   LayoutList,
   Leaf,
   Link2,
@@ -114,6 +115,8 @@ export interface SectionEditorProps {
   defaultOpen?: boolean;
   /** Shown in the form while the section has no draft and nothing published (e.g. the website's current hero in the Banner card). Not saved until the editor saves. */
   initialData?: Record<string, unknown>;
+  /** Public page address of this section ("View on website"); absent while the website or the page is not public. */
+  viewHref?: string;
 }
 
 /**
@@ -121,7 +124,7 @@ export interface SectionEditorProps {
  * form from the editor spec → PUT …/draft, discard → DELETE …/draft, workflow → POST …/:action.
  * Editable only while the draft is DRAFT/REJECTED (or there is no draft yet).
  */
-export function SectionEditor({ tenantId, pageKey, spec, section, capabilities, defaultOpen = false, initialData }: SectionEditorProps) {
+export function SectionEditor({ tenantId, pageKey, spec, section, capabilities, defaultOpen = false, initialData, viewHref }: SectionEditorProps) {
   const t = useTranslations("editor");
   const ta = useTranslations("admin");
   const tc = useTranslations("common");
@@ -247,6 +250,18 @@ export function SectionEditor({ tenantId, pageKey, spec, section, capabilities, 
           {published && <StatusPill status="PUBLISHED" label={`${ta("contentStatus.PUBLISHED")} v${published.version}`} />}
           {draft && <StatusPill status={draft.status} label={`${ta("contentStatus." + draft.status)} v${draft.version}`} />}
           {!draft && !published && <span className="text-xs text-muted">{t("noContent")}</span>}
+          {/* Opens the public page at this section and frames it. Only what is published is on the website. */}
+          {viewHref && published && (
+            <a
+              href={viewHref}
+              target="_blank"
+              rel="noopener"
+              title={draft ? t("viewOnSiteDraftHint") : undefined}
+              className="inline-flex h-8 items-center gap-1.5 rounded-button border border-line bg-surface px-3 text-xs font-semibold text-primary hover:bg-surface-soft"
+            >
+              <ExternalLink className="size-3.5" aria-hidden /> {t("viewOnSite")}
+            </a>
+          )}
           {spec.items && canEdit && (
             <Button
               type="button"

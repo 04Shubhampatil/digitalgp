@@ -267,7 +267,7 @@ export function renderSections(page: PublicPageDto, slug: string, locale: UiLoca
       const members = sorted.filter((m) => group.includes(m.sectionKey) && RENDERERS[m.sectionKey]).sort((a, b) => group.indexOf(a.sectionKey) - group.indexOf(b.sectionKey));
       members.forEach((m) => done.add(m.sectionKey));
       out.push(
-        <section key={group.join("+")} id={members[0]?.sectionKey} className={`scroll-mt-[180px] bg-cream ${grp.pad ?? "py-8"}`}>
+        <section key={group.join("+")} id={members[0]?.sectionKey} data-sections={members.map((m) => m.sectionKey).join(" ")} className={`scroll-mt-[180px] bg-cream ${grp.pad ?? "py-8"}`}>
           <div className={`mx-auto grid max-w-[1440px] gap-5 px-4 sm:px-8 ${grp.cols} lg:gap-[20px] lg:px-[60px] [&>*:only-child]:lg:col-span-full`}>
             {members.map((m) => {
               const Card = RENDERERS[m.sectionKey]!;

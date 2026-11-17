@@ -1690,7 +1690,9 @@
       "actionButton": "Buttons",
       "trend": "Trend",
       "trendIsPositive": "Trend is good news",
-      "comparedTo": "Compared to"
+      "comparedTo": "Compared to",
+      "mainImage": "Main picture (large)",
+      "secondImage": "Second picture (small)"
     },
     "order": "Order",
     "addNew": "Add New {name}",
@@ -1833,6 +1835,8 @@
     "subtitleLong": "Managing institutional content for {name}",
     "addAnotherCta": "Add Another CTA",
     "livePreview": "Live preview",
+    "viewOnSite": "View on website",
+    "viewOnSiteDraftHint": "This shows the published version. Your draft appears on the website after it is published.",
     "livePreviewEmpty": "Add a heading or a picture to see the banner here.",
     "livePreviewHint": "Shown smaller than on the website. Changes appear on the website after you save and publish.",
     "ctaLimit": "Add up to {n} CTA buttons."
