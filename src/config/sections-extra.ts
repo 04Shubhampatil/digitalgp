@@ -102,6 +102,16 @@ export const PROJECTS_SECTIONS: SectionDefinition[] = [
       note: bilingualLongSchema.optional(),
     }),
   },
+  {
+    // Development Timeline card: one step per year; `done: false` marks the step that is still in progress.
+    key: "dev-timeline",
+    sortOrder: 35,
+    schema: strict({
+      title: bilingualSchema.optional(),
+      steps: list(strict({ year: text(10), label: bilingualSchema, status: bilingualSchema.optional(), done: z.boolean().optional() }), 12),
+      action: viewAllSchema.optional(),
+    }),
+  },
   { key: "success-stories", sortOrder: 50, schema: successStories },
   {
     key: "development-suggestions",

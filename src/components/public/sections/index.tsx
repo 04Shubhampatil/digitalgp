@@ -2,7 +2,7 @@ import type { PublicPageDto } from "@/types/api";
 import type { UiLocale } from "@/i18n/config";
 import { AboutEmergencySection, AboutHeroSection, AboutHistorySection, AboutRolesSection, AboutStructureSection, AboutVisionSection } from "./AboutFigma";
 import { LiveStatsSection } from "./cms/extra";
-import { CategoryStripSection, DevelopmentSuggestionsSection, EmergencyServicesSection, FinancialItemsView, ImpactDashboardSection, LeadersProfileGridSection, MonthlyReportSection, QuickActionsSection, RolesCardsSection } from "./cms/extra";
+import { CategoryStripSection, DevelopmentSuggestionsSection, EmergencyServicesSection, FinancialItemsView, LeadersProfileGridSection, MonthlyReportSection, QuickActionsSection, RolesCardsSection } from "./cms/extra";
 import { BeforeAfterSection, CtaBannerSection, DevTimelineSection, FinancialOverviewSection, ImpactGridSection, ImageCropsSection, ProgressTrackerSection, ProjectShowcaseSection, SuccessStoriesSection } from "./PageKit";
 import { LinkCardsSection, MediaCardsSection, StatCardsSection, TileGridSection, VideoFeatureSection } from "./PageKit2";
 import { CalloutSection, GrievanceRegisterSection, GrievanceTrackSection } from "./GrievanceSections";
@@ -110,7 +110,11 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
   "coverage-map": SchemeCoverageSection,
   "before-after-gallery": BeforeAfterSection,
   "village-resolution-tracker": ProgressTrackerSection,
-  "impact-dashboard": ImpactDashboardSection,
+  // Published indicators are drawn as the design's Impact Dashboard card (beside the resolution tracker).
+  "impact-dashboard": (p) => {
+    const d = p.data as { heading?: unknown; items?: { title?: unknown; value?: string; description?: unknown }[] };
+    return <ImpactGridSection {...p} data={{ title: d.heading, items: (d.items ?? []).map((i) => ({ label: i.title, value: i.value })) }} />;
+  },
   "development-suggestions": DevelopmentSuggestionsSection,
   "monthly-report": MonthlyReportSection,
   "leaders-profile-grid": LeadersProfileGridSection,
@@ -233,7 +237,7 @@ const ROW_GROUPS: { keys: string[]; cols: string; all?: boolean; /** Vertical pa
   // Figma Key Projects: 41px between the gallery, the tracker row, the timeline row and the stories.
   { keys: ["progress-tracker", "impact-grid"], cols: "xl:grid-cols-[567px_minmax(0,1fr)]", pad: "py-8 lg:pt-[9px] lg:pb-[20.5px]" },
   // The backend tracker uses the same card renderer; on its own it gets the same cream band.
-  { keys: ["village-resolution-tracker"], cols: "lg:grid-cols-1" },
+  { keys: ["village-resolution-tracker", "impact-dashboard"], cols: "xl:grid-cols-[567px_minmax(0,1fr)]", pad: "py-8 lg:pt-[9px] lg:pb-[20.5px]" },
   { keys: ["dev-timeline", "financial-overview"], cols: "xl:grid-cols-[601px_minmax(0,1fr)]", pad: "py-8 lg:py-[20.5px]" },
   // Figma home: "What's New This Week?" on the left, "Top Five Achievements of the Ward" on the right (649 / 650px).
   { keys: ["whats-new", "achievements"], cols: "lg:grid-cols-2", pad: "py-8 lg:pt-5 lg:pb-0" },

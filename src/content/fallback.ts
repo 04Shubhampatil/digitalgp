@@ -289,7 +289,10 @@ const HERO_KEYS = new Set(["hero", "page-hero", "about-hero"]);
 
 function withSections(pageKey: PageKey, page: PublicPageDto | null, override: FallbackSection[] | null): PublicPageDto {
   const cms = hasPublishedCms(pageKey, page?.sections ?? []);
-  const fallbacks = (override ?? (cms ? [...(LIVE_EXTRAS[pageKey] ?? []), ...liveBlocks(pageKey)] : (FALLBACK_SECTIONS[pageKey] ?? []))).filter((s) => pageKey !== "home" || !HOME_HIDDEN.has(s.sectionKey));
+  // In published mode the design's sample blocks are dropped, but its hero stays until a banner takes its place:
+  // a page never loses its top block because one section further down was published.
+  const designHero = (FALLBACK_SECTIONS[pageKey] ?? []).filter((s) => HERO_KEYS.has(s.sectionKey));
+  const fallbacks = (override ?? (cms ? [...designHero, ...(LIVE_EXTRAS[pageKey] ?? []), ...liveBlocks(pageKey)] : (FALLBACK_SECTIONS[pageKey] ?? []))).filter((s) => pageKey !== "home" || !HOME_HIDDEN.has(s.sectionKey));
   const welcomeData = pageKey === "home" ? (page?.sections.find((s) => s.sectionKey === "welcome")?.data as Obj | undefined) : undefined;
   const published = (page?.sections ?? [])
     .filter((s) => pageKey !== "home" || !HOME_HIDDEN.has(s.sectionKey))

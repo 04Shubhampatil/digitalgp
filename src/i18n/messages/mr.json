@@ -1390,7 +1390,8 @@
       "bannerImageSettings": "प्रतिमा सेटिंग्ज",
       "bannerOverlay": "आच्छादन आणि वाचनीयता",
       "welcomeVideo": "स्वागत व्हिडिओ",
-      "homeGallery": "छायाचित्र पट्टी"
+      "homeGallery": "छायाचित्र पट्टी",
+      "devTimeline": "विकास कालरेषा"
     },
     "fields": {
       "layout": "मांडणी",
@@ -1697,7 +1698,10 @@
       "secondImage": "दुसरे चित्र (लहान)",
       "watchLabel": "व्हिडिओवरील बटणाचा मजकूर",
       "caption": "मथळा",
-      "galleryPhoto": "छायाचित्रे"
+      "galleryPhoto": "छायाचित्रे",
+      "timelineStep": "टप्पे",
+      "year": "वर्ष",
+      "completed": "पूर्ण"
     },
     "order": "क्रम",
     "addNew": "नवीन {name} जोडा",
@@ -1760,7 +1764,8 @@
       "volunteerCategory": "वर्ग",
       "market": "बाजार",
       "actionButton": "बटण",
-      "galleryPhoto": "छायाचित्र"
+      "galleryPhoto": "छायाचित्र",
+      "timelineStep": "टप्पा"
     },
     "options": {
       "full-background": "पूर्ण पार्श्वभूमी",

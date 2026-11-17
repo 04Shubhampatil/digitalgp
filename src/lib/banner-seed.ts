@@ -35,6 +35,17 @@ function buttons(list: unknown): Obj[] {
  * (the home About block, Welcome video, Gallery strip and What's New). Same rule as the banner: nothing is stored until the editor saves.
  */
 export function sectionSeed(pageKey: PageKey, sectionKey: string, welcome?: Obj | null): Obj | undefined {
+  if (pageKey === "projects" && sectionKey === "dev-timeline") {
+    // The design's timeline, so the card can be saved as it is and then edited.
+    const t = (FALLBACK_SECTIONS.projects ?? []).find((x) => x.sectionKey === "dev-timeline")?.data;
+    if (!t) return undefined;
+    const action = (t.action ?? {}) as Obj;
+    return {
+      title: text(t.title),
+      steps: (Array.isArray(t.steps) ? (t.steps as Obj[]) : []).map((x) => ({ year: String(x.year ?? ""), label: text(x.label), status: text(x.status), done: x.done !== false })),
+      ...(text(action.label) && typeof action.href === "string" ? { action: { label: text(action.label), href: action.href } } : {}),
+    };
+  }
   if (pageKey !== "home") return undefined;
   const d = (FALLBACK_SECTIONS.home ?? []).find((s) => s.sectionKey === sectionKey)?.data;
   if (!d) return undefined;

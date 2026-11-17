@@ -1390,7 +1390,8 @@
       "bannerImageSettings": "Image Settings",
       "bannerOverlay": "Overlay & Readability",
       "welcomeVideo": "Welcome video",
-      "homeGallery": "Gallery strip"
+      "homeGallery": "Gallery strip",
+      "devTimeline": "Development timeline"
     },
     "fields": {
       "layout": "Layout",
@@ -1697,7 +1698,10 @@
       "secondImage": "Second picture (small)",
       "watchLabel": "Button text on the video",
       "caption": "Caption",
-      "galleryPhoto": "Photos"
+      "galleryPhoto": "Photos",
+      "timelineStep": "Steps",
+      "year": "Year",
+      "completed": "Completed"
     },
     "order": "Order",
     "addNew": "Add New {name}",
@@ -1760,7 +1764,8 @@
       "volunteerCategory": "Category",
       "market": "Market",
       "actionButton": "Button",
-      "galleryPhoto": "photo"
+      "galleryPhoto": "photo",
+      "timelineStep": "step"
     },
     "options": {
       "full-background": "Full background",

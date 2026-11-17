@@ -558,6 +558,11 @@ export const EXTRA_EDITORS: Partial<Record<PageKey, SectionEditorSpec[]>> = {
       items: list("items", "financialItem", 12, [bi("label", "label", { required: true }), txt("amount", "amount", 15, { required: true, placeholder: "12500.00" }), colour("colour", "colour", { required: true })]),
     }),
     successStoriesSpec,
+    section("dev-timeline", "devTimeline", {
+      fields: [bi("title", "heading")],
+      groups: [group("action", "viewAll", [bi("label", "viewAllLabel", { required: true }), link("href", "viewAllLink", { required: true })], { optional: true })],
+      items: list("steps", "timelineStep", 12, [txt("year", "year", 10, { required: true }), bi("label", "title", { required: true }), bi("status", "status"), { name: "done", type: "boolean", labelKey: "completed" }]),
+    }),
     section("development-suggestions", "developmentSuggestions", { fields: [bi("heading", "heading", { required: true }), bi("description", "description"), img("imageId", "image"), bi("buttonText", "buttonText"), link("buttonLink", "buttonLink")] }),
   ],
   schemes: [

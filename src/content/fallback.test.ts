@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PublicPageDto } from "@/types/api";
-import { bannerSeed } from "@/lib/banner-seed";
+import { bannerSeed, sectionSeed } from "@/lib/banner-seed";
 import { withFallback } from "./fallback";
 
 const seo = { titleEn: null, titleMr: null, descriptionEn: null, descriptionMr: null, shareImageId: null };
@@ -169,5 +169,28 @@ describe("About page: published sections inside the design blocks", () => {
 
   it("does not draw the published sections a second time", () => {
     for (const k of ["overview", "history", "members", "office", "vision-mission"]) expect(keys(out)).not.toContain(k);
+  });
+});
+
+describe("inner pages in published mode", () => {
+  it("keeps the design hero when a section further down is published and there is no banner", () => {
+    const out = withFallback("projects", page("projects", [{ sectionKey: "top-stats", data: { items: [] } }]));
+    expect(keys(out)).toContain("page-hero");
+    expect(keys(out)).not.toContain("quick-stats");
+  });
+
+  it("a filled-in banner still replaces the design hero in published mode", () => {
+    const out = withFallback("projects", page("projects", [
+      { sectionKey: "banner", data: { layout: "full-background", heading: { en: "Projects" } } },
+      { sectionKey: "top-stats", data: { items: [] } },
+    ]));
+    expect(keys(out)).toContain("banner");
+    expect(keys(out)).not.toContain("page-hero");
+  });
+
+  it("the timeline card opens with the design steps", () => {
+    const seed = sectionSeed("projects", "dev-timeline")!;
+    expect((seed.steps as { year: string; done: boolean }[]).map((s) => s.year)).toContain("2025");
+    expect((seed.steps as { year: string; done: boolean }[]).find((s) => s.year === "2025")!.done).toBe(false);
   });
 });
