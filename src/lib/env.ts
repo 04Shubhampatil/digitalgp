@@ -3,6 +3,13 @@ import { z } from "zod";
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
+  /**
+   * Pooled connection for the running app (Prisma Postgres / Vercel integration). When set the app uses it
+   * instead of DATABASE_URL; migrations and scripts keep the direct DATABASE_URL.
+   */
+  DATABASE_URL_POOLED: z.string().min(1).optional(),
+  /** Connections one server instance may open. Keep small on serverless, where many instances run at once. */
+  DB_POOL_MAX: z.coerce.number().int().min(1).max(50).optional(),
   /** Base host for subdomain tenant resolution, e.g. "digitalgp.in". */
   APP_BASE_HOST: z.string().min(1).default("localhost"),
   /** Public origin of the admin app; used for CSRF origin checks and reset links. */
