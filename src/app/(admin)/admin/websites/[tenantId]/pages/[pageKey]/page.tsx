@@ -15,6 +15,7 @@ import { ProjectsManager } from "@/components/admin/websites/ProjectsManager";
 import { SchemesManager } from "@/components/admin/websites/SchemesManager";
 import { PageEditorHeader } from "@/components/admin/editor/PageEditorHeader";
 import { content, tenants } from "@/lib/api/admin";
+import { bannerSeed } from "@/lib/banner-seed";
 import { isApiError } from "@/lib/api/client";
 import { cookieHeader } from "@/lib/api/server";
 import { getCurrentUser, hasCapability } from "@/lib/session";
@@ -69,10 +70,29 @@ export default async function PageEditor({ params, searchParams }: { params: Pro
   const ordered = page.sections.slice().sort((a, b) => a.sortOrder - b.sortOrder);
   const unknown = ordered.filter((s) => !editorSpec(pageKey, s.sectionKey));
 
+  // The Banner card is the page's hero: until it is saved it shows the hero the website has today, and the older
+  // Home "hero" card is hidden so there is one place to edit it.
+  const hasBanner = ordered.some((s) => s.sectionKey === "banner");
+  const heroSection = ordered.find((s) => s.sectionKey === "hero");
+  const heroData = (heroSection?.draft?.data ?? heroSection?.published?.data) as Record<string, unknown> | undefined;
+  const seed = hasBanner ? bannerSeed(pageKey, heroData) : undefined;
+
   const renderSection = (section: (typeof ordered)[number]) => {
     const spec = editorSpec(pageKey, section.sectionKey);
     if (!spec) return null;
-    return <SectionEditor key={section.sectionKey} tenantId={tenantId} pageKey={pageKey} spec={spec} section={section} capabilities={user.capabilities} defaultOpen />;
+    if (hasBanner && section.sectionKey === "hero") return null;
+    return (
+      <SectionEditor
+        key={section.sectionKey}
+        tenantId={tenantId}
+        pageKey={pageKey}
+        spec={spec}
+        section={section}
+        capabilities={user.capabilities}
+        defaultOpen
+        initialData={section.sectionKey === "banner" ? seed : undefined}
+      />
+    );
   };
 
   return (

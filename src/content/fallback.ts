@@ -38,6 +38,7 @@ export const FALLBACK_SECTIONS: Partial<Record<PageKey, FallbackSection[]>> = {
  * → achievements → weather → welcome → leaders → notices).
  */
 const HOME_ORDER: Record<string, number> = {
+  banner: 0,
   hero: 0,
   "quick-stats": 10,
   "quick-links": 15,
@@ -259,6 +260,9 @@ export function withFallback(pageKey: PageKey, page: PublicPageDto | null): Publ
   return withSections(pageKey, page, null);
 }
 
+/** Hero blocks a published, filled-in `banner` takes the place of. */
+const HERO_KEYS = new Set(["hero", "page-hero", "about-hero"]);
+
 function withSections(pageKey: PageKey, page: PublicPageDto | null, override: FallbackSection[] | null): PublicPageDto {
   const cms = hasPublishedCms(pageKey, page?.sections ?? []);
   const fallbacks = (override ?? (cms ? [...(LIVE_EXTRAS[pageKey] ?? []), ...liveBlocks(pageKey)] : (FALLBACK_SECTIONS[pageKey] ?? []))).filter((s) => pageKey !== "home" || !HOME_HIDDEN.has(s.sectionKey));
@@ -268,6 +272,22 @@ function withSections(pageKey: PageKey, page: PublicPageDto | null, override: Fa
     const f = fallbacks.find((x) => x.sectionKey === s.sectionKey);
     return f ? { ...s, data: fillLabels(s.sectionKey, s.data as Obj, f.data) } : s;
   });
+  // The Banner card of the editor is the page's hero. A filled-in banner replaces the hero (it is not added under
+  // it); an empty one is skipped so the design's hero stays.
+  const bannerAt = published.findIndex((s) => s.sectionKey === "banner");
+  if (bannerAt >= 0) {
+    const b = published[bannerAt]!.data as Obj;
+    const filledBanner = has(b.heading) || has(b.imageId) || has(b.supportingText);
+    const drop = filledBanner ? HERO_KEYS : new Set(["banner"]);
+    if (filledBanner && !has(b.imageId)) {
+      // No banner picture uploaded yet: keep the design's hero photo for the page.
+      const designHero = (FALLBACK_SECTIONS[pageKey] ?? []).find((s) => HERO_KEYS.has(s.sectionKey))?.data;
+      const fallbackImageUrl = (designHero?.imageUrl as string | undefined) ?? (pageKey === "home" ? "/images/figma/home-hero.png" : undefined);
+      if (fallbackImageUrl) published[bannerAt] = { ...published[bannerAt]!, data: { ...b, fallbackImageUrl } };
+    }
+    for (let i = published.length - 1; i >= 0; i--) if (drop.has(published[i]!.sectionKey)) published.splice(i, 1);
+    if (filledBanner) for (let i = fallbacks.length - 1; i >= 0; i--) if (HERO_KEYS.has(fallbacks[i]!.sectionKey)) fallbacks.splice(i, 1);
+  }
   const have = new Set(published.map((s) => s.sectionKey));
   const extra = fallbacks
     .filter((s) => !have.has(s.sectionKey) && !(s.skipIfPresent ?? []).some((k) => have.has(k)))

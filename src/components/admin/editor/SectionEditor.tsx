@@ -112,6 +112,8 @@ export interface SectionEditorProps {
   section: PageSectionDto;
   capabilities: string[];
   defaultOpen?: boolean;
+  /** Shown in the form while the section has no draft and nothing published (e.g. the website's current hero in the Banner card). Not saved until the editor saves. */
+  initialData?: Record<string, unknown>;
 }
 
 /**
@@ -119,7 +121,7 @@ export interface SectionEditorProps {
  * form from the editor spec → PUT …/draft, discard → DELETE …/draft, workflow → POST …/:action.
  * Editable only while the draft is DRAFT/REJECTED (or there is no draft yet).
  */
-export function SectionEditor({ tenantId, pageKey, spec, section, capabilities, defaultOpen = false }: SectionEditorProps) {
+export function SectionEditor({ tenantId, pageKey, spec, section, capabilities, defaultOpen = false, initialData }: SectionEditorProps) {
   const t = useTranslations("editor");
   const ta = useTranslations("admin");
   const tc = useTranslations("common");
@@ -138,7 +140,10 @@ export function SectionEditor({ tenantId, pageKey, spec, section, capabilities, 
   const canEdit = capabilities.includes("content:edit") && (!draft || EDITABLE_STATUSES.includes(draft.status));
   const [isVisible, setIsVisible] = useState(section.isVisible);
 
-  const form = useForm<FormRecord>({ defaultValues: toFormValues(spec, working?.data) });
+  // The seed also fills a saved section that has no text or picture yet (a banner stored with its layout only).
+  const blank = (v: unknown) => v == null || v === "" || (typeof v === "object" && Object.values(v as object).every((x) => !x));
+  const seeded = initialData && (!working?.data || ["heading", "supportingText", "imageId"].every((k) => blank((working.data as Record<string, unknown>)[k]))) ? { ...initialData, ...Object.fromEntries(Object.entries(working?.data ?? {}).filter(([, v]) => !blank(v))) } : working?.data;
+  const form = useForm<FormRecord>({ defaultValues: toFormValues(spec, seeded) });
   const { control, handleSubmit, formState } = form;
   // The header "Add New" button appends to the primary list, which registers its append function here.
   const appendPrimary = useRef<(() => void) | null>(null);

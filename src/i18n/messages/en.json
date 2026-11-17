@@ -1832,6 +1832,9 @@
     "nothingToSave": "There are no unsaved changes.",
     "subtitleLong": "Managing institutional content for {name}",
     "addAnotherCta": "Add Another CTA",
+    "livePreview": "Live preview",
+    "livePreviewEmpty": "Add a heading or a picture to see the banner here.",
+    "livePreviewHint": "Shown smaller than on the website. Changes appear on the website after you save and publish.",
     "ctaLimit": "Add up to {n} CTA buttons."
   }
 }
