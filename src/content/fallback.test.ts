@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PublicPageDto } from "@/types/api";
-import { bannerSeed, sectionSeed } from "@/lib/banner-seed";
+import { bannerSeed, designSeed, sectionSeed } from "@/lib/banner-seed";
 import { withFallback } from "./fallback";
 
 const seo = { titleEn: null, titleMr: null, descriptionEn: null, descriptionMr: null, shareImageId: null };
@@ -210,5 +210,72 @@ describe("Schemes: category strip edits the scheme levels strip", () => {
     const items = out.sections.find((s) => s.sectionKey === "scheme-levels")!.data.items as { level: string; label: { en: string } }[];
     expect(items.map((i) => i.level)).toEqual(["CENTRAL", "DISTRICT"]);
     expect(items[0]!.label).toEqual({ en: "Union schemes" });
+  });
+});
+
+describe("inner pages: section by section", () => {
+  const cultureDesign = withFallback("culture", null);
+  const heritage = cultureDesign.sections.find((s) => s.sectionKey === "heritage-cards")!.data as { items: { title: { en: string }; imageId: string }[] };
+
+  it("publishing one section keeps the design content of every other block", () => {
+    const out = withFallback("culture", page("culture", [{ sectionKey: "heritage-cards", data: { items: [{ title: { en: "New temple" } }] } }]));
+    expect(keys(out).sort()).toEqual(keys(cultureDesign).sort());
+    expect(keys(out)).toEqual(keys(cultureDesign));
+  });
+
+  it("an item that keeps its design title keeps the design picture; a retitled item does not get one", () => {
+    const first = heritage.items[0]!;
+    const out = withFallback("culture", page("culture", [{ sectionKey: "heritage-cards", data: { items: [{ title: first.title }, { title: { en: "Some other place" } }] } }]));
+    const items = out.sections.find((s) => s.sectionKey === "heritage-cards")!.data.items as { imageId?: string }[];
+    expect(items[0]!.imageId).toBe(first.imageId);
+    expect(items[1]!.imageId).toBeUndefined();
+  });
+
+  it("an uploaded picture is never replaced by the design picture", () => {
+    const first = heritage.items[0]!;
+    const out = withFallback("culture", page("culture", [{ sectionKey: "heritage-cards", data: { items: [{ title: first.title, imageId: "media000021" }] } }]));
+    expect((out.sections.find((s) => s.sectionKey === "heritage-cards")!.data.items as { imageId: string }[])[0]!.imageId).toBe("media000021");
+  });
+
+  it("a section switched off in the editor hides its block, also while it has only design content", () => {
+    const out = withFallback("culture", { ...page("culture", []), hiddenSections: ["homestay"] });
+    expect(keys(out)).not.toContain("homestay");
+    expect(keys(out)).toContain("heritage-cards");
+  });
+
+  it("a section with another key replaces its design block (Services links, Contact cards)", () => {
+    const services = withFallback("services", page("services", [{ sectionKey: "service-links", data: { items: [] } }]));
+    expect(keys(services)).not.toContain("rts-grid");
+    expect(keys(services)).toContain("action-cards");
+    const hiddenContact = withFallback("contact", { ...page("contact", []), hiddenSections: ["contact-cards"] });
+    expect(keys(hiddenContact)).not.toContain("contact-cards-figma");
+  });
+
+  it("Infrastructure stats are drawn in the design's facility tiles", () => {
+    const out = withFallback("infrastructure", page("infrastructure", [{ sectionKey: "top-stats", data: { items: [{ icon: "droplet", title: { en: "Water" }, value: "100%", unit: { en: "Coverage" }, visible: true }, { icon: "x", title: { en: "Hidden" }, value: "1", visible: false }] } }]));
+    expect(keys(out)).not.toContain("top-stats");
+    const grid = out.sections.find((s) => s.sectionKey === "facility-grid")!.data as { items: { label: unknown; value: { en: string } }[] };
+    expect(grid.items).toHaveLength(1);
+    expect(grid.items[0]!.value.en).toBe("100% Coverage");
+  });
+
+  it("published sections sit where their design block was", () => {
+    const out = withFallback("culture", page("culture", [{ sectionKey: "success-stories", data: { items: [] } }, { sectionKey: "heritage-cards", data: { items: [] } }]));
+    expect(keys(out)).toEqual(keys(cultureDesign));
+  });
+});
+
+describe("designSeed (what a section card shows before it is saved)", () => {
+  it("leaves out site picture files and fills Marathi", () => {
+    const seed = designSeed("culture", "heritage-cards", "savardari")!;
+    const items = seed.items as { title: { en: string; mr: string }; imageId?: string }[];
+    expect(items.length).toBeGreaterThan(0);
+    expect(items[0]!.imageId).toBeUndefined();
+    expect(items[0]!.title.mr).toBeTruthy();
+  });
+
+  it("drops rows whose required picture is a site file, and stores list links as addresses", () => {
+    expect((designSeed("gallery", "photo-gallery", "savardari")!.photos as unknown[]).length).toBe(0);
+    expect(JSON.stringify(designSeed("culture", "success-stories", "savardari"))).toContain("/savardari/success-stories");
   });
 });

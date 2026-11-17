@@ -250,8 +250,8 @@ export function SectionEditor({ tenantId, pageKey, spec, section, capabilities, 
           {published && <StatusPill status="PUBLISHED" label={`${ta("contentStatus.PUBLISHED")} v${published.version}`} />}
           {draft && <StatusPill status={draft.status} label={`${ta("contentStatus." + draft.status)} v${draft.version}`} />}
           {!draft && !published && <span className="text-xs text-muted">{t("noContent")}</span>}
-          {/* Opens the public page at this section and frames it. Only what is published is on the website. */}
-          {viewHref && published && (
+          {/* Opens the public page at this block and frames it. The website shows what is published (the design content until then). */}
+          {viewHref && (
             <a
               href={viewHref}
               target="_blank"
