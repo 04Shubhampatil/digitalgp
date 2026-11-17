@@ -9,7 +9,15 @@ import { getEnv } from "@/lib/env";
  * explicitly opts back in with `omit: { passwordHash: false }` (only src/lib/auth.ts does).
  */
 function createClient() {
-  const adapter = new PrismaPg({ connectionString: getEnv().DATABASE_URL });
+  const env = getEnv();
+  // Serverless (Vercel) runs many instances at once: use the pooled URL and a small pool per instance so the
+  // database's connection limit is never exhausted. Locally the direct URL and a normal pool are fine.
+  const adapter = new PrismaPg({
+    connectionString: env.DATABASE_URL_POOLED ?? env.DATABASE_URL,
+    max: env.DB_POOL_MAX ?? (env.NODE_ENV === "production" ? 3 : 10),
+    idleTimeoutMillis: 10_000,
+    connectionTimeoutMillis: 10_000,
+  });
   return new PrismaClient({
     adapter,
     omit: {
@@ -21,11 +29,9 @@ function createClient() {
 
 const globalForPrisma = globalThis as unknown as { __digitalgpPrisma?: ReturnType<typeof createClient> };
 
+// Kept on globalThis in every environment so module re-evaluation never opens a second pool.
 export const db = globalForPrisma.__digitalgpPrisma ?? createClient();
-
-if (getEnv().NODE_ENV !== "production") {
-  globalForPrisma.__digitalgpPrisma = db;
-}
+globalForPrisma.__digitalgpPrisma = db;
 
 export type Db = typeof db;
 /** Transaction client type for functions that must run inside `db.$transaction`. */
