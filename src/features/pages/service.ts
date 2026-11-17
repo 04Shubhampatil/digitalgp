@@ -358,7 +358,7 @@ export async function getPublicPage(tenantSlug: string, pageKey: string): Promis
   if (!isPageKey(pageKey)) throw Errors.notFound("Page");
   const page = await db.page.findUnique({
     where: { tenantId_pageKey: { tenantId: tenant.id, pageKey } },
-    include: { sections: { where: { isVisible: true, publishedId: { not: null } }, include: { published: true }, orderBy: { sortOrder: "asc" } } },
+    include: { sections: { include: { published: true }, orderBy: { sortOrder: "asc" } } },
   });
   if (!page || !page.isEnabled) throw Errors.notFound("Page");
   return {
@@ -370,8 +370,10 @@ export async function getPublicPage(tenantSlug: string, pageKey: string): Promis
       descriptionMr: page.seoDescriptionMr,
       shareImageId: page.shareImageId,
     },
+    // Hidden sections are named (so the page can drop their block) but their content is never returned.
+    hiddenSections: page.sections.filter((s) => !s.isVisible).map((s) => s.sectionKey),
     sections: page.sections
-      .filter((s) => s.published && s.published.status === "PUBLISHED")
+      .filter((s) => s.isVisible && s.published && s.published.status === "PUBLISHED")
       .map((s) => ({ sectionKey: s.sectionKey, sortOrder: s.sortOrder, data: s.published!.data as Record<string, unknown>, publishedAt: s.published!.publishedAt?.toISOString() ?? null })),
   };
 }

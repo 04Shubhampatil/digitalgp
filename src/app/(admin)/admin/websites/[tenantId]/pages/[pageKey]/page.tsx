@@ -15,7 +15,8 @@ import { ProjectsManager } from "@/components/admin/websites/ProjectsManager";
 import { SchemesManager } from "@/components/admin/websites/SchemesManager";
 import { PageEditorHeader } from "@/components/admin/editor/PageEditorHeader";
 import { content, tenants } from "@/lib/api/admin";
-import { bannerSeed, sectionSeed } from "@/lib/banner-seed";
+import { publicAnchor } from "@/content/fallback";
+import { bannerSeed, designSeed, sectionSeed } from "@/lib/banner-seed";
 import { isApiError } from "@/lib/api/client";
 import { cookieHeader } from "@/lib/api/server";
 import { getCurrentUser, hasCapability } from "@/lib/session";
@@ -117,8 +118,8 @@ export default async function PageEditor({ params, searchParams }: { params: Pro
         section={section}
         capabilities={user.capabilities}
         defaultOpen
-        initialData={section.sectionKey === "banner" ? seed : sectionSeed(pageKey, section.sectionKey, welcomeData)}
-        viewHref={sitePublic ? `${pageHref(tenant.slug, pageKey)}?highlight=${PUBLIC_ANCHOR[section.sectionKey] ?? section.sectionKey}` : undefined}
+        initialData={section.sectionKey === "banner" ? seed : (sectionSeed(pageKey, section.sectionKey, welcomeData) ?? (!section.draft && !section.published ? designSeed(pageKey, section.sectionKey, tenant.slug) : undefined))}
+        viewHref={sitePublic ? `${pageHref(tenant.slug, pageKey)}?highlight=${PUBLIC_ANCHOR[section.sectionKey] ?? publicAnchor(pageKey, section.sectionKey, !!section.published)}` : undefined}
       />
     );
   };

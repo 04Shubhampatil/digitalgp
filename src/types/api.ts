@@ -533,6 +533,8 @@ export interface PublicPageDto {
   pageKey: string;
   seo: { titleEn: string | null; titleMr: string | null; descriptionEn: string | null; descriptionMr: string | null; shareImageId: string | null };
   sections: { sectionKey: string; sortOrder: number; data: Record<string, unknown>; publishedAt: string | null }[];
+  /** Keys of the sections switched off in the editor ("Show this section" off). Keys only, never their content. */
+  hiddenSections?: string[];
 }
 
 // ---------------------------------------------------------------------------

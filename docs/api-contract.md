@@ -509,6 +509,7 @@ Migration `20261104090000_public_site_fields` is **additive only** (new nullable
 
 ### Pages
 - `GET /public/:slug/pages/:pageKey` answers `404 NOT_FOUND` for unknown keys, disabled pages and pages without a row (it never answered 500 on the backend; an `INTERNAL_ERROR` in the browser means the client could not parse the reply, e.g. `APP_ORIGIN` pointing at another app).
+- `GET /public/:slug/pages/:pageKey` also returns `hiddenSections`: the keys (never the content) of the sections switched off in the editor, so the public page can drop the block of a hidden section. Sections that are hidden or unpublished are still left out of `sections`.
 - Every website now has every page row. Optional pages (`OPTIONAL_PAGE_KEYS`, today `progress`) are created **disabled**; enable with `PATCH /content/:tenantId/pages/progress { isEnabled: true }`.
 
 ### Website settings (`PATCH /tenants/:id { settings }`)

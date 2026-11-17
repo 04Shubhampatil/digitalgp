@@ -281,6 +281,89 @@ export function withFallback(pageKey: PageKey, page: PublicPageDto | null): Publ
   return withSections(pageKey, page, null);
 }
 
+/**
+ * Registered section → the design block(s) it takes the place of once it is published (or switched off). Sections
+ * whose design block has the same key need no entry.
+ */
+const REPLACES: Partial<Record<PageKey, Record<string, string[]>>> = {
+  projects: {
+    "top-stats": ["quick-stats"],
+    "village-resolution-tracker": ["progress-tracker"],
+    "impact-dashboard": ["impact-grid"],
+    "success-stories": ["stories-figma"],
+    "development-suggestions": ["cta-banner"],
+    "before-after-gallery": ["before-after"],
+  },
+  schemes: { statistics: ["live-stats"], "quick-actions": ["service-strip"] },
+  services: { "service-links": ["rts-grid"], "service-categories": ["action-cards"], "top-stats": ["live-stats"], help: ["help-card"] },
+  announcements: {
+    "announcement-categories": ["announce-categories"],
+    "live-announcements": ["announce-feed"],
+    calendar: ["announce-feed"],
+    "deadline-cards": ["deadlines-downloads"],
+    "download-forms": ["deadlines-downloads"],
+    "support-cards": ["service-strip"],
+  },
+  contact: { "contact-cards": ["contact-cards-figma"] },
+  grievance: { "complaint-form": ["grievance-register"], "track-complaint": ["grievance-track"] },
+  infrastructure: { "top-stats": ["facility-grid"] },
+};
+
+/** Where a section of the editor shows on the public page (its own block, or the design block it is drawn in). */
+export function publicAnchor(pageKey: PageKey, sectionKey: string, published = true): string {
+  const designBlock = REPLACES[pageKey]?.[sectionKey]?.[0];
+  if ((pageKey === "infrastructure" || pageKey === "projects") && sectionKey === "top-stats") return designBlock!;
+  // Until the section is published the website still shows the design block it will replace.
+  return !published && designBlock ? designBlock : sectionKey;
+}
+
+type Published = PublicPageDto["sections"][number];
+
+/** Published "top-stats" of Infrastructure and Key Projects in the shape of the design block of that page. */
+function adaptToDesign(pageKey: PageKey, s: Published, design: FallbackSection[]): Published | null {
+  if (s.sectionKey !== "top-stats" || (pageKey !== "infrastructure" && pageKey !== "projects")) return null;
+  const target = REPLACES[pageKey]!["top-stats"]![0]!;
+  const base = design.find((x) => x.sectionKey === target);
+  if (!base) return null;
+  const rows = ((s.data.items as Obj[] | undefined) ?? []).filter((i) => i.visible !== false);
+  if (rows.length === 0) return null;
+  const withUnit = (i: Obj): Obj => {
+    const unit = (i.unit ?? {}) as { en?: string; mr?: string };
+    const v = String(i.value ?? "");
+    return { en: [v, unit.en].filter(Boolean).join(" "), mr: [v, unit.mr || unit.en].filter(Boolean).join(" ") };
+  };
+  const items = pageKey === "infrastructure" ? rows.map((i) => ({ label: i.title, value: withUnit(i) })) : rows.map((i) => ({ label: i.title, value: i.value, unit: i.unit, icon: i.icon }));
+  return { ...s, sectionKey: target, sortOrder: base.sortOrder, data: { ...base.data, ...filled({ heading: s.data.heading }), items } };
+}
+
+const isObj = (v: unknown): v is Obj => !!v && typeof v === "object" && !Array.isArray(v);
+/** Fields that hold a picture, file or link of an item (imageId, logoIds, iconUrl, iconImage, …). */
+const MEDIA_KEY = /(Ids?|Url|iconImage)$/;
+const itemName = (v: unknown): string => (isObj(v) ? labelOf(v.title ?? v.name ?? v.label ?? v.heading ?? v.skillName ?? v.question) : "");
+
+/**
+ * The pictures of the design are files of the website, not uploads, so the editor cannot store them. A published
+ * section therefore keeps the design picture wherever its own is empty: for the section itself, and for a list item
+ * whose title is still the one of the design (a retitled or new item never gets the picture of another item).
+ */
+function fillDesignMedia(data: unknown, design: unknown): unknown {
+  if (Array.isArray(data) && Array.isArray(design)) {
+    const byName = new Map<string, unknown>();
+    for (const d of design) if (itemName(d)) byName.set(itemName(d), d);
+    return data.map((item) => (itemName(item) && byName.has(itemName(item)) ? fillDesignMedia(item, byName.get(itemName(item))) : item));
+  }
+  if (isObj(data) && isObj(design)) {
+    const out: Obj = { ...data };
+    for (const [k, v] of Object.entries(design)) {
+      if (MEDIA_KEY.test(k)) {
+        if (!has(out[k])) out[k] = v;
+      } else if (k in out && (isObj(v) || Array.isArray(v))) out[k] = fillDesignMedia(out[k], v);
+    }
+    return out;
+  }
+  return data;
+}
+
 /** Home sections that always sit on their design block, whatever else of the page is published. */
 const DESIGN_BASE = new Set(["about-cards", "welcome-video", "home-gallery", "whats-new"]);
 
@@ -289,10 +372,13 @@ const HERO_KEYS = new Set(["hero", "page-hero", "about-hero"]);
 
 function withSections(pageKey: PageKey, page: PublicPageDto | null, override: FallbackSection[] | null): PublicPageDto {
   const cms = hasPublishedCms(pageKey, page?.sections ?? []);
-  // In published mode the design's sample blocks are dropped, but its hero stays until a banner takes its place:
-  // a page never loses its top block because one section further down was published.
-  const designHero = (FALLBACK_SECTIONS[pageKey] ?? []).filter((s) => HERO_KEYS.has(s.sectionKey));
-  const fallbacks = (override ?? (cms ? [...designHero, ...(LIVE_EXTRAS[pageKey] ?? []), ...liveBlocks(pageKey)] : (FALLBACK_SECTIONS[pageKey] ?? []))).filter((s) => pageKey !== "home" || !HOME_HIDDEN.has(s.sectionKey));
+  // Section by section: a published section takes the place of its design block; every block nobody has published
+  // yet keeps its design content, so editing one card never empties the rest of the page. In published mode the
+  // blocks fed by records (projects, schemes, announcements) stop showing sample rows.
+  const design = FALLBACK_SECTIONS[pageKey] ?? [];
+  const liveKeys = new Set(LIVE_BLOCKS[pageKey] ?? []);
+  const liveExtras = cms ? (LIVE_EXTRAS[pageKey] ?? []) : [];
+  const fallbacks = (override ?? (cms ? [...design.filter((s) => !liveKeys.has(s.sectionKey)), ...liveExtras, ...liveBlocks(pageKey)] : design)).filter((s) => pageKey !== "home" || !HOME_HIDDEN.has(s.sectionKey));
   const welcomeData = pageKey === "home" ? (page?.sections.find((s) => s.sectionKey === "welcome")?.data as Obj | undefined) : undefined;
   const published = (page?.sections ?? [])
     .filter((s) => pageKey !== "home" || !HOME_HIDDEN.has(s.sectionKey))
@@ -304,7 +390,7 @@ function withSections(pageKey: PageKey, page: PublicPageDto | null, override: Fa
       const base = { ...f.data, ...filled({ subheading: welcomeData.body, mainImageId: welcomeData.imageId }) };
       return { ...s, data: fillLabels(s.sectionKey, s.data as Obj, base) };
     }
-    return f ? { ...s, data: fillLabels(s.sectionKey, s.data as Obj, f.data) } : s;
+    return f ? { ...s, data: fillDesignMedia(fillLabels(s.sectionKey, s.data as Obj, f.data), f.data) as Obj } : s;
   });
   // The published About cards are the About block; the "welcome" section would draw the same block a second time.
   if (pageKey === "home" && welcomeData && published.some((s) => s.sectionKey === "about-cards")) {
@@ -345,11 +431,25 @@ function withSections(pageKey: PageKey, page: PublicPageDto | null, override: Fa
       published.splice(stripAt, 1);
     }
   }
+  // Design blocks that are gone: replaced by a published section with another key, or switched off in the editor
+  // ("Show this section" off hides the block, also while it still has its design content).
+  const replaces = REPLACES[pageKey] ?? {};
+  const hidden = new Set(page?.hiddenSections ?? []);
+  const gone = new Set<string>(hidden);
+  for (const key of [...published.map((s) => s.sectionKey), ...liveExtras.map((s) => s.sectionKey), ...hidden]) for (const k of replaces[key] ?? []) gone.add(k);
+  // Stats typed in the editor are drawn in the design's own block of the page (facility tiles, stats strip).
+  for (let i = 0; i < published.length; i++) {
+    const adapted = adaptToDesign(pageKey, published[i]!, design);
+    if (adapted) published[i] = adapted;
+  }
   const have = new Set(published.map((s) => s.sectionKey));
   const extra = fallbacks
-    .filter((s) => !have.has(s.sectionKey) && !(s.skipIfPresent ?? []).some((k) => have.has(k)))
+    .filter((s) => !have.has(s.sectionKey) && !gone.has(s.sectionKey) && !(s.skipIfPresent ?? []).some((k) => have.has(k)))
     .map((s) => ({ sectionKey: s.sectionKey, sortOrder: s.sortOrder, data: s.data, publishedAt: null }));
-  const order = (s: { sectionKey: string; sortOrder: number }) => (pageKey === "home" ? (HOME_ORDER[s.sectionKey] ?? s.sortOrder) : s.sortOrder);
+  // Inner pages follow the order of the design: a published section sits where its design block was.
+  const designOrder = new Map(design.map((s) => [s.sectionKey, s.sortOrder]));
+  const order = (s: { sectionKey: string; sortOrder: number }) =>
+    pageKey === "home" ? (HOME_ORDER[s.sectionKey] ?? s.sortOrder) : override ? s.sortOrder : (designOrder.get(s.sectionKey) ?? designOrder.get((replaces[s.sectionKey] ?? [])[0] ?? "") ?? s.sortOrder);
   return {
     pageKey,
     seo: page?.seo ?? { titleEn: null, titleMr: null, descriptionEn: null, descriptionMr: null, shareImageId: null },

@@ -1,4 +1,5 @@
 import type { PageKey } from "@/config/pages";
+import { findSection } from "@/config/sections";
 import { FALLBACK_SECTIONS } from "@/content/fallback";
 import { marathiFor } from "@/i18n/mr-fallback";
 
@@ -99,4 +100,71 @@ export function bannerSeed(pageKey: PageKey, heroData: Obj | null | undefined): 
     description: text(d.body),
     ...(ctas.length ? { ctas } : {}),
   };
+}
+
+const MEDIA_ID = /^[a-z0-9]{10,40}$/;
+
+/** Design content in the shape an editor form can hold: Marathi filled in, site picture files left out. */
+function formReady(v: unknown): unknown {
+  if (Array.isArray(v)) return v.map(formReady).filter((x) => x !== undefined);
+  if (v && typeof v === "object") {
+    const o = v as Obj;
+    const keys = Object.keys(o);
+    if (keys.length > 0 && keys.every((k) => k === "en" || k === "mr")) return text(o);
+    const out: Obj = {};
+    for (const k of keys) {
+      const val = o[k];
+      // Pictures of the design are files of the website ("/images/…"), not uploads: the field starts empty and the
+      // public page keeps the design picture until one is uploaded.
+      if (/Ids?$/.test(k)) {
+        if (typeof val === "string" && MEDIA_ID.test(val)) out[k] = val;
+        else if (Array.isArray(val)) out[k] = val.filter((x) => typeof x === "string" && MEDIA_ID.test(x));
+        continue;
+      }
+      if (typeof val === "string" && val.startsWith("/images/")) continue;
+      const next = formReady(val);
+      if (next !== undefined) out[k] = next;
+    }
+    return out;
+  }
+  return v;
+}
+
+/**
+ * What any other section card shows before it has been saved: the design content of the block with the same key,
+ * so the editor changes what is on the website instead of typing it again. Nothing is stored until it is saved.
+ */
+export function designSeed(pageKey: PageKey, sectionKey: string, slug?: string): Obj | undefined {
+  const d = (FALLBACK_SECTIONS[pageKey] ?? []).find((s) => s.sectionKey === sectionKey)?.data;
+  if (!d) return undefined;
+  // "list:success-stories" is a design shorthand for the website's own stories list; the editor stores the address.
+  const data = JSON.parse(JSON.stringify(formReady(d)).replaceAll('"list:success-stories"', JSON.stringify(`/${slug ?? ""}/success-stories`))) as Obj;
+  const schema = findSection(pageKey, sectionKey)?.schema;
+  if (!schema) return data;
+  // Fit the design content to what the section can store: drop design-only fields, and list rows whose required
+  // picture or file is a site file (the editor would refuse to save them until something is uploaded).
+  for (let round = 0; round < 30; round++) {
+    const r = schema.safeParse(data);
+    if (r.success) break;
+    let changed = false;
+    for (const issue of r.error.issues) {
+      const path = issue.path as (string | number)[];
+      if (issue.code === "unrecognized_keys") {
+        const at = path.reduce<unknown>((o, k) => (o as Record<string | number, unknown> | undefined)?.[k], data);
+        if (at && typeof at === "object") for (const k of (issue as unknown as { keys: string[] }).keys) delete (at as Obj)[k];
+        changed = true;
+      } else if (typeof path.at(-1) === "string" && /Ids?$/.test(path.at(-1) as string)) {
+        const i = path.findLastIndex((k) => typeof k === "number");
+        if (i < 0) continue;
+        const list = path.slice(0, i).reduce<unknown>((o, k) => (o as Record<string | number, unknown> | undefined)?.[k], data);
+        if (Array.isArray(list) && (path[i] as number) < list.length) {
+          list.splice(path[i] as number, 1);
+          changed = true;
+          break; // indexes moved: validate again
+        }
+      }
+    }
+    if (!changed) break;
+  }
+  return data;
 }
