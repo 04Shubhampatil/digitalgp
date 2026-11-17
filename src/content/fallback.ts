@@ -326,6 +326,25 @@ function withSections(pageKey: PageKey, page: PublicPageDto | null, override: Fa
     for (let i = published.length - 1; i >= 0; i--) if (drop.has(published[i]!.sectionKey)) published.splice(i, 1);
     if (filledBanner) for (let i = fallbacks.length - 1; i >= 0; i--) if (HERO_KEYS.has(fallbacks[i]!.sectionKey)) fallbacks.splice(i, 1);
   }
+  // Schemes: the "Category strip" card edits the labels of the scheme levels strip (Central / State / District) and
+  // can switch a level off; it is not drawn as a second row under it. Categories are matched to levels by their key.
+  if (pageKey === "schemes") {
+    const stripAt = published.findIndex((s) => s.sectionKey === "category-strip");
+    const levelsAt = fallbacks.findIndex((s) => s.sectionKey === "scheme-levels");
+    if (stripAt >= 0 && levelsAt >= 0) {
+      const cats = ((published[stripAt]!.data as Obj).items as Obj[] | undefined) ?? [];
+      const levels = fallbacks[levelsAt]!;
+      const items = ((levels.data.items as Obj[] | undefined) ?? [])
+        .map((it) => {
+          const hit = cats.find((c) => String(c.key ?? "").trim().toUpperCase() === it.level);
+          if (!hit) return it;
+          return hit.active === false ? null : { ...it, label: has(hit.label) ? hit.label : it.label };
+        })
+        .filter((x): x is Obj => x !== null);
+      fallbacks[levelsAt] = { ...levels, data: { ...levels.data, items } };
+      published.splice(stripAt, 1);
+    }
+  }
   const have = new Set(published.map((s) => s.sectionKey));
   const extra = fallbacks
     .filter((s) => !have.has(s.sectionKey) && !(s.skipIfPresent ?? []).some((k) => have.has(k)))

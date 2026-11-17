@@ -194,3 +194,21 @@ describe("inner pages in published mode", () => {
     expect((seed.steps as { year: string; done: boolean }[]).find((s) => s.year === "2025")!.done).toBe(false);
   });
 });
+
+describe("Schemes: category strip edits the scheme levels strip", () => {
+  const out = withFallback("schemes", page("schemes", [
+    { sectionKey: "category-strip", data: { items: [
+      { icon: "landmark", label: { en: "Union schemes" }, key: "central", active: true },
+      { icon: "map", label: { en: "State" }, key: "state", active: false },
+    ] } },
+  ]));
+  it("is not drawn as a second strip", () => {
+    expect(keys(out)).not.toContain("category-strip");
+    expect(keys(out)).toContain("scheme-levels");
+  });
+  it("renames a level and hides one that is switched off", () => {
+    const items = out.sections.find((s) => s.sectionKey === "scheme-levels")!.data.items as { level: string; label: { en: string } }[];
+    expect(items.map((i) => i.level)).toEqual(["CENTRAL", "DISTRICT"]);
+    expect(items[0]!.label).toEqual({ en: "Union schemes" });
+  });
+});

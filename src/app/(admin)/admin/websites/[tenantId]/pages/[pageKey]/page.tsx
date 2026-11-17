@@ -37,6 +37,8 @@ const PUBLIC_ANCHOR: Record<string, string> = {
   "vision-mission": "about-vision",
   "roles-cards": "about-roles",
   "emergency-services": "about-emergency",
+  // Schemes: the category strip edits the scheme levels strip.
+  "category-strip": "scheme-levels",
 };
 
 function editorBlocks<T extends { sectionKey: string }>(pageKey: string, sections: T[]): T[][] {
