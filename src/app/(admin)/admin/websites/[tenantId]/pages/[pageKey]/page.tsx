@@ -99,6 +99,24 @@ export default async function PageEditor({ params, searchParams }: { params: Pro
   const welcomeData = (welcomeSection?.draft?.data ?? welcomeSection?.published?.data) as Record<string, unknown> | undefined;
   const sitePublic = tenant.status === "PUBLISHED" && page.isEnabled;
 
+  // The list screens (projects, schemes, announcements, gallery, contact details) feed one block of the public page:
+  // the same "View on website" link as on the section cards. Several keys = the first block found on the page.
+  const LIST_BLOCK: Record<string, string> = {
+    projects: "project-showcase",
+    schemes: "scheme-showcase",
+    announcements: "live-announcements,announce-feed",
+    gallery: "photo-gallery",
+    contact: "contact-cards,contact-cards-figma",
+  };
+  const listView =
+    sitePublic && LIST_BLOCK[pageKey] ? (
+      <div className="-mb-2 flex justify-end">
+        <a href={`${pageHref(tenant.slug, pageKey)}?highlight=${LIST_BLOCK[pageKey]}`} target="_blank" rel="noopener" className="inline-flex h-8 items-center gap-1.5 rounded-button border border-line bg-surface px-3 text-xs font-semibold text-primary hover:bg-surface-soft">
+          <ExternalLink className="size-3.5" aria-hidden /> {t("viewOnSite")}
+        </a>
+      </div>
+    ) : null;
+
   const renderSection = (section: (typeof ordered)[number]) => {
     const spec = editorSpec(pageKey, section.sectionKey);
     if (!spec) return null;
@@ -118,7 +136,7 @@ export default async function PageEditor({ params, searchParams }: { params: Pro
         section={section}
         capabilities={user.capabilities}
         defaultOpen
-        initialData={section.sectionKey === "banner" ? seed : (sectionSeed(pageKey, section.sectionKey, welcomeData) ?? (!section.draft && !section.published ? designSeed(pageKey, section.sectionKey, tenant.slug) : undefined))}
+        initialData={section.sectionKey === "banner" ? seed : (sectionSeed(pageKey, section.sectionKey, welcomeData) ?? (!section.draft && !section.published ? designSeed(pageKey, section.sectionKey, tenant.slug, tenant.settings.contact?.email) : undefined))}
         viewHref={sitePublic ? `${pageHref(tenant.slug, pageKey)}?highlight=${PUBLIC_ANCHOR[section.sectionKey] ?? publicAnchor(pageKey, section.sectionKey, !!section.published)}` : undefined}
       />
     );
@@ -145,6 +163,7 @@ export default async function PageEditor({ params, searchParams }: { params: Pro
 
       <div className="grid gap-4">
         {/* Key Projects, Schemes, Announcements, Gallery and Contact have no registered sections: their content is a list with its own workflow. */}
+        {listView}
         {pageKey === "projects" && <ProjectsManager user={user} tenantId={tenantId} basePath={`/admin/websites/${tenantId}/pages/projects`} stage={stage} />}
 
         {pageKey === "schemes" && <SchemesManager user={user} tenantId={tenantId} basePath={`/admin/websites/${tenantId}/pages/schemes`} level={level} />}

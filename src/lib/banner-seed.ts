@@ -130,12 +130,180 @@ function formReady(v: unknown): unknown {
   return v;
 }
 
+const bi = (en: string, mr: string): Text => ({ en, mr });
+const rows = (v: unknown): Obj[] => (Array.isArray(v) ? (v as Obj[]) : []);
+const str = (v: unknown): string | undefined => (typeof v === "string" && v ? v : undefined);
+const pick = <T,>(list: readonly T[], i: number): T => list[i % list.length]!;
+/** Drop the keys that have no value, so optional fields stay absent instead of being stored empty. */
+const compact = (o: Obj): Obj => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined && v !== ""));
+/** "+91 12345 67890" → "+911234567890" (the form of a phone number the editor stores). */
+const phoneOf = (v: unknown): string | undefined => {
+  const p = String(v ?? "").replace(/[^\d+]/g, "");
+  return /^\+?\d{10,15}$/.test(p) ? p : undefined;
+};
+/** "10:00 AM - 12:00 PM" → ["10:00", "12:00"]. */
+function clockRange(v: unknown): [string | undefined, string | undefined] {
+  const out = [...String(v ?? "").matchAll(/(\d{1,2}):(\d{2})\s*(AM|PM)/gi)].map((m) => {
+    const h = (Number(m[1]) % 12) + (m[3]!.toUpperCase() === "PM" ? 12 : 0);
+    return `${String(h).padStart(2, "0")}:${m[2]}`;
+  });
+  return [out[0], out[1]];
+}
+/** "100% Coverage" → value "100%" + unit "Coverage" (Marathi unit from the same split of the Marathi text). */
+function valueAndUnit(v: unknown): { value: string; unit?: Text } {
+  const t = text(v) ?? { en: String(v ?? "") };
+  const [value = "", ...rest] = (t.en ?? "").split(" ");
+  const mrParts = (t.mr ?? "").split(" ");
+  const unitEn = rest.join(" ");
+  const unitMr = mrParts.length > 1 ? mrParts.slice(1).join(" ") : (marathiFor(unitEn) ?? "");
+  return { value: value.slice(0, 40), ...(unitEn ? { unit: { en: unitEn, mr: unitMr } } : {}) };
+}
+
+const STAT_ICONS = ["users", "house", "droplets", "zap", "recycle", "lightbulb", "road", "bus", "health", "school", "tree", "building"] as const;
+const CATEGORY_ICONS = ["users", "heart", "sprout", "health", "education", "building"] as const;
+const ACCENTS = ["#135130", "#F5871F", "#1A62E0", "#7B2CBF"] as const;
+
 /**
- * What any other section card shows before it has been saved: the design content of the block with the same key,
- * so the editor changes what is on the website instead of typing it again. Nothing is stored until it is saved.
+ * Sections whose design block has another key (and another shape): the design content of that block, rewritten into
+ * the fields of the section, so these cards also open with what the website shows today.
  */
-export function designSeed(pageKey: PageKey, sectionKey: string, slug?: string): Obj | undefined {
-  const d = (FALLBACK_SECTIONS[pageKey] ?? []).find((s) => s.sectionKey === sectionKey)?.data;
+const BRIDGES: Partial<Record<PageKey, Record<string, (block: (key: string) => Obj | undefined, officeEmail?: string) => Obj | undefined>>> = {
+  infrastructure: {
+    "top-stats": (b) => {
+      const d = b("facility-grid");
+      return d && { heading: d.heading, items: rows(d.items).map((i, n) => ({ icon: pick(STAT_ICONS, n), title: i.label, ...valueAndUnit(i.value), visible: true })) };
+    },
+  },
+  projects: {
+    "top-stats": (b) => {
+      const d = b("quick-stats");
+      return d && { items: rows(d.items).map((i, n) => compact({ icon: str(i.icon) ?? pick(STAT_ICONS, n), title: i.label, value: String(i.value ?? ""), unit: i.unit, visible: true })) };
+    },
+  },
+  services: {
+    "service-links": (b) => {
+      const d = b("rts-grid");
+      return d && { items: rows(d.items).map((i) => compact({ icon: "file", title: i.label, description: i.caption, href: i.href, visible: true })) };
+    },
+    "service-categories": (b) => {
+      const d = b("action-cards");
+      return (
+        d && {
+          items: rows(d.items).map((i, n) =>
+            compact({ icon: pick(["info", "users", "file", "heart"], n), title: i.title, description: i.body, features: rows(i.bullets).slice(0, 4), buttonText: i.action, buttonLink: i.href, accentColour: pick(ACCENTS, n) }),
+          ),
+        }
+      );
+    },
+    "top-stats": (b) => {
+      const d = b("live-stats");
+      return d && { variant: "band", items: rows(d.items).map((i) => compact({ icon: str(i.icon) ?? "file", title: i.title, value: String(i.value ?? ""), background: i.background, visible: i.visible !== false })) };
+    },
+    help: (b) => {
+      const d = b("help-card");
+      if (!d) return undefined;
+      const hours = text(d.phoneHours)?.en?.slice(0, 120);
+      // The design lists questions as links; answers are typed in the editor, so the question list starts empty.
+      return { heading: d.heading, subtitle: d.body, contact: [compact({ phone: phoneOf(d.phone), email: str(d.email), hours })], faqs: [] };
+    },
+  },
+  announcements: {
+    "announcement-categories": (b) => {
+      const d = b("announce-categories");
+      return d && { items: rows(d.items).map((i, n) => ({ label: i.label, icon: pick(CATEGORY_ICONS, n) })) };
+    },
+    calendar: (b) => {
+      const d = b("announce-feed");
+      return (
+        d && {
+          title: d.calendarTitle,
+          defaultMonthView: "current",
+          eventsToShow: 4,
+          visible: true,
+          events: rows(d.events).map((e) => {
+            const [startTime, endTime] = clockRange(e.time);
+            return compact({ date: e.date, title: e.title, colour: str(e.color) ?? "#135130", startTime, endTime });
+          }),
+        }
+      );
+    },
+    "deadline-cards": (b) => {
+      const d = b("deadlines-downloads");
+      return d && { items: rows(d.deadlines).map((i) => compact({ icon: "calendar", date: (text(i.date)?.en ?? "").slice(0, 60), title: i.title, subtitle: i.caption })) };
+    },
+    "support-cards": (b) => {
+      const d = b("service-strip");
+      return d && { heading: d.heading, layout: "strip", items: rows(d.items).map((i, n) => compact({ icon: pick(CATEGORY_ICONS, n), title: i.label, description: i.caption, link: i.href, visible: true })) };
+    },
+  },
+  contact: {
+    "contact-cards": (b) => {
+      const d = b("contact-cards-figma");
+      if (!d) return undefined;
+      const l = (d.labels ?? {}) as Obj;
+      const reach = [str(d.phone), str(d.email)].filter(Boolean).join("\n");
+      return {
+        items: [
+          { title: l.inquiries, details: { en: reach, mr: reach }, socialLinks: [] },
+          { title: l.hours, details: d.hours, socialLinks: [] },
+          { title: l.address, details: d.address, socialLinks: [] },
+        ].filter((i) => i.title),
+      };
+    },
+  },
+  grievance: {
+    "complaint-form": (b, officeEmail) => ({
+      heading: b("grievance-register")?.heading ?? bi("Register Your Complaint", "आपली तक्रार नोंदवा"),
+      successMessage: bi("Your complaint has been registered.", "आपली तक्रार नोंदवली गेली आहे."),
+      submitButtonText: bi("Submit Complaint", "तक्रार सादर करा"),
+      // Complaints go to the office's own address (website settings), never to an address taken from the design.
+      ...(officeEmail ? { recipientEmail: officeEmail } : {}),
+      captchaEnabled: false,
+      allowFileUpload: true,
+      maxFileSizeMb: 5,
+      allowedFileTypes: ["pdf", "jpg", "jpeg", "png"],
+    }),
+    "track-complaint": (b) => ({
+      heading: b("grievance-track")?.heading ?? bi("Track Your Complaint", "आपल्या तक्रारीची स्थिती"),
+      searchLabel: bi("Enter Complaint ID / Mobile Number", "तक्रार क्रमांक / मोबाईल क्रमांक लिहा"),
+      placeholder: bi("Complaint ID (GRV-XXXXXXXX) or 10-digit mobile number", "तक्रार क्रमांक (GRV-XXXXXXXX) किंवा १० अंकी मोबाईल क्रमांक"),
+      buttonText: bi("Track Status", "स्थिती तपासा"),
+      noResultMessage: bi("No complaint found with this code on this website.", "या कोडची तक्रार या संकेतस्थळावर आढळली नाही."),
+      errorMessage: bi("Enter a complaint ID like GRV-XXXXXXXX or the 10-digit mobile number used on the complaint.", "GRV-XXXXXXXX असा तक्रार क्रमांक किंवा तक्रारीत दिलेला १० अंकी मोबाईल क्रमांक लिहा."),
+    }),
+  },
+};
+
+/**
+ * Texts the website shows from its own wording while a section leaves them empty. The editor needs them filled in to
+ * save, so the card opens with the same wording.
+ */
+const DEFAULTS: Partial<Record<PageKey, Record<string, Obj>>> = {
+  grievance: {
+    "monthly-report": {
+      cardLabels: {
+        total: bi("Total Complaints", "एकूण तक्रारी"),
+        resolved: bi("Resolved Complaints", "निराकरण झालेल्या तक्रारी"),
+        pending: bi("Pending Complaints", "प्रलंबित तक्रारी"),
+        resolutionRate: bi("Resolution Percentage", "निराकरण टक्केवारी"),
+      },
+    },
+  },
+  contact: {
+    "feedback-form": { successMessage: bi("Thank you. Your feedback has been sent to the Gram Panchayat.", "धन्यवाद. आपला अभिप्राय ग्रामपंचायतीकडे पाठवला आहे.") },
+    "volunteer-registration": { successMessage: bi("Thank you for registering. The Gram Panchayat will contact you.", "नोंदणीबद्दल धन्यवाद. ग्रामपंचायत आपल्याशी संपर्क साधेल.") },
+  },
+};
+
+/**
+ * What any other section card shows before it has been saved: the design content of the block with the same key (or
+ * of the design block the section takes the place of), so the editor changes what is on the website instead of typing
+ * it again. Nothing is stored until it is saved.
+ */
+export function designSeed(pageKey: PageKey, sectionKey: string, slug?: string, officeEmail?: string): Obj | undefined {
+  const block = (key: string) => (FALLBACK_SECTIONS[pageKey] ?? []).find((s) => s.sectionKey === key)?.data;
+  const own = block(sectionKey);
+  const d = own ? { ...DEFAULTS[pageKey]?.[sectionKey], ...own } : BRIDGES[pageKey]?.[sectionKey]?.(block, officeEmail);
   if (!d) return undefined;
   // "list:success-stories" is a design shorthand for the website's own stories list; the editor stores the address.
   const data = JSON.parse(JSON.stringify(formReady(d)).replaceAll('"list:success-stories"', JSON.stringify(`/${slug ?? ""}/success-stories`))) as Obj;
