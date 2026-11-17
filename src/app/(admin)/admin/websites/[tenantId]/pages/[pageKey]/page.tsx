@@ -92,12 +92,19 @@ export default async function PageEditor({ params, searchParams }: { params: Pro
   const heroData = (heroSection?.draft?.data ?? heroSection?.published?.data) as Record<string, unknown> | undefined;
   const seed = hasBanner ? bannerSeed(pageKey, heroData) : undefined;
 
+  const hasAboutCards = ordered.some((s) => s.sectionKey === "about-cards");
+  const welcomeSection = ordered.find((s) => s.sectionKey === "welcome");
+  const welcomeData = (welcomeSection?.draft?.data ?? welcomeSection?.published?.data) as Record<string, unknown> | undefined;
   const sitePublic = tenant.status === "PUBLISHED" && page.isEnabled;
 
   const renderSection = (section: (typeof ordered)[number]) => {
     const spec = editorSpec(pageKey, section.sectionKey);
     if (!spec) return null;
     if (hasBanner && section.sectionKey === "hero") return null;
+    // "Our leaders" is not shown on the home page (it lives on About), so its card would change nothing here.
+    if (pageKey === "home" && section.sectionKey === "leaders") return null;
+    // The home About block is edited in the "About the village cards" card; the older "welcome" card fed the same block.
+    if (pageKey === "home" && section.sectionKey === "welcome" && hasAboutCards) return null;
     return (
       <SectionEditor
         key={section.sectionKey}
@@ -107,7 +114,7 @@ export default async function PageEditor({ params, searchParams }: { params: Pro
         section={section}
         capabilities={user.capabilities}
         defaultOpen
-        initialData={section.sectionKey === "banner" ? seed : sectionSeed(pageKey, section.sectionKey)}
+        initialData={section.sectionKey === "banner" ? seed : sectionSeed(pageKey, section.sectionKey, welcomeData)}
         viewHref={sitePublic ? `${pageHref(tenant.slug, pageKey)}?highlight=${PUBLIC_ANCHOR[section.sectionKey] ?? section.sectionKey}` : undefined}
       />
     );

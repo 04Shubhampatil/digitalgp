@@ -194,6 +194,18 @@ export const SCHEMES_SECTIONS: SectionDefinition[] = [
 export const HOME_EXTRA_SECTIONS: SectionDefinition[] = [
   { key: "banner", sortOrder: 2, schema: bannerSchema },
   {
+    // "Welcome to <village>" video card: thumbnail picture, the button text and the video link (YouTube / Vimeo).
+    key: "welcome-video",
+    sortOrder: 50,
+    schema: strict({ heading: bilingualSchema.optional(), watchLabel: bilingualSchema.optional(), imageId: mediaId.optional(), videoUrl: href.optional() }),
+  },
+  {
+    // Photo strip at the bottom of the home page (the full gallery lives on the Gallery page).
+    key: "home-gallery",
+    sortOrder: 56,
+    schema: strict({ heading: bilingualSchema.optional(), photos: list(strict({ imageId: mediaId, caption: bilingualSchema.optional() }), 12) }),
+  },
+  {
     // Manual fallback for the live weather card (used when no provider is configured or it fails).
     key: "weather",
     sortOrder: 22,
@@ -208,6 +220,7 @@ export const HOME_EXTRA_SECTIONS: SectionDefinition[] = [
     sortOrder: 42,
     schema: strict({
       heading: bilingualSchema.optional(),
+      viewAll: viewAllSchema.optional(),
       // imageId: the row thumbnail (optional; ownership-checked like every *Id media reference).
       items: list(strict({ title: bilingualSchema, date: text(60), status: text(40), href: href.optional(), imageId: mediaId.optional() }), 12),
     }),

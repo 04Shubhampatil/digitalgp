@@ -34,6 +34,8 @@ export function WelcomeSection(props: SectionProps) {
     heading: { [locale]: isAbout ? heading : designHeading },
     subheading: body ? { [locale]: body } : ABOUT_DESIGN.subheading,
     cards: d.cards?.length ? d.cards : ABOUT_DESIGN.cards,
+    // The section's photo is the large picture of the collage.
+    ...(d.imageId ? { mainImageId: d.imageId } : {}),
   };
   return <AboutCardsSection {...props} data={aboutData} />;
 }

@@ -170,14 +170,15 @@ export function SarpanchMessageSection({ slug, locale, data }: SectionProps) {
  * `welcome-video`: "Welcome to <village>" photo with a play prompt (Figma 375:12438). Frontend-only
  * placeholder until the backend offers a video/welcome-media section.
  */
-export function WelcomeVideoSection({ locale, data, tenantName }: SectionProps) {
-  const d = data as { heading?: Bilingual; watchLabel?: Bilingual; imageUrl?: string; videoUrl?: string };
+export function WelcomeVideoSection({ slug, locale, data, tenantName }: SectionProps) {
+  const d = data as { heading?: Bilingual; watchLabel?: Bilingual; imageUrl?: string; /** Uploaded thumbnail (Home editor). */ imageId?: string; videoUrl?: string };
+  const picture = d.imageId ? publicMediaUrl(slug, d.imageId) : (d.imageUrl ?? "/images/figma/home-video.png");
   const label = pickText(d.watchLabel, locale);
   const inner = (
     <>
       {/* Figma 375:13109: the design's lakeside photo under a navy 40% tint, an 85px outlined play ring and the label. */}
       {/* eslint-disable-next-line @next/next/no-img-element -- static design asset */}
-      <img src={d.imageUrl ?? "/images/figma/home-video.png"} alt="" className="absolute inset-0 size-full object-cover" loading="lazy" />
+      <img src={picture} alt="" className="absolute inset-0 size-full object-cover" loading="lazy" />
       <span aria-hidden className="absolute inset-0 bg-[#000080]/40" />
       <span className="relative flex flex-col items-center gap-[11px] text-white">
         {/* Figma play_arrow: 85px ring (white 25% fill, 2px stroke) around an outlined play triangle. */}

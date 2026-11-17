@@ -32,17 +32,27 @@ function buttons(list: unknown): Obj[] {
 
 /**
  * What a section card shows before it has been saved, for sections whose design content the website already shows
- * (today: the home About block). Same rule as the banner: nothing is stored until the editor saves.
+ * (the home About block, Welcome video, Gallery strip and What's New). Same rule as the banner: nothing is stored until the editor saves.
  */
-export function sectionSeed(pageKey: PageKey, sectionKey: string): Obj | undefined {
-  if (pageKey !== "home" || sectionKey !== "about-cards") return undefined;
-  const d = (FALLBACK_SECTIONS.home ?? []).find((s) => s.sectionKey === "about-cards")?.data;
+export function sectionSeed(pageKey: PageKey, sectionKey: string, welcome?: Obj | null): Obj | undefined {
+  if (pageKey !== "home") return undefined;
+  const d = (FALLBACK_SECTIONS.home ?? []).find((s) => s.sectionKey === sectionKey)?.data;
   if (!d) return undefined;
+  // The design pictures of these blocks are site files, not uploads, so only their texts and links are prefilled.
+  if (sectionKey === "welcome-video") return { heading: text(d.heading), watchLabel: text(d.watchLabel) };
+  if (sectionKey === "home-gallery") return { heading: text(d.heading) };
+  if (sectionKey === "whats-new") {
+    const all = (d.viewAll ?? {}) as Obj;
+    return { heading: text(d.heading), ...(text(all.label) && typeof all.href === "string" ? { viewAll: { label: text(all.label), href: all.href } } : {}) };
+  }
+  if (sectionKey !== "about-cards") return undefined;
   const icons = ["landmark", "factory", "leaf"];
   const readMore = (d.readMore ?? {}) as Obj;
   return {
     heading: text(d.heading),
-    subheading: text(d.subheading),
+    // The older "About the village" section (welcome) holds the intro text and photo of the same block.
+    subheading: text(welcome?.body) ?? text(d.subheading),
+    ...(typeof welcome?.imageId === "string" && welcome.imageId ? { mainImageId: welcome.imageId } : {}),
     address: text(d.address),
     buttonText: text(readMore.label),
     ...(typeof readMore.href === "string" ? { buttonLink: readMore.href } : {}),

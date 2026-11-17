@@ -88,6 +88,14 @@ function fillLabels(sectionKey: string, data: Obj, fallback: Obj): Obj {
       }),
     };
   }
+  if (sectionKey === "welcome-video" || sectionKey === "home-gallery") {
+    // Empty fields (and an empty photo list) keep the design content.
+    return { ...fallback, ...filled(data) };
+  }
+  if (sectionKey === "whats-new") {
+    // Rows typed in the editor are shown as they are; with no rows the block keeps listing the announcements.
+    return has(data.items) ? { heading: fallback.heading, viewAll: fallback.viewAll, ...filled(data) } : { ...fallback, ...filled(data) };
+  }
   if (sectionKey === "about-cards") {
     // Published cards and pictures on top of the design block: what the editor left empty keeps the design value.
     return { ...fallback, ...filled(data) };
@@ -264,19 +272,32 @@ export function withFallback(pageKey: PageKey, page: PublicPageDto | null): Publ
   return withSections(pageKey, page, null);
 }
 
+/** Home sections that always sit on their design block, whatever else of the page is published. */
+const DESIGN_BASE = new Set(["about-cards", "welcome-video", "home-gallery", "whats-new"]);
+
 /** Hero blocks a published, filled-in `banner` takes the place of. */
 const HERO_KEYS = new Set(["hero", "page-hero", "about-hero"]);
 
 function withSections(pageKey: PageKey, page: PublicPageDto | null, override: FallbackSection[] | null): PublicPageDto {
   const cms = hasPublishedCms(pageKey, page?.sections ?? []);
   const fallbacks = (override ?? (cms ? [...(LIVE_EXTRAS[pageKey] ?? []), ...liveBlocks(pageKey)] : (FALLBACK_SECTIONS[pageKey] ?? []))).filter((s) => pageKey !== "home" || !HOME_HIDDEN.has(s.sectionKey));
+  const welcomeData = pageKey === "home" ? (page?.sections.find((s) => s.sectionKey === "welcome")?.data as Obj | undefined) : undefined;
   const published = (page?.sections ?? [])
     .filter((s) => pageKey !== "home" || !HOME_HIDDEN.has(s.sectionKey))
     .map((s) => {
     // The home About block always sits on its design block, also when other sections of the page are published.
-    const f = fallbacks.find((x) => x.sectionKey === s.sectionKey) ?? (s.sectionKey === "about-cards" ? (FALLBACK_SECTIONS[pageKey] ?? []).find((x) => x.sectionKey === s.sectionKey) : undefined);
+    const f = fallbacks.find((x) => x.sectionKey === s.sectionKey) ?? (DESIGN_BASE.has(s.sectionKey) ? (FALLBACK_SECTIONS[pageKey] ?? []).find((x) => x.sectionKey === s.sectionKey) : undefined);
+    if (f && s.sectionKey === "about-cards" && welcomeData) {
+      // One About block: the older "welcome" section's text and photo are the defaults under the About cards.
+      const base = { ...f.data, ...filled({ subheading: welcomeData.body, mainImageId: welcomeData.imageId }) };
+      return { ...s, data: fillLabels(s.sectionKey, s.data as Obj, base) };
+    }
     return f ? { ...s, data: fillLabels(s.sectionKey, s.data as Obj, f.data) } : s;
   });
+  // The published About cards are the About block; the "welcome" section would draw the same block a second time.
+  if (pageKey === "home" && welcomeData && published.some((s) => s.sectionKey === "about-cards")) {
+    for (let i = published.length - 1; i >= 0; i--) if (published[i]!.sectionKey === "welcome") published.splice(i, 1);
+  }
   // The Banner card of the editor is the page's hero. A filled-in banner replaces the hero (it is not added under
   // it); an empty one is skipped so the design's hero stays.
   const bannerAt = published.findIndex((s) => s.sectionKey === "banner");

@@ -100,3 +100,45 @@ describe("home About block (about-cards)", () => {
     expect((about(out).cards as unknown[]).length).toBe(3);
   });
 });
+
+describe("home Gallery strip, Welcome video and What's New", () => {
+  const sec = (out: PublicPageDto, key: string) => out.sections.find((s) => s.sectionKey === key)!.data as Record<string, unknown>;
+
+  it("gallery: uploaded photos replace the design photos; an empty list keeps them", () => {
+    const withPhotos = withFallback("home", page("home", [{ sectionKey: "home-gallery", data: { photos: [{ imageId: "media000001" }] } }]));
+    expect(sec(withPhotos, "home-gallery").photos).toEqual([{ imageId: "media000001" }]);
+    const empty = withFallback("home", page("home", [{ sectionKey: "home-gallery", data: { photos: [] } }]));
+    expect((sec(empty, "home-gallery").photos as unknown[]).length).toBeGreaterThan(2);
+  });
+
+  it("welcome video: a published link and thumbnail are used, the design text stays", () => {
+    const out = withFallback("home", page("home", [{ sectionKey: "welcome-video", data: { videoUrl: "https://youtu.be/abc", imageId: "media000002" } }]));
+    expect(sec(out, "welcome-video")).toMatchObject({ videoUrl: "https://youtu.be/abc", imageId: "media000002", watchLabel: { en: "Watch Village Story" } });
+  });
+
+  it("what's new: typed rows are shown as they are; with no rows the announcements list stays", () => {
+    const rows = withFallback("home", page("home", [{ sectionKey: "whats-new", data: { items: [{ title: { en: "Row" }, date: "1 Jan", status: "event" }] } }]));
+    expect(sec(rows, "whats-new").source).toBeUndefined();
+    expect(sec(rows, "whats-new").viewAll).toBeDefined();
+    const none = withFallback("home", page("home", [{ sectionKey: "whats-new", data: { heading: { en: "News" }, items: [] } }]));
+    expect(sec(none, "whats-new")).toMatchObject({ source: "announcements", heading: { en: "News" } });
+  });
+});
+
+describe("home About block: one block from the welcome section and the About cards", () => {
+  it("only welcome published: the welcome section draws the block", () => {
+    const out = withFallback("home", page("home", [{ sectionKey: "welcome", data: { heading: { en: "About" }, body: { en: "Intro" } } }]));
+    expect(keys(out)).toContain("welcome");
+    expect(keys(out)).not.toContain("about-cards");
+  });
+
+  it("both published: one About block, with the welcome text and photo as defaults", () => {
+    const out = withFallback("home", page("home", [
+      { sectionKey: "welcome", data: { heading: { en: "About" }, body: { en: "Intro" }, imageId: "media000009" } },
+      { sectionKey: "about-cards", data: { items: [{ icon: "leaf", title: { en: "Card" } }] } },
+    ]));
+    expect(keys(out)).not.toContain("welcome");
+    const d = out.sections.find((s) => s.sectionKey === "about-cards")!.data;
+    expect(d).toMatchObject({ subheading: { en: "Intro" }, mainImageId: "media000009" });
+  });
+});
