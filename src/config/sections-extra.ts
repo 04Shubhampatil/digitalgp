@@ -208,7 +208,8 @@ export const HOME_EXTRA_SECTIONS: SectionDefinition[] = [
     sortOrder: 42,
     schema: strict({
       heading: bilingualSchema.optional(),
-      items: list(strict({ title: bilingualSchema, date: text(60), status: text(40), href: href.optional() }), 12),
+      // imageId: the row thumbnail (optional; ownership-checked like every *Id media reference).
+      items: list(strict({ title: bilingualSchema, date: text(60), status: text(40), href: href.optional(), imageId: mediaId.optional() }), 12),
     }),
   },
   {

@@ -506,7 +506,7 @@ export const EXTRA_EDITORS: Partial<Record<PageKey, SectionEditorSpec[]>> = {
       groups: [group("current", "currentWeather", [txt("temperature", "temperature", 20, { required: true }), txt("humidity", "humidity", 20, { required: true }), txt("wind", "wind", 40, { required: true }), txt("feelsLike", "feelsLike", 20, { required: true }), txt("condition", "condition", 120, { required: true })])],
       items: list("forecast", "forecastDay", 7, [date("date", "date", { required: true }), icon("icon", { required: true }), txt("maxTemp", "maxTemp", 20, { required: true }), txt("minTemp", "minTemp", 20, { required: true })]),
     }),
-    section("whats-new", "whatsNew", { fields: [bi("heading", "heading")], items: list("items", "whatsNewItem", 12, [bi("title", "title", { required: true }), txt("date", "dateText", 60, { required: true }), txt("status", "status", 40, { required: true }), link("href")]) }),
+    section("whats-new", "whatsNew", { fields: [bi("heading", "heading")], items: list("items", "whatsNewItem", 12, [bi("title", "title", { required: true }), txt("date", "dateText", 60, { required: true }), txt("status", "status", 40, { required: true }), link("href"), img("imageId", "image")]) }),
     section("achievements", "achievements", {
       fields: [bi("heading", "heading")],
       items: list("items", "achievementItem", 10, [bi("title", "title", { required: true }), bi("description", "description"), txt("completedOn", "completedOn", 60, { required: true }), int("rank", "rank")]),

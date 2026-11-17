@@ -1,4 +1,5 @@
 import { marathiFor } from "@/i18n/mr-fallback";
+import { Megaphone } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { pair, pickText, type Bilingual } from "@/i18n/text";
@@ -31,7 +32,7 @@ const CHIP: Record<string, string> = {
   ongoing: "bg-[#ff9933]/15 text-[#ff9933]",
 };
 
-type NewsItem = { title?: B; date?: B | string; status?: string; imageUrl?: string; href?: string };
+type NewsItem = { title?: B; date?: B | string; status?: string; imageUrl?: string; /** Published row: thumbnail uploaded in the Home editor. */ imageId?: string; href?: string };
 
 /**
  * `whats-new`: "What's New This Week?" list with thumbnails and status chips (Figma 375:13391). Each row opens its
@@ -41,7 +42,7 @@ type NewsItem = { title?: B; date?: B | string; status?: string; imageUrl?: stri
 export async function WhatsNewSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public");
   const d = data as { heading?: B; source?: "announcements"; viewAll?: { label?: B; href?: string }; items?: NewsItem[] };
-  let items: NewsItem[] = d.items ?? [];
+  let items: NewsItem[] = (d.items ?? []).map((i) => (i.imageId && !i.imageUrl ? { ...i, imageUrl: publicMediaUrl(slug, i.imageId) } : i));
   if (d.source === "announcements") {
     const live = await listPublicAnnouncements(slug, { page: "home", limit: 5 }).catch(() => null);
     if (live && live.data.length > 0) {
@@ -82,9 +83,14 @@ export async function WhatsNewSection({ slug, locale, data }: SectionProps) {
         {items.map((n, i) => (
           <li key={i} className="border-b border-black last:border-b-0">
             <Link href={n.href ? resolveHref(n.href, slug) : d.viewAll?.href ? resolveHref(d.viewAll.href, slug) : pageHref(slug, "announcements")} className="flex min-h-[94px] items-center gap-[14px] py-[13px] hover:bg-[#f4faf6]">
-            {n.imageUrl && (
+            {n.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- static design asset / backend media
               <img src={n.imageUrl} alt="" width={92} height={68} className="h-[68px] w-[92px] shrink-0 rounded-[10px] object-cover" loading="lazy" />
+            ) : (
+              // A row without a picture keeps the thumbnail column, so every title starts on the same line.
+              <span aria-hidden className="flex h-[68px] w-[92px] shrink-0 items-center justify-center rounded-[10px] bg-[#e7f3e8] text-[#135130]">
+                <Megaphone className="size-7" />
+              </span>
             )}
             <div>
               <p className="text-[16px] leading-[24px] font-semibold text-black">{pickText(n.title, locale)}</p>
