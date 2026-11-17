@@ -22,7 +22,7 @@ export const FIGMA_HOME_SECTIONS: FallbackSection[] = [
       photos: [
         { imageUrl: "/images/figma/about-road.png", caption: { en: "Village entrance" } },
         { imageUrl: "/images/figma/about-aerial.png", caption: { en: "Aerial view" } },
-        { imageUrl: "/images/figma/home-hero.png", caption: { en: "Temple and village" } },
+        { imageUrl: "/images/figma/home-gallery-temple.webp", caption: { en: "Temple and village" } },
         // More of the design's gallery photos, so the arrows have something to slide through.
         { imageUrl: "/images/figma/pages/gal-p1.png", caption: { en: "Holi celebration", mr: "होळी उत्सव" } },
         { imageUrl: "/images/figma/pages/gal-p2.png", caption: { en: "Village festival", mr: "गाव उत्सव" } },

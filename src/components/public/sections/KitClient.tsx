@@ -45,18 +45,23 @@ export function ProjectTabs({
   tabs,
   items,
   labels,
+  viewAllLabel,
 }: {
   tabs: TabDef[];
   items: ProjectCard[];
   labels: ProjectLabels;
+  /** Figma shows one row of three cards with "View All Projects" under it; the button reveals the rest of the tab. */
+  viewAllLabel?: string;
 }) {
   const [active, setActive] = useState(tabs[0]?.key ?? "");
-  const shown = items.filter((p) => p.stage === active);
+  const [expanded, setExpanded] = useState(false);
+  const inTab = items.filter((p) => p.stage === active);
+  const shown = viewAllLabel && !expanded ? inTab.slice(0, 3) : inTab;
   return (
     <div>
       <div
         role="tablist"
-        className="flex flex-wrap justify-end gap-8 text-[14px]"
+        className="flex flex-wrap justify-end gap-8 text-[14px] lg:-mt-[35px]"
       >
         {tabs.map((t) => (
           <button
@@ -64,7 +69,10 @@ export function ProjectTabs({
             type="button"
             role="tab"
             aria-selected={t.key === active}
-            onClick={() => setActive(t.key)}
+            onClick={() => {
+              setActive(t.key);
+              setExpanded(false);
+            }}
             className={cn(
               "border-b-2 pb-1 font-medium",
               t.key === active
@@ -81,7 +89,7 @@ export function ProjectTabs({
           {labels.empty}
         </p>
       ) : (
-        <ul className="mt-5 grid gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-[18px]">
+        <ul className="mt-5 grid gap-6 lg:mt-[11px] md:grid-cols-2 lg:grid-cols-3 lg:gap-[18px]">
           {shown.map((p, i) => {
             // Published projects open their own page; placeholder cards jump to themselves (all their details are on the card).
             const id = `project-${p.stage.toLowerCase()}-${i + 1}`;
@@ -157,6 +165,13 @@ export function ProjectTabs({
             );
           })}
         </ul>
+      )}
+      {viewAllLabel && !expanded && inTab.length > 0 && (
+        <div className="mt-8 flex justify-center">
+          <button type="button" onClick={() => setExpanded(true)} className="inline-flex rounded-full border border-[#135130] bg-[#135130] px-4 py-2 text-[12.5px] font-medium text-white hover:opacity-90">
+            {viewAllLabel}
+          </button>
+        </div>
       )}
     </div>
   );

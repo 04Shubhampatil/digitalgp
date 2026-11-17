@@ -598,7 +598,7 @@ export function SupportStripSection({ slug, locale, data }: SectionProps) {
                     <Icon name={c.icon} className="size-11" />
                   </span>
                 )}
-                <span className={`leading-6 font-semibold text-black ${sp ? "mt-[22px] text-[17px]" : "mt-4 text-[16px]"}`}>
+                <span className={`leading-6 font-semibold text-black xl:-mx-4 ${sp ? "mt-[22px] text-[17px]" : "mt-4 text-[16px]"}`}>
                   {tx(c.title, locale)}
                 </span>
                 {tx(c.description, locale) && (

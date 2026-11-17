@@ -230,10 +230,11 @@ const ROW_GROUPS: { keys: string[]; cols: string; all?: boolean; /** Vertical pa
   // Figma home: 683px KPI column, the 556px ward card flush right (80px apart).
   // Home bands follow the Figma spacing: 38px below About, 20px to What's New, 53px to Weather, 64px to the video row.
   { keys: ["monthly-metrics", "ward-details"], cols: "xl:grid-cols-[683px_minmax(0,556px)] xl:justify-between", pad: "py-8 lg:pt-[38px] lg:pb-0" },
-  { keys: ["progress-tracker", "impact-grid"], cols: "xl:grid-cols-[567px_minmax(0,1fr)]" },
+  // Figma Key Projects: 41px between the gallery, the tracker row, the timeline row and the stories.
+  { keys: ["progress-tracker", "impact-grid"], cols: "xl:grid-cols-[567px_minmax(0,1fr)]", pad: "py-8 lg:pt-[9px] lg:pb-[20.5px]" },
   // The backend tracker uses the same card renderer; on its own it gets the same cream band.
   { keys: ["village-resolution-tracker"], cols: "lg:grid-cols-1" },
-  { keys: ["dev-timeline", "financial-overview"], cols: "xl:grid-cols-[601px_minmax(0,1fr)]" },
+  { keys: ["dev-timeline", "financial-overview"], cols: "xl:grid-cols-[601px_minmax(0,1fr)]", pad: "py-8 lg:py-[20.5px]" },
   // Figma home: "What's New This Week?" on the left, "Top Five Achievements of the Ward" on the right (649 / 650px).
   { keys: ["whats-new", "achievements"], cols: "lg:grid-cols-2", pad: "py-8 lg:pt-5 lg:pb-0" },
   { keys: ["weather", "sarpanch-message"], cols: "lg:grid-cols-2", pad: "py-8 lg:pt-[53px] lg:pb-0" },

@@ -85,14 +85,7 @@ export async function ProjectShowcaseSection({ slug, locale, data }: SectionProp
         <div className="mb-2 flex flex-wrap items-end justify-between gap-3">
           <Eyebrow green>{pickText(d.eyebrow, locale)}</Eyebrow>
         </div>
-        <ProjectTabs tabs={tabs} items={items} labels={labels} />
-        {d.viewAll?.href && (
-          <div className="mt-8 flex justify-center">
-            <Link href={resolveHref(d.viewAll.href, slug)} className="inline-flex rounded-full border border-[#135130] bg-[#135130] px-4 py-2 text-[12.5px] font-medium text-white hover:opacity-90">
-              {pickText(d.viewAll.label, locale)}
-            </Link>
-          </div>
-        )}
+        <ProjectTabs tabs={tabs} items={items} labels={labels} viewAllLabel={pickText(d.viewAll?.label, locale) || undefined} />
       </div>
     </section>
   );

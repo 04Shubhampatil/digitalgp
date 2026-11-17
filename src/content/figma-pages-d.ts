@@ -103,6 +103,7 @@ export const FIGMA_PAGE_SECTIONS_D: Partial<Record<PageKey, FallbackSection[]>> 
   services: [
     hero({
       eyebrow: t("Citizen Services & Online Forms"),
+      eyebrowAsTyped: true,
       title: t("Easy Access. Better Services."),
       titleAccent: t("Stronger Savardari."),
       titleLines: true,

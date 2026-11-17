@@ -565,6 +565,7 @@ export const FIGMA_PAGE_SECTIONS_C: Partial<Record<PageKey, FallbackSection[]>> 
   environment: [
     hero({
       eyebrow: t("Environment & Sustainability"),
+      eyebrowAsTyped: true,
       title: t("Building a Greener Savardari for a Sustainable Tomorrow"),
       titleParts: [{ text: b("Building a Greener", "शाश्वत उद्यासाठी हिरवीगार") }, { text: b("Savardari", "सवरदरी"), accent: true }, { text: b("for a Sustainable Tomorrow", "घडवूया") }],
       imageBleed: { left: 599, width: 841, height: 539 },

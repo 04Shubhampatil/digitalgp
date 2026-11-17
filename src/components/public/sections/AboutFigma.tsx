@@ -42,6 +42,8 @@ export function AboutHeroSection({ slug, locale, data, tenantName }: SectionProp
     imageBleed?: boolean | { left: number; width: number; height: number; section?: number; /** Height the text block is centred in (default 513). */ textBox?: number };
     /** Opt-in with imageBleed: 45px heading (Gallery, Contact) instead of 40px. */
     titleLarge?: boolean;
+    /** Opt-in with imageBleed: 32px heading and an eyebrow that wraps to two lines (Finance, Infrastructure). */
+    titleSmall?: boolean;
     /** Opt-in with imageBleed: eyebrow as typed (Grievance) instead of upper case. */
     eyebrowAsTyped?: boolean;
     /** Opt-in: the heading as runs of text, `accent` runs in green (Figma heroes that colour words mid-sentence). */
@@ -76,8 +78,8 @@ export function AboutHeroSection({ slug, locale, data, tenantName }: SectionProp
         <div className="relative mx-auto h-full max-w-[1440px] px-4 sm:px-8 lg:px-[62px]">
           <div className="relative z-[1] flex max-w-[491px] flex-col justify-center gap-10 py-12 lg:h-[var(--ht)] lg:py-0">
             <div className="flex flex-col gap-8">
-              <p className={`text-[17px] font-semibold text-[#ea7f14] sm:text-[22px] sm:whitespace-nowrap ${d.eyebrowAsTyped ? "" : "uppercase"}`}>{pickText(d.eyebrow, locale)}</p>
-              <h1 className={`text-[36px] leading-[50px] font-bold text-black lg:w-[547px] ${d.titleLarge ? "lg:text-[45px]" : "lg:text-[40px]"}`}>
+              <p className={`text-[17px] font-semibold text-[#ea7f14] sm:text-[22px] ${d.titleSmall ? "sm:max-w-[440px] sm:leading-[30px]" : "sm:whitespace-nowrap"} ${d.eyebrowAsTyped ? "" : "uppercase"}`}>{pickText(d.eyebrow, locale)}</p>
+              <h1 className={`font-bold text-black lg:w-[547px] ${d.titleSmall ? "text-[28px] leading-[42px] lg:text-[32px] lg:leading-[50px]" : `text-[36px] leading-[50px] ${d.titleLarge ? "lg:text-[45px]" : "lg:text-[40px]"}`}`}>
                 {parts.length > 0 ? (
                   parts.map((p, i) => (
                     <span key={i} className={p.accent ? "text-[#135130]" : undefined}>
@@ -101,7 +103,7 @@ export function AboutHeroSection({ slug, locale, data, tenantName }: SectionProp
                     </>
                   ) : (
                     <>
-                      {rawTitle} {accent && <span className="text-[#135130]">{accent}</span>}
+                      {rawTitle} {accent && <span className={d.accentBlock ? "block text-[#135130]" : "text-[#135130]"}>{accent}</span>}
                     </>
                   )))
                 )}

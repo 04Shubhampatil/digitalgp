@@ -176,7 +176,8 @@ export function BudgetChartClient({ tabs, charts, crLabel, lakhLabel, emptyLabel
   const [active, setActive] = useState(first);
   const chart = charts.find((c) => c.tabKey === active) ?? (tabs.length === 0 ? charts[0] : undefined);
   const W = 640;
-  const H = 260;
+  // The grievance trend (plain counts) is a wide, short chart in Figma; the budget chart is taller.
+  const H = plain ? 180 : 260;
   const L = 56;
   const B = 30;
   const T = 12;

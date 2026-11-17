@@ -52,7 +52,7 @@ export async function ContactCardsSection({ slug, locale, data }: SectionProps) 
             </span>
             <h3 className="mt-5 text-[20px] font-semibold text-[#135130]">{pickText(L.inquiries, locale)}</h3>
             {phone && (
-              <a href={`tel:${phone.replace(/s+/g, "")}`} className="mt-6 text-[15px] font-semibold text-black hover:underline">
+              <a href={`tel:${phone.replace(/\s+/g, "")}`} className="mt-6 text-[15px] font-semibold text-black hover:underline">
                 {phone}
               </a>
             )}
@@ -81,20 +81,20 @@ export async function ContactCardsSection({ slug, locale, data }: SectionProps) 
               <Globe className="size-9" />
             </span>
             <h3 className="mt-5 text-[20px] font-semibold text-[#135130]">{pickText(L.follow, locale)}</h3>
-            {/* Brand icons as in Figma (32px); networks without a URL in the settings stay hidden. */}
+            {/* Brand icons as in Figma (32px), always shown: without a URL in the settings they open the network's home page. */}
             <div className="mt-5 flex items-center gap-3">
-              <Social href={s.facebook} label="Facebook">
+              <Social href={s.facebook || "https://www.facebook.com"} label="Facebook">
                 <FacebookIcon className="size-8" />
               </Social>
-              <Social href={s.twitter} label="X (Twitter)">
+              <Social href={s.twitter || "https://x.com"} label="X (Twitter)">
                 <XIcon className="size-8" />
               </Social>
-              <Social href={s.youtube} label="YouTube">
+              <Social href={s.youtube || "https://www.youtube.com"} label="YouTube">
                 <span className="flex size-8 items-center justify-center rounded-full bg-[#e8221b]">
                   <YouTubeIcon className="h-5 w-6 [&_rect]:fill-white [&_path]:fill-[#e8221b]" />
                 </span>
               </Social>
-              <Social href={s.instagram} label="Instagram">
+              <Social href={s.instagram || "https://www.instagram.com"} label="Instagram">
                 <InstagramIcon className="size-8" gradientId="ig-contact" />
               </Social>
             </div>

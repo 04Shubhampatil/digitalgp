@@ -138,7 +138,7 @@ export async function SchemeShowcaseSection({ slug, locale, data }: SectionProps
           {cards.map((c, i) => {
             const pic = CARD_PICTURES.find((x) => x.re.test(`${c.name} ${c.category ?? ""}`))!.src;
             return (
-              <li key={i} className="flex min-h-[473px] w-[256px] flex-col items-center rounded-[18.4px] border-[1.84px] border-[#414141]/15 bg-white px-[29px] pt-[22px] pb-[34px]">
+              <li key={i} className="flex min-h-[473px] w-[256px] flex-col xl:w-[calc((100%-38px)/5)] xl:max-w-[256px] items-center rounded-[18.4px] border-[1.84px] border-[#414141]/15 bg-white px-[29px] pt-[22px] pb-[34px]">
                 {/* eslint-disable-next-line @next/next/no-img-element -- static design asset */}
                 <img src={pic} alt="" width={87} height={79} className="h-[79px] w-[87px] shrink-0" />
                 <h3 className="mt-[21px] flex h-[45px] w-[226px] items-start justify-center pt-[7px] text-center text-[14px] leading-[21px] font-semibold text-black" title={c.name}>

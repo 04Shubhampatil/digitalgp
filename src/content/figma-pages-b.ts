@@ -26,6 +26,7 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
         title: t("Stronger Infrastructure, Better Living —"),
         titleAccent: t("Building a Better Savardari"),
         accentBlock: true,
+        titleSmall: true,
         body: t("Explore the infrastructure and public facilities available in our village that ensure a better quality of life and sustainable development for all"),
         imageUrl: P + "infra-hero-torn.png",
         imageBleed: { left: 553, width: 887, height: 539 },
@@ -140,6 +141,7 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
         eyebrow: t("Financial Information & Budget Transperancy"),
         title: t("Transparent Today, Stronger Tomorrow —"),
         titleAccent: t("Savardari’s Commitment to Accountability"),
+        titleSmall: true,
         body: t("We are committed to complete transparency in financial management and the responsible use of public funds for the development of our village"),
         imageUrl: P + "fin-hero-torn.png",
         imageBleed: { left: 553, width: 887, height: 513 },
@@ -282,8 +284,8 @@ export const FIGMA_PAGE_SECTIONS_B: Partial<Record<PageKey, FallbackSection[]>> 
           { label: t("View Homestay Options"), href: "page:culture#homestay" },
         ],
         // Figma: villagers making a rangoli in a temple courtyard.
-        imageUrl: P + "vil-hero-torn.png",
-        imageBleed: { left: 553, width: 887, height: 513 },
+        imageUrl: P + "vil-hero-rangoli.png",
+        imageBleed: true,
       },
     },
     {

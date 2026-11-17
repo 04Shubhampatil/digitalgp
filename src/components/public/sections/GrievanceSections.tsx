@@ -34,7 +34,7 @@ export async function GrievanceRegisterSection({ slug, locale, data }: SectionPr
   const d = data as { heading?: B };
   return (
     <section id="register" className="bg-cream py-8">
-      <div className="mx-auto max-w-[1320px] px-4 sm:px-8">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
         <h2 className="mb-6 text-center text-[30px] leading-[45px] font-semibold text-black">{pickText(d.heading, locale) || t("registerTitle")}</h2>
         {/* The form draws its own bordered card (Figma frame 375:11315). */}
         <GrievanceSubmitForm slug={slug} />
@@ -50,7 +50,7 @@ export async function GrievanceTrackSection({ slug, locale, data }: SectionProps
   const steps = Array.isArray(d.howSteps) ? (d.howSteps as B[]) : [];
   return (
     <section id="track" className="bg-cream py-8">
-      <div className="mx-auto max-w-[1320px] px-4 sm:px-8">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
         <h2 className="mb-6 text-center text-[30px] leading-[45px] font-semibold text-black">{pickText(d.heading, locale) || t("trackTitle")}</h2>
         {/* Figma "Group 34": white lookup card + pale-green "How It Works?" card (459px). */}
         <div className="grid items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_459px]">
