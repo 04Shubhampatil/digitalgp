@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { PublicPageDto } from "@/types/api";
+import { editorSpec } from "@/config/section-editors";
+import { findSection } from "@/config/sections";
+import { toApiData, toFormValues } from "@/lib/section-data";
 import { bannerSeed, designSeed, sectionSeed } from "@/lib/banner-seed";
 import { withFallback } from "./fallback";
 
@@ -277,5 +280,59 @@ describe("designSeed (what a section card shows before it is saved)", () => {
   it("drops rows whose required picture is a site file, and stores list links as addresses", () => {
     expect((designSeed("gallery", "photo-gallery", "savardari")!.photos as unknown[]).length).toBe(0);
     expect(JSON.stringify(designSeed("culture", "success-stories", "savardari"))).toContain("/savardari/success-stories");
+  });
+});
+
+describe("designSeed: cards whose design block has another key", () => {
+  const ok = (page: Parameters<typeof designSeed>[0], key: string, email?: string) => {
+    const seed = designSeed(page, key, "savardari", email);
+    expect(seed, key).toBeDefined();
+    // As the editor saves it: through the form, which fills the empty lists and drops blank fields.
+    const spec = editorSpec(page, key)!;
+    const r = findSection(page, key)!.schema.safeParse(toApiData(spec, toFormValues(spec, seed)));
+    expect(r.success, `${page}:${key} ${r.success ? "" : JSON.stringify(r.error.issues.slice(0, 3))}`).toBe(true);
+    return seed!;
+  };
+
+  it("opens every card that used to open empty with the content the website shows, valid for its schema", () => {
+    const cards: [Parameters<typeof designSeed>[0], string][] = [
+      ["infrastructure", "top-stats"],
+      ["projects", "top-stats"],
+      ["services", "service-links"],
+      ["services", "service-categories"],
+      ["services", "qr-codes"],
+      ["services", "top-stats"],
+      ["services", "help"],
+      ["announcements", "announcement-categories"],
+      ["announcements", "calendar"],
+      ["announcements", "deadline-cards"],
+      ["announcements", "support-cards"],
+      ["contact", "contact-cards"],
+      ["contact", "feedback-form"],
+      ["contact", "volunteer-registration"],
+      ["grievance", "track-complaint"],
+      ["grievance", "monthly-report"],
+    ];
+    for (const [page, key] of cards) ok(page, key);
+  });
+
+  it("splits facility values into value and unit, and calendar times into HH:MM", () => {
+    const first = (ok("infrastructure", "top-stats").items as { value: string; unit?: { en: string } }[])[0]!;
+    expect(first.value).toBe("100%");
+    expect(first.unit?.en).toBe("Coverage");
+    const ev = (ok("announcements", "calendar").events as { startTime?: string; endTime?: string }[])[0]!;
+    expect(ev.startTime).toBe("10:00");
+    expect(ev.endTime).toBe("12:00");
+  });
+
+  it("keeps the website's own pages as QR links and fills the texts the website words itself", () => {
+    expect(JSON.stringify(ok("services", "qr-codes"))).toContain("page:grievance");
+    expect(ok("grievance", "monthly-report").cardLabels).toMatchObject({ total: { en: "Total Complaints" } });
+    expect((ok("contact", "feedback-form").successMessage as { mr: string }).mr).toBeTruthy();
+  });
+
+  it("sends complaints to the office's own address and never to an address from the design", () => {
+    expect(designSeed("grievance", "complaint-form", "savardari")?.recipientEmail).toBeUndefined();
+    expect(ok("grievance", "complaint-form", "office@example.org").recipientEmail).toBe("office@example.org");
   });
 });

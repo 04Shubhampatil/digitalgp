@@ -42,6 +42,8 @@ import {
  * listed in docs/admin-editor-backend-needs.md and are not part of these schemas.
  */
 
+/** A page of this website: "page:services" or "page:services#qr-codes". */
+const pageLink = z.string().trim().regex(/^page:[a-z]+(-[a-z]+)*(#[a-z0-9]+(-[a-z0-9]+)*)?$/, "Use an https:// address or page:<page>");
 const sectionList = <T extends z.ZodType>(item: T, max: number) => z.array(item).max(max);
 const strict = <T extends z.ZodRawShape>(shape: T) => z.object(shape).strict();
 
@@ -332,7 +334,9 @@ const services: SectionDefinition[] = [
           description: bilingualSchema.optional(),
           serviceIcon: iconName,
           buttonText: bilingualSchema.optional(),
-          linkUrl: httpsUrl,
+          // An https address, or one of the website's own pages ("page:grievance"): the public page turns it into
+          // the full address before drawing the code.
+          linkUrl: httpsUrl.or(pageLink),
         }),
         12,
       ),

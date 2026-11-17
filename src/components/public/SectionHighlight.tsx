@@ -6,12 +6,14 @@ import { useEffect } from "react";
  * "View on website" from the page editor opens the public page with `?highlight=<sectionKey>`: this scrolls to that
  * section and frames it for a few seconds, so the editor does not have to look for the block they changed.
  * A section that shares a row with another is found through the row's `data-sections` list. The page streams in,
- * so the section is looked for until it is there (up to about ten seconds).
+ * so the section is looked for until it is there (up to about ten seconds). Several keys separated by commas mean
+ * "the first of these blocks that is on the page" (a list screen's block has another key once the page is published).
  */
 export function SectionHighlight() {
   useEffect(() => {
     const key = new URLSearchParams(window.location.search).get("highlight");
-    if (!key || !/^[a-z0-9-]{1,60}$/.test(key)) return;
+    if (!key || !/^[a-z0-9-]{1,60}(,[a-z0-9-]{1,60}){0,3}$/.test(key)) return;
+    const keys = key.split(",");
     let frame: HTMLDivElement | null = null;
     let tries = 0;
     const timers: number[] = [];
@@ -33,7 +35,7 @@ export function SectionHighlight() {
       );
     };
     const look = () => {
-      const target = document.getElementById(key) ?? document.querySelector<HTMLElement>(`[data-sections~="${key}"]`);
+      const target = keys.map((k) => document.getElementById(k) ?? document.querySelector<HTMLElement>(`[data-sections~="${k}"]`)).find((el) => el !== null);
       if (target) show(target);
       else if (++tries < 35) timers.push(window.setTimeout(look, 300));
     };
