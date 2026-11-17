@@ -102,6 +102,16 @@ export const PROJECTS_SECTIONS: SectionDefinition[] = [
       note: bilingualLongSchema.optional(),
     }),
   },
+  {
+    // Development Timeline card: one step per year; `done: false` marks the step that is still in progress.
+    key: "dev-timeline",
+    sortOrder: 35,
+    schema: strict({
+      title: bilingualSchema.optional(),
+      steps: list(strict({ year: text(10), label: bilingualSchema, status: bilingualSchema.optional(), done: z.boolean().optional() }), 12),
+      action: viewAllSchema.optional(),
+    }),
+  },
   { key: "success-stories", sortOrder: 50, schema: successStories },
   {
     key: "development-suggestions",
@@ -194,6 +204,18 @@ export const SCHEMES_SECTIONS: SectionDefinition[] = [
 export const HOME_EXTRA_SECTIONS: SectionDefinition[] = [
   { key: "banner", sortOrder: 2, schema: bannerSchema },
   {
+    // "Welcome to <village>" video card: thumbnail picture, the button text and the video link (YouTube / Vimeo).
+    key: "welcome-video",
+    sortOrder: 50,
+    schema: strict({ heading: bilingualSchema.optional(), watchLabel: bilingualSchema.optional(), imageId: mediaId.optional(), videoUrl: href.optional() }),
+  },
+  {
+    // Photo strip at the bottom of the home page (the full gallery lives on the Gallery page).
+    key: "home-gallery",
+    sortOrder: 56,
+    schema: strict({ heading: bilingualSchema.optional(), photos: list(strict({ imageId: mediaId, caption: bilingualSchema.optional() }), 12) }),
+  },
+  {
     // Manual fallback for the live weather card (used when no provider is configured or it fails).
     key: "weather",
     sortOrder: 22,
@@ -208,7 +230,9 @@ export const HOME_EXTRA_SECTIONS: SectionDefinition[] = [
     sortOrder: 42,
     schema: strict({
       heading: bilingualSchema.optional(),
-      items: list(strict({ title: bilingualSchema, date: text(60), status: text(40), href: href.optional() }), 12),
+      viewAll: viewAllSchema.optional(),
+      // imageId: the row thumbnail (optional; ownership-checked like every *Id media reference).
+      items: list(strict({ title: bilingualSchema, date: text(60), status: text(40), href: href.optional(), imageId: mediaId.optional() }), 12),
     }),
   },
   {
@@ -231,7 +255,18 @@ export const HOME_EXTRA_SECTIONS: SectionDefinition[] = [
     key: "about-cards",
     sortOrder: 12,
     schema: strict({
-      items: list(strict({ icon: iconName, title: bilingualSchema, description: bilingualSchema.optional(), buttonText: bilingualSchema.optional(), buttonLink: href.optional() }), 8),
+      // Block heading and intro, the three pictures of the collage (large photo, small photo, map picture), the
+      // address on the map with its link, and the Read More button. All optional: the design values show until set.
+      heading: bilingualSchema.optional(),
+      subheading: bilingualLongSchema.optional(),
+      mainImageId: mediaId.optional(),
+      secondImageId: mediaId.optional(),
+      mapImageId: mediaId.optional(),
+      address: bilingualSchema.optional(),
+      mapUrl: href.optional(),
+      buttonText: bilingualSchema.optional(),
+      buttonLink: href.optional(),
+      items: list(strict({ icon: iconName, title: bilingualSchema, description: bilingualLongSchema.optional(), buttonText: bilingualSchema.optional(), buttonLink: href.optional() }), 8),
     }),
   },
   {

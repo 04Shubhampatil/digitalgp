@@ -18,6 +18,8 @@ interface BannerData {
   description?: B;
   ctas?: { label?: B; linkType?: "page" | "external"; href?: string; openInNewTab?: boolean }[];
   imageId?: string;
+  /** Set by the page builder: the design photo shown until a banner picture is uploaded. */
+  fallbackImageUrl?: string;
   textPosition?: { horizontal?: "left" | "center" | "right"; vertical?: "top" | "middle" | "bottom" };
   overlay?: { enabled?: boolean; colour?: string; intensity?: number; gradient?: "left-right" | "right-left" | "top-bottom" | "none" };
   appearance?: { height?: number; contentWidth?: "small" | "medium" | "large"; cornerRadius?: number; textColour?: string };
@@ -61,7 +63,7 @@ function Buttons({ d, slug, locale, light }: { d: BannerData; slug: string; loca
 export function BannerSection({ slug, locale, data }: SectionProps) {
   const d = data as BannerData;
   const layout = d.layout ?? "full-background";
-  const image = mediaUrl(slug, d.imageId);
+  const image = mediaUrl(slug, d.imageId) || d.fallbackImageUrl;
   const heading = tx(d.heading, locale);
   const supporting = tx(d.supportingText, locale);
   const description = tx(d.description, locale);
@@ -109,6 +111,28 @@ export function BannerSection({ slug, locale, data }: SectionProps) {
         {overlayBg && <div aria-hidden className="absolute inset-0" style={{ background: overlayBg }} />}
         <div className={`relative mx-auto flex max-w-[1440px] px-4 py-12 sm:px-8 lg:px-[60px] ${JUSTIFY[pos?.horizontal ?? "left"]} ${ALIGN[pos?.vertical ?? "middle"]}`} style={{ minHeight: height }}>
           <div className={`${width} ${text ? "" : "text-white"}`}>{copy(true)}</div>
+        </div>
+      </section>
+    );
+  }
+
+  if (image && layout !== "framed-image") {
+    // Image right / left: as the design's hero, the picture fills its side at the banner height and runs to the
+    // edge of the page; the text column is centred beside it.
+    const left = layout === "image-left";
+    const uploaded = !!mediaUrl(slug, d.imageId);
+    const side = (
+      <div className={`relative h-[300px] sm:h-[420px] lg:h-[var(--bh)] ${left ? "sm:-ml-8 lg:-ml-[62px]" : "sm:-mr-8 lg:-mr-[62px]"}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- website media served by the backend / static design asset */}
+        <img src={image} alt="" className={`absolute inset-0 size-full object-cover ${left ? "object-left" : "object-right"}`} style={uploaded && d.appearance?.cornerRadius ? { borderRadius: radius } : undefined} />
+      </div>
+    );
+    return (
+      <section className="overflow-hidden bg-cream" style={{ "--bh": `${height}px` } as React.CSSProperties}>
+        <div className={`mx-auto grid max-w-[1440px] items-center gap-8 px-4 sm:px-8 lg:gap-0 lg:px-[62px] ${left ? "lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]" : "lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]"}`}>
+          {left && side}
+          <div className={`py-10 lg:py-0 ${left ? "lg:pl-10" : "lg:pr-10"} ${width}`}>{copy(false)}</div>
+          {!left && side}
         </div>
       </section>
     );

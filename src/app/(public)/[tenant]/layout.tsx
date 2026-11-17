@@ -1,3 +1,4 @@
+import { SectionHighlight } from "@/components/public/SectionHighlight";
 import type { Metadata } from "next";
 import { PublicFooter } from "@/components/public/PublicFooter";
 import { PublicHeader } from "@/components/public/PublicHeader";
@@ -27,6 +28,7 @@ export default async function TenantLayout({ children, params }: { children: Rea
       <PublicHeader tenant={tenant} />
       <div className="flex-1">{children}</div>
       <PublicFooter tenant={tenant} />
+      <SectionHighlight />
     </div>
   );
 }

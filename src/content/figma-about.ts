@@ -125,5 +125,6 @@ export const FIGMA_ABOUT_SECTIONS: FallbackSection[] = [
       values: [t("Transparency and accountability"), t("Cleanliness and public health"), t("Equal access to services"), t("Respect for culture and environment")],
     },
   },
-  ...(leaders ? [{ ...leaders, sortOrder: 60 }] : []),
+  // The published leaders grid of the About page takes the place of the design's leaders block.
+  ...(leaders ? [{ ...leaders, sortOrder: 60, skipIfPresent: ["leaders-profile-grid"] }] : []),
 ];

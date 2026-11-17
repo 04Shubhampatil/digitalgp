@@ -1388,7 +1388,10 @@
       "quickActions": "जलद कृती",
       "bannerContent": "मजकूर",
       "bannerImageSettings": "प्रतिमा सेटिंग्ज",
-      "bannerOverlay": "आच्छादन आणि वाचनीयता"
+      "bannerOverlay": "आच्छादन आणि वाचनीयता",
+      "welcomeVideo": "स्वागत व्हिडिओ",
+      "homeGallery": "छायाचित्र पट्टी",
+      "devTimeline": "विकास कालरेषा"
     },
     "fields": {
       "layout": "मांडणी",
@@ -1690,7 +1693,15 @@
       "actionButton": "बटणे",
       "trend": "कल",
       "trendIsPositive": "हा कल चांगला आहे",
-      "comparedTo": "तुलना"
+      "comparedTo": "तुलना",
+      "mainImage": "मुख्य चित्र (मोठे)",
+      "secondImage": "दुसरे चित्र (लहान)",
+      "watchLabel": "व्हिडिओवरील बटणाचा मजकूर",
+      "caption": "मथळा",
+      "galleryPhoto": "छायाचित्रे",
+      "timelineStep": "टप्पे",
+      "year": "वर्ष",
+      "completed": "पूर्ण"
     },
     "order": "क्रम",
     "addNew": "नवीन {name} जोडा",
@@ -1752,7 +1763,9 @@
       "partner": "भागीदार",
       "volunteerCategory": "वर्ग",
       "market": "बाजार",
-      "actionButton": "बटण"
+      "actionButton": "बटण",
+      "galleryPhoto": "छायाचित्र",
+      "timelineStep": "टप्पा"
     },
     "options": {
       "full-background": "पूर्ण पार्श्वभूमी",
@@ -1832,6 +1845,11 @@
     "nothingToSave": "जतन न केलेले बदल नाहीत.",
     "subtitleLong": "{name} साठी संस्थात्मक मजकूर व्यवस्थापन",
     "addAnotherCta": "आणखी CTA जोडा",
+    "livePreview": "थेट पूर्वावलोकन",
+    "viewOnSite": "संकेतस्थळावर पहा",
+    "viewOnSiteDraftHint": "येथे प्रकाशित आवृत्ती दिसते. तुमचा मसुदा प्रकाशित झाल्यानंतर संकेतस्थळावर दिसेल.",
+    "livePreviewEmpty": "बॅनर येथे पाहण्यासाठी शीर्षक किंवा चित्र जोडा.",
+    "livePreviewHint": "संकेतस्थळापेक्षा लहान आकारात दाखवले आहे. जतन करून प्रकाशित केल्यानंतर बदल संकेतस्थळावर दिसतात.",
     "ctaLimit": "जास्तीत जास्त {n} CTA बटणे जोडा."
   }
 }

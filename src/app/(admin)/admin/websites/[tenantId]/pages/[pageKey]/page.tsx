@@ -15,6 +15,7 @@ import { ProjectsManager } from "@/components/admin/websites/ProjectsManager";
 import { SchemesManager } from "@/components/admin/websites/SchemesManager";
 import { PageEditorHeader } from "@/components/admin/editor/PageEditorHeader";
 import { content, tenants } from "@/lib/api/admin";
+import { bannerSeed, sectionSeed } from "@/lib/banner-seed";
 import { isApiError } from "@/lib/api/client";
 import { cookieHeader } from "@/lib/api/server";
 import { getCurrentUser, hasCapability } from "@/lib/session";
@@ -23,6 +24,22 @@ export const metadata: Metadata = { title: "Page editor" };
 
 /** Home editor order and side-by-side pairs, as in the design. Sections not listed follow in their usual order. */
 const HOME_BLOCKS: string[][] = [["banner"], ["quick-stats"], ["about-cards"], ["monthly-metrics"], ["ward-details"], ["whats-new"], ["achievements"], ["weather", "sarpanch-message"], ["notice-categories"], ["notices"]];
+
+/**
+ * "View on website": where a section shows on the public page when that is not a block with the section's own key
+ * (the About page draws its published sections inside the design's blocks).
+ */
+const PUBLIC_ANCHOR: Record<string, string> = {
+  overview: "about-hero",
+  history: "about-history",
+  members: "about-structure",
+  office: "about-structure",
+  "vision-mission": "about-vision",
+  "roles-cards": "about-roles",
+  "emergency-services": "about-emergency",
+  // Schemes: the category strip edits the scheme levels strip.
+  "category-strip": "scheme-levels",
+};
 
 function editorBlocks<T extends { sectionKey: string }>(pageKey: string, sections: T[]): T[][] {
   if (pageKey !== "home") return sections.map((s) => [s]);
@@ -69,10 +86,41 @@ export default async function PageEditor({ params, searchParams }: { params: Pro
   const ordered = page.sections.slice().sort((a, b) => a.sortOrder - b.sortOrder);
   const unknown = ordered.filter((s) => !editorSpec(pageKey, s.sectionKey));
 
+  // The Banner card is the page's hero: until it is saved it shows the hero the website has today, and the older
+  // Home "hero" card is hidden so there is one place to edit it.
+  const hasBanner = ordered.some((s) => s.sectionKey === "banner");
+  const heroSection = ordered.find((s) => s.sectionKey === "hero");
+  const heroData = (heroSection?.draft?.data ?? heroSection?.published?.data) as Record<string, unknown> | undefined;
+  const seed = hasBanner ? bannerSeed(pageKey, heroData) : undefined;
+
+  const hasAboutCards = ordered.some((s) => s.sectionKey === "about-cards");
+  const welcomeSection = ordered.find((s) => s.sectionKey === "welcome");
+  const welcomeData = (welcomeSection?.draft?.data ?? welcomeSection?.published?.data) as Record<string, unknown> | undefined;
+  const sitePublic = tenant.status === "PUBLISHED" && page.isEnabled;
+
   const renderSection = (section: (typeof ordered)[number]) => {
     const spec = editorSpec(pageKey, section.sectionKey);
     if (!spec) return null;
-    return <SectionEditor key={section.sectionKey} tenantId={tenantId} pageKey={pageKey} spec={spec} section={section} capabilities={user.capabilities} defaultOpen />;
+    if (hasBanner && section.sectionKey === "hero") return null;
+    // "Our leaders" is not shown on the home page (it lives on About), so its card would change nothing here.
+    if (pageKey === "home" && section.sectionKey === "leaders") return null;
+    // The About design has no block for the geography figures, so that card would change nothing on the website.
+    if (pageKey === "about" && section.sectionKey === "geography") return null;
+    // The home About block is edited in the "About the village cards" card; the older "welcome" card fed the same block.
+    if (pageKey === "home" && section.sectionKey === "welcome" && hasAboutCards) return null;
+    return (
+      <SectionEditor
+        key={section.sectionKey}
+        tenantId={tenantId}
+        pageKey={pageKey}
+        spec={spec}
+        section={section}
+        capabilities={user.capabilities}
+        defaultOpen
+        initialData={section.sectionKey === "banner" ? seed : sectionSeed(pageKey, section.sectionKey, welcomeData)}
+        viewHref={sitePublic ? `${pageHref(tenant.slug, pageKey)}?highlight=${PUBLIC_ANCHOR[section.sectionKey] ?? section.sectionKey}` : undefined}
+      />
+    );
   };
 
   return (

@@ -500,13 +500,15 @@ const successStoriesSpec = successStories;
 export const EXTRA_EDITORS: Partial<Record<PageKey, SectionEditorSpec[]>> = {
   home: [
     banner,
-    section("about-cards", "aboutCards", { items: list("items", "aboutCard", 8, [icon(), bi("title", "title", { required: true }), bi("description", "description"), bi("buttonText", "buttonText"), link("buttonLink", "buttonLink")]) }),
+    section("about-cards", "aboutCards", { fields: [bi("heading", "heading"), bl("subheading", "subheading"), img("mainImageId", "mainImage"), img("secondImageId", "secondImage"), img("mapImageId", "mapImage"), bi("address", "address"), link("mapUrl", "mapUrl"), bi("buttonText", "buttonText"), link("buttonLink", "buttonLink")], items: list("items", "aboutCard", 8, [icon(), bi("title", "title", { required: true }), bl("description", "description"), bi("buttonText", "buttonText"), link("buttonLink", "buttonLink")]) }),
     section("weather", "weather", {
       fields: [txt("location", "location", 120)],
       groups: [group("current", "currentWeather", [txt("temperature", "temperature", 20, { required: true }), txt("humidity", "humidity", 20, { required: true }), txt("wind", "wind", 40, { required: true }), txt("feelsLike", "feelsLike", 20, { required: true }), txt("condition", "condition", 120, { required: true })])],
       items: list("forecast", "forecastDay", 7, [date("date", "date", { required: true }), icon("icon", { required: true }), txt("maxTemp", "maxTemp", 20, { required: true }), txt("minTemp", "minTemp", 20, { required: true })]),
     }),
-    section("whats-new", "whatsNew", { fields: [bi("heading", "heading")], items: list("items", "whatsNewItem", 12, [bi("title", "title", { required: true }), txt("date", "dateText", 60, { required: true }), txt("status", "status", 40, { required: true }), link("href")]) }),
+    section("welcome-video", "welcomeVideo", { fields: [bi("heading", "heading"), bi("watchLabel", "watchLabel"), img("imageId", "thumbnail"), link("videoUrl", "videoUrl")] }),
+    section("home-gallery", "homeGallery", { fields: [bi("heading", "heading")], items: list("photos", "galleryPhoto", 12, [img("imageId", "photo", { required: true }), bi("caption", "caption")]) }),
+    section("whats-new", "whatsNew", { fields: [bi("heading", "heading")], groups: [viewAll], items: list("items", "whatsNewItem", 12, [bi("title", "title", { required: true }), txt("date", "dateText", 60, { required: true }), txt("status", "status", 40, { required: true }), link("href"), img("imageId", "image")]) }),
     section("achievements", "achievements", {
       fields: [bi("heading", "heading")],
       items: list("items", "achievementItem", 10, [bi("title", "title", { required: true }), bi("description", "description"), txt("completedOn", "completedOn", 60, { required: true }), int("rank", "rank")]),
@@ -556,6 +558,11 @@ export const EXTRA_EDITORS: Partial<Record<PageKey, SectionEditorSpec[]>> = {
       items: list("items", "financialItem", 12, [bi("label", "label", { required: true }), txt("amount", "amount", 15, { required: true, placeholder: "12500.00" }), colour("colour", "colour", { required: true })]),
     }),
     successStoriesSpec,
+    section("dev-timeline", "devTimeline", {
+      fields: [bi("title", "heading")],
+      groups: [group("action", "viewAll", [bi("label", "viewAllLabel", { required: true }), link("href", "viewAllLink", { required: true })], { optional: true })],
+      items: list("steps", "timelineStep", 12, [txt("year", "year", 10, { required: true }), bi("label", "title", { required: true }), bi("status", "status"), { name: "done", type: "boolean", labelKey: "completed" }]),
+    }),
     section("development-suggestions", "developmentSuggestions", { fields: [bi("heading", "heading", { required: true }), bi("description", "description"), img("imageId", "image"), bi("buttonText", "buttonText"), link("buttonLink", "buttonLink")] }),
   ],
   schemes: [

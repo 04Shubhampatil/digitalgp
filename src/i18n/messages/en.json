@@ -1388,7 +1388,10 @@
       "quickActions": "Quick actions",
       "bannerContent": "Content",
       "bannerImageSettings": "Image Settings",
-      "bannerOverlay": "Overlay & Readability"
+      "bannerOverlay": "Overlay & Readability",
+      "welcomeVideo": "Welcome video",
+      "homeGallery": "Gallery strip",
+      "devTimeline": "Development timeline"
     },
     "fields": {
       "layout": "Layout",
@@ -1690,7 +1693,15 @@
       "actionButton": "Buttons",
       "trend": "Trend",
       "trendIsPositive": "Trend is good news",
-      "comparedTo": "Compared to"
+      "comparedTo": "Compared to",
+      "mainImage": "Main picture (large)",
+      "secondImage": "Second picture (small)",
+      "watchLabel": "Button text on the video",
+      "caption": "Caption",
+      "galleryPhoto": "Photos",
+      "timelineStep": "Steps",
+      "year": "Year",
+      "completed": "Completed"
     },
     "order": "Order",
     "addNew": "Add New {name}",
@@ -1752,7 +1763,9 @@
       "partner": "Partner",
       "volunteerCategory": "Category",
       "market": "Market",
-      "actionButton": "Button"
+      "actionButton": "Button",
+      "galleryPhoto": "photo",
+      "timelineStep": "step"
     },
     "options": {
       "full-background": "Full background",
@@ -1832,6 +1845,11 @@
     "nothingToSave": "There are no unsaved changes.",
     "subtitleLong": "Managing institutional content for {name}",
     "addAnotherCta": "Add Another CTA",
+    "livePreview": "Live preview",
+    "viewOnSite": "View on website",
+    "viewOnSiteDraftHint": "This shows the published version. Your draft appears on the website after it is published.",
+    "livePreviewEmpty": "Add a heading or a picture to see the banner here.",
+    "livePreviewHint": "Shown smaller than on the website. Changes appear on the website after you save and publish.",
     "ctaLimit": "Add up to {n} CTA buttons."
   }
 }

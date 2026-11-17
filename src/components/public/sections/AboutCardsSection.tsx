@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { pickText, type Bilingual } from "@/i18n/text";
+import { publicMediaUrl } from "@/lib/api/public";
 import { resolveHref } from "@/lib/href";
 import type { SectionProps } from "./index";
 
@@ -10,6 +11,14 @@ interface AboutCardsData {
   heading?: Bilingual;
   subheading?: Bilingual;
   cards?: { title?: Bilingual; body?: Bilingual; tone?: Tone }[];
+  /** Published cards (Home editor): title and description; the three design colours are given in order. */
+  items?: { title?: Bilingual; description?: Bilingual }[];
+  /** Uploaded pictures of the collage; the design photos show until they are set. */
+  mainImageId?: string;
+  secondImageId?: string;
+  mapImageId?: string;
+  buttonText?: Bilingual;
+  buttonLink?: string;
   address?: Bilingual;
   mapUrl?: string;
   readMore?: { label?: Bilingual; href?: string };
@@ -40,9 +49,14 @@ const PHOTOS = {
 export async function AboutCardsSection({ slug, locale, data, tenantName }: SectionProps) {
   const t = await getTranslations("public");
   const d = data as AboutCardsData;
-  const cards = d.cards ?? [];
+  const TONE_ORDER: Tone[] = ["orange", "navy", "green"];
+  const cards = d.items?.length ? d.items.map((c, i) => ({ title: c.title, body: c.description, tone: TONE_ORDER[i % 3] })) : (d.cards ?? []);
   if (cards.length === 0) return null;
-  const readMoreLabel = pickText(d.readMore?.label, locale);
+  const readMoreLabel = pickText(d.buttonText, locale) || pickText(d.readMore?.label, locale);
+  const readMoreHref = d.buttonLink || d.readMore?.href;
+  const main = d.mainImageId ? publicMediaUrl(slug, d.mainImageId) : null;
+  const second = d.secondImageId ? publicMediaUrl(slug, d.secondImageId) : null;
+  const mapPicture = d.mapImageId ? publicMediaUrl(slug, d.mapImageId) : null;
   const address = pickText(d.address, locale);
   // The design always shows "Open in Maps"; without a configured link it searches the address on Google Maps.
   const mapHref = d.mapUrl || (address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}` : "");
@@ -97,15 +111,15 @@ export async function AboutCardsSection({ slug, locale, data, tenantName }: Sect
           <div className="grid gap-4 lg:px-[34px] lg:py-[22px]">
             {/* eslint-disable @next/next/no-img-element -- static design assets */}
             <div className="h-[260px] overflow-hidden rounded-[10px] bg-white sm:h-[383px]">
-              <img src={PHOTOS.road} alt="" className="size-full object-cover" loading="lazy" />
+              <img src={main ?? PHOTOS.road} alt="" className="size-full object-cover" loading="lazy" />
             </div>
             <div className="grid gap-4 sm:grid-cols-[390fr_393fr] lg:gap-[22px]">
               <div className="relative h-[260px] overflow-hidden rounded-[10px] bg-white sm:h-[383px]">
                 {/* Figma 375:13445: photo at full width, 181% high, shifted up 44%. */}
-                <img src={PHOTOS.aerial} alt="" className="absolute top-[-44.42%] left-0 h-[181.23%] w-full max-w-none" loading="lazy" />
+                {second ? <img src={second} alt="" className="size-full object-cover" loading="lazy" /> : <img src={PHOTOS.aerial} alt="" className="absolute top-[-44.42%] left-0 h-[181.23%] w-full max-w-none" loading="lazy" />}
               </div>
               <div className="relative h-[260px] overflow-hidden rounded-[10px] bg-[#ff9933] sm:h-[383px]">
-                <img src={PHOTOS.map} alt="" className="absolute top-[-3.13%] left-[-41.87%] h-[103.13%] w-[193.13%] max-w-none object-cover" loading="lazy" />
+                {mapPicture ? <img src={mapPicture} alt="" className="size-full object-cover" loading="lazy" /> : <img src={PHOTOS.map} alt="" className="absolute top-[-3.13%] left-[-41.87%] h-[103.13%] w-[193.13%] max-w-none object-cover" loading="lazy" />}
                 {mapHref && (
                   <a href={mapHref} target="_blank" rel="noopener" className="absolute top-3.5 right-[19px] inline-flex h-[30px] w-[147px] items-center gap-[7px] rounded-full bg-[#d9d9d9] pl-[19px] text-[11.5px] leading-[20.7px] font-medium text-black">
                     <img src={PHOTOS.maps} alt="" width={24} height={24} className="size-6" /> {t("openInMaps")}
@@ -125,8 +139,8 @@ export async function AboutCardsSection({ slug, locale, data, tenantName }: Sect
           </div>
         </div>
 
-        {readMoreLabel && d.readMore?.href && (
-          <Link href={resolveHref(d.readMore.href, slug)} className="mt-2 inline-flex rounded-full border border-[#135130] bg-[#135130] px-4 py-2 text-[12.5px] font-medium text-white hover:opacity-90">
+        {readMoreLabel && readMoreHref && (
+          <Link href={resolveHref(readMoreHref, slug)} className="mt-2 inline-flex rounded-full border border-[#135130] bg-[#135130] px-4 py-2 text-[12.5px] font-medium text-white hover:opacity-90">
             {readMoreLabel}
           </Link>
         )}

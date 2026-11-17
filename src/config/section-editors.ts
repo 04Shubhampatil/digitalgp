@@ -223,7 +223,7 @@ const about: SectionEditorSpec[] = [
     fields: [bilingual("eyebrow", "eyebrow"), bilingual("heading", "heading", { required: true }), bilingualLong("body", "body", { required: true }), { name: "imageId", type: "image", labelKey: "image" }],
     items: { name: "actions", labelKey: "actionButton", min: 0, max: 3, fields: [bilingual("label", "buttonLabel", { required: true }), { name: "href", type: "href", labelKey: "link", required: true }] },
   },
-  { key: "history", labelKey: "history", descriptionKey: "historyDesc", fields: [bilingual("heading", "heading"), bilingualLong("body", "body", { required: true })] },
+  { key: "history", labelKey: "history", descriptionKey: "historyDesc", fields: [bilingual("heading", "heading"), bilingualLong("body", "body", { required: true }), { name: "mainImageId", type: "image", labelKey: "mainImage" }, { name: "secondImageId", type: "image", labelKey: "secondImage" }, { name: "mapImageId", type: "image", labelKey: "mapImage" }] },
   {
     key: "geography",
     labelKey: "geography",

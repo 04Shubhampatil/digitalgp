@@ -38,6 +38,7 @@ export const FALLBACK_SECTIONS: Partial<Record<PageKey, FallbackSection[]>> = {
  * → achievements → weather → welcome → leaders → notices).
  */
 const HOME_ORDER: Record<string, number> = {
+  banner: 0,
   hero: 0,
   "quick-stats": 10,
   "quick-links": 15,
@@ -86,6 +87,18 @@ function fillLabels(sectionKey: string, data: Obj, fallback: Obj): Obj {
         return match?.caption && !i.caption ? { ...i, caption: match.caption } : i;
       }),
     };
+  }
+  if (sectionKey === "welcome-video" || sectionKey === "home-gallery") {
+    // Empty fields (and an empty photo list) keep the design content.
+    return { ...fallback, ...filled(data) };
+  }
+  if (sectionKey === "whats-new") {
+    // Rows typed in the editor are shown as they are; with no rows the block keeps listing the announcements.
+    return has(data.items) ? { heading: fallback.heading, viewAll: fallback.viewAll, ...filled(data) } : { ...fallback, ...filled(data) };
+  }
+  if (sectionKey === "about-cards") {
+    // Published cards and pictures on top of the design block: what the editor left empty keeps the design value.
+    return { ...fallback, ...filled(data) };
   }
   if (sectionKey === "ward-details") return { ...data, viewAll: data.viewAll ?? fallback.viewAll };
   if (sectionKey === "village-progress") {
@@ -192,22 +205,31 @@ function mergeAbout(fallback: FallbackSection, legacy: Map<string, Obj>): Obj {
       const o = legacy.get("overview");
       if (!o) return d;
       const actions = ((o.actions as Obj[] | undefined) ?? []).filter((a) => a.href).map((a) => ({ ...a, href: aboutHref(a.href) }));
-      return { ...d, ...filled({ eyebrow: o.eyebrow, title: o.heading, body: o.body }), ...(actions.length ? { actions } : {}) };
+      return { ...d, ...filled({ eyebrow: o.eyebrow, title: o.heading, body: o.body, imageId: o.imageId }), ...(actions.length ? { actions } : {}) };
     }
     case "about-history": {
-      const h = legacy.get("history");
-      return h?.body ? { ...d, body: h.body } : d;
+      const h = legacy.get("history") ?? {};
+      const office = legacy.get("office") ?? {};
+      // The two info cards under the text show the published office hours and contact details.
+      const designCards = (d.cards as Obj[] | undefined) ?? [];
+      const contact = [office.phone ? `Phone number: ${String(office.phone)}` : "", office.email ? `Email id: ${String(office.email)}` : ""].filter(Boolean).join("\n");
+      const cards = designCards.map((c, i) => (i === 0 && has(office.hours) ? { ...c, body: office.hours } : i === 1 && contact ? { ...c, body: { en: contact } } : c));
+      return {
+        ...d,
+        cards,
+        ...filled({ heading: h.heading, body: h.body, mainImageId: h.mainImageId, secondImageId: h.secondImageId, mapImageId: h.mapImageId, mapUrl: office.mapUrl, address: office.address }),
+      };
     }
     case "about-structure": {
       const office = legacy.get("office") ?? {};
       const membersSection = legacy.get("members") ?? {};
-      const people = ((membersSection.items as Obj[] | undefined) ?? []) as { name?: Obj; designation?: Obj }[];
+      const people = ((membersSection.items as Obj[] | undefined) ?? []) as { name?: Obj; designation?: Obj; photoId?: string }[];
       const members = ((d.members as Obj[] | undefined) ?? []).map((m) => {
         const hit = people.find((p) => labelOf(p.designation) === labelOf(m.role));
-        return hit?.name ? { ...m, title: hit.name } : m;
+        return hit?.name ? { ...m, title: hit.name, ...(hit.photoId ? { photoId: hit.photoId } : {}) } : m;
       });
       // Published members whose designation has no card in the design get a card of their own.
-      const extra = people.filter((p) => p.name && !members.some((m) => labelOf(m.role) === labelOf(p.designation))).map((p) => ({ role: p.designation, title: p.name }));
+      const extra = people.filter((p) => p.name && !members.some((m) => labelOf(m.role) === labelOf(p.designation))).map((p) => ({ role: p.designation, title: p.name, ...(p.photoId ? { photoId: p.photoId } : {}) }));
       const base = (d.office as Obj | undefined) ?? {};
       const keep = (k: string) => (office[k] ? { [k]: office[k] } : {});
       return { ...d, ...filled({ heading: membersSection.heading }), members: [...members, ...extra], office: { ...base, ...keep("address"), ...keep("hours"), ...keep("phone"), ...keep("email") } };
@@ -219,7 +241,7 @@ function mergeAbout(fallback: FallbackSection, legacy: Map<string, Obj>): Obj {
       const mission = (v.mission as Obj | undefined) ?? {};
       return {
         ...d,
-        ...filled({ vision: vision.title, visionBody: vision.body, missionLabel: mission.title, mission: mission.body, missionPoints: mission.points, valuesLabel: v.valuesTitle, values: v.values }),
+        ...filled({ vision: vision.title, visionBody: vision.body, missionLabel: mission.title, mission: mission.body, missionPoints: mission.points, valuesLabel: v.valuesTitle, values: v.values, imageId: v.imageId }),
       };
     }
     case "about-roles": {
@@ -259,15 +281,70 @@ export function withFallback(pageKey: PageKey, page: PublicPageDto | null): Publ
   return withSections(pageKey, page, null);
 }
 
+/** Home sections that always sit on their design block, whatever else of the page is published. */
+const DESIGN_BASE = new Set(["about-cards", "welcome-video", "home-gallery", "whats-new"]);
+
+/** Hero blocks a published, filled-in `banner` takes the place of. */
+const HERO_KEYS = new Set(["hero", "page-hero", "about-hero"]);
+
 function withSections(pageKey: PageKey, page: PublicPageDto | null, override: FallbackSection[] | null): PublicPageDto {
   const cms = hasPublishedCms(pageKey, page?.sections ?? []);
-  const fallbacks = (override ?? (cms ? [...(LIVE_EXTRAS[pageKey] ?? []), ...liveBlocks(pageKey)] : (FALLBACK_SECTIONS[pageKey] ?? []))).filter((s) => pageKey !== "home" || !HOME_HIDDEN.has(s.sectionKey));
+  // In published mode the design's sample blocks are dropped, but its hero stays until a banner takes its place:
+  // a page never loses its top block because one section further down was published.
+  const designHero = (FALLBACK_SECTIONS[pageKey] ?? []).filter((s) => HERO_KEYS.has(s.sectionKey));
+  const fallbacks = (override ?? (cms ? [...designHero, ...(LIVE_EXTRAS[pageKey] ?? []), ...liveBlocks(pageKey)] : (FALLBACK_SECTIONS[pageKey] ?? []))).filter((s) => pageKey !== "home" || !HOME_HIDDEN.has(s.sectionKey));
+  const welcomeData = pageKey === "home" ? (page?.sections.find((s) => s.sectionKey === "welcome")?.data as Obj | undefined) : undefined;
   const published = (page?.sections ?? [])
     .filter((s) => pageKey !== "home" || !HOME_HIDDEN.has(s.sectionKey))
     .map((s) => {
-    const f = fallbacks.find((x) => x.sectionKey === s.sectionKey);
+    // The home About block always sits on its design block, also when other sections of the page are published.
+    const f = fallbacks.find((x) => x.sectionKey === s.sectionKey) ?? (DESIGN_BASE.has(s.sectionKey) ? (FALLBACK_SECTIONS[pageKey] ?? []).find((x) => x.sectionKey === s.sectionKey) : undefined);
+    if (f && s.sectionKey === "about-cards" && welcomeData) {
+      // One About block: the older "welcome" section's text and photo are the defaults under the About cards.
+      const base = { ...f.data, ...filled({ subheading: welcomeData.body, mainImageId: welcomeData.imageId }) };
+      return { ...s, data: fillLabels(s.sectionKey, s.data as Obj, base) };
+    }
     return f ? { ...s, data: fillLabels(s.sectionKey, s.data as Obj, f.data) } : s;
   });
+  // The published About cards are the About block; the "welcome" section would draw the same block a second time.
+  if (pageKey === "home" && welcomeData && published.some((s) => s.sectionKey === "about-cards")) {
+    for (let i = published.length - 1; i >= 0; i--) if (published[i]!.sectionKey === "welcome") published.splice(i, 1);
+  }
+  // The Banner card of the editor is the page's hero. A filled-in banner replaces the hero (it is not added under
+  // it); an empty one is skipped so the design's hero stays.
+  const bannerAt = published.findIndex((s) => s.sectionKey === "banner");
+  if (bannerAt >= 0) {
+    const b = published[bannerAt]!.data as Obj;
+    const filledBanner = has(b.heading) || has(b.imageId) || has(b.supportingText);
+    const drop = filledBanner ? HERO_KEYS : new Set(["banner"]);
+    if (filledBanner && !has(b.imageId)) {
+      // No banner picture uploaded yet: keep the design's hero photo for the page.
+      const designHero = (FALLBACK_SECTIONS[pageKey] ?? []).find((s) => HERO_KEYS.has(s.sectionKey))?.data;
+      const fallbackImageUrl = (designHero?.imageUrl as string | undefined) ?? (pageKey === "home" ? "/images/figma/home-hero.png" : undefined);
+      if (fallbackImageUrl) published[bannerAt] = { ...published[bannerAt]!, data: { ...b, fallbackImageUrl } };
+    }
+    for (let i = published.length - 1; i >= 0; i--) if (drop.has(published[i]!.sectionKey)) published.splice(i, 1);
+    if (filledBanner) for (let i = fallbacks.length - 1; i >= 0; i--) if (HERO_KEYS.has(fallbacks[i]!.sectionKey)) fallbacks.splice(i, 1);
+  }
+  // Schemes: the "Category strip" card edits the labels of the scheme levels strip (Central / State / District) and
+  // can switch a level off; it is not drawn as a second row under it. Categories are matched to levels by their key.
+  if (pageKey === "schemes") {
+    const stripAt = published.findIndex((s) => s.sectionKey === "category-strip");
+    const levelsAt = fallbacks.findIndex((s) => s.sectionKey === "scheme-levels");
+    if (stripAt >= 0 && levelsAt >= 0) {
+      const cats = ((published[stripAt]!.data as Obj).items as Obj[] | undefined) ?? [];
+      const levels = fallbacks[levelsAt]!;
+      const items = ((levels.data.items as Obj[] | undefined) ?? [])
+        .map((it) => {
+          const hit = cats.find((c) => String(c.key ?? "").trim().toUpperCase() === it.level);
+          if (!hit) return it;
+          return hit.active === false ? null : { ...it, label: has(hit.label) ? hit.label : it.label };
+        })
+        .filter((x): x is Obj => x !== null);
+      fallbacks[levelsAt] = { ...levels, data: { ...levels.data, items } };
+      published.splice(stripAt, 1);
+    }
+  }
   const have = new Set(published.map((s) => s.sectionKey));
   const extra = fallbacks
     .filter((s) => !have.has(s.sectionKey) && !(s.skipIfPresent ?? []).some((k) => have.has(k)))

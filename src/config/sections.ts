@@ -185,7 +185,8 @@ const about: SectionDefinition[] = [
   {
     key: "history",
     sortOrder: 10,
-    schema: z.object({ heading: bilingualSchema.optional(), body: bilingualLongSchema }).strict(),
+    // The three pictures beside the history text (large photo, small photo, map picture); design photos until set.
+    schema: z.object({ heading: bilingualSchema.optional(), body: bilingualLongSchema, mainImageId: mediaId.optional(), secondImageId: mediaId.optional(), mapImageId: mediaId.optional() }).strict(),
   },
   {
     key: "geography",
