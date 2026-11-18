@@ -28,7 +28,13 @@ const envSchema = z.object({
   GRIEVANCE_UPLOAD_MAX_PENDING: z.coerce.number().int().min(1).max(10_000).default(200),
   /** Weather provider API key (OpenWeatherMap-compatible). Unset = public weather falls back to the manual section. Never commit. */
   WEATHER_API_KEY: z.string().min(1).optional(),
-  WEATHER_API_BASE_URL: z.string().url().default("https://api.openweathermap.org/data/2.5"),
+  /**
+   * Which weather service the key belongs to. Unset = guessed from WEATHER_API_BASE_URL (weatherapi.com -> "weatherapi"),
+   * else "openweathermap".
+   */
+  WEATHER_PROVIDER: z.enum(["openweathermap", "weatherapi"]).optional(),
+  /** Unset = the chosen provider's own address. */
+  WEATHER_API_BASE_URL: z.string().url().optional(),
   /** How long a fetched forecast is reused before the provider is called again. */
   WEATHER_CACHE_MINUTES: z.coerce.number().int().min(1).max(180).default(15),
 });

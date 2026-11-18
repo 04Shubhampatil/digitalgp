@@ -4,6 +4,18 @@ import { memoized } from "@/lib/memo-cache";
 import { publishedSectionData } from "@/lib/published-section";
 import { getPublicTenantBySlug } from "@/lib/tenant";
 import { toCurrent, toDaily, type ProviderCurrent, type ProviderForecastItem, type WeatherDto } from "@/features/weather/provider";
+import { fetchWeatherApi } from "@/features/weather/weatherapi";
+
+const DEFAULT_BASE = { openweathermap: "https://api.openweathermap.org/data/2.5", weatherapi: "https://api.weatherapi.com/v1" } as const;
+
+/** The configured weather service and its address. */
+export function weatherProvider(env: { WEATHER_PROVIDER?: "openweathermap" | "weatherapi"; WEATHER_API_BASE_URL?: string }) {
+  const name = env.WEATHER_PROVIDER ?? (env.WEATHER_API_BASE_URL?.includes("weatherapi.com") ? "weatherapi" : "openweathermap");
+  // An address left over from the other service (e.g. the OpenWeatherMap default) is ignored.
+  const base =
+    env.WEATHER_API_BASE_URL && (name === "weatherapi") === env.WEATHER_API_BASE_URL.includes("weatherapi.com") ? env.WEATHER_API_BASE_URL : DEFAULT_BASE[name];
+  return { name, base };
+}
 
 /**
  * Public weather for a website. Uses the provider when WEATHER_API_KEY is set and the website has a
@@ -13,8 +25,13 @@ import { toCurrent, toDaily, type ProviderCurrent, type ProviderForecastItem, ty
  * WEATHER_CACHE_MINUTES. The API key is never returned or logged.
  */
 async function fetchLive(location: string, lang: "en" | "mr"): Promise<Omit<WeatherDto, "source" | "location">> {
-  const { WEATHER_API_KEY, WEATHER_API_BASE_URL } = getEnv();
-  const query = (path: string) => `${WEATHER_API_BASE_URL}/${path}?q=${encodeURIComponent(location)}&units=metric&lang=${lang}&appid=${WEATHER_API_KEY}`;
+  const env = getEnv();
+  const { WEATHER_API_KEY } = env;
+  const provider = weatherProvider(env);
+  if (provider.name === "weatherapi") {
+    return { ...(await fetchWeatherApi(provider.base, WEATHER_API_KEY!, location, lang)), fetchedAt: new Date().toISOString() };
+  }
+  const query = (path: string) => `${provider.base}/${path}?q=${encodeURIComponent(location)}&units=metric&lang=${lang}&appid=${WEATHER_API_KEY}`;
   const [currentRes, forecastRes] = await Promise.all([
     fetch(query("weather"), { signal: AbortSignal.timeout(5000) }),
     fetch(query("forecast"), { signal: AbortSignal.timeout(5000) }),
