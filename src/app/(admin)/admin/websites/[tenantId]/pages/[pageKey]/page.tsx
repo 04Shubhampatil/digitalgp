@@ -136,7 +136,7 @@ export default async function PageEditor({ params, searchParams }: { params: Pro
         section={section}
         capabilities={user.capabilities}
         defaultOpen
-        initialData={section.sectionKey === "banner" ? seed : (sectionSeed(pageKey, section.sectionKey, welcomeData) ?? (!section.draft && !section.published ? designSeed(pageKey, section.sectionKey, tenant.slug, tenant.settings.contact?.email) : undefined))}
+        initialData={section.sectionKey === "banner" ? seed : (sectionSeed(pageKey, section.sectionKey, welcomeData) ?? (!section.draft && !section.published ? designSeed(pageKey, section.sectionKey, tenant.slug, tenant.settings.contact?.email, tenant.settings.weather?.location) : undefined))}
         viewHref={sitePublic ? `${pageHref(tenant.slug, pageKey)}?highlight=${PUBLIC_ANCHOR[section.sectionKey] ?? publicAnchor(pageKey, section.sectionKey, !!section.published)}` : undefined}
       />
     );

@@ -397,10 +397,9 @@ const environment: SectionEditorSpec[] = [
     ],
   }),
   section("weather-update", "weatherUpdate", {
+    // Figures come from the weather provider; nothing is typed in by hand.
     descriptionKey: "weatherUpdateDesc",
     fields: [bi("title", "title", { required: true }), bi("location", "location")],
-    groups: [group("current", "currentWeather", [txt("temperature", "temperature", 20, { required: true }), txt("humidity", "humidity", 20, { required: true }), txt("wind", "wind", 40, { required: true }), txt("feelsLike", "feelsLike", 20, { required: true }), bi("condition", "condition", { required: true })])],
-    items: list("forecast", "forecastDay", 10, [date("date", "date", { required: true }), icon(), txt("maxTemp", "maxTemp", 20, { required: true }), txt("minTemp", "minTemp", 20, { required: true })]),
   }),
 ];
 
@@ -502,9 +501,9 @@ export const EXTRA_EDITORS: Partial<Record<PageKey, SectionEditorSpec[]>> = {
     banner,
     section("about-cards", "aboutCards", { fields: [bi("heading", "heading"), bl("subheading", "subheading"), img("mainImageId", "mainImage"), img("secondImageId", "secondImage"), img("mapImageId", "mapImage"), bi("address", "address"), link("mapUrl", "mapUrl"), bi("buttonText", "buttonText"), link("buttonLink", "buttonLink")], items: list("items", "aboutCard", 8, [icon(), bi("title", "title", { required: true }), bl("description", "description"), bi("buttonText", "buttonText"), link("buttonLink", "buttonLink")]) }),
     section("weather", "weather", {
-      fields: [txt("location", "location", 120)],
-      groups: [group("current", "currentWeather", [txt("temperature", "temperature", 20, { required: true }), txt("humidity", "humidity", 20, { required: true }), txt("wind", "wind", 40, { required: true }), txt("feelsLike", "feelsLike", 20, { required: true }), txt("condition", "condition", 120, { required: true })])],
-      items: list("forecast", "forecastDay", 7, [date("date", "date", { required: true }), icon("icon", { required: true }), txt("maxTemp", "maxTemp", 20, { required: true }), txt("minTemp", "minTemp", 20, { required: true })]),
+      // The figures are fetched live from the weather provider: only the place is typed.
+      descriptionKey: "weatherAutoDesc",
+      fields: [txt("location", "weatherShownPlace", 120, { placeholder: "Savardari, Maharashtra" }), txt("place", "weatherLookupPlace", 120, { placeholder: "Khed,IN" })],
     }),
     section("welcome-video", "welcomeVideo", { fields: [bi("heading", "heading"), bi("watchLabel", "watchLabel"), img("imageId", "thumbnail"), link("videoUrl", "videoUrl")] }),
     section("home-gallery", "homeGallery", { fields: [bi("heading", "heading")], items: list("photos", "galleryPhoto", 12, [img("imageId", "photo", { required: true }), bi("caption", "caption")]) }),

@@ -1352,7 +1352,7 @@
       "marketPrices": "Daily agricultural market prices",
       "marketPricesDesc": "Show the update time: the public page flags prices that are out of date.",
       "weatherUpdate": "Weather update",
-      "weatherUpdateDesc": "Manual entry. Update it regularly: weather goes stale quickly.",
+      "weatherUpdateDesc": "Filled in automatically from the weather service for the village. Nothing to type except the heading and the place shown.",
       "announcementCategories": "Announcement categories",
       "calendar": "Interactive calendar",
       "deadlineCards": "Important deadlines",
@@ -1369,7 +1369,7 @@
       "volunteerCategories": "Volunteer categories",
       "volunteerRegistration": "Volunteer registration settings",
       "aboutCards": "About the village cards",
-      "weather": "Weather (manual fallback)",
+      "weather": "Weather (live)",
       "whatsNew": "What's new",
       "achievements": "Achievements",
       "noticeCategories": "Notice categories",
@@ -1391,7 +1391,8 @@
       "bannerOverlay": "Overlay & Readability",
       "welcomeVideo": "Welcome video",
       "homeGallery": "Gallery strip",
-      "devTimeline": "Development timeline"
+      "devTimeline": "Development timeline",
+      "weatherAutoDesc": "Filled in automatically from the weather service. Only the place is typed: the temperature, humidity, wind and the rest are fetched for you."
     },
     "fields": {
       "layout": "Layout",
@@ -1701,7 +1702,9 @@
       "galleryPhoto": "Photos",
       "timelineStep": "Steps",
       "year": "Year",
-      "completed": "Completed"
+      "completed": "Completed",
+      "weatherShownPlace": "Place shown on the card",
+      "weatherLookupPlace": "Place for the weather lookup (town, country code)"
     },
     "order": "Order",
     "addNew": "Add New {name}",

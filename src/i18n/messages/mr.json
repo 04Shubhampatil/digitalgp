@@ -1352,7 +1352,7 @@
       "marketPrices": "दैनिक शेतमाल बाजारभाव",
       "marketPricesDesc": "अद्यतन वेळ दाखवा: जुने भाव सार्वजनिक पृष्ठावर चिन्हांकित केले जातात.",
       "weatherUpdate": "हवामान अद्यतन",
-      "weatherUpdateDesc": "हाताने भरलेली माहिती. नियमित अद्यतन करा: हवामान लवकर जुने होते.",
+      "weatherUpdateDesc": "गावासाठी हवामान सेवेकडून आपोआप भरले जाते. शीर्षक आणि दाखवायचे ठिकाण याशिवाय काही लिहायचे नाही.",
       "announcementCategories": "घोषणा वर्ग",
       "calendar": "परस्परसंवादी दिनदर्शिका",
       "deadlineCards": "महत्त्वाच्या अंतिम तारखा",
@@ -1369,7 +1369,7 @@
       "volunteerCategories": "स्वयंसेवक वर्ग",
       "volunteerRegistration": "स्वयंसेवक नोंदणी सेटिंग्ज",
       "aboutCards": "गावाबद्दल कार्ड्स",
-      "weather": "हवामान (हाताने भरलेले)",
+      "weather": "हवामान (थेट)",
       "whatsNew": "नवीन काय",
       "achievements": "उपलब्धी",
       "noticeCategories": "सूचना वर्ग",
@@ -1391,7 +1391,8 @@
       "bannerOverlay": "आच्छादन आणि वाचनीयता",
       "welcomeVideo": "स्वागत व्हिडिओ",
       "homeGallery": "छायाचित्र पट्टी",
-      "devTimeline": "विकास कालरेषा"
+      "devTimeline": "विकास कालरेषा",
+      "weatherAutoDesc": "हवामान सेवेकडून आपोआप भरले जाते. फक्त ठिकाण लिहा: तापमान, आर्द्रता, वारा इत्यादी आपोआप मिळतात."
     },
     "fields": {
       "layout": "मांडणी",
@@ -1701,7 +1702,9 @@
       "galleryPhoto": "छायाचित्रे",
       "timelineStep": "टप्पे",
       "year": "वर्ष",
-      "completed": "पूर्ण"
+      "completed": "पूर्ण",
+      "weatherShownPlace": "कार्डवर दाखवायचे ठिकाण",
+      "weatherLookupPlace": "हवामान शोधण्यासाठी ठिकाण (शहर, देश कोड)"
     },
     "order": "क्रम",
     "addNew": "नवीन {name} जोडा",

@@ -747,7 +747,8 @@ const environment: SectionDefinition[] = [
   {
     key: "weather-update",
     sortOrder: 50,
-    // Manual fallback: the preferred source is a cached server-side fetch (not implemented yet).
+    // The figures are fetched from the weather provider (same source as the Home card); only the title and the place
+    // shown are typed. `current` / `forecast` are the legacy manual figures, still accepted but no longer edited.
     schema: strict({
       title: bilingualSchema,
       location: bilingualSchema.optional(),
@@ -757,8 +758,8 @@ const environment: SectionDefinition[] = [
         wind: text(40),
         feelsLike: text(20),
         condition: bilingualSchema,
-      }),
-      forecast: sectionList(strict({ date: isoDate, icon: iconName, maxTemp: text(20), minTemp: text(20) }), 10),
+      }).optional(),
+      forecast: sectionList(strict({ date: isoDate, icon: iconName, maxTemp: text(20), minTemp: text(20) }), 10).optional(),
     }),
   },
 ];

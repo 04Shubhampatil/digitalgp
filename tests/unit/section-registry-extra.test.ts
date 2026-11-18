@@ -44,10 +44,13 @@ describe("registry: projects, schemes and extra home / about blocks", () => {
     expect(ok("schemes", "quick-actions", action("javascript:alert(1)"))).toBe(false);
   });
 
-  it("home weather: the manual fallback needs the current block and up to seven forecast days", () => {
+  it("home weather: only the place is typed; old manual figures are still accepted", () => {
+    expect(ok("home", "weather", { location: "Savardari, Maharashtra", place: "Khed,IN" })).toBe(true);
+    expect(ok("home", "weather", {})).toBe(true);
     const current = { temperature: "31°C", humidity: "82%", wind: "18 km/h", feelsLike: "36°C", condition: "Partly cloudy" };
     expect(ok("home", "weather", { current, forecast: [{ date: "2026-10-30", icon: "01d", maxTemp: "33°C", minTemp: "18°C" }] })).toBe(true);
-    expect(ok("home", "weather", { forecast: [] })).toBe(false);
+    // The figures themselves must be complete when they are given.
+    expect(ok("home", "weather", { current: { temperature: "31°C" } })).toBe(false);
   });
 
   it("about: emergency numbers accept digits and reject letters", () => {
