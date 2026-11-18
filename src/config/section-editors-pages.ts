@@ -73,7 +73,7 @@ const banner = section("banner", "banner", {
       { optional: true },
     ),
   ],
-  items: list("ctas", "cta", 2, [bi("label", "buttonLabel", { required: true }), sel("linkType", "linkType", ["page", "external"], { required: true }), link("href", "link", { required: true }), on("openInNewTab", "openInNewTab")]),
+  items: list("ctas", "cta", 3, [bi("label", "buttonLabel", { required: true }), sel("linkType", "linkType", ["page", "external"], { required: true }), link("href", "link", { required: true }), on("openInNewTab", "openInNewTab")]),
 });
 
 const topStats = section("top-stats", "topStats", {

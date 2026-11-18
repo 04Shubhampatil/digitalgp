@@ -23,7 +23,7 @@ function join(a: Text | undefined, b: Text | undefined): Text | undefined {
 function buttons(list: unknown): Obj[] {
   return (Array.isArray(list) ? (list as Obj[]) : [])
     .filter((c) => typeof c?.href === "string" && c.href && text(c.label))
-    .slice(0, 2)
+    .slice(0, 3)
     .map((c) => {
       const href = c.href as string;
       const external = /^(https?:|mailto:|tel:)/.test(href);
