@@ -322,6 +322,8 @@ const REPLACES: Partial<Record<PageKey, Record<string, string[]>>> = {
 
 /** Where a section of the editor shows on the public page (its own block, or the design block it is drawn in). */
 export function publicAnchor(pageKey: PageKey, sectionKey: string, published = true): string {
+  // The banner is the page's hero: its own block once published, the design's hero until then (first one found is framed).
+  if (sectionKey === "banner") return "banner,hero,page-hero,about-hero";
   const designBlock = REPLACES[pageKey]?.[sectionKey]?.[0];
   if ((pageKey === "infrastructure" || pageKey === "projects") && sectionKey === "top-stats") return designBlock!;
   // Until the section is published the website still shows the design block it will replace.

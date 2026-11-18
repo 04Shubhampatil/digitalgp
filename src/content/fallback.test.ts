@@ -4,7 +4,7 @@ import { editorSpec } from "@/config/section-editors";
 import { findSection } from "@/config/sections";
 import { toApiData, toFormValues } from "@/lib/section-data";
 import { bannerSeed, designSeed, sectionSeed } from "@/lib/banner-seed";
-import { withFallback } from "./fallback";
+import { publicAnchor, withFallback } from "./fallback";
 
 const seo = { titleEn: null, titleMr: null, descriptionEn: null, descriptionMr: null, shareImageId: null };
 const page = (pageKey: string, sections: { sectionKey: string; data: Record<string, unknown> }[]): PublicPageDto => ({
@@ -405,5 +405,17 @@ describe("weather cards: live figures, the place typed in the editor", () => {
     expect(spec.fields.map((f) => f.name)).toEqual(["location", "place"]);
     expect(spec.groups ?? []).toHaveLength(0);
     expect(spec.items ?? []).toHaveLength(0);
+  });
+});
+
+describe("View on website: the banner link finds the hero, published or not", () => {
+  it("names the banner block first and the design hero blocks after it", () => {
+    for (const page of ["home", "finance", "about"] as const) {
+      const keys = publicAnchor(page, "banner", false).split(",");
+      expect(keys[0]).toBe("banner");
+      // The first block of the design page that is a hero is among them, so the link works before the banner is published.
+      const heroKey = withFallback(page, null).sections.find((s) => ["hero", "page-hero", "about-hero"].includes(s.sectionKey))!.sectionKey;
+      expect(keys).toContain(heroKey);
+    }
   });
 });

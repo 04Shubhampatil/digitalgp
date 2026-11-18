@@ -40,6 +40,11 @@ const PUBLIC_ANCHOR: Record<string, string> = {
   "emergency-services": "about-emergency",
   // Schemes: the category strip edits the scheme levels strip.
   "category-strip": "scheme-levels",
+  // Home: the About block is drawn as the "welcome" block until it is published; the notice tabs are part of "notices".
+  "about-cards": "about-cards,welcome",
+  "notice-categories": "notices",
+  // About: the design's leaders block.
+  "leaders-profile-grid": "leaders-profile-grid,leaders",
 };
 
 function editorBlocks<T extends { sectionKey: string }>(pageKey: string, sections: T[]): T[][] {
