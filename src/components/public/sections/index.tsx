@@ -162,7 +162,12 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
   notices: NoticesSection,
   "quick-links": QuickLinksSection,
   // backend sections of the other pages (src/config/sections-pages.ts)
-  banner: BannerSection,
+  // A banner in the editor's default layout (image on the right) is drawn by the page's own design hero, so publishing it
+  // never changes the look of the page: "hero" = the home hero, "page-hero" = the inner pages' hero.
+  banner: (p) => {
+    const kind = (p.data as { designHero?: string }).designHero;
+    return kind === "hero" ? <HeroSection {...p} /> : kind === "page-hero" ? <AboutHeroSection {...p} /> : <BannerSection {...p} />;
+  },
   "top-stats": TopStatsSection,
   "green-scoreboard": GreenScoreboardSection,
   // Employment / Education use the Figma strip that overlaps the hero; Grievance and Announcements keep the cards.

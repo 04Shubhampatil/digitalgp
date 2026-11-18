@@ -219,7 +219,7 @@ export const bannerSchema = z
             path: ["href"],
           }),
       )
-      .max(2)
+      .max(3)
       .optional(),
     imageId: mediaId.optional(),
     textPosition: z

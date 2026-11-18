@@ -35,19 +35,57 @@ describe("banner and hero on public pages", () => {
   });
 
   it("home: a banner without a picture keeps the design photo", () => {
+    // Drawn by the design's hero, which shows the Figma photo until a picture is uploaded.
     const out = withFallback("home", page("home", [{ sectionKey: "banner", data: { layout: "image-right", heading: { en: "New banner" } } }]));
-    expect(out.sections[0]!.data.fallbackImageUrl).toBe("/images/figma/home-hero.png");
+    expect(out.sections[0]!.data.designHero).toBe("hero");
+    expect(out.sections[0]!.data.backgroundImageId).toBeUndefined();
+    const other = withFallback("home", page("home", [{ sectionKey: "banner", data: { layout: "full-background", heading: { en: "New banner" } } }]));
+    expect(other.sections[0]!.data.fallbackImageUrl).toBe("/images/figma/home-hero.png");
   });
 
   it("home: an uploaded banner picture is not replaced", () => {
     const out = withFallback("home", page("home", [{ sectionKey: "banner", data: { layout: "image-right", heading: { en: "New banner" }, imageId: "m1" } }]));
+    expect(out.sections[0]!.data.backgroundImageId).toBe("m1");
     expect(out.sections[0]!.data.fallbackImageUrl).toBeUndefined();
+  });
+
+  it("home: a banner in the image-right layout keeps the design hero (texts, three buttons, photo to the edge)", () => {
+    const out = withFallback("home", page("home", [{ sectionKey: "banner", data: { layout: "image-right", heading: { en: "Welcome to Gram Panchayat X" }, supportingText: { en: "Building a village." } } }]));
+    const hero = out.sections[0]!;
+    expect(hero.sectionKey).toBe("banner");
+    expect(hero.data).toMatchObject({ designHero: "hero", title: { en: "Welcome to Gram Panchayat X" }, subtitle: { en: "Building a village." } });
+    // No buttons typed in the banner: the design's three buttons stay.
+    expect((hero.data.actions as unknown[]).length).toBe(3);
+  });
+
+  it("home: the banner's own buttons replace the design buttons", () => {
+    const ctas = [{ label: { en: "One" }, linkType: "page", href: "page:about", openInNewTab: false }];
+    const out = withFallback("home", page("home", [{ sectionKey: "banner", data: { layout: "image-right", heading: { en: "H" }, ctas } }]));
+    expect(out.sections[0]!.data.actions).toEqual(ctas);
   });
 
   it("inner page: a filled-in banner replaces the design hero", () => {
     const out = withFallback("finance", page("finance", [{ sectionKey: "banner", data: { layout: "full-background", heading: { en: "Finance" } } }]));
     expect(keys(out)).toContain("banner");
     expect(keys(out)).not.toContain("page-hero");
+  });
+
+  it("inner page: a banner in the image-right layout keeps the design hero's look and takes its texts and picture", () => {
+    const seed = bannerSeed("finance", null)!;
+    const design = withFallback("finance", null).sections.find((s) => s.sectionKey === "page-hero")!.data;
+    // As the editor saves it: nothing changed yet.
+    const same = withFallback("finance", page("finance", [{ sectionKey: "banner", data: seed }])).sections[0]!;
+    expect(same.sectionKey).toBe("banner");
+    expect(same.data).toMatchObject({ designHero: "page-hero", titleSmall: true, imageBleed: design.imageBleed, title: design.title, titleAccent: design.titleAccent, imageUrl: design.imageUrl });
+    // New heading and an uploaded picture: the heading replaces title and accent, the picture replaces the design photo.
+    const edited = withFallback("finance", page("finance", [{ sectionKey: "banner", data: { ...seed, heading: { en: "A new heading", mr: "नवीन शीर्षक" }, imageId: "m1" } }])).sections[0]!;
+    expect(edited.data).toMatchObject({ designHero: "page-hero", title: { en: "A new heading" }, imageId: "m1", titleSmall: true });
+    expect(edited.data.titleAccent).toBeUndefined();
+  });
+
+  it("inner page: other banner layouts are the editor's choice and are not redrawn as the design hero", () => {
+    const out = withFallback("finance", page("finance", [{ sectionKey: "banner", data: { layout: "full-background", heading: { en: "Finance" } } }]));
+    expect(out.sections[0]!.data.designHero).toBeUndefined();
   });
 
   it("inner page: without a banner the design hero is shown", () => {
@@ -57,7 +95,7 @@ describe("banner and hero on public pages", () => {
 });
 
 describe("bannerSeed (what the Banner card shows before it is saved)", () => {
-  it("home: takes the heading, picture and at most two buttons of the hero", () => {
+  it("home: takes the heading, picture and the buttons (up to three, as in the design) of the hero", () => {
     const seed = bannerSeed("home", {
       title: { en: "Welcome", mr: "स्वागत" },
       subtitle: { en: "Sub" },
@@ -70,8 +108,8 @@ describe("bannerSeed (what the Banner card shows before it is saved)", () => {
     })!;
     expect(seed.heading).toEqual({ en: "Welcome", mr: "स्वागत" });
     expect(seed.imageId).toBe("m1");
-    expect(seed.ctas).toHaveLength(2);
-    expect((seed.ctas as { linkType: string }[]).map((c) => c.linkType)).toEqual(["page", "external"]);
+    expect(seed.ctas).toHaveLength(3);
+    expect((seed.ctas as { linkType: string }[]).map((c) => c.linkType)).toEqual(["page", "external", "page"]);
   });
 
   it("home: falls back to the design hero when the website has none", () => {

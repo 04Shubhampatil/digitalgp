@@ -367,6 +367,31 @@ function fillDesignMedia(data: unknown, design: unknown): unknown {
 /** Home sections that always sit on their design block, whatever else of the page is published. */
 const DESIGN_BASE = new Set(["about-cards", "welcome-video", "home-gallery", "whats-new"]);
 
+/**
+ * The inner page hero of the design with what the Banner card holds written into it: eyebrow (supporting text), heading,
+ * paragraph (description), buttons and picture. The design's own look (sizes, accent colour, picture position) stays. The
+ * heading keeps the design's accent split while it is the text the card opened with; a new heading replaces it whole.
+ */
+function pageHeroFromBanner(design: Obj, b: Obj, ctas: Obj[]): Obj {
+  const joined = (loc: "en" | "mr") => [(design.title as Obj | undefined)?.[loc], (design.titleAccent as Obj | undefined)?.[loc]].filter(Boolean).join(" ");
+  const heading = (b.heading ?? {}) as Obj;
+  const sameHeading = (["en", "mr"] as const).every((l) => !heading[l] || !joined(l) || String(heading[l]).trim() === joined(l).trim());
+  const out: Obj = { ...design, designHero: "page-hero" };
+  if (has(b.supportingText)) out.eyebrow = b.supportingText;
+  if (has(b.description)) out.body = b.description;
+  if (has(b.heading) && !sameHeading) {
+    out.title = b.heading;
+    for (const k of ["titleAccent", "titleParts", "accentBlock"]) delete out[k];
+  }
+  if (ctas.length) {
+    out.actions = ctas;
+    delete out.primary;
+    delete out.secondary;
+  }
+  if (has(b.imageId)) out.imageId = b.imageId;
+  return out;
+}
+
 /** Hero blocks a published, filled-in `banner` takes the place of. */
 const HERO_KEYS = new Set(["hero", "page-hero", "about-hero"]);
 
@@ -408,6 +433,21 @@ function withSections(pageKey: PageKey, page: PublicPageDto | null, override: Fa
       const designHero = (FALLBACK_SECTIONS[pageKey] ?? []).find((s) => HERO_KEYS.has(s.sectionKey))?.data;
       const fallbackImageUrl = (designHero?.imageUrl as string | undefined) ?? (pageKey === "home" ? "/images/figma/home-hero.png" : undefined);
       if (fallbackImageUrl) published[bannerAt] = { ...published[bannerAt]!, data: { ...b, fallbackImageUrl } };
+    }
+    // Home: the banner (image on the right, the layout the editor starts with) is drawn by the design's own hero, so the
+    // page keeps the Figma look; its texts, buttons and picture come from the banner. Other layouts are the editor's choice.
+    if (filledBanner && (b.layout ?? "image-right") === "image-right") {
+      const designHero = design.find((s) => HERO_KEYS.has(s.sectionKey));
+      const ctas = ((b.ctas as Obj[] | undefined) ?? []).filter((c) => c.href && has(c.label));
+      if (pageKey === "home") {
+        const designActions = (designHero?.data.actions as Obj[] | undefined) ?? [];
+        published[bannerAt] = {
+          ...published[bannerAt]!,
+          data: { designHero: "hero", title: b.heading, subtitle: has(b.supportingText) ? b.supportingText : b.description, backgroundImageId: b.imageId, actions: ctas.length ? ctas : designActions },
+        };
+      } else if (designHero) {
+        published[bannerAt] = { ...published[bannerAt]!, data: pageHeroFromBanner(designHero.data, b, ctas) };
+      }
     }
     for (let i = published.length - 1; i >= 0; i--) if (drop.has(published[i]!.sectionKey)) published.splice(i, 1);
     if (filledBanner) for (let i = fallbacks.length - 1; i >= 0; i--) if (HERO_KEYS.has(fallbacks[i]!.sectionKey)) fallbacks.splice(i, 1);
