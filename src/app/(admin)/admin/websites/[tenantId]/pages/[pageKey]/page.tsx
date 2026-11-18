@@ -17,6 +17,7 @@ import { PageEditorHeader } from "@/components/admin/editor/PageEditorHeader";
 import { content, tenants } from "@/lib/api/admin";
 import { publicAnchor } from "@/content/fallback";
 import { bannerSeed, designSeed, sectionSeed } from "@/lib/banner-seed";
+import { isEditorCard } from "@/lib/editor-sections";
 import { isApiError } from "@/lib/api/client";
 import { cookieHeader } from "@/lib/api/server";
 import { getCurrentUser, hasCapability } from "@/lib/session";
@@ -95,11 +96,11 @@ export default async function PageEditor({ params, searchParams }: { params: Pro
   // The Banner card is the page's hero: until it is saved it shows the hero the website has today, and the older
   // Home "hero" card is hidden so there is one place to edit it.
   const hasBanner = ordered.some((s) => s.sectionKey === "banner");
-  const heroSection = ordered.find((s) => s.sectionKey === "hero");
+  // The hero the website shows: Home "hero", About "overview" (both are replaced by the Banner card once it is saved).
+  const heroSection = ordered.find((s) => s.sectionKey === (pageKey === "about" ? "overview" : "hero"));
   const heroData = (heroSection?.draft?.data ?? heroSection?.published?.data) as Record<string, unknown> | undefined;
   const seed = hasBanner ? bannerSeed(pageKey, heroData) : undefined;
 
-  const hasAboutCards = ordered.some((s) => s.sectionKey === "about-cards");
   const welcomeSection = ordered.find((s) => s.sectionKey === "welcome");
   const welcomeData = (welcomeSection?.draft?.data ?? welcomeSection?.published?.data) as Record<string, unknown> | undefined;
   const sitePublic = tenant.status === "PUBLISHED" && page.isEnabled;
@@ -125,13 +126,8 @@ export default async function PageEditor({ params, searchParams }: { params: Pro
   const renderSection = (section: (typeof ordered)[number]) => {
     const spec = editorSpec(pageKey, section.sectionKey);
     if (!spec) return null;
-    if (hasBanner && section.sectionKey === "hero") return null;
-    // "Our leaders" is not shown on the home page (it lives on About), so its card would change nothing here.
-    if (pageKey === "home" && section.sectionKey === "leaders") return null;
-    // The About design has no block for the geography figures, so that card would change nothing on the website.
-    if (pageKey === "about" && section.sectionKey === "geography") return null;
-    // The home About block is edited in the "About the village cards" card; the older "welcome" card fed the same block.
-    if (pageKey === "home" && section.sectionKey === "welcome" && hasAboutCards) return null;
+    // Cards that would change nothing the visitor sees (or that another card replaces) are not shown: see isEditorCard.
+    if (!isEditorCard(pageKey, section, ordered)) return null;
     return (
       <SectionEditor
         key={section.sectionKey}

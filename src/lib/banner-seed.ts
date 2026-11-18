@@ -4,6 +4,7 @@ import { FALLBACK_SECTIONS } from "@/content/fallback";
 import { marathiFor } from "@/i18n/mr-fallback";
 
 type Obj = Record<string, unknown>;
+const MEDIA_ID = /^[a-z0-9]{10,40}$/;
 type Text = { en?: string; mr?: string };
 
 /** Bilingual value with the Marathi text filled from the design's translation table when it is missing. */
@@ -90,6 +91,18 @@ export function bannerSeed(pageKey: PageKey, heroData: Obj | null | undefined): 
       ...(ctas.length ? { ctas } : {}),
     };
   }
+  if (pageKey === "about" && heroData) {
+    // The About hero of the website is the published "overview" section: the Banner card opens with that.
+    const ctas = buttons(heroData.actions);
+    return {
+      layout: "image-right",
+      heading: text(heroData.heading),
+      supportingText: text(heroData.eyebrow),
+      description: text(heroData.body),
+      ...(typeof heroData.imageId === "string" && MEDIA_ID.test(heroData.imageId) ? { imageId: heroData.imageId } : {}),
+      ...(ctas.length ? { ctas } : {}),
+    };
+  }
   const d = (FALLBACK_SECTIONS[pageKey] ?? []).find((s) => s.sectionKey === "page-hero" || s.sectionKey === "about-hero")?.data;
   if (!d) return undefined;
   const ctas = buttons(Array.isArray(d.actions) && d.actions.length ? d.actions : [d.primary, d.secondary].filter(Boolean));
@@ -101,8 +114,6 @@ export function bannerSeed(pageKey: PageKey, heroData: Obj | null | undefined): 
     ...(ctas.length ? { ctas } : {}),
   };
 }
-
-const MEDIA_ID = /^[a-z0-9]{10,40}$/;
 
 /** Design content in the shape an editor form can hold: Marathi filled in, site picture files left out. */
 function formReady(v: unknown): unknown {

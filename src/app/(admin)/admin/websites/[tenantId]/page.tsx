@@ -15,7 +15,9 @@ import { content, hierarchy, tenants } from "@/lib/api/admin";
 import { isApiError } from "@/lib/api/client";
 import { cookieHeader } from "@/lib/api/server";
 import { formatDate } from "@/lib/format";
+import { isEditorCard } from "@/lib/editor-sections";
 import { getCurrentUser, hasCapability } from "@/lib/session";
+import type { PageKey } from "@/config/pages";
 
 export const metadata: Metadata = { title: "Website" };
 
@@ -53,14 +55,18 @@ export default async function WebsitePage({ params }: { params: Promise<{ tenant
   const districtTaluka = [unitName("DISTRICT"), unitName("TALUKA")].filter(Boolean).join(" / ");
 
   const name = pickText(pair(tenant.nameEn, tenant.nameMr), ui, tenant.slug);
-  const withPublished = pages.filter((p) => p.sections.some((s) => s.published)).length;
+  // Only the cards the page editor shows count (hidden registry sections can never be filled in, so they would keep a
+  // page "in progress" for ever).
+  const shown = (p: PageDto) => p.sections.filter((sec) => isEditorCard(p.pageKey as PageKey, sec, p.sections));
+  const withPublished = pages.filter((p) => shown(p).some((s) => s.published)).length;
   const progress = pages.length ? Math.round((withPublished / pages.length) * 100) : 0;
-  const pendingItems = pages.reduce((n, p) => n + p.sections.filter((sec) => !sec.published).length, 0);
+  const pendingItems = pages.reduce((n, p) => n + shown(p).filter((sec) => !sec.published).length, 0);
   const isGpOnly = user.assignments.filter((a) => !a.revokedAt).length === 1 && !hasCapability(user, "tenant:create");
   const pageState = (p: PageDto): "completed" | "inProgress" | "notStarted" => {
-    const published = p.sections.filter((sec) => sec.published).length;
-    if (p.sections.length > 0 && published === p.sections.length) return "completed";
-    return published > 0 || p.sections.some((sec) => sec.draft) ? "inProgress" : "notStarted";
+    const cards = shown(p);
+    const published = cards.filter((sec) => sec.published).length;
+    if (cards.length > 0 && published === cards.length) return "completed";
+    return published > 0 || cards.some((sec) => sec.draft) ? "inProgress" : "notStarted";
   };
   const completedPages = pages.filter((p) => pageState(p) === "completed").length;
   const base = process.env.APP_BASE_HOST && process.env.APP_BASE_HOST !== "localhost" ? `https://${tenant.slug}.${process.env.APP_BASE_HOST}` : `/${tenant.slug}`;
@@ -83,8 +89,8 @@ export default async function WebsitePage({ params }: { params: Promise<{ tenant
       cell: (p) => {
         if (!p.isEnabled) return <span className="text-muted">{t("websites.disabled")}</span>;
         if (p.sections.length === 0) return <span className="text-muted">{t("websites.noSections")}</span>;
-        const left = p.sections.filter((sec) => !sec.published).length;
-        const drafts = p.sections.filter((sec) => sec.draft).length;
+        const left = shown(p).filter((sec) => !sec.published).length;
+        const drafts = shown(p).filter((sec) => sec.draft).length;
         return (
           <span className="text-muted">
             {left > 0 ? t("websites.sectionsPending", { n: left }) : "—"}

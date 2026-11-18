@@ -4,6 +4,7 @@ import { editorSpec } from "@/config/section-editors";
 import { findSection } from "@/config/sections";
 import { toApiData, toFormValues } from "@/lib/section-data";
 import { bannerSeed, designSeed, sectionSeed } from "@/lib/banner-seed";
+import { isEditorCard } from "@/lib/editor-sections";
 import { publicAnchor, withFallback } from "./fallback";
 
 const seo = { titleEn: null, titleMr: null, descriptionEn: null, descriptionMr: null, shareImageId: null };
@@ -417,5 +418,51 @@ describe("View on website: the banner link finds the hero, published or not", ()
       const heroKey = withFallback(page, null).sections.find((s) => ["hero", "page-hero", "about-hero"].includes(s.sectionKey))!.sectionKey;
       expect(keys).toContain(heroKey);
     }
+  });
+});
+
+describe("which cards the editor and the CMS overview count", () => {
+  const sec = (sectionKey: string, extra: { draft?: unknown; published?: unknown } = {}) => ({ sectionKey, ...extra });
+
+  it("leaves out registry sections that another card replaces or that the website has no place for", () => {
+    const home = ["banner", "hero", "welcome", "about-cards", "leaders", "quick-stats"].map((k) => sec(k));
+    const shown = home.filter((s) => isEditorCard("home", s, home)).map((s) => s.sectionKey);
+    expect(shown).toEqual(["banner", "about-cards", "quick-stats"]);
+    const about = ["banner", "overview", "geography", "history"].map((k) => sec(k));
+    expect(about.filter((s) => isEditorCard("about", s, about)).map((s) => s.sectionKey)).toEqual(["banner", "history"]);
+  });
+
+  it("keeps the older hero and welcome cards when there is no banner / about cards to replace them", () => {
+    const home = ["hero", "welcome"].map((k) => sec(k));
+    expect(home.every((s) => isEditorCard("home", s, home))).toBe(true);
+  });
+
+  it("hides cards with no block on the site until they hold something, never after", () => {
+    const env = [sec("banner"), sec("top-stats"), sec("weather-update")];
+    expect(isEditorCard("environment", env[1]!, env)).toBe(false);
+    const saved = [sec("banner"), sec("top-stats", { draft: {} })];
+    expect(isEditorCard("environment", saved[1]!, saved)).toBe(true);
+    const live = [sec("banner"), sec("top-stats", { published: {} })];
+    expect(isEditorCard("environment", live[1]!, live)).toBe(true);
+    const culture = [sec("training-programs")];
+    expect(isEditorCard("culture", culture[0]!, culture)).toBe(false);
+  });
+});
+
+describe("About Banner card opens with the About hero the website shows", () => {
+  it("takes the texts, buttons and picture of the published overview section", () => {
+    const seed = bannerSeed("about", {
+      eyebrow: { en: "Our Gram Panchayat" },
+      heading: { en: "A heading" },
+      body: { en: "Some words about the village." },
+      imageId: "abcdefghij1",
+      actions: [{ label: { en: "Know our leaders" }, href: "page:about#members" }],
+    })!;
+    expect(seed).toMatchObject({ heading: { en: "A heading" }, supportingText: { en: "Our Gram Panchayat" }, description: { en: "Some words about the village." }, imageId: "abcdefghij1" });
+    expect((seed.ctas as unknown[]).length).toBe(1);
+  });
+
+  it("falls back to the design hero when nothing is published", () => {
+    expect(bannerSeed("about", undefined)?.heading).toBeDefined();
   });
 });
