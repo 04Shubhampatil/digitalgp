@@ -890,8 +890,10 @@ export async function WeatherUpdateSection({ slug, locale, data }: SectionProps)
     current?: { temperature?: string; humidity?: string; wind?: string; feelsLike?: string; condition?: B };
     forecast?: unknown;
   };
-  const live = await getPublicWeather(slug);
+  const live = await getPublicWeather(slug, locale);
   const useLive = live?.source === "live" && !!live.current;
+  // Values arrive with their unit ("31°C", "82%") from the weather service and plain ("31") from older manual rows.
+  const bare = (v?: string) => String(v ?? "").replace(/\s*(°\s*C?|%)\s*$/i, "");
   const c = useLive ? { ...live!.current!, condition: plain(live!.current!.condition, locale) } : d.current ? { ...d.current, condition: tx(d.current.condition, locale) } : null;
   const days = useLive ? (live!.forecast ?? []) : list<{ date?: string; icon?: string; maxTemp?: string; minTemp?: string }>(d.forecast);
   if (!c) return null;
@@ -915,14 +917,14 @@ export async function WeatherUpdateSection({ slug, locale, data }: SectionProps)
             <Cloud aria-hidden className="absolute right-0 bottom-0 size-11 text-white" fill="#ffffff" />
           </span>
           <div>
-            <p className="text-[32px] leading-none font-bold">{c.temperature}°C</p>
+            <p className="text-[32px] leading-none font-bold">{bare(c.temperature)}°C</p>
             <p className="mt-1.5 text-[14px] opacity-95">{c.condition}</p>
           </div>
         </div>
         <dl className="grid gap-0.5 text-[13px]">
-          <div className="flex gap-1"><dt>{t("humidity")}:</dt><dd>{c.humidity}%</dd></div>
+          <div className="flex gap-1"><dt>{t("humidity")}:</dt><dd>{bare(c.humidity)}%</dd></div>
           <div className="flex gap-1"><dt>{t("wind")}:</dt><dd>{c.wind}</dd></div>
-          <div className="flex gap-1"><dt>{t("feelsLike")}:</dt><dd>{c.feelsLike}°C</dd></div>
+          <div className="flex gap-1"><dt>{t("feelsLike")}:</dt><dd>{bare(c.feelsLike)}°C</dd></div>
         </dl>
       </div>
       {days.length > 0 && (
@@ -934,8 +936,8 @@ export async function WeatherUpdateSection({ slug, locale, data }: SectionProps)
                 <span className="text-[12px] font-semibold text-[#135130]">{date ? date.toLocaleDateString(loc, { weekday: "short" }) : ""}</span>
                 <span className="text-[10px] text-[#414141]">{date ? date.toLocaleDateString(loc, { day: "numeric", month: "short" }) : ""}</span>
                 <WeatherGlyph name={day.icon} className="my-1 size-4 text-[#f5a623]" />
-                <span className="text-[13px] font-semibold text-black">{day.maxTemp}°C</span>
-                <span className="text-[13px] font-semibold text-black">{day.minTemp}°C</span>
+                <span className="text-[13px] font-semibold text-black">{bare(day.maxTemp)}°C</span>
+                <span className="text-[13px] font-semibold text-black">{bare(day.minTemp)}°C</span>
               </li>
             );
           })}

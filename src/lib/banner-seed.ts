@@ -167,7 +167,21 @@ const ACCENTS = ["#135130", "#F5871F", "#1A62E0", "#7B2CBF"] as const;
  * Sections whose design block has another key (and another shape): the design content of that block, rewritten into
  * the fields of the section, so these cards also open with what the website shows today.
  */
-const BRIDGES: Partial<Record<PageKey, Record<string, (block: (key: string) => Obj | undefined, officeEmail?: string) => Obj | undefined>>> = {
+type BridgeCtx = { officeEmail?: string; weatherPlace?: string };
+const BRIDGES: Partial<Record<PageKey, Record<string, (block: (key: string) => Obj | undefined, ctx: BridgeCtx) => Obj | undefined>>> = {
+  home: {
+    // Live weather: only the place is typed (the card shows the shown place, the provider looks up the other).
+    weather: (b, ctx) => {
+      const shown = text(b("weather")?.location)?.en;
+      return { ...(shown ? { location: shown } : {}), ...(ctx.weatherPlace ? { place: ctx.weatherPlace } : {}) };
+    },
+  },
+  environment: {
+    "weather-update": (b) => {
+      const d = b("weather-update");
+      return d && { title: d.title, ...(d.location ? { location: d.location } : {}) };
+    },
+  },
   infrastructure: {
     "top-stats": (b) => {
       const d = b("facility-grid");
@@ -252,7 +266,7 @@ const BRIDGES: Partial<Record<PageKey, Record<string, (block: (key: string) => O
     },
   },
   grievance: {
-    "complaint-form": (b, officeEmail) => ({
+    "complaint-form": (b, { officeEmail }) => ({
       heading: b("grievance-register")?.heading ?? bi("Register Your Complaint", "आपली तक्रार नोंदवा"),
       successMessage: bi("Your complaint has been registered.", "आपली तक्रार नोंदवली गेली आहे."),
       submitButtonText: bi("Submit Complaint", "तक्रार सादर करा"),
@@ -300,10 +314,12 @@ const DEFAULTS: Partial<Record<PageKey, Record<string, Obj>>> = {
  * of the design block the section takes the place of), so the editor changes what is on the website instead of typing
  * it again. Nothing is stored until it is saved.
  */
-export function designSeed(pageKey: PageKey, sectionKey: string, slug?: string, officeEmail?: string): Obj | undefined {
+export function designSeed(pageKey: PageKey, sectionKey: string, slug?: string, officeEmail?: string, weatherPlace?: string): Obj | undefined {
   const block = (key: string) => (FALLBACK_SECTIONS[pageKey] ?? []).find((s) => s.sectionKey === key)?.data;
   const own = block(sectionKey);
-  const d = own ? { ...DEFAULTS[pageKey]?.[sectionKey], ...own } : BRIDGES[pageKey]?.[sectionKey]?.(block, officeEmail);
+  const bridge = BRIDGES[pageKey]?.[sectionKey];
+  // A section whose design block has another shape (or other fields) is rewritten by its bridge; the rest open as the block is.
+  const d = bridge ? bridge(block, { officeEmail, weatherPlace }) : own ? { ...DEFAULTS[pageKey]?.[sectionKey], ...own } : undefined;
   if (!d) return undefined;
   // "list:success-stories" is a design shorthand for the website's own stories list; the editor stores the address.
   const data = JSON.parse(JSON.stringify(formReady(d)).replaceAll('"list:success-stories"', JSON.stringify(`/${slug ?? ""}/success-stories`))) as Obj;

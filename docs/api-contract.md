@@ -481,11 +481,12 @@ Publishing, unpublishing or archiving announcements, schemes and projects revali
 `GET /public/:tenantSlug/media/:mediaId/meta` returns `{ id, kind, mimeType, sizeBytes }` only when a published section or a published announcement references the file. Unreferenced files return 404. No storage path or uploader is returned.
 
 ### Weather (item 9)
-`GET /public/:tenantSlug/weather` returns `{ source: "live" | "manual", location, current, forecast[] (up to 5 days), fetchedAt }`.
-- Live data comes from an OpenWeatherMap-compatible API when `WEATHER_API_KEY` is set and the website has `settings.weather.location` (e.g. `"Khed,IN"`). Results are cached per website for `WEATHER_CACHE_MINUTES` (default 15).
-- Otherwise, or if the provider fails, the manual `weather` section published on Home is returned with `source: "manual"`.
+`GET /public/:tenantSlug/weather[?lang=mr]` returns `{ source: "live" | "manual", location, current, forecast[] (up to 5 days), fetchedAt }`. `current` has `temperature`, `feelsLike`, `humidity`, `wind` (with compass direction), `condition`, and, when the provider sends them, `visibility`, `sunrise`, `sunset` (clock of the place). `?lang=mr` asks the provider for the condition text in Marathi.
+- Admins no longer type weather figures. The Home `weather` section (and the Environment `weather-update` card) only holds the place: `weather.location` is the text shown on the card, `weather.place` is the name sent to the provider (e.g. `"Khed,IN"`). `current` / `forecast` stay in the schema as optional legacy manual figures.
+- Live data comes from an OpenWeatherMap-compatible API when `WEATHER_API_KEY` is set and a place is known: the `place` of the published Home `weather` section, else `settings.weather.location`. Results are cached per website, place and language for `WEATHER_CACHE_MINUTES` (default 15).
+- Otherwise, or if the provider fails, the legacy manual figures of that section are returned with `source: "manual"` (none if the section has none: the site keeps its design card).
 - The API key is never returned or logged.
-- Env: `WEATHER_API_KEY` (optional, never commit), `WEATHER_API_BASE_URL`, `WEATHER_CACHE_MINUTES`.
+- Env: `WEATHER_API_KEY` (optional, never commit; set it in the host's environment too), `WEATHER_API_BASE_URL`, `WEATHER_CACHE_MINUTES`.
 
 ### New section keys (item 10)
 | Page | Keys |

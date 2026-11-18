@@ -33,17 +33,22 @@ function normaliseWeather(data: unknown, live: PublicWeatherDto | null, locale: 
   const text = (v: unknown) => (typeof v === "string" ? { en: v, mr: v } : v);
   const days = (src.forecast ?? []).slice(0, 5).map((f) => ({
     day: f.date ? new Date(`${f.date}T00:00:00`).toLocaleDateString(locale === "mr" ? "mr-IN" : "en-IN", { weekday: "short" }) : "",
-    max: f.maxTemp,
-    min: f.minTemp,
+    // The card adds the degree sign itself; the weather service sends "31°C".
+    max: (f.maxTemp ?? "").replace(/s*°s*C?$/i, ""),
+    min: (f.minTemp ?? "").replace(/s*°s*C?$/i, ""),
   }));
   return {
     title: own.title,
-    location: text(src.location ?? own.location),
+    // The place shown on the card is the one of the design / the editor; the lookup name ("Khed,IN") only when there is none.
+    location: text(own.location ?? src.location),
     temperature: (c.temperature ?? "").replace(/\s*°\s*C?$/i, ""),
     condition: text(c.condition),
     feelsLike: withUnit(c.feelsLike, "°C"),
     humidity: withUnit(c.humidity, "%"),
     wind: c.wind,
+    visibility: c.visibility,
+    sunrise: c.sunrise,
+    sunset: c.sunset,
     date: new Date().toLocaleDateString(locale === "mr" ? "mr-IN" : "en-IN", { day: "numeric", month: "short", year: "numeric" }),
     days,
   };
@@ -57,7 +62,7 @@ function mrWeather(v: string | undefined, locale: string): string | undefined {
   const DIRS: Record<string, string> = { N: "उ", S: "द", E: "पू", W: "प", NW: "वायव्य", NE: "ईशान्य", SW: "नैऋत्य", SE: "आग्नेय" };
   return v
     .replace(/(\d{1,2}):(\d{2}) (AM|PM)/g, (_m, h: string, mi: string, ap: string) => (ap === "AM" ? "सकाळी" : "सायं.") + " " + h + ":" + mi)
-    .replace(/km\/hr/g, "किमी/तास")
+    .replace(/km\/hr?\b/g, "किमी/तास")
     .replace(/\bkm\b/g, "किमी")
     .replace(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/g, (m) => MONTHS[m] ?? m)
     .replace(/\b(NW|NE|SW|SE|N|S|E|W)\b/g, (m) => DIRS[m] ?? m)
@@ -70,7 +75,7 @@ function mrWeather(v: string | undefined, locale: string): string | undefined {
  */
 export async function WeatherSection({ slug, locale, data }: SectionProps) {
   const tw = await getTranslations("public.weatherLabels");
-  const live = await getPublicWeather(slug);
+  const live = await getPublicWeather(slug, locale);
   const d = normaliseWeather(data, live, locale) as {
     title?: Bilingual;
     location?: Bilingual;

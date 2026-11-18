@@ -216,13 +216,16 @@ export const HOME_EXTRA_SECTIONS: SectionDefinition[] = [
     schema: strict({ heading: bilingualSchema.optional(), photos: list(strict({ imageId: mediaId, caption: bilingualSchema.optional() }), 12) }),
   },
   {
-    // Manual fallback for the live weather card (used when no provider is configured or it fails).
+    // Live weather card. The figures come from the weather provider (server-side), never from the editor: only the
+    // place is typed. `location` is the text shown on the card, `place` the name sent to the provider ("Khed,IN").
+    // `current` / `forecast` are the legacy manual figures: still accepted so older rows keep validating, no longer edited.
     key: "weather",
     sortOrder: 22,
     schema: strict({
       location: text(120).optional(),
-      current: strict({ temperature: text(20), humidity: text(20), wind: text(40), feelsLike: text(20), condition: text(120) }),
-      forecast: list(strict({ date: isoDate, icon: iconName, maxTemp: text(20), minTemp: text(20) }), 7),
+      place: text(120).optional(),
+      current: strict({ temperature: text(20), humidity: text(20), wind: text(40), feelsLike: text(20), condition: text(120) }).optional(),
+      forecast: list(strict({ date: isoDate, icon: iconName, maxTemp: text(20), minTemp: text(20) }), 7).optional(),
     }),
   },
   {

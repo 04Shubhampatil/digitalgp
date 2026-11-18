@@ -1,8 +1,14 @@
 /** Shapes returned by an OpenWeatherMap-compatible API (only the fields used here). */
 export interface ProviderCurrent {
   main: { temp: number; feels_like: number; humidity: number };
-  wind: { speed: number };
+  wind: { speed: number; deg?: number };
   weather: { description: string; icon: string }[];
+  /** Metres. */
+  visibility?: number;
+  /** Unix seconds (UTC). */
+  sys?: { sunrise?: number; sunset?: number };
+  /** Offset of the place from UTC, in seconds. */
+  timezone?: number;
 }
 
 export interface ProviderForecastItem {
@@ -14,20 +20,37 @@ export interface ProviderForecastItem {
 export interface WeatherDto {
   source: "live" | "manual";
   location: string | null;
-  current: { temperature: string; humidity: string; wind: string; feelsLike: string; condition: string } | null;
+  current: { temperature: string; humidity: string; wind: string; feelsLike: string; condition: string; visibility?: string; sunrise?: string; sunset?: string } | null;
   /** Next days, one entry per date, from the provider's 3-hourly forecast. */
   forecast: { date: string; icon: string; maxTemp: string; minTemp: string }[];
   fetchedAt: string;
 }
 
+const COMPASS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;
+
+/** "6:12 AM" for a Unix time, in the clock of the place (the provider gives its offset from UTC). */
+function clock(unixSeconds: number, offsetSeconds: number): string {
+  const d = new Date((unixSeconds + offsetSeconds) * 1000);
+  const h = d.getUTCHours();
+  return `${h % 12 || 12}:${String(d.getUTCMinutes()).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+}
+
+/** First letter of every word in capitals ("partly cloudy" -> "Partly Cloudy"); Devanagari is left as it is. */
+const capitalise = (s: string) => s.replace(/(^|\s)([a-z])/g, (_m, sp: string, ch: string) => sp + ch.toUpperCase());
+
 /** Map the provider's current conditions to the display fields used on the site (metric units). */
 export function toCurrent(c: ProviderCurrent): NonNullable<WeatherDto["current"]> {
+  const dir = typeof c.wind.deg === "number" ? ` ${COMPASS[Math.round(c.wind.deg / 45) % 8]}` : "";
+  const offset = c.timezone ?? 0;
   return {
     temperature: `${Math.round(c.main.temp)}°C`,
     feelsLike: `${Math.round(c.main.feels_like)}°C`,
     humidity: `${Math.round(c.main.humidity)}%`,
-    wind: `${Math.round(c.wind.speed * 3.6)} km/h`,
-    condition: c.weather[0]?.description ?? "",
+    wind: `${Math.round(c.wind.speed * 3.6)} km/h${dir}`,
+    condition: capitalise(c.weather[0]?.description ?? ""),
+    ...(typeof c.visibility === "number" ? { visibility: `${Math.round(c.visibility / 100) / 10} km` } : {}),
+    ...(c.sys?.sunrise ? { sunrise: clock(c.sys.sunrise, offset) } : {}),
+    ...(c.sys?.sunset ? { sunset: clock(c.sys.sunset, offset) } : {}),
   };
 }
 

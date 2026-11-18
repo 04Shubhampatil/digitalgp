@@ -100,6 +100,17 @@ function fillLabels(sectionKey: string, data: Obj, fallback: Obj): Obj {
     // Published cards and pictures on top of the design block: what the editor left empty keeps the design value.
     return { ...fallback, ...filled(data) };
   }
+  if (sectionKey === "weather") {
+    // Live weather: the card draws the provider's figures. The published section only names the place; the design card
+    // (with its sample figures) stays for when the provider is not available. Old manual figures still win if present.
+    if (has(data.current)) return data;
+    const shown = typeof data.location === "string" && data.location.trim() ? { en: data.location, mr: data.location } : fallback.location;
+    return { ...fallback, location: shown };
+  }
+  if (sectionKey === "weather-update") {
+    // Same on the Environment page: without typed figures the design's sample figures stay until the provider answers.
+    return { ...data, current: data.current ?? fallback.current, forecast: data.forecast ?? fallback.forecast };
+  }
   if (sectionKey === "ward-details") return { ...data, viewAll: data.viewAll ?? fallback.viewAll };
   if (sectionKey === "village-progress") {
     // An indicator the editor listed without a value shows the design's value for that label until one is entered.

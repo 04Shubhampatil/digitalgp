@@ -374,3 +374,36 @@ describe("designSeed: cards whose design block has another key", () => {
     expect(ok("grievance", "complaint-form", "office@example.org").recipientEmail).toBe("office@example.org");
   });
 });
+
+describe("weather cards: live figures, the place typed in the editor", () => {
+  it("home: a published place keeps the design card (shown with the typed place) until live figures arrive", () => {
+    const out = withFallback("home", page("home", [{ sectionKey: "weather", data: { location: "Khed, Maharashtra", place: "Khed,IN" } }]));
+    const w = out.sections.find((s) => s.sectionKey === "weather")!;
+    expect(w.data.temperature).toBeDefined();
+    expect(w.data.location).toEqual({ en: "Khed, Maharashtra", mr: "Khed, Maharashtra" });
+  });
+
+  it("home: old manual figures are used as they are", () => {
+    const current = { temperature: "29°C", humidity: "60%", wind: "10 km/h", feelsLike: "30°C", condition: "Clear" };
+    const w = withFallback("home", page("home", [{ sectionKey: "weather", data: { current } }])).sections.find((s) => s.sectionKey === "weather")!;
+    expect(w.data.current).toEqual(current);
+  });
+
+  it("environment: the weather card keeps the design figures until the provider answers", () => {
+    const w = withFallback("environment", page("environment", [{ sectionKey: "weather-update", data: { title: { en: "Weather" } } }])).sections.find((s) => s.sectionKey === "weather-update")!;
+    expect(w.data.current).toBeDefined();
+  });
+
+  it("editor: the weather card opens with the shown place and the lookup place, and no figures to type", () => {
+    const seed = designSeed("home", "weather", "savardari", undefined, "Khed,IN")!;
+    expect(seed).toMatchObject({ location: "Savardari, Maharashtra", place: "Khed,IN" });
+    expect(seed.current).toBeUndefined();
+    const env = designSeed("environment", "weather-update", "savardari")!;
+    expect(env.title).toBeDefined();
+    expect(env.current).toBeUndefined();
+    const spec = editorSpec("home", "weather")!;
+    expect(spec.fields.map((f) => f.name)).toEqual(["location", "place"]);
+    expect(spec.groups ?? []).toHaveLength(0);
+    expect(spec.items ?? []).toHaveLength(0);
+  });
+});
