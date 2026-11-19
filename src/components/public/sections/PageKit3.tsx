@@ -20,7 +20,7 @@ const LEVEL_ICONS: LucideIcon[] = [Landmark, MapPinned, Building2];
 /** `scheme-levels`: Central / State / District counts. Counts come from published schemes when any exist. */
 export async function SchemeLevelsSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public");
-  const d = data as { items?: { level?: "CENTRAL" | "STATE" | "DISTRICT"; label?: B; count?: number; iconUrl?: string }[] };
+  const d = data as { items?: { level?: "CENTRAL" | "STATE" | "DISTRICT"; label?: B; count?: number; iconUrl?: string; iconImageId?: string }[] };
   const live = await listPublicSchemes(slug, { limit: 100 }).catch(() => null);
   const counts: Record<string, number> = {};
   for (const s of live?.data ?? []) counts[s.level] = (counts[s.level] ?? 0) + 1;
@@ -36,9 +36,9 @@ export async function SchemeLevelsSection({ slug, locale, data }: SectionProps) 
           const at = msg.indexOf(String(n));
           return (
             <li key={i} className="relative flex h-[110px] items-center justify-center gap-[34px] md:h-[138px]">
-              {it.iconUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element -- static design asset
-                <img src={it.iconUrl} alt="" width={75} height={79} className="h-[79px] w-[75px] shrink-0" />
+              {it.iconImageId || it.iconUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- static design asset / uploaded picture
+                <img src={it.iconImageId ? publicMediaUrl(slug, it.iconImageId) : it.iconUrl} alt="" width={75} height={79} className="h-[79px] w-[75px] shrink-0" />
               ) : (
                 <span aria-hidden className="flex size-[64px] shrink-0 items-center justify-center rounded-[14px] bg-[#e9f4e9] text-[#135130]">
                   <Icon className="size-8" strokeWidth={1.7} />

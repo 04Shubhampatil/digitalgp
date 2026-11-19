@@ -62,7 +62,7 @@ export default async function SchemeDetailPage({ params }: { params: Promise<{ i
       <Card className="mb-5">
         <CardHeader title={t("announcements.workflow")} description={!editable ? t("announcements.locked", { status: t(`contentStatus.${s.status}`) }) : undefined} />
         <div className="px-5 pb-5">
-          <ContentWorkflowBar resource="schemes" id={s.id} status={s.status} capabilities={user.capabilities} canDelete={canEdit} listPath="/admin/schemes" />
+          <ContentWorkflowBar resource="schemes" id={s.id} status={s.status} capabilities={user.capabilities} canDelete={canEdit} listPath="/admin/schemes" editPath={`/admin/schemes/${s.id}/edit`} />
           {s.reviewNote && (
             <p className="mt-4 rounded-input bg-warning-soft px-4 py-3 text-sm text-ink">
               <span className="font-semibold">{t("announcements.reviewNote")}: </span>

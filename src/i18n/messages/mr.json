@@ -812,7 +812,13 @@
       "consentNeeded": "या कथेत व्यक्तीचे नाव किंवा फोटो आहे: सादर करण्यापूर्वी संमती निवडा.",
       "consentShort": "संमती",
       "consentMissing": "नाही"
-    }
+    },
+    "takeBackEdit": "संपादित करा",
+    "takeBackTitle": "हा घटक संपादित करायचा?",
+    "takeBackBody": "हा घटक संपादनासाठी लेखकाकडे परत जातो. बदल जतन केल्यानंतर पुन्हा पुनरावलोकनासाठी सादर करा.",
+    "takeBackBodyPublished": "संपादन करताना हा घटक संकेतस्थळावरून काढला जातो. बदल जतन केल्यानंतर तो पुनरावलोकनासाठी सादर करा आणि पुन्हा प्रकाशित करा.",
+    "takeBackConfirm": "परत घेऊन संपादित करा",
+    "takeBackNote": "संपादनासाठी परत घेतले."
   },
   "public": {
     "home": "मुख्यपृष्ठ",
@@ -1704,7 +1710,16 @@
       "year": "वर्ष",
       "completed": "पूर्ण",
       "weatherShownPlace": "कार्डवर दाखवायचे ठिकाण",
-      "weatherLookupPlace": "हवामान शोधण्यासाठी ठिकाण (शहर, देश कोड)"
+      "weatherLookupPlace": "हवामान शोधण्यासाठी ठिकाण (शहर, देश कोड)",
+      "percent": "टक्केवारी (%)",
+      "budgetLabel": "अर्थसंकल्प यादीचे शीर्षक",
+      "sourcesLabel": "निधी स्रोत यादीचे शीर्षक",
+      "allocationRow": "अर्थसंकल्प बाब",
+      "fundingSource": "निधी स्रोत",
+      "fundingAmountText": "दाखवायची रक्कम (उदा. ₹3.10 कोटी)",
+      "fundingValue": "आलेखासाठी वाटा (कोटी)",
+      "personRole": "भूमिका / वॉर्ड",
+      "iconPicture": "चिन्हाचे चित्र"
     },
     "order": "क्रम",
     "addNew": "नवीन {name} जोडा",
@@ -1768,7 +1783,9 @@
       "market": "बाजार",
       "actionButton": "बटण",
       "galleryPhoto": "छायाचित्र",
-      "timelineStep": "टप्पा"
+      "timelineStep": "टप्पा",
+      "allocationRow": "अर्थसंकल्प बाब",
+      "fundingSource": "निधी स्रोत"
     },
     "options": {
       "full-background": "पूर्ण पार्श्वभूमी",

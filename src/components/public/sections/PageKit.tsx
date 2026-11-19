@@ -169,7 +169,8 @@ export async function ProgressTrackerSection({ locale, data }: SectionProps) {
   };
   const items = d.items ?? [];
   if (items.length === 0) return null;
-  const withStatus = items.some((i) => i.status);
+  // A percent draws the design's progress bar; the status pill is the older look, used only when there is no percent.
+  const withStatus = items.some((i) => i.status && i.percent === undefined);
   const count = (st: string) => items.filter((i) => i.status === st).length;
   const subtitle = pickText(d.subtitle, locale) || (withStatus ? t("resolutionSummary", { resolved: count("resolved"), progress: count("in-progress"), open: count("open") }) : "");
   return (
@@ -180,7 +181,7 @@ export async function ProgressTrackerSection({ locale, data }: SectionProps) {
         {items.map((it, i) => {
           const Icon = TRACKER_ICONS[i % TRACKER_ICONS.length]!;
           const label = pickText(it.label ?? it.title, locale);
-          if (it.status) {
+          if (it.status && it.percent === undefined) {
             const st = RESOLUTION_STYLE[it.status] ?? RESOLUTION_STYLE.open!;
             const note = [pickText(it.updateNote, locale), it.wardNo ? t("ward", { no: it.wardNo }) : "", it.date ?? ""].filter(Boolean).join(" · ");
             return (
@@ -361,7 +362,7 @@ export function FinancialOverviewSection({ slug, locale, data }: SectionProps) {
  */
 export async function SuccessStoriesSection({ slug, locale, data, pageKey }: SectionProps) {
   const td = await getTranslations("public.detail");
-  const d = data as { title?: B; viewAll?: Btn; items?: { quote?: B; name?: B; role?: B; photoUrl?: string; href?: string }[] };
+  const d = data as { title?: B; viewAll?: Btn; items?: { quote?: B; name?: B; role?: B; photoUrl?: string; photoId?: string; href?: string }[] };
   const live = await listPublicSuccessStories(slug, { page: pageKey ?? "projects", limit: 6 }).catch(() => null);
   const items =
     live && live.data.length > 0
@@ -372,7 +373,7 @@ export async function SuccessStoriesSection({ slug, locale, data, pageKey }: Sec
           photoUrl: x.photoId ? publicMediaUrl(slug, x.photoId) : undefined,
           href: detailHref(slug, "success-stories", x.id) as string | undefined,
         }))
-      : (d.items ?? []);
+      : (d.items ?? []).map((x) => ({ ...x, photoUrl: x.photoUrl ?? (x.photoId ? publicMediaUrl(slug, x.photoId) : undefined) }));
   return (
     <section className="bg-cream py-4">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">

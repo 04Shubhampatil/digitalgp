@@ -25,6 +25,7 @@ export function ContentWorkflowBar({
   capabilities,
   canDelete,
   listPath,
+  editPath,
 }: {
   resource: WorkflowResourceKind;
   id: string;
@@ -32,6 +33,8 @@ export function ContentWorkflowBar({
   capabilities: string[];
   canDelete: boolean;
   listPath: string;
+  /** Edit page of the item. Given, a locked item (published, approved, in review) gets an "Edit" button. */
+  editPath?: string;
 }) {
   const t = useTranslations("admin");
   const tc = useTranslations("common");
@@ -41,7 +44,12 @@ export function ContentWorkflowBar({
   const [noteFor, setNoteFor] = useState<WorkflowAction | null>(null);
   const [note, setNote] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmEdit, setConfirmEdit] = useState(false);
   const api = RESOURCES[resource];
+  // The workflow has no "edit a published item": a locked item is taken back (unpublished if needed, then returned to
+  // its author as REJECTED), which opens it for editing. It stays off the website until it is published again.
+  const lockedStatuses: ContentStatus[] = ["PUBLISHED", "APPROVED", "SUBMITTED", "UNDER_REVIEW"];
+  const canTakeBack = !!editPath && lockedStatuses.includes(status) && capabilities.includes("content:edit") && capabilities.includes("content:review") && (status !== "PUBLISHED" || capabilities.includes("content:publish"));
   const actions = availableActions(status, capabilities);
 
   const run = (action: WorkflowAction, withNote?: string) =>
@@ -53,6 +61,20 @@ export function ContentWorkflowBar({
         setNote("");
         router.refresh();
       } catch (err) {
+        setError(isApiError(err) ? err.message : tc("errorGeneric"));
+      }
+    });
+
+  const takeBack = () =>
+    start(async () => {
+      setError(null);
+      try {
+        if (status === "PUBLISHED") await api.transition(id, "unpublish", null);
+        await api.transition(id, "reject", t("takeBackNote"));
+        router.push(editPath!);
+        router.refresh();
+      } catch (err) {
+        setConfirmEdit(false);
         setError(isApiError(err) ? err.message : tc("errorGeneric"));
       }
     });
@@ -71,6 +93,11 @@ export function ContentWorkflowBar({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
+      {canTakeBack && (
+        <Button size="sm" variant="primary" loading={pending} onClick={() => setConfirmEdit(true)}>
+          {t("takeBackEdit")}
+        </Button>
+      )}
       {actions.map((a) => (
         <Button
           key={a}
@@ -110,6 +137,25 @@ export function ContentWorkflowBar({
         }
       >
         <Textarea label={t("announcements.rejectNote")} value={note} onChange={(e) => setNote(e.target.value)} rows={4} required />
+      </Dialog>
+      <Dialog
+        open={confirmEdit}
+        onClose={() => setConfirmEdit(false)}
+        title={t("takeBackTitle")}
+        closeLabel={tc("close")}
+        size="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setConfirmEdit(false)}>
+              {tc("cancel")}
+            </Button>
+            <Button variant="primary" loading={pending} onClick={takeBack}>
+              {t("takeBackConfirm")}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-ink">{t(status === "PUBLISHED" ? "takeBackBodyPublished" : "takeBackBody")}</p>
       </Dialog>
       <Dialog
         open={confirmDelete}

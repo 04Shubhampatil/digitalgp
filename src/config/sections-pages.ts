@@ -96,7 +96,7 @@ const iconCardList = (max: number) =>
   strict({
     ...listHeader,
     items: sectionList(
-      strict({ icon: iconName, title: bilingualSchema, description: bilingualSchema.optional(), link: href.optional(), colour: colour.optional(), active: z.boolean() }),
+      strict({ icon: iconName.optional(), iconImageId: mediaId.optional(), title: bilingualSchema, description: bilingualSchema.optional(), link: href.optional(), colour: colour.optional(), active: z.boolean() }),
       max,
     ),
   });
@@ -530,7 +530,8 @@ const employment: SectionDefinition[] = [
       ...listHeader,
       items: sectionList(
         strict({
-          icon: iconName,
+          icon: iconName.optional(),
+          iconImageId: mediaId.optional(),
           skillName: bilingualSchema,
           availableCount: z.number().int().min(0).max(100_000).optional(),
           // Counts from a typed-in list are approximate until a real directory exists.
@@ -600,7 +601,7 @@ const education: SectionDefinition[] = [
       quote: bilingualSchema.optional(),
       buttonText: bilingualSchema.optional(),
       buttonLink: href.optional(),
-      achievementCards: sectionList(strict({ icon: iconName, title: bilingualSchema, value: text(40) }), 6),
+      achievementCards: sectionList(strict({ icon: iconName.optional(), iconImageId: mediaId.optional(), title: bilingualSchema, value: text(40) }), 6),
       guardianConsent: guardianConsent.optional(),
     }),
     submitCheck: requireGuardianConsent,
@@ -685,7 +686,7 @@ const environment: SectionDefinition[] = [
     sortOrder: 3,
     schema: strict({
       ...listHeader,
-      items: sectionList(strict({ icon: iconName, title: bilingualSchema, link: href.optional(), active: z.boolean().optional() }), 20),
+      items: sectionList(strict({ icon: iconName.optional(), iconImageId: mediaId.optional(), title: bilingualSchema, link: href.optional(), active: z.boolean().optional() }), 20),
     }),
   },
   { key: "top-stats", sortOrder: 5, schema: topStats },
@@ -693,7 +694,7 @@ const environment: SectionDefinition[] = [
     key: "green-scoreboard",
     sortOrder: 10,
     schema: strict({
-      items: sectionList(strict({ icon: iconName, title: bilingualSchema, value: text(40), description: bilingualSchema.optional(), visible: z.boolean() }), 12),
+      items: sectionList(strict({ icon: iconName.optional(), iconImageId: mediaId.optional(), title: bilingualSchema, value: text(40), description: bilingualSchema.optional(), visible: z.boolean() }), 12),
     }),
   },
   {
