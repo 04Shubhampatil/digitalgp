@@ -89,6 +89,8 @@ export const PROJECTS_SECTIONS: SectionDefinition[] = [
           icon: iconName.optional(),
           title: bilingualSchema,
           value: text(40),
+          /** Small text after the value ("Groups"). */
+          unit: bilingualSchema.optional(),
           description: bilingualSchema.optional(),
           theme: z.enum(["blue", "orange", "green", "purple"]).optional(),
         }),

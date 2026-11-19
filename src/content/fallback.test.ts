@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PublicPageDto } from "@/types/api";
 import { editorSpec } from "@/config/section-editors";
 import { findSection } from "@/config/sections";
@@ -6,6 +6,9 @@ import { toApiData, toFormValues } from "@/lib/section-data";
 import { bannerSeed, designSeed, sectionSeed } from "@/lib/banner-seed";
 import { isEditorCard } from "@/lib/editor-sections";
 import { publicAnchor, withFallback } from "./fallback";
+
+// The tests describe the default (design fallbacks on); a local .env may switch them off.
+vi.stubEnv("NEXT_PUBLIC_DESIGN_FALLBACKS", "on");
 
 const seo = { titleEn: null, titleMr: null, descriptionEn: null, descriptionMr: null, shareImageId: null };
 const page = (pageKey: string, sections: { sectionKey: string; data: Record<string, unknown> }[]): PublicPageDto => ({
@@ -537,5 +540,86 @@ describe("Projects blocks and the Schemes level strip are driven by their cards"
     const levels = out.sections.find((s) => s.sectionKey === "scheme-levels")!;
     const state = (levels.data.items as { level: string; label: { en: string }; iconImageId?: string }[]).find((i) => i.level === "STATE")!;
     expect(state).toMatchObject({ label: { en: "State schemes" }, iconImageId: "abcdefghij1" });
+  });
+});
+
+describe("design fallbacks switch (NEXT_PUBLIC_DESIGN_FALLBACKS)", () => {
+  afterEach(() => vi.stubEnv("NEXT_PUBLIC_DESIGN_FALLBACKS", "on"));
+
+  it("on (default): a block nobody has published shows its design content", () => {
+    expect(keys(withFallback("culture", null))).toContain("village-intro");
+  });
+
+  it("off: only published sections and record-fed blocks are drawn", () => {
+    vi.stubEnv("NEXT_PUBLIC_DESIGN_FALLBACKS", "off");
+    expect(keys(withFallback("culture", null))).toEqual([]);
+    const projects = keys(withFallback("projects", null));
+    // Blocks fed by projects stay (their sample rows are dropped); the design's other blocks do not.
+    expect(projects).toEqual(expect.arrayContaining(["project-showcase", "before-after"]));
+    expect(projects).not.toContain("dev-timeline");
+    const before = withFallback("projects", null).sections.find((s) => s.sectionKey === "before-after")!;
+    expect(before.data.items).toEqual([]);
+  });
+
+  it("off: Home keeps What's New and the notices (built from the announcements), without sample tabs", () => {
+    vi.stubEnv("NEXT_PUBLIC_DESIGN_FALLBACKS", "off");
+    const home = withFallback("home", null);
+    expect(keys(home)).toEqual(expect.arrayContaining(["whats-new", "notices"]));
+    expect(keys(home)).not.toContain("sarpanch-message");
+    expect(home.sections.find((s) => s.sectionKey === "notices")!.data.tabs).toEqual([]);
+    expect(home.sections.find((s) => s.sectionKey === "whats-new")!.data.items).toEqual([]);
+  });
+
+  it("off: a published section is still drawn in the design's block", () => {
+    vi.stubEnv("NEXT_PUBLIC_DESIGN_FALLBACKS", "off");
+    const out = withFallback("services", page("services", [{ sectionKey: "service-links", data: { items: [{ title: { en: "Birth Certificate" }, description: { en: "Apply" }, href: "https://example.org", visible: true }] } }]));
+    expect(keys(out)).toContain("rts-grid");
+    expect(keys(out)).not.toContain("service-links");
+  });
+});
+
+describe("published sections drawn by the design's own blocks", () => {
+  it("announcements: events, deadlines and downloads feed the design blocks (one block for deadlines + downloads)", () => {
+    const out = withFallback("announcements", page("announcements", [
+      { sectionKey: "calendar", data: { title: { en: "Calendar" }, events: [{ date: "2026-07-15", title: { en: "Gram Sabha" }, colour: "#135130", startTime: "10:00", endTime: "12:00" }] } },
+      { sectionKey: "deadline-cards", data: { items: [{ date: "July 31, 2026", title: { en: "Tax" }, subtitle: { en: "Last Date" } }] } },
+      { sectionKey: "download-forms", data: { items: [{ name: { en: "Form A" }, fileId: "abcdefghij1" }] } },
+    ]));
+    const feed = out.sections.find((s) => s.sectionKey === "announce-feed")!;
+    expect((feed.data.events as { time: string }[])[0]!.time).toBe("10:00 AM - 12:00 PM");
+    expect(feed.data.calendarTitle).toEqual({ en: "Calendar" });
+    const dd = out.sections.filter((s) => s.sectionKey === "deadlines-downloads");
+    expect(dd).toHaveLength(1);
+    expect(dd[0]!.data).toMatchObject({ deadlines: [{ title: { en: "Tax" } }], files: [{ fileId: "abcdefghij1" }] });
+    expect(keys(out)).not.toContain("calendar");
+  });
+
+  it("services: help card takes the typed contact (number written as the design writes it) and the uploaded picture", () => {
+    const out = withFallback("services", page("services", [{ sectionKey: "help", data: { heading: { en: "Help" }, subtitle: { en: "We assist" }, imageId: "abcdefghij1", contact: [{ phone: "+911234567890", email: "a@b.in", hours: "Mon-Sat" }], faqs: [] } }]));
+    const h = out.sections.find((s) => s.sectionKey === "help-card")!;
+    expect(h.data).toMatchObject({ phone: "+91 12345 67890", email: "a@b.in", imageId: "abcdefghij1", body: { en: "We assist" } });
+  });
+
+  it("grievance: the form and the lookup keep the design blocks (and the how-it-works steps)", () => {
+    const out = withFallback("grievance", page("grievance", [{ sectionKey: "track-complaint", data: { heading: { en: "Track it" } } }]));
+    const t = out.sections.find((s) => s.sectionKey === "grievance-track")!;
+    expect(t.data.heading).toEqual({ en: "Track it" });
+    expect(t.data.howSteps).toBeDefined();
+  });
+
+  it("about: the leaders block keeps its accent heading while the typed heading is the design's", () => {
+    const base = withFallback("about", null).sections.find((s) => s.sectionKey === "leaders")!.data;
+    const joined = { en: [base.heading as { en: string }, base.headingAccent as { en: string }].map((h) => h?.en).filter(Boolean).join(" ") };
+    const same = withFallback("about", page("about", [{ sectionKey: "leaders-profile-grid", data: { heading: joined, items: [{ name: { en: "A Leader" }, designation: { en: "Sarpanch" } }] } }])).sections.find((s) => s.sectionKey === "leaders")!;
+    expect(same.data.headingAccent).toEqual(base.headingAccent);
+    const changed = withFallback("about", page("about", [{ sectionKey: "leaders-profile-grid", data: { heading: { en: "Our team" }, items: [{ name: { en: "A Leader" } }] } }])).sections.find((s) => s.sectionKey === "leaders")!;
+    expect(changed.data.heading).toEqual({ en: "Our team" });
+    expect(changed.data.headingAccent).toBeUndefined();
+  });
+
+  it("a published section keeps the look settings of its design block (card style, spacing) that are not stored", () => {
+    const design = withFallback("culture", null).sections.find((s) => s.sectionKey === "success-stories")!.data;
+    const out = withFallback("culture", page("culture", [{ sectionKey: "success-stories", data: { items: [{ title: { en: "A story" }, order: 1 }] } }]));
+    expect(out.sections.find((s) => s.sectionKey === "success-stories")!.data.variant).toBe(design.variant);
   });
 });

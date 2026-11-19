@@ -42,6 +42,10 @@ const schema = z
       .regex(/^(\d{4}-\d{2})?$/, "Use the form 2026-27")
       .refine((v) => !v || (Number(v.slice(0, 4)) + 1) % 100 === Number(v.slice(5)), "The second year must follow the first"),
     category: z.string().trim().max(60),
+    benefitValueEn: z.string().trim().max(60),
+    benefitValueMr: z.string().trim().max(60),
+    benefitCaptionEn: z.string().trim().max(120),
+    benefitCaptionMr: z.string().trim().max(120),
     mapImageId: z.string(),
   })
   .refine((v) => !!(v.nameEn || v.nameMr), { message: "A name in English or Marathi is required", path: ["nameEn"] })
@@ -83,6 +87,10 @@ export function SchemeForm({ assignments, capabilities, existing }: { assignment
           amountDisbursed: existing.amountDisbursed ?? "",
           disbursedFinancialYear: existing.disbursedFinancialYear ?? "",
           category: existing.category ?? "",
+          benefitValueEn: existing.benefitValueEn ?? "",
+          benefitValueMr: existing.benefitValueMr ?? "",
+          benefitCaptionEn: existing.benefitCaptionEn ?? "",
+          benefitCaptionMr: existing.benefitCaptionMr ?? "",
           mapImageId: existing.mapImageId ?? "",
         }
       : {
@@ -103,6 +111,10 @@ export function SchemeForm({ assignments, capabilities, existing }: { assignment
           amountDisbursed: "",
           disbursedFinancialYear: "",
           category: "",
+          benefitValueEn: "",
+          benefitValueMr: "",
+          benefitCaptionEn: "",
+          benefitCaptionMr: "",
           mapImageId: "",
         },
   });
@@ -129,6 +141,10 @@ export function SchemeForm({ assignments, capabilities, existing }: { assignment
       amountDisbursed: nn(v.amountDisbursed),
       disbursedFinancialYear: nz(v.disbursedFinancialYear),
       category: nz(v.category),
+      benefitValueEn: nz(v.benefitValueEn),
+      benefitValueMr: nz(v.benefitValueMr),
+      benefitCaptionEn: nz(v.benefitCaptionEn),
+      benefitCaptionMr: nz(v.benefitCaptionMr),
       mapImageId: nz(v.mapImageId),
     };
     try {
@@ -204,6 +220,10 @@ export function SchemeForm({ assignments, capabilities, existing }: { assignment
           <Input label={`${tp("beneficiaries")} (${tc("optional")})`} inputMode="numeric" hint={t("schemesUi.aggregateHint")} error={formState.errors.beneficiaryCount?.message} {...register("beneficiaryCount")} />
           <Input label={`${tp("amountDisbursed")} (₹, ${tc("optional")})`} inputMode="decimal" error={formState.errors.amountDisbursed?.message} {...register("amountDisbursed")} />
           <Input label={`${t("schemesUi.category")} (${tc("optional")})`} hint={t("schemesUi.categoryHint")} maxLength={60} error={formState.errors.category?.message} {...register("category")} />
+          <Input label={`${t("schemesUi.benefitValueEn")} (${tc("optional")})`} placeholder="₹1.20 Lakh" hint={t("schemesUi.benefitHint")} maxLength={60} error={formState.errors.benefitValueEn?.message} {...register("benefitValueEn")} />
+          <Input label={`${t("schemesUi.benefitValueMr")} (${tc("optional")})`} lang="mr" maxLength={60} error={formState.errors.benefitValueMr?.message} {...register("benefitValueMr")} />
+          <Input label={`${t("schemesUi.benefitCaptionEn")} (${tc("optional")})`} placeholder="Financial Assistance" maxLength={120} error={formState.errors.benefitCaptionEn?.message} {...register("benefitCaptionEn")} />
+          <Input label={`${t("schemesUi.benefitCaptionMr")} (${tc("optional")})`} lang="mr" maxLength={120} error={formState.errors.benefitCaptionMr?.message} {...register("benefitCaptionMr")} />
           <Input label={`${t("schemesUi.financialYear")} (${tc("optional")})`} placeholder="2026-27" hint={t("schemesUi.financialYearHint")} error={formState.errors.disbursedFinancialYear?.message} {...register("disbursedFinancialYear")} />
           <div className="sm:col-span-2">
             {mediaTenant ? (

@@ -156,6 +156,8 @@ export const successStoriesSchema = z
             personName: bilingualSchema.optional(),
             /** Line under the name ("Resident Ward 2"). */
             personRole: bilingualSchema.optional(),
+            /** Small label chip under the story (the scheme it is about). */
+            tag: bilingualSchema.optional(),
             storyId: z.string().trim().min(10).max(40).regex(/^[a-z0-9]+$/, "Invalid story id").optional(),
             buttonText: bilingualSchema.optional(),
             buttonLink: href.optional(),

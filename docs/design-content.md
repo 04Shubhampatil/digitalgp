@@ -48,4 +48,25 @@ migration `20261119090000_site_asset_media`.
 | Announcements `download-forms`, Finance `documents` rows | need real files | upload the PDFs in the admin |
 | Schemes `statistics`, Services `live-stats` | computed from records (already live) | — |
 
-Frontend follow-up: the placeholder fallbacks can be switched off once every website is published.
+## Switching the design fallbacks off (frontend)
+
+`NEXT_PUBLIC_DESIGN_FALLBACKS=off` (set it in `.env` and in the host's environment, then redeploy) makes the public pages draw only
+what is published: sections, and the blocks fed by records. Unset (default) keeps the old behaviour, so a website that has not
+had its design content published yet still shows the design.
+
+With the flag off:
+- A block nobody has published is not drawn. Kept: blocks fed by records (projects, before/after, schemes and their counts,
+  the announcement categories / latest announcements / calendar, Home "What's New", Home "notices" whose tabs are the
+  announcement categories), computed figures (`live-stats`) and the fixed call-out bands of Grievance and Contact.
+- Published sections are still drawn in the design's own blocks (`src/content/design-adapters.ts` and `adaptToDesign` in
+  `src/content/fallback.ts`), so the look of the page does not change: Announcements, Services, Schemes quick actions,
+  Projects, Contact, Grievance and About leaders. Settings of the design block that are not stored (card style, spacing) are
+  taken from the design file.
+- Finance documents and Announcement downloads only list rows that have a file.
+- Pictures are media ids (`SITE_ASSET` or uploads); the page does not read picture paths from the design files.
+
+Checked locally with a script that compares every page (English and Marathi) with the design: no broken pictures, the same
+blocks and texts, except what is now dynamic (live counts and weather, announcement tabs) or needs a file (documents, downloads).
+
+Marathi note: texts typed in one language (scheme category, deadline dates, weather place) show in the design's Marathi when the
+design has a translation, otherwise as typed.

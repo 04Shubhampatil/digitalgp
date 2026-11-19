@@ -110,7 +110,8 @@ export async function SchemeShowcaseSection({ slug, locale, data }: SectionProps
     live && live.data.length > 0
       ? live.data.map((s) => ({
           name: pickText(pair(s.nameEn, s.nameMr), locale),
-          category: s.category ?? undefined,
+          // A scheme's category is typed in one language: known ones show in the visitor's language, others as typed.
+          category: s.category ? (/^[a-z]+$/.test(s.category.trim().toLowerCase()) && t.has(`schemeCategories.${s.category.trim().toLowerCase()}`) ? t(`schemeCategories.${s.category.trim().toLowerCase()}`) : s.category) : undefined,
           level: t(`schemeLevelShort.${s.level}`),
           description: pickText(pair(s.descriptionEn, s.descriptionMr), locale),
           // The scheme's own headline benefit ("₹1.20 Lakh" / "Financial Assistance") first, else its figures.

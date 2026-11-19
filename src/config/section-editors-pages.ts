@@ -105,6 +105,7 @@ const successStories = listSection("success-stories", "successStories", {
     bi("quote", "quote"),
     bi("personName", "personName"),
     bi("personRole", "personRole"),
+    bi("tag", "storyTag"),
     txt("storyId", "storyId", 40, { placeholder: "Success story id (Read Story page)" }),
     bi("buttonText", "buttonText"),
     link("buttonLink", "buttonLink"),
@@ -552,7 +553,7 @@ export const EXTRA_EDITORS: Partial<Record<PageKey, SectionEditorSpec[]>> = {
     }),
     section("impact-dashboard", "impactDashboard", {
       fields: [bi("heading", "heading"), bi("subtitle", "subtitle")],
-      items: list("items", "impactItem", 12, [icon(), bi("title", "title", { required: true }), txt("value", "value", 40, { required: true }), bi("description", "description"), sel("theme", "theme", ["blue", "orange", "green", "purple"])]),
+      items: list("items", "impactItem", 12, [icon(), bi("title", "title", { required: true }), txt("value", "value", 40, { required: true }), bi("unit", "unit"), bi("description", "description"), sel("theme", "theme", ["blue", "orange", "green", "purple"])]),
     }),
     section("financial-overview", "financialOverview", {
       fields: [bi("heading", "heading", { required: true }), bi("budgetLabel", "budgetLabel"), bi("sourcesLabel", "sourcesLabel")],
