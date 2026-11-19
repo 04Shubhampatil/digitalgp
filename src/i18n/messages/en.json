@@ -812,7 +812,13 @@
       "consentNeeded": "This story names or pictures a person: tick the consent box before submitting it.",
       "consentShort": "Consent",
       "consentMissing": "Missing"
-    }
+    },
+    "takeBackEdit": "Edit",
+    "takeBackTitle": "Edit this item?",
+    "takeBackBody": "The item goes back to its author for editing. After saving your changes, submit it again for review.",
+    "takeBackBodyPublished": "The item is taken off the website while you edit it. After saving your changes, submit it for review and publish it again.",
+    "takeBackConfirm": "Take back and edit",
+    "takeBackNote": "Taken back for editing."
   },
   "public": {
     "home": "Home",
@@ -1704,7 +1710,16 @@
       "year": "Year",
       "completed": "Completed",
       "weatherShownPlace": "Place shown on the card",
-      "weatherLookupPlace": "Place for the weather lookup (town, country code)"
+      "weatherLookupPlace": "Place for the weather lookup (town, country code)",
+      "percent": "Percent (%)",
+      "budgetLabel": "Budget list heading",
+      "sourcesLabel": "Funding list heading",
+      "allocationRow": "Budget head",
+      "fundingSource": "Funding source",
+      "fundingAmountText": "Amount shown (e.g. ₹3.10 Cr)",
+      "fundingValue": "Share for the chart (crore)",
+      "personRole": "Role / ward",
+      "iconPicture": "Icon picture"
     },
     "order": "Order",
     "addNew": "Add New {name}",
@@ -1768,7 +1783,9 @@
       "market": "Market",
       "actionButton": "Button",
       "galleryPhoto": "photo",
-      "timelineStep": "step"
+      "timelineStep": "step",
+      "allocationRow": "Budget head",
+      "fundingSource": "Funding source"
     },
     "options": {
       "full-background": "Full background",

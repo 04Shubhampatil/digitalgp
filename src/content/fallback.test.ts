@@ -351,6 +351,11 @@ describe("designSeed: cards whose design block has another key", () => {
       ["contact", "volunteer-registration"],
       ["grievance", "track-complaint"],
       ["grievance", "monthly-report"],
+      ["projects", "village-resolution-tracker"],
+      ["projects", "financial-overview"],
+      ["projects", "success-stories"],
+      ["projects", "impact-dashboard"],
+      ["schemes", "category-strip"],
     ];
     for (const [page, key] of cards) ok(page, key);
   });
@@ -464,5 +469,73 @@ describe("About Banner card opens with the About hero the website shows", () => 
 
   it("falls back to the design hero when nothing is published", () => {
     expect(bannerSeed("about", undefined)?.heading).toBeDefined();
+  });
+});
+
+describe("Projects blocks and the Schemes level strip are driven by their cards", () => {
+  it("tracker: the card opens with the ten design commitments and their percentages", () => {
+    const seed = designSeed("projects", "village-resolution-tracker", "savardari")!;
+    const items = seed.items as { title: { en: string }; percent: number }[];
+    expect(items).toHaveLength(10);
+    expect(items[0]).toMatchObject({ title: { en: "Clean Village" }, percent: 92 });
+  });
+
+  it("tracker: typed commitments keep the design's progress bars (percent), the pill only without percent", () => {
+    const out = withFallback("projects", page("projects", [{ sectionKey: "village-resolution-tracker", data: { heading: { en: "Our promises" }, items: [{ title: { en: "Roads" }, percent: 40 }] } }]));
+    // Drawn by the design's own tracker block, so it keeps its row with the Impact Dashboard.
+    const t = out.sections.find((s) => s.sectionKey === "progress-tracker")!;
+    expect((t.data.items as { percent?: number }[])[0]!.percent).toBe(40);
+    expect(t.data.title).toEqual({ en: "Our promises" });
+    expect(keys(out)).not.toContain("village-resolution-tracker");
+    // Statuses only (no percent): the older status look is kept.
+    const legacy = withFallback("projects", page("projects", [{ sectionKey: "village-resolution-tracker", data: { items: [{ title: { en: "Roads" }, status: "open" }] } }]));
+    expect(keys(legacy)).toContain("village-resolution-tracker");
+  });
+
+  it("impact dashboard: the card opens with the design tiles and typed tiles are drawn in the design block", () => {
+    const seed = designSeed("projects", "impact-dashboard", "savardari")!;
+    expect((seed.items as { title: { en: string }; value: string }[])[0]).toMatchObject({ title: { en: "Toilets Constructed" }, value: "100%" });
+    const out = withFallback("projects", page("projects", [{ sectionKey: "impact-dashboard", data: { heading: { en: "Impact" }, items: [{ title: { en: "Wells" }, value: "12" }] } }]));
+    const g = out.sections.find((s) => s.sectionKey === "impact-grid")!;
+    expect(g.data.items).toEqual([{ label: { en: "Wells" }, value: "12" }]);
+    expect(keys(out)).not.toContain("impact-dashboard");
+  });
+
+  it("financial overview: typed budget heads and funding sources fill the design block; old item lists still work", () => {
+    const seed = designSeed("projects", "financial-overview", "savardari")!;
+    expect((seed.allocation as unknown[]).length).toBe(6);
+    expect((seed.sources as unknown[]).length).toBe(4);
+    const typed = withFallback("projects", page("projects", [{ sectionKey: "financial-overview", data: { heading: { en: "Money" }, allocation: [{ label: { en: "Roads" }, percent: 50 }], sources: [{ label: { en: "State" }, amount: "₹1 Cr", value: 1 }] } }]));
+    const fin = typed.sections.find((s) => s.sectionKey === "financial-overview")!;
+    expect(fin.data).toMatchObject({ title: { en: "Money" }, allocation: [{ percent: 50 }], sources: [{ value: 1 }] });
+    // The labels the editor left empty keep the design's.
+    expect(fin.data.budgetLabel).toBeDefined();
+    const legacy = withFallback("projects", page("projects", [{ sectionKey: "financial-overview", data: { heading: { en: "Old" }, items: [] } }])).sections.find((s) => s.sectionKey === "financial-overview")!;
+    expect(legacy.data.items).toEqual([]);
+  });
+
+  it("success stories: typed stories are drawn by the design's quote cards and keep the design photo under the design name", () => {
+    const seed = designSeed("projects", "success-stories", "savardari")!;
+    expect((seed.items as { personName: { en: string } }[])[0]!.personName.en).toBe("Sunil Pawar");
+    const out = withFallback("projects", page("projects", [{ sectionKey: "success-stories", data: { heading: { en: "Voices" }, items: [
+      { title: { en: "Sunil Pawar" }, quote: { en: "A quote" }, personName: { en: "Sunil Pawar" }, personRole: { en: "Resident Ward 2" }, order: 0 },
+      { title: { en: "New person" }, quote: { en: "Another" }, personName: { en: "New person" }, imageId: "abcdefghij1", order: 1 },
+    ] } }]));
+    const s = out.sections.find((x) => x.sectionKey === "stories-figma")!;
+    expect(keys(out)).not.toContain("success-stories");
+    const items = s.data.items as { name: { en: string }; photoUrl?: string; photoId?: string }[];
+    expect(items[0]!.photoUrl).toContain("prj-story-1");
+    expect(items[1]!.photoId).toBe("abcdefghij1");
+    expect(items[1]!.photoUrl).toBeUndefined();
+    expect(s.data.title).toEqual({ en: "Voices" });
+  });
+
+  it("schemes: the level strip card opens with the three levels and takes an uploaded picture", () => {
+    const seed = designSeed("schemes", "category-strip", "savardari")!;
+    expect((seed.items as { key: string }[]).map((i) => i.key)).toEqual(["CENTRAL", "STATE", "DISTRICT"]);
+    const out = withFallback("schemes", page("schemes", [{ sectionKey: "category-strip", data: { items: [{ key: "STATE", label: { en: "State schemes" }, iconImageId: "abcdefghij1", active: true }] } }]));
+    const levels = out.sections.find((s) => s.sectionKey === "scheme-levels")!;
+    const state = (levels.data.items as { level: string; label: { en: string }; iconImageId?: string }[]).find((i) => i.level === "STATE")!;
+    expect(state).toMatchObject({ label: { en: "State schemes" }, iconImageId: "abcdefghij1" });
   });
 });

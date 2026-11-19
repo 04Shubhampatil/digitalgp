@@ -142,6 +142,7 @@ function formReady(v: unknown): unknown {
 }
 
 const bi = (en: string, mr: string): Text => ({ en, mr });
+const isObj = (v: unknown): v is Obj => !!v && typeof v === "object" && !Array.isArray(v);
 const rows = (v: unknown): Obj[] => (Array.isArray(v) ? (v as Obj[]) : []);
 const str = (v: unknown): string | undefined => (typeof v === "string" && v ? v : undefined);
 const pick = <T,>(list: readonly T[], i: number): T => list[i % list.length]!;
@@ -180,6 +181,13 @@ const ACCENTS = ["#135130", "#F5871F", "#1A62E0", "#7B2CBF"] as const;
  */
 type BridgeCtx = { officeEmail?: string; weatherPlace?: string };
 const BRIDGES: Partial<Record<PageKey, Record<string, (block: (key: string) => Obj | undefined, ctx: BridgeCtx) => Obj | undefined>>> = {
+  schemes: {
+    // The three level cards (Central / State / District): label and key, the picture is uploaded.
+    "category-strip": (b) => {
+      const d = b("scheme-levels");
+      return d && { items: rows(d.items).map((i, n) => ({ icon: pick(["landmark", "map-pin", "building"], n), key: String(i.level ?? ""), label: i.label, active: true })) };
+    },
+  },
   home: {
     // Live weather: only the place is typed (the card shows the shown place, the provider looks up the other).
     weather: (b, ctx) => {
@@ -200,6 +208,31 @@ const BRIDGES: Partial<Record<PageKey, Record<string, (block: (key: string) => O
     },
   },
   projects: {
+    "impact-dashboard": (b) => {
+      const d = b("impact-grid");
+      return d && { heading: d.title, subtitle: d.subtitle, items: rows(d.items).map((i, n) => ({ icon: pick(["toilet", "plug", "droplets", "house", "route", "lightbulb", "wifi", "graduation-cap", "tree", "users", "clipboard", "recycle"], n), title: i.label, value: [i.value, i.unit].filter(Boolean).join(" ").slice(0, 40), theme: "green" })) };
+    },
+    "village-resolution-tracker": (b) => {
+      const d = b("progress-tracker");
+      return d && { heading: d.title, subtitle: d.subtitle, items: rows(d.items).map((i) => ({ title: i.label, percent: Number(i.percent ?? 0) })) };
+    },
+    "financial-overview": (b) => {
+      const d = b("financial-overview");
+      return (
+        d && {
+          heading: d.title,
+          budgetLabel: d.budgetLabel,
+          sourcesLabel: d.sourcesLabel,
+          allocation: rows(d.allocation).map((i) => ({ label: i.label, percent: Number(i.percent ?? 0) })),
+          sources: rows(d.sources).map((i) => ({ label: i.label, amount: String(i.amount ?? ""), value: Number(i.value ?? 0) })),
+          ...(isObj(d.action) && d.action.href ? { action: { label: (d.action as Obj).label, href: (d.action as Obj).href } } : {}),
+        }
+      );
+    },
+    "success-stories": (b) => {
+      const d = b("stories-figma");
+      return d && { heading: d.title, ...(isObj(d.viewAll) ? { viewAll: d.viewAll } : {}), layout: "cards", items: rows(d.items).map((i, n) => ({ title: i.name, quote: i.quote, personName: i.name, personRole: i.role, order: n })) };
+    },
     "top-stats": (b) => {
       const d = b("quick-stats");
       return d && { items: rows(d.items).map((i, n) => compact({ icon: str(i.icon) ?? pick(STAT_ICONS, n), title: i.label, value: String(i.value ?? ""), unit: i.unit, visible: true })) };

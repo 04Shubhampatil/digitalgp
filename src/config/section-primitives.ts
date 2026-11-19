@@ -154,6 +154,8 @@ export const successStoriesSchema = z
             description: bilingualSchema.optional(),
             quote: bilingualSchema.optional(),
             personName: bilingualSchema.optional(),
+            /** Line under the name ("Resident Ward 2"). */
+            personRole: bilingualSchema.optional(),
             storyId: z.string().trim().min(10).max(40).regex(/^[a-z0-9]+$/, "Invalid story id").optional(),
             buttonText: bilingualSchema.optional(),
             buttonLink: href.optional(),
@@ -171,7 +173,9 @@ export const itemList = <T extends z.ZodType>(item: T, max: number) => z.array(i
 /** Standard "Support cards" item: used by Grievance, Employment and Education pages. */
 export const supportCardItem = z
   .object({
-    icon: iconName,
+    icon: iconName.optional(),
+    /** Uploaded picture of the card's icon (replaces the design's icon picture). */
+    iconImageId: mediaId.optional(),
     title: bilingualSchema,
     description: bilingualSchema.optional(),
     /** Short contact line or number ("1800-233-4000", "128"), plain or bilingual. */
@@ -187,7 +191,8 @@ export const supportCardItem = z
 /** Figma "Top Statistics" item (shared by most pages). */
 export const topStatItem = z
   .object({
-    icon: iconName,
+    icon: iconName.optional(),
+    iconImageId: mediaId.optional(),
     title: bilingualSchema,
     value: text(40),
     unit: bilingualSchema.optional(),

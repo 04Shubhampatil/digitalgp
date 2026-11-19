@@ -62,6 +62,7 @@ import {
 } from "./cms/pages";
 import { GeographySection, HistorySection, MembersSection, OfficeSection } from "./AboutSections";
 import { HeroSection } from "./HeroSection";
+import { withIconPictures } from "@/lib/icon-pictures";
 import { MonthlyMetricsSection, SarpanchMessageSection, VillageProgressSection, WardDetailsSection, WeatherSection, WelcomeVideoSection } from "./HomeExtras";
 import { LeadersSection } from "./LeadersSection";
 import { NoticesSection } from "./NoticesSection";
@@ -101,7 +102,7 @@ const RENDERERS: Record<string, (props: SectionProps) => React.ReactNode> = {
   "progress-tracker": ProgressTrackerSection,
   "impact-grid": ImpactGridSection,
   "dev-timeline": DevTimelineSection,
-  "financial-overview": (p) => (Array.isArray((p.data as { items?: unknown }).items) ? <FinancialItemsView locale={p.locale} data={p.data as Record<string, unknown>} /> : <FinancialOverviewSection {...p} />),
+  "financial-overview": (p) => (Array.isArray((p.data as { items?: unknown }).items) && !(p.data as { allocation?: unknown; sources?: unknown }).allocation && !(p.data as { allocation?: unknown; sources?: unknown }).sources ? <FinancialItemsView locale={p.locale} data={p.data as Record<string, unknown>} /> : <FinancialOverviewSection {...p} />),
   "live-stats": LiveStatsSection,
   statistics: (p) => <TopStatsSection {...p} data={{ ...(p.data as object), variant: "strip" }} />,
   "category-strip": CategoryStripSection,
@@ -261,7 +262,7 @@ const ROW_GROUPS: { keys: string[]; cols: string; all?: boolean; /** Vertical pa
 ];
 
 export function renderSections(page: PublicPageDto, slug: string, locale: UiLocale, tenantName?: string): React.ReactNode[] {
-  const sorted = page.sections.slice().sort((a, b) => a.sortOrder - b.sortOrder);
+  const sorted = page.sections.map((s) => ({ ...s, data: withIconPictures(s.data, slug) })).sort((a, b) => a.sortOrder - b.sortOrder);
   const out: React.ReactNode[] = [];
   const done = new Set<string>();
   const siblings = Object.fromEntries(sorted.map((s) => [s.sectionKey, s.data]));

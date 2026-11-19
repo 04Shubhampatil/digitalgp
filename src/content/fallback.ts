@@ -111,6 +111,12 @@ function fillLabels(sectionKey: string, data: Obj, fallback: Obj): Obj {
     // Same on the Environment page: without typed figures the design's sample figures stay until the provider answers.
     return { ...data, current: data.current ?? fallback.current, forecast: data.forecast ?? fallback.forecast };
   }
+  if (sectionKey === "financial-overview") {
+    // Typed budget heads and funding sources are drawn by the design's block; what is left empty keeps the design value.
+    if (!has(data.allocation) && !has(data.sources)) return data;
+    const pick = (k: string) => (has(data[k]) ? data[k] : fallback[k]);
+    return { ...fallback, title: has(data.heading) ? data.heading : fallback.title, budgetLabel: pick("budgetLabel"), sourcesLabel: pick("sourcesLabel"), allocation: pick("allocation"), sources: pick("sources"), action: pick("action") };
+  }
   if (sectionKey === "ward-details") return { ...data, viewAll: data.viewAll ?? fallback.viewAll };
   if (sectionKey === "village-progress") {
     // An indicator the editor listed without a value shows the design's value for that label until one is entered.
@@ -334,6 +340,33 @@ type Published = PublicPageDto["sections"][number];
 
 /** Published "top-stats" of Infrastructure and Key Projects in the shape of the design block of that page. */
 function adaptToDesign(pageKey: PageKey, s: Published, design: FallbackSection[]): Published | null {
+  if (pageKey === "projects" && s.sectionKey === "success-stories") {
+    // Typed stories are drawn by the design's quote cards (round photo, quote, name, role).
+    const base = design.find((x) => x.sectionKey === "stories-figma");
+    const stories = ((s.data.items as Obj[] | undefined) ?? []).filter((i) => has(i.quote) || has(i.title));
+    if (!base || stories.length === 0) return null;
+    const designItems = (base.data.items as Obj[] | undefined) ?? [];
+    const items = stories.map((i) => {
+      const name = has(i.personName) ? i.personName : i.title;
+      // A story kept under its design name and without an upload keeps the design photo.
+      const photoUrl = has(i.imageId) ? undefined : designItems.find((d) => labelOf(d.name) === labelOf(name))?.photoUrl;
+      return { quote: has(i.quote) ? i.quote : has(i.description) ? i.description : i.title, name, role: i.personRole, ...(has(i.imageId) ? { photoId: i.imageId } : {}), ...(photoUrl ? { photoUrl } : {}) };
+    });
+    return { ...s, sectionKey: "stories-figma", sortOrder: base.sortOrder, data: { ...base.data, ...filled({ title: s.data.heading, viewAll: s.data.viewAll }), items } };
+  }
+  if (pageKey === "projects" && s.sectionKey === "village-resolution-tracker") {
+    const base = design.find((x) => x.sectionKey === "progress-tracker");
+    const items = ((s.data.items as Obj[] | undefined) ?? []).filter((i) => has(i.title));
+    // Only the percent look is the design's; a tracker typed with statuses only keeps its own (status) block.
+    if (!base || items.length === 0 || !items.some((i) => typeof i.percent === "number")) return null;
+    return { ...s, sectionKey: "progress-tracker", sortOrder: base.sortOrder, data: { ...base.data, ...filled({ title: s.data.heading, subtitle: s.data.subtitle }), items: items.map((i) => ({ label: i.title, percent: typeof i.percent === "number" ? i.percent : 0 })) } };
+  }
+  if (pageKey === "projects" && s.sectionKey === "impact-dashboard") {
+    const base = design.find((x) => x.sectionKey === "impact-grid");
+    const items = ((s.data.items as Obj[] | undefined) ?? []).filter((i) => has(i.title));
+    if (!base || items.length === 0) return null;
+    return { ...s, sectionKey: "impact-grid", sortOrder: base.sortOrder, data: { ...base.data, ...filled({ title: s.data.heading, subtitle: s.data.subtitle }), items: items.map((i) => ({ label: i.title, value: i.value })) } };
+  }
   if (s.sectionKey !== "top-stats" || (pageKey !== "infrastructure" && pageKey !== "projects")) return null;
   const target = REPLACES[pageKey]!["top-stats"]![0]!;
   const base = design.find((x) => x.sectionKey === target);
@@ -477,7 +510,7 @@ function withSections(pageKey: PageKey, page: PublicPageDto | null, override: Fa
         .map((it) => {
           const hit = cats.find((c) => String(c.key ?? "").trim().toUpperCase() === it.level);
           if (!hit) return it;
-          return hit.active === false ? null : { ...it, label: has(hit.label) ? hit.label : it.label };
+          return hit.active === false ? null : { ...it, label: has(hit.label) ? hit.label : it.label, ...(has(hit.iconImageId) ? { iconImageId: hit.iconImageId } : {}) };
         })
         .filter((x): x is Obj => x !== null);
       fallbacks[levelsAt] = { ...levels, data: { ...levels.data, items } };

@@ -69,7 +69,7 @@ export default async function SuccessStoryDetailPage({ params }: { params: Promi
         <CardHeader title={t("announcements.workflow")} description={!editable ? t("announcements.locked", { status: t(`contentStatus.${s.status}`) }) : undefined} />
         <div className="px-5 pb-5">
           {consentMissing && editable && <p className="mb-4 rounded-input bg-warning-soft px-4 py-3 text-sm text-ink">{t("storiesUi.consentNeeded")}</p>}
-          <ContentWorkflowBar resource="successStories" id={s.id} status={s.status} capabilities={user.capabilities} canDelete={canEdit} listPath="/admin/success-stories" />
+          <ContentWorkflowBar resource="successStories" id={s.id} status={s.status} capabilities={user.capabilities} canDelete={canEdit} listPath="/admin/success-stories" editPath={`/admin/success-stories/${s.id}/edit`} />
           {s.reviewNote && (
             <p className="mt-4 rounded-input bg-warning-soft px-4 py-3 text-sm text-ink">
               <span className="font-semibold">{t("announcements.reviewNote")}: </span>

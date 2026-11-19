@@ -62,10 +62,14 @@ export const PROJECTS_SECTIONS: SectionDefinition[] = [
     sortOrder: 20,
     schema: strict({
       heading: bilingualSchema.optional(),
+      subtitle: bilingualSchema.optional(),
       items: list(
         strict({
           title: bilingualSchema,
-          status: z.enum(["open", "in-progress", "resolved"]),
+          // `percent` draws the design's progress bar; `status` (open / in progress / resolved) is the older way and
+          // is only used when no percent is given.
+          percent: z.number().int().min(0).max(100).optional(),
+          status: z.enum(["open", "in-progress", "resolved"]).optional(),
           date: isoDate.optional(),
           wardNo: text(20).optional(),
           updateNote: bilingualSchema.optional(),
@@ -79,13 +83,14 @@ export const PROJECTS_SECTIONS: SectionDefinition[] = [
     sortOrder: 30,
     schema: strict({
       heading: bilingualSchema.optional(),
+      subtitle: bilingualSchema.optional(),
       items: list(
         strict({
-          icon: iconName,
+          icon: iconName.optional(),
           title: bilingualSchema,
           value: text(40),
           description: bilingualSchema.optional(),
-          theme: z.enum(["blue", "orange", "green", "purple"]),
+          theme: z.enum(["blue", "orange", "green", "purple"]).optional(),
         }),
         12,
       ),
@@ -98,7 +103,14 @@ export const PROJECTS_SECTIONS: SectionDefinition[] = [
       heading: bilingualSchema,
       subtitle: bilingualSchema.optional(),
       currency: z.string().trim().min(3).max(10).default("INR"),
-      items: list(strict({ label: bilingualSchema, amount, colour }), 12),
+      // The design's two lists: where the budget goes (bars, in %) and where the money comes from (donut + legend).
+      budgetLabel: bilingualSchema.optional(),
+      sourcesLabel: bilingualSchema.optional(),
+      allocation: list(strict({ label: bilingualSchema, percent: z.number().min(0).max(100) }), 10).optional(),
+      sources: list(strict({ label: bilingualSchema, amount: text(30), value: z.number().min(0).max(1_000_000) }), 8).optional(),
+      action: viewAllSchema.optional(),
+      // Older single list of heads, still accepted.
+      items: list(strict({ label: bilingualSchema, amount, colour }), 12).optional(),
       note: bilingualLongSchema.optional(),
     }),
   },
@@ -135,7 +147,8 @@ export const SCHEMES_SECTIONS: SectionDefinition[] = [
   {
     key: "category-strip",
     sortOrder: 10,
-    schema: strict({ items: list(strict({ icon: iconName, label: bilingualSchema, key: text(40), active: z.boolean() }), 12) }),
+    // `iconImageId`: the picture of the level card (the design shows a picture, not an icon); `icon` is the fallback.
+    schema: strict({ items: list(strict({ icon: iconName.optional(), iconImageId: mediaId.optional(), label: bilingualSchema, key: text(40), active: z.boolean() }), 12) }),
   },
   {
     key: "coverage-map",
