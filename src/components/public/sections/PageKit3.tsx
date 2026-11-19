@@ -113,8 +113,13 @@ export async function SchemeShowcaseSection({ slug, locale, data }: SectionProps
           category: s.category ?? undefined,
           level: t(`schemeLevelShort.${s.level}`),
           description: pickText(pair(s.descriptionEn, s.descriptionMr), locale),
-          benefitValue: s.amountDisbursed ? fmt.format(Number(s.amountDisbursed)) : s.beneficiaryCount !== null ? s.beneficiaryCount.toLocaleString("en-IN") : undefined,
-          benefitCaption: s.amountDisbursed ? t("amountDisbursed") : s.beneficiaryCount !== null ? t("beneficiaries") : undefined,
+          // The scheme's own headline benefit ("₹1.20 Lakh" / "Financial Assistance") first, else its figures.
+          benefitValue:
+            pickText(pair(s.benefitValueEn, s.benefitValueMr), locale) ||
+            (s.amountDisbursed ? fmt.format(Number(s.amountDisbursed)) : s.beneficiaryCount !== null ? s.beneficiaryCount.toLocaleString("en-IN") : undefined),
+          benefitCaption:
+            pickText(pair(s.benefitCaptionEn, s.benefitCaptionMr), locale) ||
+            (s.amountDisbursed ? t("amountDisbursed") : s.beneficiaryCount !== null ? t("beneficiaries") : undefined),
           eligibility: pickText(pair(s.eligibilityEn, s.eligibilityMr), locale) || undefined,
           process: pickText(pair(s.processEn, s.processMr), locale) || undefined,
           href: s.externalUrl ?? undefined,
@@ -209,12 +214,11 @@ export async function SchemeCoverageSection({ slug, locale, data, siblings }: Se
 
   let initialId = "";
   let initial: CoverageView;
-  if (schemes.length > 0) {
+  // Coverage recorded for the first scheme wins; until a scheme has ward figures the section's own wards and map show.
+  const cov = schemes.length > 0 ? await getPublicSchemeCoverage(slug, schemes[0]!.id).catch(() => null) : null;
+  if (cov && cov.wards.length > 0) {
     initialId = schemes[0]!.id;
-    const cov = await getPublicSchemeCoverage(slug, initialId).catch(() => null);
-    initial = cov
-      ? { wards: cov.wards, totalHouseholds: cov.totalHouseholds, totalBeneficiaries: cov.totalBeneficiaries, mapUrl: cov.mapImageId ? publicMediaUrl(slug, cov.mapImageId) : undefined }
-      : { wards: [], totalHouseholds: 0, totalBeneficiaries: null };
+    initial = { wards: cov.wards, totalHouseholds: cov.totalHouseholds, totalBeneficiaries: cov.totalBeneficiaries, mapUrl: cov.mapImageId ? publicMediaUrl(slug, cov.mapImageId) : sectionMap };
   } else {
     if (sectionWards.length === 0 && !sectionMap) return null;
     const benef = sectionWards.filter((w) => w.beneficiaries !== null);

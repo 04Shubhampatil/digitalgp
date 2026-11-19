@@ -32,11 +32,18 @@ export async function parseUpload(req: Request): Promise<{ fields: UploadMediaFi
 
 /** Stream a stored file. Inline for images/videos/PDF; `nosniff` so the browser trusts our type. */
 export function fileResponse(file: MediaFile, cache: "public" | "private") {
+  // Site assets live in the website's own /images folder: send the browser there (same origin, validated path).
+  if (file.redirectTo) {
+    return new NextResponse(null, {
+      status: 307,
+      headers: { location: file.redirectTo, "cache-control": cache === "public" ? "public, max-age=3600" : "private, no-store" },
+    });
+  }
   const disposition = `inline; filename="${file.filename.replace(/"/g, "")}"`;
   return new NextResponse(file.stream, {
     headers: {
       "content-type": file.mimeType,
-      "content-length": String(file.sizeBytes),
+      "content-length": String(file.sizeBytes ?? 0),
       "content-disposition": disposition,
       "x-content-type-options": "nosniff",
       "cache-control": cache === "public" ? "public, max-age=3600" : "private, no-store",

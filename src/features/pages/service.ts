@@ -12,6 +12,7 @@ import { parseValue } from "@/lib/validation";
 import { pageTag, revalidatePublicTags, tenantTag } from "@/lib/revalidate";
 import type { PageDto, PageSectionDto, PublicPageDto, SectionRevisionDto } from "@/types/api";
 import { nextStatus, transitionCapability } from "@/features/content/workflow";
+import { LIBRARY_SOURCES } from "@/features/media/site-assets";
 import type { SaveSectionDraftInput, SectionAction, UpdatePageInput } from "@/features/pages/validators";
 
 const MODULE = "pages" as const;
@@ -121,7 +122,7 @@ async function assertMediaOwnership(tenant: ResolvedTenant, data: unknown): Prom
   collectMediaRefs(data, refs);
   if (refs.size === 0) return;
   const ids = [...refs];
-  const media = await db.media.findMany({ where: { id: { in: ids }, deletedAt: null, source: "ADMIN" }, select: { id: true, tenantId: true, ownerUnit: { select: { path: true } } } });
+  const media = await db.media.findMany({ where: { id: { in: ids }, deletedAt: null, source: { in: [...LIBRARY_SOURCES] } }, select: { id: true, tenantId: true, ownerUnit: { select: { path: true } } } });
   const ok = new Set(media.filter((m) => m.tenantId === tenant.id || (m.tenantId === null && tenant.unitPath.startsWith(m.ownerUnit.path))).map((m) => m.id));
   const bad = ids.filter((id) => !ok.has(id));
   if (bad.length) throw Errors.badRequest("Referenced media does not belong to this website", { mediaIds: bad });

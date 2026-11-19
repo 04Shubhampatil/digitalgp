@@ -45,6 +45,10 @@ export function toSchemeDto(s: SchemeRow): SchemeDto {
     amountDisbursed: decimalToString(s.amountDisbursed),
     disbursedFinancialYear: s.disbursedFinancialYear,
     category: s.category,
+    benefitValueEn: s.benefitValueEn,
+    benefitValueMr: s.benefitValueMr,
+    benefitCaptionEn: s.benefitCaptionEn,
+    benefitCaptionMr: s.benefitCaptionMr,
     mapImageId: s.mapImageId,
     status: s.status,
     targets: s.targets.map((t) => ({ unitId: t.unit.id, level: t.unit.level, nameEn: t.unit.nameEn, nameMr: t.unit.nameMr })),
@@ -77,6 +81,10 @@ function toPublicDto(s: SchemeRow): PublicSchemeDto {
     amountDisbursed: decimalToString(s.amountDisbursed),
     disbursedFinancialYear: s.disbursedFinancialYear,
     category: s.category,
+    benefitValueEn: s.benefitValueEn,
+    benefitValueMr: s.benefitValueMr,
+    benefitCaptionEn: s.benefitCaptionEn,
+    benefitCaptionMr: s.benefitCaptionMr,
     mapImageId: s.mapImageId,
     publishedAt: s.publishedAt?.toISOString() ?? null,
     isShared: s.tenantId === null,
@@ -119,6 +127,7 @@ function baseData(input: Partial<CreateSchemeInput>): Prisma.SchemeUncheckedUpda
   }
   if (input.disbursedFinancialYear !== undefined) data.disbursedFinancialYear = input.disbursedFinancialYear;
   if (input.category !== undefined) data.category = input.category;
+  for (const k of ["benefitValueEn", "benefitValueMr", "benefitCaptionEn", "benefitCaptionMr"] as const) if (input[k] !== undefined) data[k] = input[k];
   if (input.mapImageId !== undefined) data.mapImageId = input.mapImageId;
   return data;
 }

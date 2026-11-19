@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { Errors } from "@/lib/errors";
+import { LIBRARY_SOURCES } from "@/features/media/site-assets";
 
 /**
  * A record may point at an admin-uploaded, non-deleted file that belongs to the same website, or
@@ -15,7 +16,7 @@ export async function assertUsableMedia(
 ): Promise<void> {
   const label = opts.label ?? "File";
   const media = await db.media.findFirst({
-    where: { id: mediaId, deletedAt: null, source: "ADMIN", ...(opts.kind ? { kind: opts.kind } : {}) },
+    where: { id: mediaId, deletedAt: null, source: { in: [...LIBRARY_SOURCES] }, ...(opts.kind ? { kind: opts.kind } : {}) },
     select: { tenantId: true, ownerUnit: { select: { path: true } } },
   });
   if (!media) throw Errors.badRequest(`${label} not found`);

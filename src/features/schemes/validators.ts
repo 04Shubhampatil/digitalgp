@@ -34,6 +34,11 @@ const base = {
   /** Financial year the amount belongs to, e.g. "2026-27"; counts towards "disbursed this financial year". */
   disbursedFinancialYear: financialYearSchema.optional().nullable(),
   category: z.string().trim().min(1).max(60).optional().nullable(),
+  /** Headline benefit on the scheme card ("₹1.20 Lakh") and its caption ("Financial Assistance"). */
+  benefitValueEn: z.string().trim().max(60).optional().nullable(),
+  benefitValueMr: z.string().trim().max(60).optional().nullable(),
+  benefitCaptionEn: z.string().trim().max(120).optional().nullable(),
+  benefitCaptionMr: z.string().trim().max(120).optional().nullable(),
   /** Map picture for the coverage block (when the wards have no polygons). */
   mapImageId: idSchema.optional().nullable(),
 };

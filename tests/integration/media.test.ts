@@ -47,7 +47,7 @@ describe("media upload", () => {
 
     const file = await getMediaFile(operator.ctx, m.id);
     expect(file.mimeType).toBe("image/png");
-    expect(await read(file.stream)).toEqual(PNG);
+    expect(await read(file.stream!)).toEqual(PNG);
   });
 
   it("rejects disallowed types, empty and oversized files regardless of the declared type", async () => {
@@ -111,7 +111,7 @@ describe("public media", () => {
     expect(shared.tenantId).toBeNull();
     expect((await db.media.findUniqueOrThrow({ where: { id: shared.id } })).storageKey).toBe(`shared/${w.taluka1.id}/${shared.id}.pdf`);
 
-    expect(await read((await getPublicMediaFile("gp-a", own.id)).stream)).toEqual(PNG);
+    expect(await read((await getPublicMediaFile("gp-a", own.id)).stream!)).toEqual(PNG);
     expect((await getPublicMediaFile("gp-a", shared.id)).mimeType).toBe("application/pdf");
     expect((await getPublicMediaFile("gp-b", shared.id)).mimeType).toBe("application/pdf");
     await expectCode(getPublicMediaFile("gp-b", own.id), "NOT_FOUND");

@@ -81,6 +81,8 @@ enum MediaKind {
 enum MediaSource {
   ADMIN
   PUBLIC_GRIEVANCE
+  /// A picture shipped with the website (public/images/...): storageKey "site:<path>", no stored bytes.
+  SITE_ASSET
 }
 
 enum ProjectStage {
@@ -438,6 +440,11 @@ model Scheme {
   amountDisbursed        Decimal?             @db.Decimal(14, 2)
   /// Financial year `amountDisbursed` belongs to, e.g. "2026-27" (null = cumulative / unknown).
   disbursedFinancialYear String?
+  /// Headline benefit on the scheme card, e.g. "₹1.20 Lakh" / "Financial Assistance".
+  benefitValueEn   String?
+  benefitValueMr   String?
+  benefitCaptionEn String?
+  benefitCaptionMr String?
   /// Free-text category shown on the scheme cards, e.g. "Agriculture", "Housing".
   category               String?
   /// Map picture for the coverage block (used when the wards have no polygons).

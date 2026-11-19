@@ -20,7 +20,8 @@
     "test:ui": "vitest run --config vitest.frontend.config.ts",
     "test:ui:watch": "vitest --config vitest.frontend.config.ts",
     "test:e2e": "playwright test",
-    "forms:purge": "tsx scripts/purge-form-submissions.ts"
+    "forms:purge": "tsx scripts/purge-form-submissions.ts",
+    "content:publish-design": "tsx scripts/publish-design-content.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "5.9.2",

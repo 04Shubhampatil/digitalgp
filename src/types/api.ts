@@ -295,6 +295,11 @@ export interface SchemeDto {
   /** Financial year `amountDisbursed` belongs to, e.g. "2026-27"; null = cumulative. */
   disbursedFinancialYear: string | null;
   category: string | null;
+  /** Headline benefit on the scheme card ("₹1.20 Lakh" / "Financial Assistance"). */
+  benefitValueEn: string | null;
+  benefitValueMr: string | null;
+  benefitCaptionEn: string | null;
+  benefitCaptionMr: string | null;
   mapImageId: string | null;
   status: ContentStatus;
   targets: { unitId: string; level: AdminUnitLevel; nameEn: string; nameMr: string }[];
@@ -326,6 +331,11 @@ export interface PublicSchemeDto {
   amountDisbursed: string | null;
   disbursedFinancialYear: string | null;
   category: string | null;
+  /** Headline benefit on the scheme card ("₹1.20 Lakh" / "Financial Assistance"). */
+  benefitValueEn: string | null;
+  benefitValueMr: string | null;
+  benefitCaptionEn: string | null;
+  benefitCaptionMr: string | null;
   mapImageId: string | null;
   publishedAt: string | null;
   isShared: boolean;

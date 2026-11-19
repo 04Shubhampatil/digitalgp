@@ -12,6 +12,7 @@ import { getPublicTenantBySlug, getTenantForActor, getUnitForActor } from "@/lib
 import { paginate } from "@/lib/validation";
 import type { MediaDto } from "@/types/api";
 import { classifyUpload, sanitizeFilename, type ListMediaQuery, type UpdateMediaInput, type UploadMediaFields } from "@/features/media/validators";
+import { LIBRARY_SOURCES, siteAssetPath } from "@/features/media/site-assets";
 
 const MODULE = "media" as const;
 
@@ -43,10 +44,12 @@ export interface UploadFile {
   bytes: Uint8Array;
 }
 
-export interface MediaFile extends StoredFile {
+export interface MediaFile extends Partial<StoredFile> {
   mimeType: string;
   filename: string;
   kind: MediaRow["kind"];
+  /** Site assets: the website path to redirect to instead of streaming bytes. */
+  redirectTo?: string;
 }
 
 async function findInScope(ctx: AuthContext, id: string): Promise<MediaRow> {
@@ -64,7 +67,7 @@ export async function listMedia(ctx: AuthContext, query: ListMediaQuery) {
   const rows = await db.media.findMany({
     where: {
       deletedAt: null,
-      source: "ADMIN", // citizen complaint uploads are not library items
+      source: { in: [...LIBRARY_SOURCES] }, // citizen complaint uploads are not library items
       ownerUnit: unitPathScopeFilter(ctx),
       ...(query.tenantId ? { tenantId: query.tenantId } : {}),
       ...(query.ownerUnitId ? { ownerUnitId: query.ownerUnitId } : {}),
@@ -176,7 +179,8 @@ export async function deleteMedia(ctx: AuthContext, id: string, client: ClientIn
       tx,
     );
   });
-  await getStorage().delete(before.storageKey);
+  // Site assets have no stored bytes: the website's own file is never deleted.
+  if (before.source !== "SITE_ASSET") await getStorage().delete(before.storageKey);
 }
 
 /** Bytes of an in-scope media item for the admin UI (drafts included). */
@@ -196,7 +200,7 @@ export async function getMediaFile(ctx: AuthContext, id: string): Promise<MediaF
 export async function getPublicMediaFile(tenantSlug: string, id: string): Promise<MediaFile> {
   const tenant = await getPublicTenantBySlug(tenantSlug);
   // Complaint attachments (PUBLIC_GRIEVANCE) are staff-only and never served here.
-  const row = await db.media.findFirst({ where: { id, deletedAt: null, source: "ADMIN" }, include: mediaInclude });
+  const row = await db.media.findFirst({ where: { id, deletedAt: null, source: { in: [...LIBRARY_SOURCES] } }, include: mediaInclude });
   if (!row) throw Errors.notFound("Media");
   const visible = row.tenantId === tenant.id || (row.tenantId === null && tenant.unitPath.startsWith(row.ownerUnit.path));
   if (!visible) throw Errors.notFound("Media");
@@ -204,6 +208,11 @@ export async function getPublicMediaFile(tenantSlug: string, id: string): Promis
 }
 
 async function openFile(row: MediaRow): Promise<MediaFile> {
+  if (row.source === "SITE_ASSET") {
+    const path = siteAssetPath(row.storageKey);
+    if (!path) throw Errors.notFound("Media file");
+    return { redirectTo: path, mimeType: row.mimeType, filename: row.originalName, kind: row.kind };
+  }
   const stored = await getStorage().get(row.storageKey);
   if (!stored) throw Errors.notFound("Media file");
   return { ...stored, mimeType: row.mimeType, filename: row.originalName, kind: row.kind };
@@ -215,7 +224,7 @@ async function openFile(row: MediaRow): Promise<MediaFile> {
  */
 export async function getPublicMediaMeta(tenantSlug: string, id: string): Promise<{ id: string; kind: string; mimeType: string; sizeBytes: number }> {
   const tenant = await getPublicTenantBySlug(tenantSlug);
-  const row = await db.media.findFirst({ where: { id, deletedAt: null, source: "ADMIN" }, include: mediaInclude });
+  const row = await db.media.findFirst({ where: { id, deletedAt: null, source: { in: [...LIBRARY_SOURCES] } }, include: mediaInclude });
   if (!row) throw Errors.notFound("Media");
   const visible = row.tenantId === tenant.id || (row.tenantId === null && tenant.unitPath.startsWith(row.ownerUnit.path));
   if (!visible) throw Errors.notFound("Media");
