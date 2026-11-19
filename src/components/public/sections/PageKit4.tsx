@@ -180,6 +180,8 @@ export async function AnnounceCategoriesSection({ slug, locale, data }: SectionP
     live.length > 0
       ? live.slice(0, 6).map((c) => ({ label: locale === "mr" ? (marathiFor(c.category) ?? c.category) : c.category, caption: t("announcementCount", { n: c.count }), href: categoryHref(slug, c.category) }))
       : (d.items ?? []).map((it) => ({ label: pickText(it.label, locale), caption: pickText(d.viewAll, locale), href: resolveHref(it.href ?? d.href ?? "page:announcements#announce-feed", slug) }));
+  // No live categories and none typed: nothing to show (the block is fed by the announcements).
+  if (tiles.length === 0) return null;
   const taken = new Set<number>();
   const themed = tiles.map((it) => {
     const k = CAT_THEMES.find(([re, n]) => re.test(it.label) && !taken.has(n))?.[1];
@@ -752,6 +754,8 @@ export function HelpCardSection({ slug, locale, data }: SectionProps) {
     heading?: B;
     body?: B;
     imageUrl?: string;
+    /** Uploaded (or registered design) picture of the card. */
+    imageId?: string;
     phone?: string;
     phoneHours?: B;
     email?: string;
@@ -759,6 +763,7 @@ export function HelpCardSection({ slug, locale, data }: SectionProps) {
     queriesTitle?: B;
     queries?: (B | { label?: B; href?: string })[];
   };
+  const helpImage = d.imageId ? publicMediaUrl(slug, d.imageId) : d.imageUrl;
   const queries = (d.queries ?? []).map((q) =>
     q && typeof q === "object" && "label" in q
       ? q
@@ -768,10 +773,10 @@ export function HelpCardSection({ slug, locale, data }: SectionProps) {
     <section className="bg-cream pt-2 pb-10 lg:pt-0 lg:pb-[17px]">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
         <div className="grid items-center gap-6 rounded-[10px] border border-black/20 bg-white p-5 lg:grid-cols-[304px_minmax(0,1fr)_minmax(0,504px)] lg:gap-8 lg:py-7 lg:pr-7 lg:pl-5">
-          {d.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- static design asset
+          {helpImage ? (
+            // eslint-disable-next-line @next/next/no-img-element -- static design asset / uploaded picture
             <img
-              src={d.imageUrl}
+              src={helpImage}
               alt=""
               width={304}
               height={274}

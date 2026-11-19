@@ -180,15 +180,23 @@ const ACCENTS = ["#135130", "#F5871F", "#1A62E0", "#7B2CBF"] as const;
  * the fields of the section, so these cards also open with what the website shows today.
  */
 type BridgeCtx = { officeEmail?: string; weatherPlace?: string };
+/** `{ [field]: media id }` when the design row holds that picture as a media id (the publish script swaps site files for ids). */
+const pic = (row: Obj | undefined, from: string, to = from): Obj => (typeof row?.[from] === "string" && MEDIA_ID.test(row[from] as string) ? { [to]: row[from] } : {});
+
 const BRIDGES: Partial<Record<PageKey, Record<string, (block: (key: string) => Obj | undefined, ctx: BridgeCtx) => Obj | undefined>>> = {
   schemes: {
     // The three level cards (Central / State / District): label and key, the picture is uploaded.
     "category-strip": (b) => {
       const d = b("scheme-levels");
-      return d && { items: rows(d.items).map((i, n) => ({ icon: pick(["landmark", "map-pin", "building"], n), key: String(i.level ?? ""), label: i.label, active: true })) };
+      return d && { items: rows(d.items).map((i, n) => ({ icon: pick(["landmark", "map-pin", "building"], n), ...pic(i, "iconImageId"), key: String(i.level ?? ""), label: i.label, active: true })) };
     },
   },
   home: {
+    // Top five achievements: the completion line ("Completed: 28 Jun 2026") is the text the card shows.
+    achievements: (b) => {
+      const d = b("achievements");
+      return d && { heading: d.heading, items: rows(d.items).map((i, n) => ({ title: i.title, description: i.body, completedOn: (text(i.completed)?.en ?? "").slice(0, 60), rank: n + 1 })) };
+    },
     // Live weather: only the place is typed (the card shows the shown place, the provider looks up the other).
     weather: (b, ctx) => {
       const shown = text(b("weather")?.location)?.en;
@@ -210,7 +218,7 @@ const BRIDGES: Partial<Record<PageKey, Record<string, (block: (key: string) => O
   projects: {
     "impact-dashboard": (b) => {
       const d = b("impact-grid");
-      return d && { heading: d.title, subtitle: d.subtitle, items: rows(d.items).map((i, n) => ({ icon: pick(["toilet", "plug", "droplets", "house", "route", "lightbulb", "wifi", "graduation-cap", "tree", "users", "clipboard", "recycle"], n), title: i.label, value: [i.value, i.unit].filter(Boolean).join(" ").slice(0, 40), theme: "green" })) };
+      return d && { heading: d.title, subtitle: d.subtitle, items: rows(d.items).map((i, n) => compact({ icon: pick(["toilet", "plug", "droplets", "house", "route", "lightbulb", "wifi", "graduation-cap", "tree", "users", "clipboard", "recycle"], n), title: i.label, value: String(i.value ?? "").slice(0, 40), unit: i.unit ? text({ en: String(i.unit) }) : undefined, theme: "green" })) };
     },
     "village-resolution-tracker": (b) => {
       const d = b("progress-tracker");
@@ -231,7 +239,7 @@ const BRIDGES: Partial<Record<PageKey, Record<string, (block: (key: string) => O
     },
     "success-stories": (b) => {
       const d = b("stories-figma");
-      return d && { heading: d.title, ...(isObj(d.viewAll) ? { viewAll: d.viewAll } : {}), layout: "cards", items: rows(d.items).map((i, n) => ({ title: i.name, quote: i.quote, personName: i.name, personRole: i.role, order: n })) };
+      return d && { heading: d.title, ...(isObj(d.viewAll) ? { viewAll: d.viewAll } : {}), layout: "cards", items: rows(d.items).map((i, n) => ({ title: i.name, quote: i.quote, personName: i.name, personRole: i.role, ...pic(i, "photoId", "imageId"), order: n })) };
     },
     "top-stats": (b) => {
       const d = b("quick-stats");
@@ -255,14 +263,14 @@ const BRIDGES: Partial<Record<PageKey, Record<string, (block: (key: string) => O
     },
     "top-stats": (b) => {
       const d = b("live-stats");
-      return d && { variant: "band", items: rows(d.items).map((i) => compact({ icon: str(i.icon) ?? "file", title: i.title, value: String(i.value ?? ""), background: i.background, visible: i.visible !== false })) };
+      return d && { variant: "band", items: rows(d.items).map((i) => compact({ icon: str(i.icon) ?? "file", title: i.title, value: String(i.value ?? ""), background: i.background, ...pic(i, "iconImageId"), visible: i.visible !== false })) };
     },
     help: (b) => {
       const d = b("help-card");
       if (!d) return undefined;
       const hours = text(d.phoneHours)?.en?.slice(0, 120);
       // The design lists questions as links; answers are typed in the editor, so the question list starts empty.
-      return { heading: d.heading, subtitle: d.body, contact: [compact({ phone: phoneOf(d.phone), email: str(d.email), hours })], faqs: [] };
+      return { heading: d.heading, subtitle: d.body, ...pic(d, "imageId"), contact: [compact({ phone: phoneOf(d.phone), email: str(d.email), hours })], faqs: [] };
     },
   },
   announcements: {
@@ -291,7 +299,7 @@ const BRIDGES: Partial<Record<PageKey, Record<string, (block: (key: string) => O
     },
     "support-cards": (b) => {
       const d = b("service-strip");
-      return d && { heading: d.heading, layout: "strip", items: rows(d.items).map((i, n) => compact({ icon: pick(CATEGORY_ICONS, n), title: i.label, description: i.caption, link: i.href, visible: true })) };
+      return d && { heading: d.heading, layout: "strip", items: rows(d.items).map((i, n) => compact({ icon: pick(CATEGORY_ICONS, n), ...pic(i, "iconImageId"), title: i.label, description: i.caption, link: i.href, visible: true })) };
     },
   },
   contact: {
@@ -363,7 +371,16 @@ export function designSeed(pageKey: PageKey, sectionKey: string, slug?: string, 
   const own = block(sectionKey);
   const bridge = BRIDGES[pageKey]?.[sectionKey];
   // A section whose design block has another shape (or other fields) is rewritten by its bridge; the rest open as the block is.
-  const d = bridge ? bridge(block, { officeEmail, weatherPlace }) : own ? { ...DEFAULTS[pageKey]?.[sectionKey], ...own } : undefined;
+  let d = bridge ? bridge(block, { officeEmail, weatherPlace }) : own ? { ...DEFAULTS[pageKey]?.[sectionKey], ...own } : undefined;
+  // The design writes a story's person as `name`, its ward as `ward` and its scheme chip as `tag`: the card's fields are
+  // personName / personRole / tag.
+  if (sectionKey === "success-stories" && d && Array.isArray(d.items)) {
+    d = { ...d, items: rows(d.items).map((i) => ({ ...i, ...(i.name && !i.personName ? { personName: i.name } : {}), ...(i.ward && !i.personRole ? { personRole: i.ward } : {}) })) };
+    for (const i of rows(d.items)) {
+      delete i.name;
+      delete i.ward;
+    }
+  }
   if (!d) return undefined;
   // "list:success-stories" is a design shorthand for the website's own stories list; the editor stores the address.
   const data = JSON.parse(JSON.stringify(formReady(d)).replaceAll('"list:success-stories"', JSON.stringify(`/${slug ?? ""}/success-stories`))) as Obj;

@@ -2,6 +2,7 @@ import { marathiFor } from "@/i18n/mr-fallback";
 import { ArrowRight, Download } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
+import { designFallbacksOn } from "@/content/fallback";
 import { resolveHref } from "@/lib/href";
 import type { SectionProps } from "../index";
 import { formatMoney } from "./data";
@@ -613,13 +614,14 @@ export async function DocumentsSection({ slug, locale, data }: SectionProps) {
     items?: unknown;
     fallbackLink?: string;
   };
+  // With the design fallbacks off a document is only listed when its file is uploaded (no "Download" that leads nowhere).
   const items = list<{
     title?: B;
     fileId?: string;
     buttonText?: B;
     size?: string;
     format?: string;
-  }>(d.items);
+  }>(d.items).filter((it) => designFallbacksOn() || !!it.fileId);
   if (items.length === 0) return null;
   return (
     <section

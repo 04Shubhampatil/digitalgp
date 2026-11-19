@@ -19,7 +19,8 @@ export async function AchievementsSection({ slug, locale, data }: SectionProps) 
   const items = (d.items ?? []).map((a) => ({
     title: pickText(a.title, locale),
     body: pickText(a.body ?? a.description, locale),
-    completed: a.completedOn ?? pickText(a.completed, locale),
+    // The completion line is typed as text ("Completed: 28 Jun 2026"); the design's translation fills the Marathi page.
+    completed: (locale === "mr" ? marathiFor(a.completedOn) : null) ?? a.completedOn ?? pickText(a.completed, locale),
     ward: pickText(a.ward, locale) || undefined,
   }));
   if (items.length === 0) return null;

@@ -458,6 +458,7 @@ interface StoryItem {
   tag?: B;
   /** Backend item fields: the person quoted, their words, and a SuccessStory record to open ("Read Story"). */
   personName?: B;
+  personRole?: B;
   quote?: B;
   storyId?: string;
 }
@@ -495,6 +496,7 @@ export async function successStoryItems(slug: string, locale: SectionProps["loca
     .map((it) => ({
       ...it,
       name: it.name ?? it.personName,
+      ward: it.ward ?? it.personRole,
       buttonText: it.buttonText ?? (it.storyId ? read : undefined),
       buttonLink: it.buttonLink ?? (it.storyId ? detailHref(slug, "success-stories", it.storyId) : undefined),
     }));

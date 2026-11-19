@@ -566,7 +566,12 @@
       "duplicateWard": "Each ward can be listed once.",
       "coverageInvalid": "Enter a ward and whole numbers.",
       "coverageSaved": "Ward coverage saved.",
-      "coverageHint": "Saving replaces the whole list for this website."
+      "coverageHint": "Saving replaces the whole list for this website.",
+      "benefitValueEn": "Benefit shown on the card (English)",
+      "benefitValueMr": "Benefit shown on the card (Marathi)",
+      "benefitCaptionEn": "Benefit caption (English)",
+      "benefitCaptionMr": "Benefit caption (Marathi)",
+      "benefitHint": "The headline benefit of the scheme card, for example ₹1.20 Lakh, with a short caption such as Financial Assistance."
     },
     "projectsUi": {
       "subtitle": "Development works of a Gram Panchayat: upcoming, ongoing and completed.",
@@ -1263,7 +1268,23 @@
       "GRAM_PANCHAYAT": "Gram Panchayat"
     },
     "scrollPrev": "Previous",
-    "scrollNext": "Next"
+    "scrollNext": "Next",
+    "schemeCategories": {
+      "housing": "Housing",
+      "employment": "Employment",
+      "agriculture": "Agriculture",
+      "education": "Education",
+      "health": "Health",
+      "welfare": "Welfare",
+      "women": "Women",
+      "skills": "Skills",
+      "finance": "Finance",
+      "farmers": "Farmers",
+      "sanitation": "Sanitation",
+      "water": "Water",
+      "energy": "Energy",
+      "infrastructure": "Infrastructure"
+    }
   },
   "editor": {
     "subtitle": "Editing content for {name}. Each section has its own draft; publish when it is ready.",
@@ -1719,7 +1740,8 @@
       "fundingAmountText": "Amount shown (e.g. ₹3.10 Cr)",
       "fundingValue": "Share for the chart (crore)",
       "personRole": "Role / ward",
-      "iconPicture": "Icon picture"
+      "iconPicture": "Icon picture",
+      "storyTag": "Label under the story (e.g. the scheme)"
     },
     "order": "Order",
     "addNew": "Add New {name}",

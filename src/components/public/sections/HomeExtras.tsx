@@ -2,6 +2,7 @@ import { ArrowDown, ArrowRight, ArrowUp, Play } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { FigmaIcon } from "@/components/ui/FigmaIcon";
 import { pickText, type Bilingual } from "@/i18n/text";
+import { marathiFor } from "@/i18n/mr-fallback";
 import { getPublicWeather, publicMediaUrl, type PublicWeatherDto } from "@/lib/api/public";
 import type { WardGeometry } from "@/lib/geo";
 import { mediaUrl } from "./cms/kit";
@@ -30,7 +31,8 @@ function normaliseWeather(data: unknown, live: PublicWeatherDto | null, locale: 
   if (!src.current) return own;
   const c = src.current;
   const withUnit = (v: string | undefined, unit: string) => (v ? (/[°%]|km|mm/.test(v) ? v : `${v}${unit}`) : undefined);
-  const text = (v: unknown) => (typeof v === "string" ? { en: v, mr: v } : v);
+  // A place or condition typed as one plain text: the Marathi page uses the design's translation when it has one.
+  const text = (v: unknown) => (typeof v === "string" ? { en: v, mr: marathiFor(v) ?? v } : v);
   const days = (src.forecast ?? []).slice(0, 5).map((f) => ({
     day: f.date ? new Date(`${f.date}T00:00:00`).toLocaleDateString(locale === "mr" ? "mr-IN" : "en-IN", { weekday: "short" }) : "",
     // The card adds the degree sign itself; the weather service sends "31°C".

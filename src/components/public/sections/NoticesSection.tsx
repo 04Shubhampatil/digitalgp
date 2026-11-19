@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { pair, pickText, type Bilingual } from "@/i18n/text";
-import { listPublicAnnouncements, publicMediaUrl } from "@/lib/api/public";
+import { listPublicAnnouncementCategories, listPublicAnnouncements, publicMediaUrl } from "@/lib/api/public";
 import type { Bilingual as BL } from "@/i18n/text";
 import { pageHref } from "@/config/public-nav";
 import { detailHref, resolveHref } from "@/lib/href";
@@ -53,9 +53,39 @@ export async function NoticesSection({ slug, locale, data, siblings }: SectionPr
     const names = cats.length > 0 ? cats : Array.from(new Set(rows.map((r) => r.category))).map((c) => ({ key: c, label: c, en: c }));
     tabs = names.map((c) => ({ key: c.key || c.label, label: c.label, items: rows.filter((r) => [c.key, c.label, c.en].filter(Boolean).includes(r.category)).map((r) => r.row) }));
   }
+  // No typed notices: the tabs are the categories of the published announcements, each listing its latest ones.
+  let fromCategories = false;
+  if (!published) {
+    const cats = await listPublicAnnouncementCategories(slug).catch(() => null);
+    if (cats && cats.length > 0) {
+      const day = new Intl.DateTimeFormat(locale === "mr" ? "mr-IN" : "en-IN", { day: "2-digit" });
+      const month = new Intl.DateTimeFormat(locale === "mr" ? "mr-IN" : "en-IN", { month: "short", year: "numeric" });
+      tabs = await Promise.all(
+        cats.slice(0, 6).map(async (c) => {
+          const list = await listPublicAnnouncements(slug, { category: c.category, limit: 5 }).catch(() => null);
+          return {
+            key: c.category,
+            label: c.category,
+            items: (list?.data ?? []).map((a) => {
+              const when = a.publishedAt ? new Date(a.publishedAt) : null;
+              return {
+                day: when ? day.format(when) : "",
+                monthYear: when ? month.format(when) : "",
+                title: pickText(pair(a.titleEn, a.titleMr), locale),
+                isNew: when ? new Date().getTime() - when.getTime() < 7 * 24 * 3600 * 1000 : false,
+                href: a.attachmentId ? publicMediaUrl(slug, a.attachmentId) : detailHref(slug, "announcements", a.id),
+                titleHref: detailHref(slug, "announcements", a.id),
+              } as NoticeRow;
+            }),
+          };
+        }),
+      );
+      fromCategories = true;
+    }
+  }
   if (tabs.length === 0) return null;
 
-  const live = published ? null : await listPublicAnnouncements(slug, { limit: 5 }).catch(() => null);
+  const live = published || fromCategories ? null : await listPublicAnnouncements(slug, { limit: 5 }).catch(() => null);
   if (live && live.data.length > 0) {
     const fmt = new Intl.DateTimeFormat(locale === "mr" ? "mr-IN" : "en-IN", { day: "2-digit" });
     const fmtMonth = new Intl.DateTimeFormat(locale === "mr" ? "mr-IN" : "en-IN", { month: "short", year: "numeric" });
