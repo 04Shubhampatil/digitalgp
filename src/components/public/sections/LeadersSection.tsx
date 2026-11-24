@@ -48,11 +48,11 @@ export function LeadersSection({ slug, locale, data }: SectionProps) {
             return (
               <li
                 key={i}
-                className="relative flex w-full max-w-[320px] flex-col items-stretch justify-between gap-[16.5px] overflow-hidden rounded-[7.5px] bg-white px-5 pt-[22px] pb-[22px] lg:min-h-[385px] shadow-[0_0_15px_3.8px_rgba(0,0,0,0.25)] lg:w-[calc((100%-45px)/4)] lg:max-w-[321px]"
+                className="relative flex w-[calc(50%-7.5px)] max-w-[320px] flex-col items-stretch justify-between gap-[16.5px] overflow-hidden rounded-[7.5px] bg-white px-2.5 pt-[22px] sm:w-full sm:px-5 pb-[22px] lg:min-h-[385px] shadow-[0_0_15px_3.8px_rgba(0,0,0,0.25)] lg:w-[calc((100%-45px)/4)] lg:max-w-[321px]"
               >
                 {/* Top edge: saffron fading to green, as rendered in the design. */}
                 <span aria-hidden className="absolute inset-x-0 top-0 h-[6.8px] bg-[linear-gradient(90deg,#ff9933,#138808)]" />
-                <div className="relative mx-[7px] h-[218px] overflow-hidden rounded-[7.5px] border border-black/15 bg-white">
+                <div className="relative mx-[7px] h-[170px] overflow-hidden sm:h-[218px] rounded-[7.5px] border border-black/15 bg-white">
                   {photo ? (
                     // eslint-disable-next-line @next/next/no-img-element -- backend-served media / static design asset
                     <img src={photo} alt="" className="absolute top-0 left-1/2 h-full w-auto max-w-none -translate-x-1/2" loading="lazy" />

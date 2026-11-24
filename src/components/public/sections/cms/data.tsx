@@ -713,12 +713,12 @@ export async function TreeAdoptionSection({ slug, locale, data }: SectionProps) 
             </div>
           </div>
           {stats.length > 0 && (
-            <ul className="grid gap-3 sm:grid-cols-3">
+            <ul className="grid grid-cols-3 gap-2 sm:gap-3">
               {stats.map((s, i) => (
-                <li key={i} className="flex flex-col items-center rounded-[10px] border border-black/10 bg-white px-3 py-5 text-center shadow-[0_0_8px_rgba(0,0,0,0.05)]">
+                <li key={i} className="flex flex-col items-center rounded-[10px] border border-black/10 bg-white px-1.5 py-4 text-center shadow-[0_0_8px_rgba(0,0,0,0.05)] sm:px-3 sm:py-5">
                   <Icon name={s.icon} className="size-10 text-[#2f8a3c]" />
                   <span className="mt-3 text-[14px] font-semibold text-black">{tx(s.title, locale)}</span>
-                  <span className="mt-1 text-[32px] leading-10 font-bold text-[#0f3d22]">{s.value}</span>
+                  <span className="mt-1 text-[26px] leading-10 font-bold text-[#0f3d22] sm:text-[32px]">{s.value}</span>
                   {tx(s.subText, locale) && <span className="mt-1 text-[14px] font-medium text-[#2f8a3c]">{tx(s.subText, locale)}</span>}
                 </li>
               ))}
@@ -961,7 +961,7 @@ export async function GreenScoreboardSection({ locale, data }: SectionProps) {
         <div className="rounded-[20px] bg-[#0e4a27] px-5 py-6 text-center text-white sm:px-7 lg:py-[18px]">
           <h2 className="text-[26px] leading-9 font-semibold">{t("greenScoreboard")}</h2>
           <p className="mt-1 text-[16px] opacity-90">{t("greenScoreboardSub")}</p>
-          <ul className="mt-5 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:mt-4 lg:grid-cols-[repeat(auto-fit,minmax(170px,1fr))]">
+          <ul className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3 lg:mt-4 lg:grid-cols-[repeat(auto-fit,minmax(170px,1fr))] [&>:last-child:nth-child(odd)]:col-span-2 md:[&>:last-child:nth-child(odd)]:col-span-1">
             {items.map((s, i) => (
               <li key={i} className="flex flex-col items-center rounded-[8px] bg-[#1d5c37] px-4 py-5 lg:min-h-[211px] lg:py-4">
                 {s.iconImage ? (

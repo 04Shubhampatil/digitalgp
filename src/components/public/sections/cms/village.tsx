@@ -224,15 +224,15 @@ export async function CultureCardsSection({
                   src={img}
                   alt=""
                   loading="lazy"
-                  className="h-[275px] w-full object-cover"
+                  className="h-[200px] w-full object-cover sm:h-[275px]"
                 />
               )}
-              <div className="px-5 pt-7 pb-[45px]">
+              <div className="px-5 pt-5 pb-8 sm:pt-7 sm:pb-[45px]">
                 <p className="text-[22px] leading-[30px] font-semibold text-black">
                   {tx(c.title, locale)}
                 </p>
                 {tx(c.description, locale) && (
-                  <p className="mt-3.5 text-[17px] leading-[33px] text-[#414141]">
+                  <p className="mt-3.5 text-[17px] leading-[28px] text-[#414141] sm:leading-[33px]">
                     {tx(c.description, locale)}
                   </p>
                 )}
@@ -330,13 +330,13 @@ export async function LeaderCardsSection({ slug, locale, data }: SectionProps) {
   if (items.length === 0) return null;
   return (
     <Band heading={tx(d.heading, locale) || t("leaders")} tone="cream" pad="py-6 lg:pt-[22px] lg:pb-[25px]" headGap="mb-6 lg:mb-[18px]">
-      <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
         {items.map((p, i) => {
           const photo = mediaUrl(slug, p.photoId);
           return (
             <li
               key={i}
-              className="rounded-[8px] bg-white px-4 pt-2 pb-6 text-center shadow-[0_0_10px_rgba(0,0,0,0.12)]"
+              className="rounded-[8px] bg-white px-2 pt-2 pb-6 text-center shadow-[0_0_10px_rgba(0,0,0,0.12)] sm:px-4"
             >
               {photo && (
                 // eslint-disable-next-line @next/next/no-img-element -- website media served by the backend
@@ -344,7 +344,7 @@ export async function LeaderCardsSection({ slug, locale, data }: SectionProps) {
                   src={photo}
                   alt=""
                   loading="lazy"
-                  className="mx-auto h-[162px] w-[155px] rounded-[6px] object-cover"
+                  className="mx-auto h-[125px] w-[120px] rounded-[6px] object-cover sm:h-[162px] sm:w-[155px]"
                 />
               )}
               <p className="mt-4 text-[16px] font-semibold text-black">
@@ -1357,7 +1357,7 @@ export async function SchemeCardsSection({ slug, locale, data }: SectionProps) {
           return (
             <li
               key={i}
-              className="flex min-h-[286px] flex-col rounded-[10px] border px-6 py-7"
+              className="flex flex-col rounded-[10px] border px-6 py-5 sm:min-h-[286px] sm:py-7"
               style={{ backgroundColor: tint.bg, borderColor: tint.border }}
             >
               <span style={{ color: tint.fg }}>
