@@ -55,7 +55,7 @@ export function HomeGallerySection({ slug, locale, data }: HomeGalleryProps) {
   const current = zoom === null ? null : photos[zoom];
 
   return (
-    <section className="bg-cream py-8">
+    <section className="bg-cream py-8 lg:pt-[14px] lg:pb-[39px]">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[62px]">
         <h2 className="text-center text-[30px] leading-[45px] font-semibold text-black">
           <Link href={galleryHref} className="hover:text-primary-alt">
