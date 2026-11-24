@@ -598,11 +598,11 @@ export function SupportStripSection({ slug, locale, data }: SectionProps) {
                     <Icon name={c.icon} className="size-11" />
                   </span>
                 )}
-                <span className={`leading-6 font-semibold text-black xl:-mx-4 ${sp ? "mt-[22px] text-[17px]" : "mt-4 text-[16px]"}`}>
+                <span className={`leading-6 font-semibold text-black xl:-mx-4 ${sp ? "mt-3 text-[17px] lg:mt-[22px]" : "mt-4 text-[16px]"}`}>
                   {tx(c.title, locale)}
                 </span>
                 {tx(c.description, locale) && (
-                  <span className={`leading-[28px] text-[#414141] ${sp ? "mt-[21px] text-[15.5px]" : "mt-2 text-[15px]"}`}>
+                  <span className={`text-[#414141] leading-6 lg:leading-[28px] ${sp ? "mt-2 text-[15.5px] lg:mt-[21px]" : "mt-2 text-[15px]"}`}>
                     {tx(c.description, locale)}
                   </span>
                 )}
@@ -660,18 +660,18 @@ export async function LocalOpportunitiesSection({
       pad="py-8 lg:pt-[15px] lg:pb-[47px]"
       headGap="mb-6 lg:mb-[31px]"
     >
-      <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
         {items.map((c, i) => (
           <li
             key={i}
-            className="flex flex-col items-center rounded-[12px] border-[1.2px] border-[#414141]/15 bg-white px-4 pt-5 pb-8 text-center shadow-[0_0_20px_rgba(0,0,0,0.25)] lg:h-[288px] lg:pb-0"
+            className="flex flex-col items-center rounded-[12px] border-[1.2px] border-[#414141]/15 bg-white px-2 pt-4 pb-5 text-center shadow-[0_0_20px_rgba(0,0,0,0.25)] sm:px-4 sm:pt-5 sm:pb-8 lg:h-[288px] lg:pb-0"
           >
             {c.iconImage ? (
               // eslint-disable-next-line @next/next/no-img-element -- static design asset
-              <img src={c.iconImage} alt="" width={92} height={91} className="h-[91px] w-[92px]" />
+              <img src={c.iconImage} alt="" width={92} height={91} className="h-[64px] w-[65px] sm:h-[91px] sm:w-[92px]" />
             ) : (
               <span
-                className="flex h-[91px] items-center"
+                className="flex h-[64px] items-center sm:h-[91px]"
                 style={{
                   color: c.colour ?? ICON_COLOURS[i % ICON_COLOURS.length],
                 }}
@@ -680,15 +680,15 @@ export async function LocalOpportunitiesSection({
               </span>
             )}
             {c.contactOrAction && (
-              <p className="text-[39.5px] leading-[54px] font-bold text-[#135130]">
+              <p className="text-[30px] leading-10 font-bold text-[#135130] sm:text-[39.5px] sm:leading-[54px]">
                 {plain(c.contactOrAction, locale)}
               </p>
             )}
-            <p className="mt-2.5 text-[19.7px] leading-[27px] font-semibold text-[#414141]">
+            <p className="mt-2 text-[16px] leading-[22px] font-semibold text-[#414141] sm:mt-2.5 sm:text-[19.7px] sm:leading-[27px]">
               {tx(c.title, locale)}
             </p>
             {tx(c.description, locale) && (
-              <p className="mt-2 text-[17.3px] leading-6 text-[#414141]">
+              <p className="mt-1.5 text-[14px] leading-5 text-[#414141] sm:mt-2 sm:text-[17.3px] sm:leading-6">
                 {tx(c.description, locale)}
               </p>
             )}
@@ -1175,7 +1175,7 @@ export async function StudentSpotlightSection({
             src={photo}
             alt={tx(d.name, locale)}
             loading="lazy"
-            className="mx-auto h-[318px] w-[231px] rounded-[11px] object-cover"
+            className="mx-auto h-[230px] w-[168px] rounded-[11px] object-cover lg:h-[318px] lg:w-[231px]"
           />
         )}
         <div>
@@ -1221,7 +1221,7 @@ export async function StudentSpotlightSection({
           )}
         </div>
         {cards.length > 0 && (
-          <ul className="grid gap-x-[30px] gap-y-[41px] sm:grid-cols-2">
+          <ul className="grid gap-x-[30px] gap-y-4 sm:grid-cols-2 sm:gap-y-[41px]">
             {cards.map((c, i) => {
               const colour = c.colour ?? colours[i % colours.length]!;
               return (
@@ -1375,7 +1375,7 @@ export async function SchemeCardsSection({ slug, locale, data }: SectionProps) {
                 <TextLink
                   href={resolveHref(c.buttonLink, slug)}
                   external={isExternal(c.buttonLink)}
-                  className="mt-auto pt-8 text-[16px] !font-normal"
+                  className="mt-auto pt-4 text-[16px] !font-normal sm:pt-8"
                 >
                   {tx(c.buttonText, locale) || t("learnMore")}
                 </TextLink>

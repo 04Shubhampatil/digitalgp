@@ -533,10 +533,10 @@ const STORY_VARIANTS: Record<string, { tone?: "white" | "cream"; pad: string; he
     pad: "py-8 lg:pt-[50px] lg:pb-[27px]",
     headGap: "mb-6 lg:mb-[39px]",
     imageH: 186,
-    body: "px-4 pt-[22px] pb-[45px]",
+    body: "px-4 pt-4 pb-6 sm:pt-[22px] sm:pb-[45px]",
     title: "text-[16.5px] leading-6",
-    desc: "mt-4 text-[14px] leading-8 text-[#414141]",
-    link: "pt-6",
+    desc: "mt-2 text-[14px] leading-6 text-[#414141] sm:mt-4 sm:leading-8",
+    link: "pt-3 sm:pt-6",
     viewAllGap: "mt-6 lg:mt-[26px]",
   },
 };
@@ -614,7 +614,7 @@ export async function CmsSuccessStoriesSection({ slug, locale, data, pageKey }: 
               <li key={i} className="flex flex-col overflow-hidden rounded-[10px] border border-black/10 bg-white shadow-[0_0_10px_rgba(0,0,0,0.06)]">
                 {img && (
                   // eslint-disable-next-line @next/next/no-img-element -- website media served by the backend
-                  <img src={img} alt="" loading="lazy" className="w-full object-cover" style={{ height: v.imageH }} />
+                  <img src={img} alt="" loading="lazy" className="h-[calc(var(--ih)*0.75)] w-full object-cover sm:h-[var(--ih)]" style={{ "--ih": `${v.imageH}px` } as React.CSSProperties} />
                 )}
                 <div className={`flex flex-1 flex-col ${v.body}`}>
                   <p className={`font-semibold text-black ${v.title ?? "text-[16px] leading-6"}`}>{tx(s.title, locale)}</p>
