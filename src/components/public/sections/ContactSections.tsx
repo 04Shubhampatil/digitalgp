@@ -43,7 +43,7 @@ export async function ContactCardsSection({ slug, locale, data }: SectionProps) 
   const ring = "flex size-[86px] items-center justify-center rounded-full bg-[#e9f4e9] text-[#135130]";
   return (
     // Figma 375:11766: heading 52px under the callout, cards 97px under the heading, 98px above the next heading.
-    <section className="bg-cream py-6 lg:pt-[52px] lg:pb-[67px]">
+    <section className="bg-cream py-6 lg:pt-[73px] lg:pb-[63px]">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[62px]">
         <h2 className="mb-6 text-center lg:mb-[52px] text-[30px] leading-[45px] font-semibold text-black">{pickText(d.heading, locale)}</h2>
         <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">

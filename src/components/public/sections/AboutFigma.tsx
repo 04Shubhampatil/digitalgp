@@ -307,15 +307,15 @@ export function AboutStructureSection({ slug, locale, data }: SectionProps) {
           <p className="text-[15px] font-bold uppercase">{pickText(o.eyebrow, locale)}</p>
           <h2 className="mt-2 text-[38px] leading-[50px] font-bold">{pickText(o.heading, locale)}</h2>
           <dl className="mt-5 divide-y divide-white/40 text-[16.5px]">
-            <div className="py-4">
+            <div className="py-4 lg:py-[13px]">
               <dt className="text-[15px] font-bold">{pickText(o.addressLabel, locale)}</dt>
               <dd className="mt-2 font-medium">{pickText(o.address, locale)}</dd>
             </div>
-            <div className="py-4">
+            <div className="py-4 lg:py-[13px]">
               <dt className="text-[15px] font-bold">{pickText(o.hoursLabel, locale)}</dt>
               <dd className="mt-2 font-medium whitespace-pre-line">{hours}</dd>
             </div>
-            <div className="py-4">
+            <div className="py-4 lg:py-[13px]">
               <dt className="text-[15px] font-bold">{pickText(o.phoneLabel, locale)}</dt>
               <dd className="mt-2">
                 <a href={`tel:${o.phone}`} className="hover:underline">
@@ -323,7 +323,7 @@ export function AboutStructureSection({ slug, locale, data }: SectionProps) {
                 </a>
               </dd>
             </div>
-            <div className="py-4">
+            <div className="py-4 lg:py-[13px]">
               <dt className="text-[15px] font-bold">{pickText(o.emailLabel, locale)}</dt>
               <dd className="mt-2 break-all">
                 <a href={`mailto:${o.email}`} className="hover:underline">
@@ -343,14 +343,14 @@ export function AboutRolesSection({ locale, data }: SectionProps) {
   // Placeholder rows carry `body`; the backend roles-cards rows carry a list of `points` (responsibilities).
   const d = data as { eyebrow?: B; heading?: B; items?: { title?: B; body?: B; points?: B[] }[] };
   return (
-    <section className="bg-cream py-10">
+    <section className="bg-cream py-10 lg:pb-[72px]">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
         <p className="text-center text-[20px] leading-[27px] font-semibold text-[#135130] uppercase">{pickText(d.eyebrow, locale)}</p>
         <h2 className="mt-3 text-center text-[35px] leading-[45px] font-semibold text-black">{pickText(d.heading, locale)}</h2>
         {/* Figma 375:13607: 427×246 cards, 20px apart, rows 17px apart. */}
         <ul className="mt-[50px] grid gap-5 md:grid-cols-2 lg:grid-cols-3 lg:gap-y-[17px]">
           {(d.items ?? []).map((it, i) => (
-            <li key={i} className="min-h-[246px] rounded-[13.5px] bg-white px-7 py-10 shadow-[0_0_27px_rgba(0,0,0,0.25)]">
+            <li key={i} className="min-h-[246px] rounded-[13.5px] bg-white px-7 py-10 lg:pt-[39px] lg:pb-[19px] shadow-[0_0_27px_rgba(0,0,0,0.25)]">
               <span className="inline-flex h-[49px] w-[54px] items-center justify-center rounded-full bg-[rgba(243,140,40,0.09)] text-[24px] font-bold text-[#f38c28]">{String(i + 1).padStart(2, "0")}</span>
               <h3 className="text-[21.6px] leading-[34px] font-bold text-black">{pickText(it.title, locale)}</h3>
               {pickText(it.body, locale) && <p className="mt-5 text-[16.2px] leading-[27px] text-[#414141]">{pickText(it.body, locale)}</p>}
@@ -378,7 +378,7 @@ export function AboutEmergencySection({ locale, data }: SectionProps) {
   const d = data as { eyebrow?: B; heading?: B; items?: { label?: B; numbers?: string[]; icon?: string }[] };
   return (
         // Figma 375:13503: 5% green tint over the cream page, 203×199 tiles (18–20px apart, rows 16px apart), 58px pictograms.
-    <section className="bg-[#f1f2e7] py-8">
+    <section className="bg-[#f1f2e7] py-8 lg:pb-16">
       <div className="mx-auto max-w-[1326px] px-4 sm:px-8">
         <p className="text-center text-[20px] leading-[27px] font-semibold text-[#135130] uppercase">{pickText(d.eyebrow, locale)}</p>
         <h2 className="mt-3 text-center text-[35px] leading-[45px] font-semibold text-black">{pickText(d.heading, locale)}</h2>
@@ -410,7 +410,7 @@ export function AboutVisionSection({ slug, locale, data }: SectionProps) {
   const d = data as { imageId?: string; visionLabel?: B; vision?: B; visionBody?: B; missionLabel?: B; mission?: B; missionPoints?: B[]; valuesLabel?: B; values?: B[] };
   return (
     // Figma: the vision band sits 63px below the emergency tint.
-    <section className="bg-cream py-8 lg:pt-[63px]">
+    <section className="bg-cream py-8 lg:pt-[63px] lg:pb-16">
       <div className="relative mx-auto max-w-[1324px] overflow-hidden rounded-[10px] bg-[#135130]">
         {/* eslint-disable-next-line @next/next/no-img-element -- static design asset */}
         <img src={d.imageId ? publicMediaUrl(slug, d.imageId) : "/images/figma/about-vision.png"} alt="" className="absolute inset-0 size-full object-cover" loading="lazy" />

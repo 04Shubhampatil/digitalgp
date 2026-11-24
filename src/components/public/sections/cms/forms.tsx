@@ -398,8 +398,8 @@ export async function CmsContactCardsSection({ slug, locale, data }: SectionProp
 const MAP_PREFIXES = ["https://www.google.com/maps/embed", "https://maps.google.com/maps", "https://www.openstreetmap.org/export/embed"];
 
 /** Contact-page heading that sits above its card (Figma: 30px, Title Case). */
-function OutsideHeading({ children, center }: { children: React.ReactNode; center?: boolean }) {
-  return <h2 className={`mb-5 text-[30px] leading-[45px] font-semibold text-black ${center ? "text-center" : ""}`}>{children}</h2>;
+function OutsideHeading({ children, center, gap = "mb-5" }: { children: React.ReactNode; center?: boolean; gap?: string }) {
+  return <h2 className={`${gap} text-[30px] leading-[45px] font-semibold text-black ${center ? "text-center" : ""}`}>{children}</h2>;
 }
 
 /**
@@ -413,7 +413,7 @@ export async function OfficeLocationSection({ locale, data }: SectionProps) {
   const map = d.mapEmbedUrl && MAP_PREFIXES.some((p) => d.mapEmbedUrl!.startsWith(p)) ? d.mapEmbedUrl : undefined;
   return (
     <div className="flex flex-col">
-      <OutsideHeading>{tx(d.title, locale) || t("officeLocationTitle")}</OutsideHeading>
+      <OutsideHeading gap="mb-5 lg:mb-[35px]">{tx(d.title, locale) || t("officeLocationTitle")}</OutsideHeading>
       <div className="flex flex-1 flex-col overflow-hidden rounded-[10px] border border-black/15 bg-white">
         {map && (
           <iframe
@@ -422,7 +422,7 @@ export async function OfficeLocationSection({ locale, data }: SectionProps) {
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
             sandbox="allow-scripts allow-same-origin allow-popups"
-            className="h-[420px] w-full flex-1 border-0 lg:h-[509px]"
+            className="h-[420px] w-full flex-1 border-0 lg:min-h-[488px]"
           />
         )}
         {tx(d.address, locale) && (
@@ -448,7 +448,7 @@ export async function FeedbackFormSection({ slug, locale, data }: SectionProps) 
   const input = "w-full rounded-[10px] border border-black/30 bg-white px-4 text-[15px] font-normal text-black placeholder:text-[#8a8a8a] focus:border-[#135130] focus:outline-none";
   return (
     <div id="feedback-form" className="flex scroll-mt-[180px] flex-col">
-      <OutsideHeading>{tx(d.heading, locale) || t("feedbackTitle")}</OutsideHeading>
+      <OutsideHeading gap="mb-5 lg:mb-[35px]">{tx(d.heading, locale) || t("feedbackTitle")}</OutsideHeading>
       <div className="flex-1 rounded-[10px] border border-black/25 bg-white p-6">
         {tx(d.description, locale) && <p className="mb-4 text-[13px] text-[#414141]">{tx(d.description, locale)}</p>}
         <MailtoForm
@@ -480,7 +480,7 @@ export async function PartnersSection({ slug, locale, data }: SectionProps) {
   if (items.length === 0) return null;
   return (
     // Figma 375:11766: partner cards 427×299, 43px above the next heading.
-    <section className="bg-cream py-10 lg:pb-0">
+    <section className="bg-cream py-10 lg:pt-[66px] lg:pb-0">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
         <OutsideHeading center>{t("partnersTitle")}</OutsideHeading>
         <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:mt-11 lg:grid-cols-3">
@@ -561,10 +561,10 @@ export async function VolunteerRegistrationSection({ slug, locale, data, sibling
   const sub = [standalone ? tx(d.description, locale) : "", deadline ? t("deadline", { date: deadline }) : ""].filter(Boolean).join(" · ");
   const input = "h-[48px] w-full rounded-[10px] border border-black/30 bg-white px-4 text-[15px] font-normal text-black placeholder:text-[#8a8a8a] focus:border-[#135130] focus:outline-none";
   return (
-    <section className={`bg-cream py-10 ${standalone ? "" : "lg:pt-[47px]"}`}>
+    <section className={`bg-cream py-10 lg:pb-[73px] ${standalone ? "" : "lg:pt-[47px]"}`}>
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
         {standalone && <OutsideHeading center>{tx(d.heading, locale) || t("becomeVolunteer")}</OutsideHeading>}
-        <div className="rounded-[10px] border border-black/25 bg-white px-6 pt-4 pb-7 lg:pb-[63px]">
+        <div className="rounded-[10px] border border-black/25 bg-white px-6 pt-4 pb-7 lg:pb-[35px]">
           <h3 className="text-center text-[24px] leading-9 font-semibold text-[#135130]">{t("volunteerFormTitle")}</h3>
           {sub && <p className="mt-1 text-center text-[14px] text-[#414141]">{sub}</p>}
           <div className="mt-4">
