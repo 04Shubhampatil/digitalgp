@@ -215,7 +215,7 @@ export function GrievanceSubmitForm({ slug }: { slug: string }) {
 
   const typesText = uploads.types.map((x) => x.toUpperCase()).join(", ");
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="grid gap-x-7 gap-y-4 rounded-[11px] border border-[#414141]/50 bg-white p-6 md:grid-cols-3">
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="grid gap-x-7 gap-y-4 rounded-[11px] border border-[#414141]/50 bg-white p-6 md:grid-cols-3 lg:py-[18px]">
       <TextField label={t("name")} placeholder={t("namePlaceholder")} autoComplete="name" error={errors.citizenName?.message} {...register("citizenName")} />
       <TextField label={t("phone")} placeholder={t("phonePlaceholder")} type="tel" autoComplete="tel" error={errors.citizenPhone?.message} {...register("citizenPhone")} />
       <TextField label={t("email")} placeholder={t("emailPlaceholder")} type="email" autoComplete="email" error={errors.citizenEmail?.message} {...register("citizenEmail")} />
