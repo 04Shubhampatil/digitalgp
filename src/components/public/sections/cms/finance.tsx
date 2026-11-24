@@ -247,7 +247,7 @@ export async function IncomeSourcesSection({
             {tx(d.subtitle, locale)}
           </p>
         )}
-        <div className="mt-[22px] grid items-center gap-6 rounded-[10px] border border-black/20 bg-white p-4 lg:grid-cols-[minmax(0,506fr)_minmax(0,350fr)_minmax(0,291fr)] lg:gap-x-[59px] lg:py-[12.5px] lg:pr-[23px] lg:pl-[30px]">
+        <div className="mt-[22px] grid items-center gap-6 rounded-[10px] border border-black/20 bg-white p-4 md:grid-cols-2 md:[&>:last-child]:col-span-2 lg:grid-cols-[minmax(0,506fr)_minmax(0,350fr)_minmax(0,291fr)] lg:[&>:last-child]:col-span-1 lg:gap-x-[59px] lg:py-[12.5px] lg:pr-[23px] lg:pl-[30px]">
           <ul className="flex flex-col justify-center gap-[36px] rounded-[10px] border border-black/10 bg-white px-5 py-8 lg:pr-[27px] lg:pl-[22px]">
             {coloured.map((c, i) => (
               <li
@@ -321,7 +321,7 @@ export async function ExpenditureSection({ slug, locale, data }: SectionProps) {
             {tx(d.subtitle, locale)}
           </p>
         )}
-        <div className="mt-[30px] grid items-center gap-6 rounded-[10px] border border-black/20 bg-white p-4 text-left text-black lg:h-[488px] lg:grid-cols-[minmax(0,399fr)_minmax(0,572fr)_minmax(0,318fr)] lg:gap-x-0 lg:py-0 lg:pr-[22px] lg:pl-[9px]">
+        <div className="mt-[30px] grid items-center gap-6 rounded-[10px] border border-black/20 bg-white p-4 text-left text-black md:grid-cols-2 md:[&>:last-child]:col-span-2 lg:h-[488px] lg:grid-cols-[minmax(0,399fr)_minmax(0,572fr)_minmax(0,318fr)] lg:[&>:last-child]:col-span-1 lg:gap-x-0 lg:py-0 lg:pr-[22px] lg:pl-[9px]">
           <div className="lg:pr-[13px]">
             <Donut
               segments={categories.map((c) => ({
@@ -644,7 +644,7 @@ export async function DocumentsSection({ slug, locale, data }: SectionProps) {
             {tx(d.description, locale)}
           </p>
         )}
-        <ul className="mt-[17px] grid gap-4 rounded-[10px] border border-[#414141]/20 bg-white p-4 text-left text-black sm:grid-cols-2 lg:grid-cols-5 lg:gap-[17px] lg:px-[23px] lg:pt-6 lg:pb-[28px]">
+        <ul className="mt-[17px] grid gap-4 rounded-[10px] border border-[#414141]/20 bg-white p-4 text-left text-black sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 lg:gap-[17px] lg:px-[23px] lg:pt-6 lg:pb-[28px]">
           {items.map((it, i) => {
             const file = mediaUrl(slug, it.fileId);
             const href =

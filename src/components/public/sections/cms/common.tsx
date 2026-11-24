@@ -258,7 +258,7 @@ export function TopStatsSection({ locale, data }: SectionProps) {
     // tinted icon circle, uppercase label, green value and the change line ("↑ 5.2%  vs LM"), with dividers.
     return (
       <section className="relative z-10 flow-root bg-cream px-4 sm:px-8 lg:px-[60px]">
-        <ul className="relative -top-8 mx-auto -mb-8 grid max-w-[805px] divide-black/10 rounded-[11px] border border-black/10 bg-white py-[18px] shadow-[0_0_14px_rgba(0,0,0,0.12)] sm:grid-cols-2 lg:-top-[45px] lg:-mb-[45px] lg:flex lg:h-[133px] lg:py-0">
+        <ul className="relative -top-8 mx-auto -mb-8 grid max-w-[805px] divide-black/10 rounded-[11px] border border-black/10 bg-white py-[18px] shadow-[0_0_14px_rgba(0,0,0,0.12)] sm:grid-cols-2 md:grid-cols-4 lg:-top-[45px] lg:-mb-[45px] lg:flex lg:h-[133px] lg:py-0">
           {items.map((s, i) => {
             const tint = STRIP_TINTS[i % STRIP_TINTS.length]!;
             const change = tx(s.description, locale);
