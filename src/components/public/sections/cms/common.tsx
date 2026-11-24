@@ -509,8 +509,9 @@ const STORY_VARIANTS: Record<string, { tone?: "white" | "cream"; pad: string; he
     pad: "py-8 lg:pt-[37px] lg:pb-[29px]",
     headGap: "mb-6 lg:mb-[13px]",
     imageH: 145,
-    body: "px-3.5 pt-3 pb-3.5",
-    desc: "mt-1 text-[13px] leading-[22px] text-[#414141]",
+    // Two lines of text (Figma card = 283px); a longer story is cut with "…" and read in full behind "Read Story".
+    body: "px-3.5 pt-3 pb-[18px]",
+    desc: "mt-1 line-clamp-2 text-[13px] leading-[22px] text-[#414141]",
     link: "pt-2.5",
     viewAllGap: "mt-8 lg:mt-[37px]",
   },
