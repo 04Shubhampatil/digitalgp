@@ -26,7 +26,8 @@ export default async function TenantLayout({ children, params }: { children: Rea
   return (
     <div className="public-site flex min-h-dvh flex-col bg-surface">
       <PublicHeader tenant={tenant} />
-      <div className="flex-1">{children}</div>
+      {/* The Figma About page ends with the leaders band flush against the footer; every other page keeps the footer's 64px top margin. */}
+      <div className="flex-1 lg:has-[#leaders:last-child]:-mb-16">{children}</div>
       <PublicFooter tenant={tenant} />
       <SectionHighlight />
     </div>

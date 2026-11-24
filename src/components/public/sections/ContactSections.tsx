@@ -39,20 +39,21 @@ export async function ContactCardsSection({ slug, locale, data }: SectionProps) 
   const address = c.address ? pickText({ en: c.address }, locale) : pickText(d.address, locale);
   const hours = c.hours ? pickText({ en: c.hours }, locale) : pickText(d.hours, locale);
   const L = d.labels ?? {};
-  const card = "flex min-h-[269px] flex-col items-center rounded-[10px] bg-white px-3 py-8 text-center shadow-[0_0_14px_rgba(0,0,0,0.2)]";
+  const card = "flex min-h-[269px] flex-col items-center rounded-[10px] bg-white px-3 pt-[29px] pb-[26px] text-center shadow-[0_0_14px_rgba(0,0,0,0.2)]";
   const ring = "flex size-[86px] items-center justify-center rounded-full bg-[#e9f4e9] text-[#135130]";
   return (
-    <section className="bg-cream py-6">
+    // Figma 375:11766: heading 52px under the callout, cards 97px under the heading, 98px above the next heading.
+    <section className="bg-cream py-6 lg:pt-[52px] lg:pb-[67px]">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[62px]">
-        <h2 className="mb-6 text-center text-[30px] leading-[45px] font-semibold text-black">{pickText(d.heading, locale)}</h2>
+        <h2 className="mb-6 text-center lg:mb-[52px] text-[30px] leading-[45px] font-semibold text-black">{pickText(d.heading, locale)}</h2>
         <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <li className={card}>
             <span aria-hidden className={ring}>
               <Phone className="size-9" />
             </span>
-            <h3 className="mt-5 text-[20px] font-semibold text-[#135130]">{pickText(L.inquiries, locale)}</h3>
+            <h3 className="mt-[11px] text-[20px] font-semibold text-[#135130]">{pickText(L.inquiries, locale)}</h3>
             {phone && (
-              <a href={`tel:${phone.replace(/\s+/g, "")}`} className="mt-6 text-[15px] font-semibold text-black hover:underline">
+              <a href={`tel:${phone.replace(/\s+/g, "")}`} className="mt-[18px] text-[15px] font-semibold text-black hover:underline">
                 {phone}
               </a>
             )}
@@ -66,21 +67,21 @@ export async function ContactCardsSection({ slug, locale, data }: SectionProps) 
             <span aria-hidden className={ring}>
               <Clock className="size-9" />
             </span>
-            <h3 className="mt-5 text-[20px] font-semibold text-[#135130]">{pickText(L.hours, locale)}</h3>
+            <h3 className="mt-[11px] text-[20px] font-semibold text-[#135130]">{pickText(L.hours, locale)}</h3>
             <p className="mt-6 text-[14px] whitespace-pre-line text-black">{hours}</p>
           </li>
           <li className={card}>
             <span aria-hidden className={ring}>
               <MapPin className="size-9" />
             </span>
-            <h3 className="mt-5 text-[20px] font-semibold text-[#135130]">{pickText(L.address, locale)}</h3>
+            <h3 className="mt-[11px] text-[20px] font-semibold text-[#135130]">{pickText(L.address, locale)}</h3>
             <p className="mt-6 text-[14px] whitespace-pre-line text-black">{address}</p>
           </li>
           <li className={card}>
             <span aria-hidden className={ring}>
               <Globe className="size-9" />
             </span>
-            <h3 className="mt-5 text-[20px] font-semibold text-[#135130]">{pickText(L.follow, locale)}</h3>
+            <h3 className="mt-[11px] text-[20px] font-semibold text-[#135130]">{pickText(L.follow, locale)}</h3>
             {/* Brand icons as in Figma (32px), always shown: without a URL in the settings they open the network's home page. */}
             <div className="mt-5 flex items-center gap-3">
               <Social href={s.facebook || "https://www.facebook.com"} label="Facebook">

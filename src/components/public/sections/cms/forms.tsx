@@ -422,7 +422,7 @@ export async function OfficeLocationSection({ locale, data }: SectionProps) {
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
             sandbox="allow-scripts allow-same-origin allow-popups"
-            className="h-[420px] w-full flex-1 border-0"
+            className="h-[420px] w-full flex-1 border-0 lg:h-[509px]"
           />
         )}
         {tx(d.address, locale) && (
@@ -479,14 +479,15 @@ export async function PartnersSection({ slug, locale, data }: SectionProps) {
   const items = list<{ logoId?: string; title?: B; description?: B; partnerLogoIds?: string[] }>((data as { items?: unknown }).items);
   if (items.length === 0) return null;
   return (
-    <section className="bg-cream py-10">
+    // Figma 375:11766: partner cards 427×299, 43px above the next heading.
+    <section className="bg-cream py-10 lg:pb-0">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
         <OutsideHeading center>{t("partnersTitle")}</OutsideHeading>
-        <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:mt-11 lg:grid-cols-3">
           {items.map((p, i) => {
             const logo = mediaUrl(slug, p.logoId);
             return (
-              <li key={i} className="flex flex-col rounded-[10px] bg-white p-6 shadow-[0_0_10px_rgba(0,0,0,0.12)]">
+              <li key={i} className="flex flex-col rounded-[10px] bg-white p-6 shadow-[0_0_10px_rgba(0,0,0,0.12)] lg:min-h-[299px]">
                 <div className="flex items-start gap-4">
                   <span className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#e9f4e9] text-[#135130]">
                     {logo ? (
@@ -530,7 +531,7 @@ export async function VolunteerCategoriesSection({ slug, locale, data, siblings 
   if (items.length === 0) return null;
   const reg = (siblings?.["volunteer-registration"] ?? {}) as { heading?: B; description?: B };
   return (
-    <section className="bg-cream py-10">
+    <section className="bg-cream py-10 lg:pb-0">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
         <h2 className="text-center text-[30px] leading-[45px] font-semibold text-black">{tx(reg.heading, locale) || t("becomeVolunteer")}</h2>
         {tx(reg.description, locale) && <p className="mt-3 text-center text-[20px] leading-[30px] text-black">{tx(reg.description, locale)}</p>}
@@ -560,10 +561,10 @@ export async function VolunteerRegistrationSection({ slug, locale, data, sibling
   const sub = [standalone ? tx(d.description, locale) : "", deadline ? t("deadline", { date: deadline }) : ""].filter(Boolean).join(" · ");
   const input = "h-[48px] w-full rounded-[10px] border border-black/30 bg-white px-4 text-[15px] font-normal text-black placeholder:text-[#8a8a8a] focus:border-[#135130] focus:outline-none";
   return (
-    <section className="bg-cream py-10">
+    <section className={`bg-cream py-10 ${standalone ? "" : "lg:pt-[47px]"}`}>
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
         {standalone && <OutsideHeading center>{tx(d.heading, locale) || t("becomeVolunteer")}</OutsideHeading>}
-        <div className="rounded-[10px] border border-black/25 bg-white px-6 pt-4 pb-7">
+        <div className="rounded-[10px] border border-black/25 bg-white px-6 pt-4 pb-7 lg:pb-[63px]">
           <h3 className="text-center text-[24px] leading-9 font-semibold text-[#135130]">{t("volunteerFormTitle")}</h3>
           {sub && <p className="mt-1 text-center text-[14px] text-[#414141]">{sub}</p>}
           <div className="mt-4">

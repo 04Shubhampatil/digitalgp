@@ -24,7 +24,7 @@ export function VolunteerCardsClient({ items, field }: { items: { title: string;
     document.getElementById("volunteer-registration")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
   return (
-    <ul role="radiogroup" className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <ul role="radiogroup" className="mt-10 grid gap-5 sm:grid-cols-2 lg:mt-[52px] lg:grid-cols-4">
       {items.map((c, i) => {
         const tone = TONES[i % TONES.length]!;
         const on = picked === c.title;
@@ -35,7 +35,7 @@ export function VolunteerCardsClient({ items, field }: { items: { title: string;
               role="radio"
               aria-checked={on}
               onClick={() => choose(c.title)}
-              className={`relative flex h-full w-full flex-col items-center rounded-[10px] bg-white px-6 pt-6 pb-7 text-center shadow-[0_0_10px_rgba(0,0,0,0.14)] transition hover:shadow-md ${on ? "ring-2 ring-[#135130]" : ""}`}
+              className={`relative flex h-full w-full flex-col items-center rounded-[10px] bg-white px-6 pt-6 pb-7 text-center lg:pb-[44px] shadow-[0_0_10px_rgba(0,0,0,0.14)] transition hover:shadow-md ${on ? "ring-2 ring-[#135130]" : ""}`}
             >
               <span aria-hidden className={`absolute top-5 right-5 flex size-[22px] items-center justify-center rounded-full border-2 ${on ? "border-[#135130]" : "border-[#9a9a9a]"}`}>
                 {on && <span className="size-2.5 rounded-full bg-[#135130]" />}
