@@ -739,13 +739,13 @@ export async function SkillDirectorySection({
             <>
               {s.iconImage ? (
                 // eslint-disable-next-line @next/next/no-img-element -- static design asset
-                <img src={s.iconImage} alt="" width={85} height={84} className="h-[84px] w-[85px]" />
+                <img src={s.iconImage} alt="" width={85} height={84} className="h-[56px] w-[57px] sm:h-[84px] sm:w-[85px]" />
               ) : (
-                <span className="flex size-[84px] items-center justify-center rounded-full bg-[#eef4ef] text-[#135130]">
+                <span className="flex size-14 items-center justify-center rounded-full bg-[#eef4ef] text-[#135130] sm:size-[84px]">
                   <Icon name={s.icon} className="size-9" />
                 </span>
               )}
-              <span className="mt-2.5 text-[18px] leading-[35px] font-semibold text-black lg:text-[19px]">
+              <span className="mt-2.5 text-[18px] leading-6 font-semibold text-black sm:leading-[35px] lg:text-[19px]">
                 {tx(s.skillName, locale)}
               </span>
               {typeof s.availableCount === "number" ? (
@@ -767,7 +767,7 @@ export async function SkillDirectorySection({
             </>
           );
           const cls =
-            "flex h-[201px] flex-col items-center justify-center rounded-[10px] border border-black/25 px-2 text-center";
+            "flex h-[150px] flex-col items-center justify-center rounded-[10px] border border-black/25 px-2 text-center sm:h-[201px]";
           return (
             <li key={i}>
               {s.link ? (
@@ -923,18 +923,18 @@ async function ProgramsCard({
 }) {
   const t = await getTranslations("public.cms");
   return (
-    <ul className="rounded-[10px] border border-black/10 bg-white px-6 shadow-[0_0_10px_rgba(0,0,0,0.06)]">
+    <ul className="rounded-[10px] border border-black/10 bg-white px-4 shadow-[0_0_10px_rgba(0,0,0,0.06)] sm:px-6">
       {items.map((p, i) => {
         const img = mediaUrl(slug, p.thumbnailImageId);
         return (
-          <li key={i} className="flex items-center gap-7 py-3">
+          <li key={i} className="flex items-center gap-3 py-3 sm:gap-7">
             {img && (
               // eslint-disable-next-line @next/next/no-img-element -- website media served by the backend
               <img
                 src={img}
                 alt=""
                 loading="lazy"
-                className="h-[88px] w-[128px] shrink-0 rounded-[6px] object-cover"
+                className="h-[64px] w-[88px] shrink-0 rounded-[6px] object-cover sm:h-[88px] sm:w-[128px]"
               />
             )}
             <div className="min-w-0">
@@ -943,11 +943,11 @@ async function ProgramsCard({
                   {t("featured")}
                 </span>
               )}
-              <p className="text-[18px] leading-6 font-semibold text-black">
+              <p className="text-[16px] leading-5 font-semibold text-black sm:text-[18px] sm:leading-6">
                 {tx(p.title, locale)}
               </p>
               {tx(p.shortDescription, locale) && (
-                <p className="mt-0.5 text-[15.5px] leading-[26px] text-[#555]">
+                <p className="mt-0.5 text-[14px] leading-5 text-[#555] sm:text-[15.5px] sm:leading-[26px]">
                   {tx(p.shortDescription, locale)}
                 </p>
               )}
@@ -983,7 +983,7 @@ async function PortalsCard({
   return (
     <div
       id="gov-job-portals"
-      className="scroll-mt-[180px] rounded-[10px] border border-black/10 bg-white px-6 pt-6 pb-5 shadow-[0_0_10px_rgba(0,0,0,0.06)] lg:pr-8 lg:pl-[52px]"
+      className="scroll-mt-[180px] rounded-[10px] border border-black/10 bg-white px-4 pt-6 pb-5 shadow-[0_0_10px_rgba(0,0,0,0.06)] sm:px-6 lg:pr-8 lg:pl-[52px]"
     >
       <h3 className="text-[20px] leading-7 font-semibold text-black">
         {tx(d.heading, locale) || t("jobPortals")}
@@ -1018,7 +1018,7 @@ async function PortalsCard({
             </>
           );
           const cls =
-            "flex items-center gap-8 rounded-[8px] border border-black/10 bg-white px-5 py-3";
+            "flex items-center gap-3 rounded-[8px] border border-black/10 bg-white px-3 py-3 sm:gap-8 sm:px-5";
           return (
             <li key={i}>
               {p.websiteUrl ? (
