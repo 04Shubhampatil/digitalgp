@@ -106,7 +106,7 @@ export async function NoticesSection({ slug, locale, data, siblings }: SectionPr
   }
 
   return (
-    <section className="bg-cream py-8">
+    <section className="bg-cream py-8 lg:pb-0">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
         <div className="text-center">
           <h2 className="text-[30px] leading-[45px] font-semibold text-black">{pickText(d.heading, locale)}</h2>

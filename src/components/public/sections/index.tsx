@@ -246,9 +246,9 @@ const ROW_GROUPS: { keys: string[]; cols: string; all?: boolean; /** Vertical pa
   { keys: ["village-resolution-tracker", "impact-dashboard"], cols: "xl:grid-cols-[567px_minmax(0,1fr)]", pad: "py-8 lg:pt-[9px] lg:pb-[20.5px]" },
   { keys: ["dev-timeline", "financial-overview"], cols: "xl:grid-cols-[601px_minmax(0,1fr)]", pad: "py-8 lg:py-[20.5px]" },
   // Figma home: "What's New This Week?" on the left, "Top Five Achievements of the Ward" on the right (649 / 650px).
-  { keys: ["whats-new", "achievements"], cols: "lg:grid-cols-2", pad: "py-8 lg:pt-5 lg:pb-0" },
-  { keys: ["weather", "sarpanch-message"], cols: "lg:grid-cols-2", pad: "py-8 lg:pt-[53px] lg:pb-0" },
-  { keys: ["welcome-video", "village-progress"], cols: "lg:grid-cols-2", pad: "py-8 lg:pt-16" },
+  { keys: ["whats-new", "achievements"], cols: "lg:grid-cols-2", pad: "py-8 lg:pt-[9px] lg:pb-4" },
+  { keys: ["weather", "sarpanch-message"], cols: "lg:grid-cols-2", pad: "py-8 lg:pt-8 lg:pb-[21px]" },
+  { keys: ["welcome-video", "village-progress"], cols: "lg:grid-cols-2", pad: "py-8 lg:pt-8 lg:pb-16" },
   // Figma Infrastructure: the two 570px cards (644 / 649px) 27px apart, 88px under the dashboard.
   { keys: ["latest-announcements", "upcoming-events"], cols: "lg:grid-cols-[644fr_649fr] lg:gap-x-[27px]", pad: "py-8 lg:pt-[88px] lg:pb-[106px]" },
   // Figma Environment: the cards sit 14px under the initiatives and 112px above the footer.
