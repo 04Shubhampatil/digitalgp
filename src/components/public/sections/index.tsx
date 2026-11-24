@@ -262,6 +262,8 @@ const ROW_GROUPS: { keys: string[]; cols: string; all?: boolean; /** Vertical pa
   { keys: ["link-cards", "coverage-map"], cols: "lg:grid-cols-[425px_minmax(0,1fr)] lg:items-stretch", all: true },
 ];
 
+import { MR_MIN_HEIGHT_CLASS, marathiMinHeights } from "./mr-heights";
+
 export function renderSections(page: PublicPageDto, slug: string, locale: UiLocale, tenantName?: string): React.ReactNode[] {
   const sorted = page.sections.map((s) => ({ ...s, data: withIconPictures(s.data, slug) })).sort((a, b) => a.sortOrder - b.sortOrder);
   const out: React.ReactNode[] = [];
@@ -278,7 +280,7 @@ export function renderSections(page: PublicPageDto, slug: string, locale: UiLoca
       const members = sorted.filter((m) => group.includes(m.sectionKey) && RENDERERS[m.sectionKey]).sort((a, b) => group.indexOf(a.sectionKey) - group.indexOf(b.sectionKey));
       members.forEach((m) => done.add(m.sectionKey));
       out.push(
-        <section key={group.join("+")} id={members[0]?.sectionKey} data-sections={members.map((m) => m.sectionKey).join(" ")} className={`scroll-mt-[180px] bg-cream ${grp.pad ?? "py-8"}`}>
+        <section key={group.join("+")} id={members[0]?.sectionKey} data-sections={members.map((m) => m.sectionKey).join(" ")} className={`scroll-mt-[180px] bg-cream ${grp.pad ?? "py-8"} ${marathiMinHeights(slug, page.pageKey, members[0]?.sectionKey ?? "", locale) ? MR_MIN_HEIGHT_CLASS : ""}`} style={marathiMinHeights(slug, page.pageKey, members[0]?.sectionKey ?? "", locale)}>
           <div className={`mx-auto grid max-w-[1440px] gap-5 px-4 sm:px-8 ${grp.cols} lg:gap-[20px] lg:px-[60px] [&>*:only-child]:lg:col-span-full`}>
             {members.map((m) => {
               const Card = RENDERERS[m.sectionKey]!;
@@ -291,7 +293,7 @@ export function renderSections(page: PublicPageDto, slug: string, locale: UiLoca
     }
     out.push(
       // Every section is an anchor target ("page:x#<sectionKey>") so hero buttons can jump to it.
-      <div key={`${s.sectionKey}-${s.sortOrder}`} id={s.sectionKey} className="scroll-mt-[180px]">
+      <div key={`${s.sectionKey}-${s.sortOrder}`} id={s.sectionKey} className={`scroll-mt-[180px] ${marathiMinHeights(slug, page.pageKey, s.sectionKey, locale) ? MR_MIN_HEIGHT_CLASS : ""}`} style={marathiMinHeights(slug, page.pageKey, s.sectionKey, locale)}>
         <Section slug={slug} locale={locale} data={s.data} tenantName={tenantName} siblings={siblings} pageKey={page.pageKey} />
       </div>,
     );
