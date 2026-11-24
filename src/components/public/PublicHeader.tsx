@@ -75,11 +75,11 @@ export async function PublicHeader({ tenant }: { tenant: PublicTenantDto }) {
       </div>
 
       <div className="border-b border-black/10 bg-white">
-        <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-6 px-4 py-1 sm:px-8 lg:px-[52px]">
+        <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-6 px-4 py-1 sm:px-8 lg:px-[52px] lg:py-0">
           <Link href={`/${tenant.slug}`} className="flex items-center">
             <Emblem size={105} framed className="hidden lg:block" />
             <Emblem size={52} framed className="lg:hidden" />
-            <span className="flex flex-col gap-1 p-2">
+            <span className="flex flex-col gap-1 p-2 lg:p-0 lg:pl-2">
               <span className="text-[16px] leading-normal text-black">{t("common.gramPanchayat")}</span>
               <span className="text-[24px] leading-normal font-medium text-primary-alt sm:text-[28px] lg:text-[32px]">{name}</span>
               {taglineText && <span className="text-[12px] leading-normal text-black">{taglineText}</span>}

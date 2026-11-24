@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { marathiFor } from "@/i18n/mr-fallback";
 import { pair, pickText, type Bilingual } from "@/i18n/text";
 import { listPublicAnnouncementCategories, listPublicAnnouncements, publicMediaUrl } from "@/lib/api/public";
 import type { Bilingual as BL } from "@/i18n/text";
@@ -79,7 +80,7 @@ export async function NoticesSection({ slug, locale, data, siblings }: SectionPr
       ]);
       tabs = [
         { key: "__latest", label: t("noticeLatestTab"), items: rowsOf(latest?.data ?? []) },
-        ...cats.slice(0, 6).map((c, i) => ({ key: c.category, label: c.category, items: rowsOf(perCategory[i]?.data ?? []) })),
+        ...cats.slice(0, 6).map((c, i) => ({ key: c.category, label: (locale === "mr" ? marathiFor(c.category) : null) ?? c.category, items: rowsOf(perCategory[i]?.data ?? []) })),
       ];
       fromCategories = true;
     }
