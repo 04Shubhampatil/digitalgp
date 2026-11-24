@@ -270,7 +270,9 @@ export function SchemeCoverageClient({
           </>
         )}
         {/* The ward figures (and totals) stay available to screen readers whatever the map shows. */}
-        <table className="sr-only">
+        {/* The wrapper clips the table: a table ignores the 1px size of sr-only and made the page scroll sideways on phones. */}
+        <div className="sr-only">
+        <table>
           <caption>
             {view.totalBeneficiaries !== null && `${labels.totalBeneficiaries}: ${nf.format(view.totalBeneficiaries)}. `}
             {view.totalHouseholds > 0 && `${labels.totalHouseholds}: ${nf.format(view.totalHouseholds)}.`}
@@ -292,6 +294,7 @@ export function SchemeCoverageClient({
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
