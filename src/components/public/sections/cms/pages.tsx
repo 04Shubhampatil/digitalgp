@@ -179,9 +179,10 @@ export async function DownloadFormsSection({ slug, locale, data }: SectionProps)
 /// ------------------------------------------------------------------------------------ Gallery
 
 /** Centred 30px gallery section heading (Figma, Title Case). */
-function GalleryBand({ heading, children }: { heading: string; children: React.ReactNode }) {
+/** `pad` carries the large-screen top / bottom padding of a band (Figma 375:11547 spaces each block differently). */
+function GalleryBand({ heading, children, pad = "" }: { heading: string; children: React.ReactNode; pad?: string }) {
   return (
-    <section className="bg-cream py-10">
+    <section className={`bg-cream py-10 ${pad}`}>
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
         {heading && <h2 className="mb-10 text-center text-[36px] leading-[45px] font-semibold text-black">{heading}</h2>}
         {children}
@@ -201,7 +202,7 @@ export async function PhotoGallerySection({ slug, locale, data }: SectionProps) 
     .map((p) => ({ src: mediaUrl(slug, p.imageId!) ?? "", title: tx(p.title, locale), category: p.categoryKey ?? "", date: p.date ? longDate(locale, p.date) : undefined }));
   if (photos.length === 0) return null;
   return (
-    <GalleryBand heading={t("photoGalleryTitle")}>
+    <GalleryBand heading={t("photoGalleryTitle")} pad="lg:pt-[46px] lg:pb-[86px]">
       <PhotoGalleryClient categories={categories} photos={photos} allLabel={t("all")} pageLabel={t.raw("galleryPage") as string} />
     </GalleryBand>
   );
@@ -215,7 +216,7 @@ export async function VideoGallerySection({ slug, locale, data }: SectionProps) 
     .filter((v) => v.videoUrl);
   if (items.length === 0) return null;
   return (
-    <GalleryBand heading={t("videoGalleryTitle")}>
+    <GalleryBand heading={t("videoGalleryTitle")} pad="lg:pb-[31px]">
       <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {items.map((v, i) => {
           const thumb = mediaUrl(slug, v.thumbnailId);
@@ -255,12 +256,12 @@ export async function PressCoverageSection({ slug, locale, data }: SectionProps)
   const items = list<{ logoId?: string; mediaName?: string; title?: B; date?: string; url?: string; order?: number }>((data as { items?: unknown }).items).sort(byOrder).filter((p) => p.url);
   if (items.length === 0) return null;
   return (
-    <GalleryBand heading={t("pressTitle")}>
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
+    <GalleryBand heading={t("pressTitle")} pad="lg:pb-[54px]">
+      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(200px,1fr))] lg:gap-[23px]">
         {items.map((p, i) => {
           const logo = mediaUrl(slug, p.logoId);
           return (
-            <li key={i} className={`${cardClass} flex flex-col`}>
+            <li key={i} className={`${cardClass} flex flex-col lg:min-h-[263px]`}>
               {logo ? (
                 // eslint-disable-next-line @next/next/no-img-element -- website media served by the backend
                 <img src={logo} alt={p.mediaName ?? ""} loading="lazy" className="h-12 w-auto max-w-full self-start object-contain" />
@@ -296,7 +297,7 @@ export async function ThenAndNowSection({ slug, locale, data }: SectionProps) {
     .map((c) => ({ before: mediaUrl(slug, c.beforeImageId!) ?? "", after: mediaUrl(slug, c.afterImageId!) ?? "", heading: tx(c.heading, locale) }));
   if (comparisons.length === 0) return null;
   return (
-    <GalleryBand heading={tx(d.heading, locale)}>
+    <GalleryBand heading={tx(d.heading, locale)} pad="lg:pb-0">
       <ThenNowClient wide comparisons={comparisons} beforeLabel={t("before")} afterLabel={t("after")} />
     </GalleryBand>
   );
@@ -334,7 +335,7 @@ export async function MiniDocumentarySection({ slug, locale, data }: SectionProp
   const yt = youTubeId(d.videoUrl);
   const thumbnail = d.thumbnailUrl ?? (yt ? `https://i.ytimg.com/vi/${yt}/hqdefault.jpg` : undefined);
   return (
-    <GalleryBand heading={tx(d.heading, locale)}>
+    <GalleryBand heading={tx(d.heading, locale)} pad="lg:pt-3 lg:pb-[70px]">
       <MiniDocumentaryClient
         title={tx(d.title, locale)}
         description={tx(d.description, locale)}
