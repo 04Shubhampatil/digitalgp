@@ -220,14 +220,14 @@ export function YouthSpeakClient({
       )}
       <ul
         className={cn(
-          "grid gap-5 sm:grid-cols-2 lg:grid-cols-4",
+          "grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4",
           showAll ? "mt-6" : "mt-2",
         )}
       >
         {shown.map((p, i) => {
           const body = (
             <>
-              <span className="relative block h-[194px] bg-[#e8e4d9]">
+              <span className="relative block h-[110px] bg-[#e8e4d9] sm:h-[194px]">
                 {p.cover ? (
                   // eslint-disable-next-line @next/next/no-img-element -- website media served by the backend
                   <img
@@ -243,15 +243,15 @@ export function YouthSpeakClient({
                 )}
                 <span
                   className={cn(
-                    "absolute bottom-3 left-5 rounded-[3px] px-1.5 text-[16px] leading-6 text-white",
+                    "absolute bottom-2 left-2 rounded-[3px] px-1.5 text-[12px] leading-5 text-white sm:bottom-3 sm:left-5 sm:text-[16px] sm:leading-6",
                     BADGE[p.type],
                   )}
                 >
                   {p.typeLabel}
                 </span>
               </span>
-              <span className="block px-[17px] pt-3 pb-4">
-                <span className="block text-[16px] leading-6 font-medium text-black">
+              <span className="block px-3 pt-2 pb-3 sm:px-[17px] sm:pt-3 sm:pb-4">
+                <span className="block text-[14px] leading-5 font-medium text-black sm:text-[16px] sm:leading-6">
                   {p.title}
                 </span>
                 {p.author && (
