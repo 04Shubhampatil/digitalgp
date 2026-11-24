@@ -619,6 +619,7 @@ export async function DocumentsSection({ slug, locale, data }: SectionProps) {
     fileId?: string;
     buttonText?: B;
     size?: string;
+    fileSize?: string;
     format?: string;
   }>(d.items);
   if (items.length === 0) return null;
@@ -677,7 +678,7 @@ export async function DocumentsSection({ slug, locale, data }: SectionProps) {
                       {tx(it.title, locale)}
                     </p>
                     <p className="mt-[7px] text-[15px] leading-5 text-[#2b2b2b]">
-                      {[it.format ?? "PDF", it.size]
+                      {[it.format ?? "PDF", it.size ?? it.fileSize]
                         .filter(Boolean)
                         .join(" • ")}
                     </p>

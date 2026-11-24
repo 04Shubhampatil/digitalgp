@@ -284,7 +284,8 @@ const finance: SectionDefinition[] = [
       description: bilingualSchema.optional(),
       backgroundColour: colour,
       // `fileSize` is a display label ("2.4 MB"); the exact size is also available from GET /public/:slug/media/:id/meta.
-      items: sectionList(strict({ title: bilingualSchema, fileId: mediaId, fileSize: text(20).optional(), buttonText: bilingualSchema.optional() }), 50),
+      // A document without `fileId` is listed with "File coming soon" until its PDF is uploaded.
+      items: sectionList(strict({ title: bilingualSchema, fileId: mediaId.optional(), fileSize: text(20).optional(), buttonText: bilingualSchema.optional() }), 50),
     }),
   },
 ];
