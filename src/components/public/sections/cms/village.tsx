@@ -329,7 +329,7 @@ export async function LeaderCardsSection({ slug, locale, data }: SectionProps) {
   }>(d.items);
   if (items.length === 0) return null;
   return (
-    <Band heading={tx(d.heading, locale) || t("leaders")} tone="cream" pad="py-6 lg:pt-[22px] lg:pb-[25px]" headGap="mb-6 lg:mb-[35px]">
+    <Band heading={tx(d.heading, locale) || t("leaders")} tone="cream" pad="py-6 lg:pt-[22px] lg:pb-[25px]" headGap="mb-6 lg:mb-[18px]">
       <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {items.map((p, i) => {
           const photo = mediaUrl(slug, p.photoId);

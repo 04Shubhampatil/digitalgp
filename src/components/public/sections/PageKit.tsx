@@ -375,9 +375,10 @@ export async function SuccessStoriesSection({ slug, locale, data, pageKey }: Sec
         }))
       : (d.items ?? []).map((x) => ({ ...x, photoUrl: x.photoUrl ?? (x.photoId ? publicMediaUrl(slug, x.photoId) : undefined) }));
   return (
-    <section className="bg-cream py-4">
+    <section className="bg-cream pt-4 pb-4 lg:pb-[31px]">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
-        <div className="rounded-[10px] border border-black/15 bg-white p-6">
+        {/* Figma 375:14342 frame: 217px — title 9px from the top, cards 34px below the title, 159px tall. */}
+        <div className="rounded-[10px] border border-black/15 bg-white p-6 lg:pt-[9px] lg:pb-[15px]">
           <div className="flex items-center justify-between">
             <h2 className="text-[22px] font-semibold text-black uppercase">{pickText(d.title, locale)}</h2>
             {d.viewAll?.href && (
@@ -386,11 +387,11 @@ export async function SuccessStoriesSection({ slug, locale, data, pageKey }: Sec
               </Link>
             )}
           </div>
-          <ul className="mt-4 grid gap-4 md:grid-cols-3">
+          <ul className="mt-4 grid gap-4 md:grid-cols-3 lg:mt-px">
             {items.map((s, i) => {
               const name = pickText(s.name, locale);
               return (
-                <li key={i} className="flex gap-6 rounded-[8px] border border-black/15 p-4 lg:gap-8 lg:px-5">
+                <li key={i} className="flex gap-6 rounded-[8px] border border-black/15 p-4 lg:min-h-[159px] lg:gap-8 lg:px-5 lg:py-[10px]">
                   {s.photoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element -- static design asset
                     <img src={s.photoUrl} alt="" className="size-[92px] shrink-0 rounded-full object-cover" loading="lazy" />

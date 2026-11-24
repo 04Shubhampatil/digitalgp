@@ -507,7 +507,7 @@ const STORY_VARIANTS: Record<string, { tone?: "white" | "cream"; pad: string; he
   // Our Village: 315×283 cards, 145px photo.
   village: {
     pad: "py-8 lg:pt-[37px] lg:pb-[29px]",
-    headGap: "mb-6 lg:mb-[22px]",
+    headGap: "mb-6 lg:mb-[13px]",
     imageH: 145,
     body: "px-3.5 pt-3 pb-3.5",
     desc: "mt-1 text-[13px] leading-[22px] text-[#414141]",
