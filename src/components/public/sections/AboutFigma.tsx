@@ -411,7 +411,7 @@ export function AboutVisionSection({ slug, locale, data }: SectionProps) {
   return (
     // Figma: the vision band sits 63px below the emergency tint.
     <section className="bg-cream py-8 lg:pt-[63px] lg:pb-16">
-      <div className="relative mx-auto max-w-[1324px] overflow-hidden rounded-[10px] bg-[#135130]">
+      <div className="relative mx-auto max-w-[1324px] overflow-hidden rounded-[10px] bg-[#135130] lg:min-h-[338px]">
         {/* eslint-disable-next-line @next/next/no-img-element -- static design asset */}
         <img src={d.imageId ? publicMediaUrl(slug, d.imageId) : "/images/figma/about-vision.png"} alt="" className="absolute inset-0 size-full object-cover" loading="lazy" />
         <div aria-hidden className="absolute inset-0 bg-[rgba(19,81,48,0.9)]" />

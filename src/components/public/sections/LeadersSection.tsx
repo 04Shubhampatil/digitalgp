@@ -48,7 +48,7 @@ export function LeadersSection({ slug, locale, data }: SectionProps) {
             return (
               <li
                 key={i}
-                className="relative flex w-full max-w-[320px] flex-col items-stretch justify-between gap-[16.5px] overflow-hidden rounded-[7.5px] bg-white px-5 pt-[22px] pb-[22px] shadow-[0_0_15px_3.8px_rgba(0,0,0,0.25)] lg:w-[calc((100%-45px)/4)] lg:max-w-[321px]"
+                className="relative flex w-full max-w-[320px] flex-col items-stretch justify-between gap-[16.5px] overflow-hidden rounded-[7.5px] bg-white px-5 pt-[22px] pb-[22px] lg:min-h-[385px] shadow-[0_0_15px_3.8px_rgba(0,0,0,0.25)] lg:w-[calc((100%-45px)/4)] lg:max-w-[321px]"
               >
                 {/* Top edge: saffron fading to green, as rendered in the design. */}
                 <span aria-hidden className="absolute inset-x-0 top-0 h-[6.8px] bg-[linear-gradient(90deg,#ff9933,#138808)]" />

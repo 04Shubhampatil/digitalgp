@@ -64,7 +64,7 @@ export async function AboutCardsSection({ slug, locale, data, tenantName }: Sect
   return (
     <section className="bg-cream py-8">
       <div className="mx-auto flex max-w-[1440px] flex-col items-center gap-[18px] px-4 sm:px-8 lg:px-[60px]">
-        <div className="max-w-[1094px] text-center">
+        <div className="max-w-[1094px] text-center lg:min-h-[121px]">
           <h2 className="text-[30px] leading-[45px] font-semibold text-black">
             {(() => {
               // The village name is green (Figma "About Savardari"); keep it in place when the heading already contains it.

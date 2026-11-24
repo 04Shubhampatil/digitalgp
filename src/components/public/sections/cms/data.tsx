@@ -643,7 +643,7 @@ export async function KeyInitiativesSection({ slug, locale, data }: SectionProps
             );
             const cls = "flex h-full flex-col items-center px-3 py-4 text-center lg:py-[9px]";
             return (
-              <li key={i} className={`border-black/10 lg:border-l lg:[&:nth-child(5n+1)]:border-l-0 ${i >= 5 ? "lg:border-t" : ""}`}>
+              <li key={i} className={`border-black/10 lg:min-h-[148px] lg:border-l lg:[&:nth-child(5n+1)]:border-l-0 ${i >= 5 ? "lg:border-t" : ""}`}>
                 {it.link && /^https?:\/\//.test(it.link) ? (
                   <a href={it.link} {...externalProps} className={`${cls} rounded-[10px] hover:bg-[#f4faf4]`}>
                     {body}
@@ -690,7 +690,7 @@ export async function TreeAdoptionSection({ slug, locale, data }: SectionProps) 
   return (
     <section className="bg-cream py-8 lg:pb-0">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[62px]">
-        <div className="grid items-center gap-8 rounded-[14px] border border-black/5 bg-white p-6 shadow-[0_0_10px_rgba(0,0,0,0.06)] lg:grid-cols-[minmax(0,1fr)_minmax(0,640px)] lg:px-7 lg:py-[17px]">
+        <div className="grid items-center gap-8 rounded-[14px] border border-black/5 bg-white p-6 shadow-[0_0_10px_rgba(0,0,0,0.06)] lg:grid-cols-[minmax(0,1fr)_minmax(0,640px)] lg:min-h-[310px] lg:px-7 lg:py-[17px]">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
             {image && (
               // eslint-disable-next-line @next/next/no-img-element -- website media served by the backend
@@ -963,7 +963,7 @@ export async function GreenScoreboardSection({ locale, data }: SectionProps) {
           <p className="mt-1 text-[16px] opacity-90">{t("greenScoreboardSub")}</p>
           <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:mt-4 lg:grid-cols-[repeat(auto-fit,minmax(170px,1fr))]">
             {items.map((s, i) => (
-              <li key={i} className="flex flex-col items-center rounded-[8px] bg-[#1d5c37] px-4 py-5 lg:py-4">
+              <li key={i} className="flex flex-col items-center rounded-[8px] bg-[#1d5c37] px-4 py-5 lg:min-h-[211px] lg:py-4">
                 {s.iconImage ? (
                   // eslint-disable-next-line @next/next/no-img-element -- static design asset
                   <img src={s.iconImage} alt="" width={66} height={62} className="h-[50px] w-auto" />
