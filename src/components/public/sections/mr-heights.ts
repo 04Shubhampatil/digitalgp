@@ -92,8 +92,8 @@ const HEIGHTS: Record<string, Record<string, { sm?: number; md?: number }>> = {
     "then-and-now": { sm: 528 },
     "mini-documentary": { sm: 553, md: 629 },
   },
-  // The list of every success story (src/app/(public)/[tenant]/success-stories/page.tsx), not a page of sections.
-  "success-stories": { list: { sm: 3149, md: 3368 } },
+  // The list of every success story (src/app/(public)/[tenant]/success-stories/page.tsx), not a page of sections (heights of its <main>, without the header and footer).
+  "success-stories": { list: { sm: 2066, md: 2522 } },
   grievance: {
     banner: { sm: 799, md: 930 },
     callout: { sm: 368 },
