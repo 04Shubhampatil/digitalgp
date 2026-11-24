@@ -638,11 +638,21 @@ const MR: Record<string, string> = {
   "Welcome to Gram Panchayat Savardari": "ग्रामपंचायत सवरदरीमध्ये आपले स्वागत आहे",
   "Welcome to Savardari": "सवरदरीमध्ये आपले स्वागत आहे",
   "About Savardari": "सवरदरीबद्दल",
+  // announcement categories (the tabs of the notices block) and the Education spotlight figures
+  Announcement: "घोषणा",
+  Tender: "निविदा",
+  Meeting: "सभा",
+  Election: "निवडणूक",
+  Emergency: "आपत्कालीन",
+  Holiday: "सुट्टी",
+  "State Level Runner": "राज्यस्तरीय धावपटू",
+  "Active Participants": "सक्रिय सहभागी",
+  "IAS Officer": "आयएएस अधिकारी",
   "Village Indicators": "गाव निर्देशक",
 };
 
 /** Normalise English text for lookup: drop zero-width characters and stray spaces before full stops. */
-const norm = (s: string) => s.replace(/[\u200b\u200c\u200d\ufeff]/g, "").replace(/\s+\./g, ".").replace(/[ \t]+/g, " ").trim();
+const norm = (s: string) => s.replace(/[\u200b\u200c\u200d\ufeff]/g, "").replace(/ /g, " ").replace(/\s+\./g, ".").replace(/[ \t]+/g, " ").trim();
 
 const TABLE = new Map(Object.entries(MR).map(([en, mr]) => [norm(en), mr]));
 

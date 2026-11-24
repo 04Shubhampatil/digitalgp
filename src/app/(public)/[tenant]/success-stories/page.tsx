@@ -11,6 +11,7 @@ import { pair, pickText, type Bilingual } from "@/i18n/text";
 import { listPublicSuccessStories, publicMediaUrl } from "@/lib/api/public";
 import { detailHref } from "@/lib/href";
 import { loadTenant } from "@/lib/public-tenant";
+import { MR_MIN_HEIGHT_CLASS, marathiMinHeights } from "@/components/public/sections/mr-heights";
 import { DetailHero } from "../_detail/DetailKit";
 
 type Params = Promise<{ tenant: string }>;
@@ -61,7 +62,7 @@ export default async function SuccessStoriesPage({ params }: { params: Params })
   }
 
   return (
-    <main>
+    <main className={marathiMinHeights(slug, "success-stories", "list", locale) ? MR_MIN_HEIGHT_CLASS : undefined} style={marathiMinHeights(slug, "success-stories", "list", locale)}>
       <DetailHero eyebrow={tp("culture")} title={t("allStoriesTitle")} back={{ href: `/${slug}/culture`, label: td("back", { page: tp("culture") }) }} />
       <section className="bg-cream pb-14">
         <ul className="mx-auto grid max-w-[1440px] grid-cols-2 gap-3 px-4 sm:gap-5 sm:px-8 lg:grid-cols-4 lg:px-[60px]">

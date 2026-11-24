@@ -1,5 +1,6 @@
 import { ChevronRight, CircleCheck, House } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import { marathiFor } from "@/i18n/mr-fallback";
 import { resolveHref } from "@/lib/href";
 import type { SectionProps } from "../index";
 import {
@@ -1245,7 +1246,7 @@ export async function StudentSpotlightSection({
                       {tx(c.title, locale)}
                     </span>
                     <span className="mt-5 block text-[15.2px] font-semibold text-black">
-                      {typeof c.value === "string" ? c.value : tx(c.value, locale)}
+                      {typeof c.value === "string" ? (locale === "mr" ? marathiFor(c.value) : null) ?? c.value : tx(c.value, locale)}
                     </span>
                   </span>
                 </li>
