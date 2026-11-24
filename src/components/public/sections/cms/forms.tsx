@@ -290,7 +290,7 @@ export async function EscalationMatrixSection({ slug, locale, data }: SectionPro
       ]
     : [];
   return (
-    <section className="bg-cream py-8">
+    <section className="bg-cream py-8 lg:pb-4">
       <div className={`mx-auto grid max-w-[1440px] gap-8 px-4 sm:px-8 lg:px-[60px] ${rows.length ? "lg:grid-cols-[minmax(0,1fr)_436px]" : ""}`}>
         <div>
           <h2 className="text-[22px] leading-8 font-semibold text-black">{t("escalationTitle")}</h2>
@@ -331,7 +331,7 @@ export async function EscalationMatrixSection({ slug, locale, data }: SectionPro
         {rows.length > 0 && (
           <div>
             <h2 className="text-[20px] leading-8 font-semibold text-black">{t("complaintStatus")}</h2>
-            <ul className="mt-4 space-y-2.5">
+            <ul className="mt-4 space-y-2.5 lg:mt-[10px] lg:space-y-[7px]">
               {rows.map((r) => (
                 <li key={r.label} className="flex min-h-[45px] items-center gap-4 rounded-[6px] border px-4 py-1" style={{ backgroundColor: r.bg, borderColor: r.border }}>
                   <r.icon aria-hidden className="size-6 shrink-0" style={{ color: r.fg }} />

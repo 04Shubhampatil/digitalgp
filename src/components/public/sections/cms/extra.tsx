@@ -334,13 +334,13 @@ export async function MonthlyReportSection({ slug, locale, data }: SectionProps)
   const colours = new Map(list<{ category?: string; colour?: string }>(d.categoryColours).map((c) => [c.category ?? "", c.colour ?? "#6b7280"]));
   const palette = ["#1a62e0", "#2f9e3f", "#f5871f", "#7b2cbf", "#6b7280", "#0b7285"];
   return (
-    <section className="bg-cream py-8">
+    <section className="bg-cream py-8 lg:pt-[14px] lg:pb-[26px]">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
       <h2 className="text-center text-[24px] leading-8 font-semibold text-black">{tx(d.heading, locale) || t("monthlyReport")}</h2>
-      <span aria-hidden className="mx-auto mt-2 mb-6 block h-0.5 w-10 rounded bg-[#135130]" />
+      <span aria-hidden className="mx-auto mt-2 mb-6 block h-0.5 w-10 rounded bg-[#135130] lg:mb-0" />
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((c, i) => (
-          <li key={i} className="flex items-center gap-5 rounded-[10px] border border-black/10 bg-white px-6 py-5 shadow-[0_0_10px_rgba(0,0,0,0.05)]">
+          <li key={i} className="flex items-center gap-5 rounded-[10px] border border-black/10 bg-white px-6 py-5 shadow-[0_0_10px_rgba(0,0,0,0.05)] lg:py-[34px]">
             <span className="flex size-12 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: c.bg, color: c.fg }}>
               <c.icon aria-hidden className="size-6" />
             </span>
@@ -352,8 +352,8 @@ export async function MonthlyReportSection({ slug, locale, data }: SectionProps)
           </li>
         ))}
       </ul>
-      <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-        <div className={cardClass}>
+      <div className="mt-5 grid gap-5 lg:mt-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+        <div className={`${cardClass} lg:p-4`}>
           <p className="mb-2 text-[15px] font-semibold text-black">{t("trendOverview")}</p>
           <BudgetChartClient
             tabs={[]}
@@ -364,7 +364,7 @@ export async function MonthlyReportSection({ slug, locale, data }: SectionProps)
             emptyLabel={t("noChart")}
           />
         </div>
-        <div className={cardClass}>
+        <div className={`${cardClass} lg:p-4`}>
           <p className="mb-3 text-[15px] font-semibold text-black">{t("categoryWise")}</p>
           {stats.byCategory.length === 0 ? (
             <p className="text-[13px] text-[#414141]">{t("noChart")}</p>
