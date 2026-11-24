@@ -60,26 +60,27 @@ export async function NoticesSection({ slug, locale, data, siblings }: SectionPr
     if (cats && cats.length > 0) {
       const day = new Intl.DateTimeFormat(locale === "mr" ? "mr-IN" : "en-IN", { day: "2-digit" });
       const month = new Intl.DateTimeFormat(locale === "mr" ? "mr-IN" : "en-IN", { month: "short", year: "numeric" });
-      tabs = await Promise.all(
-        cats.slice(0, 6).map(async (c) => {
-          const list = await listPublicAnnouncements(slug, { category: c.category, limit: 5 }).catch(() => null);
+      const rowsOf = (data: { publishedAt?: string | null; titleEn: string | null; titleMr?: string | null; attachmentId?: string | null; id: string }[]) =>
+        data.map((a) => {
+          const when = a.publishedAt ? new Date(a.publishedAt) : null;
           return {
-            key: c.category,
-            label: c.category,
-            items: (list?.data ?? []).map((a) => {
-              const when = a.publishedAt ? new Date(a.publishedAt) : null;
-              return {
-                day: when ? day.format(when) : "",
-                monthYear: when ? month.format(when) : "",
-                title: pickText(pair(a.titleEn, a.titleMr), locale),
-                isNew: when ? new Date().getTime() - when.getTime() < 7 * 24 * 3600 * 1000 : false,
-                href: a.attachmentId ? publicMediaUrl(slug, a.attachmentId) : detailHref(slug, "announcements", a.id),
-                titleHref: detailHref(slug, "announcements", a.id),
-              } as NoticeRow;
-            }),
-          };
-        }),
-      );
+            day: when ? day.format(when) : "",
+            monthYear: when ? month.format(when) : "",
+            title: pickText(pair(a.titleEn, a.titleMr), locale),
+            isNew: when ? new Date().getTime() - when.getTime() < 7 * 24 * 3600 * 1000 : false,
+            href: a.attachmentId ? publicMediaUrl(slug, a.attachmentId) : detailHref(slug, "announcements", a.id),
+            titleHref: detailHref(slug, "announcements", a.id),
+          } as NoticeRow;
+        });
+      // Figma's first tab lists the latest announcements of every category; one tab per category follows.
+      const [latest, ...perCategory] = await Promise.all([
+        listPublicAnnouncements(slug, { limit: 5 }).catch(() => null),
+        ...cats.slice(0, 6).map((c) => listPublicAnnouncements(slug, { category: c.category, limit: 5 }).catch(() => null)),
+      ]);
+      tabs = [
+        { key: "__latest", label: t("noticeLatestTab"), items: rowsOf(latest?.data ?? []) },
+        ...cats.slice(0, 6).map((c, i) => ({ key: c.category, label: c.category, items: rowsOf(perCategory[i]?.data ?? []) })),
+      ];
       fromCategories = true;
     }
   }

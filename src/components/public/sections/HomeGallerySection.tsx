@@ -82,11 +82,11 @@ export function HomeGallerySection({ slug, locale, data }: HomeGalleryProps) {
             <ArrowRight className="size-6" aria-hidden />
           </button>
         </div>
-        <ul className="mt-2 grid grid-cols-1 gap-6 sm:grid-cols-3" aria-live="polite">
+        <ul className="grid grid-cols-1 gap-5 sm:grid-cols-3" aria-live="polite">
           {shown.map((idx, k) => {
             const p = photos[idx]!;
             return (
-              <li key={`${idx}-${k}`} className={`h-[220px] overflow-hidden rounded-[10px] bg-white sm:h-[280px] ${k > 0 ? "hidden sm:block" : ""}`}>
+              <li key={`${idx}-${k}`} className={`h-[220px] overflow-hidden rounded-[10px] bg-white sm:h-[250px] ${k > 0 ? "hidden sm:block" : ""}`}>
                 <button type="button" onClick={() => setZoom(idx)} className="block size-full cursor-zoom-in" aria-label={p.caption || (locale === "mr" ? "फोटो मोठा पहा" : "View photo")}>
                   {/* eslint-disable-next-line @next/next/no-img-element -- backend media or static design asset */}
                   <img src={p.src} alt={p.caption} className="size-full object-cover transition-transform duration-300 hover:scale-[1.03]" loading="lazy" />
