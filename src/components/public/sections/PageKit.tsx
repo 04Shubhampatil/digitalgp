@@ -174,7 +174,7 @@ export async function ProgressTrackerSection({ locale, data }: SectionProps) {
   const count = (st: string) => items.filter((i) => i.status === st).length;
   const subtitle = pickText(d.subtitle, locale) || (withStatus ? t("resolutionSummary", { resolved: count("resolved"), progress: count("in-progress"), open: count("open") }) : "");
   return (
-    <div className={card}>
+    <div className={`${card} xl:min-h-[504px]`}>
       <h2 className="text-[22px] leading-[27px] font-semibold text-black uppercase">{pickText(d.title ?? d.heading, locale) || t("resolutionTracker")}</h2>
       {subtitle && <p className="mt-2 text-[12px] text-[#414141]">{subtitle}</p>}
       <ul className="mt-5 flex flex-col gap-[14px]">
@@ -227,7 +227,7 @@ export function ImpactGridSection({ locale, data }: SectionProps) {
   const d = data as { title?: B; subtitle?: B; items?: { label?: B; value?: string; unit?: string }[] };
   return (
     // Figma 375:14178: 736px card, 167×102 tiles 12px apart (inset 16px), 51px green line icon, 10px label over a 24px value.
-    <div className={`${card} xl:px-4`}>
+    <div className={`${card} xl:min-h-[504px] xl:px-4`}>
       <h2 className="text-[22px] leading-[27px] font-semibold text-black uppercase xl:px-[18px]">{pickText(d.title, locale)}</h2>
       <p className="mt-2 text-[12px] text-[#414141] xl:px-[18px]">{pickText(d.subtitle, locale)}</p>
       <ul className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4 xl:gap-x-3 xl:gap-y-5">

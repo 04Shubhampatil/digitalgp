@@ -616,7 +616,7 @@ export function SupportStripSection({ slug, locale, data }: SectionProps) {
             const cls =
               "flex h-full flex-col items-center px-4 py-2 text-center";
             return (
-              <li key={i}>
+              <li key={i} className={sp ? "lg:min-h-[204px]" : undefined}>
                 {c.link ? (
                   <a
                     href={resolveHref(c.link, slug)}

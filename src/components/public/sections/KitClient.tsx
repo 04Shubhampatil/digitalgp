@@ -97,7 +97,7 @@ export function ProjectTabs({
               <li
                 key={i}
                 id={id}
-                className="scroll-mt-[180px] overflow-hidden rounded-[10px] border border-black/20 bg-white"
+                className="scroll-mt-[180px] overflow-hidden rounded-[10px] border border-black/20 bg-white lg:min-h-[413px]"
               >
                 <div className="relative h-[205px] bg-[#e8e4d9]">
                   {p.beforeUrl && p.afterUrl ? (
