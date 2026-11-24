@@ -1284,7 +1284,8 @@
       "water": "Water",
       "energy": "Energy",
       "infrastructure": "Infrastructure"
-    }
+    },
+    "noticeLatestTab": "Announcements"
   },
   "editor": {
     "subtitle": "Editing content for {name}. Each section has its own draft; publish when it is ready.",
