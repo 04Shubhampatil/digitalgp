@@ -2,7 +2,6 @@ import { marathiFor } from "@/i18n/mr-fallback";
 import { ArrowRight, Download } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
-import { designFallbacksOn } from "@/content/fallback";
 import { resolveHref } from "@/lib/href";
 import type { SectionProps } from "../index";
 import { formatMoney } from "./data";
@@ -614,14 +613,14 @@ export async function DocumentsSection({ slug, locale, data }: SectionProps) {
     items?: unknown;
     fallbackLink?: string;
   };
-  // With the design fallbacks off a document is only listed when its file is uploaded (no "Download" that leads nowhere).
+  // A document whose file is not uploaded yet is still listed (as the design shows it) but without a download link.
   const items = list<{
     title?: B;
     fileId?: string;
     buttonText?: B;
     size?: string;
     format?: string;
-  }>(d.items).filter((it) => designFallbacksOn() || !!it.fileId);
+  }>(d.items);
   if (items.length === 0) return null;
   return (
     <section
@@ -684,6 +683,11 @@ export async function DocumentsSection({ slug, locale, data }: SectionProps) {
                     </p>
                   </div>
                 </div>
+                {!href && (
+                  <div className="mt-auto flex justify-center pt-4">
+                    <span className="inline-flex items-center gap-3 text-[14px] font-semibold text-[#6b6b6b]">{t("filePending")}</span>
+                  </div>
+                )}
                 {href && (
                   <div className="mt-auto flex justify-center pt-4">
                     {file ? (
