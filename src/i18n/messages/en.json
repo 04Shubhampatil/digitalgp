@@ -1015,6 +1015,7 @@
       "deadline": "Register by {date}",
       "deadlines": "Important deadlines",
       "download": "Download",
+      "filePending": "File coming soon",
       "downloads": "Downloads",
       "escalation": "Escalation matrix",
       "escalationSub": "How a complaint moves from registration to resolution.",
