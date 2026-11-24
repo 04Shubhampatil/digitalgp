@@ -36,7 +36,7 @@ export function MarketPricesClient({
   return (
     <>
       {markets.length > 1 ? (
-        <div className="mt-3 flex items-center gap-3 text-[13px] font-semibold text-[#135130]">
+        <div className="mt-3 flex items-center gap-3 text-[13px] lg:mt-2 font-semibold text-[#135130]">
           <label htmlFor={id}>{labels.market}</label>
           <span className="relative">
             <select
@@ -57,13 +57,13 @@ export function MarketPricesClient({
         </div>
       ) : (
         m.name && (
-          <p className="mt-3 flex items-center gap-3 text-[13px] font-semibold text-[#135130]">
+          <p className="mt-3 flex items-center gap-3 text-[13px] lg:mt-2 font-semibold text-[#135130]">
             {labels.market}
             <span className="rounded-[6px] border border-black/15 px-3 py-1 font-normal text-black">{m.name}</span>
           </p>
         )
       )}
-      <div className="mt-3 overflow-x-auto rounded-[8px] border border-black/10">
+      <div className="mt-3 overflow-x-auto rounded-[8px] lg:mt-2 border border-black/10">
         <table className="w-full min-w-[26rem] text-left text-[12px]">
           <thead className="text-[12px] text-black">
             <tr className="border-b border-black/10">
@@ -77,18 +77,18 @@ export function MarketPricesClient({
           <tbody>
             {m.rows.map((r, i) => (
               <tr key={i}>
-                <td className="px-3 py-1.5 text-black">{r.commodity}</td>
-                <td className="px-3 py-1.5 text-[#414141]">{r.unit}</td>
-                <td className="px-3 py-1.5 text-right">{r.min}</td>
-                <td className="px-3 py-1.5 text-right">{r.max}</td>
-                <td className="px-3 py-1.5 text-right">{r.modal}</td>
+                <td className="px-3 py-1.5 text-black lg:py-1">{r.commodity}</td>
+                <td className="px-3 py-1.5 text-[#414141] lg:py-1">{r.unit}</td>
+                <td className="px-3 py-1.5 text-right lg:py-1">{r.min}</td>
+                <td className="px-3 py-1.5 text-right lg:py-1">{r.max}</td>
+                <td className="px-3 py-1.5 text-right lg:py-1">{r.modal}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
       {note && <p className="mt-2 text-[12px] text-[#414141]">{note}</p>}
-      <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-3">
+      <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-3 lg:pt-2">
         <p className={`text-[12px] ${m.stale ? "font-medium text-[#c25f00]" : "text-[#414141]"}`}>
           {m.updated}
           {m.stale && `${m.updated ? " · " : ""}${labels.stale}`}

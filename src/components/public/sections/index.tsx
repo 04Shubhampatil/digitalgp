@@ -251,7 +251,8 @@ const ROW_GROUPS: { keys: string[]; cols: string; all?: boolean; /** Vertical pa
   { keys: ["welcome-video", "village-progress"], cols: "lg:grid-cols-2", pad: "py-8 lg:pt-16" },
   // Figma Infrastructure: the two 570px cards (644 / 649px) 27px apart, 88px under the dashboard.
   { keys: ["latest-announcements", "upcoming-events"], cols: "lg:grid-cols-[644fr_649fr] lg:gap-x-[27px]", pad: "py-8 lg:pt-[88px] lg:pb-[106px]" },
-  { keys: ["market-prices", "weather-update"], cols: "lg:grid-cols-2" },
+  // Figma Environment: the cards sit 14px under the initiatives and 112px above the footer.
+  { keys: ["market-prices", "weather-update"], cols: "lg:grid-cols-2", pad: "py-8 lg:pt-[14px] lg:pb-12" },
   { keys: ["office-location", "feedback-form"], cols: "lg:grid-cols-2" },
   { keys: ["live-announcements", "calendar"], cols: "lg:grid-cols-[minmax(0,1fr)_340px]" },
   { keys: ["deadline-cards", "download-forms"], cols: "lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]" },

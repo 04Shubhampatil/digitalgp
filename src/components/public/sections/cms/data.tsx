@@ -641,7 +641,7 @@ export async function KeyInitiativesSection({ slug, locale, data }: SectionProps
                 <span className="mt-3 max-w-[165px] text-[16px] leading-[27px] font-semibold whitespace-pre-line text-black">{tx(it.title, locale)}</span>
               </>
             );
-            const cls = "flex h-full flex-col items-center px-3 py-4 text-center";
+            const cls = "flex h-full flex-col items-center px-3 py-4 text-center lg:py-[9px]";
             return (
               <li key={i} className={`border-black/10 lg:border-l lg:[&:nth-child(5n+1)]:border-l-0 ${i >= 5 ? "lg:border-t" : ""}`}>
                 {it.link && /^https?:\/\//.test(it.link) ? (
@@ -688,9 +688,9 @@ export async function TreeAdoptionSection({ slug, locale, data }: SectionProps) 
   const ownLink = !d.buttonLink || /^page:environment#(tree-adoption|adopt-a-tree)$/.test(d.buttonLink);
   const fallback = resolveHref(ownLink ? "page:contact#volunteer-registration" : d.buttonLink!, slug);
   return (
-    <section className="bg-cream py-8">
+    <section className="bg-cream py-8 lg:pb-0">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[62px]">
-        <div className="grid items-center gap-8 rounded-[14px] border border-black/5 bg-white p-6 shadow-[0_0_10px_rgba(0,0,0,0.06)] lg:grid-cols-[minmax(0,1fr)_minmax(0,640px)] lg:px-7">
+        <div className="grid items-center gap-8 rounded-[14px] border border-black/5 bg-white p-6 shadow-[0_0_10px_rgba(0,0,0,0.06)] lg:grid-cols-[minmax(0,1fr)_minmax(0,640px)] lg:px-7 lg:py-[17px]">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
             {image && (
               // eslint-disable-next-line @next/next/no-img-element -- website media served by the backend
@@ -739,14 +739,14 @@ export async function SustainabilityInitiativesSection({ slug, locale, data }: S
   const items = list<{ imageId?: string; title?: B; description?: B; active?: boolean; link?: string }>((data as { items?: unknown }).items).filter((i) => i.active !== false);
   if (items.length === 0) return null;
   return (
-    <section className="bg-cream py-8">
+    <section className="bg-cream py-8 lg:pt-[18px] lg:pb-0">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[62px]">
-        <h2 className="mb-5 text-center text-[22px] leading-8 font-semibold text-black">{t("initiativesTitle")}</h2>
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <h2 className="mb-5 text-center text-[22px] leading-8 font-semibold text-black lg:mb-[3px]">{t("initiativesTitle")}</h2>
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-y-[11px]">
           {items.map((it, i) => {
             const img = mediaUrl(slug, it.imageId);
             return (
-              <li key={i} className="flex items-center gap-8 rounded-[10px] border border-black/10 bg-white px-4 py-4 shadow-[0_0_8px_rgba(0,0,0,0.04)]">
+              <li key={i} className="flex items-center gap-8 rounded-[10px] border border-black/10 bg-white px-4 py-4 shadow-[0_0_8px_rgba(0,0,0,0.04)] lg:min-h-[171px]">
                 {img && (
                   // eslint-disable-next-line @next/next/no-img-element -- website media served by the backend
                   <img src={img} alt="" loading="lazy" className="size-[100px] shrink-0 rounded-full object-cover" />
@@ -831,7 +831,7 @@ export async function MarketPricesSection({ slug, locale, data }: SectionProps) 
   const initial = (named && named.rows.length ? named : all[0]!).key;
   const external = !!d.buttonLink && /^https?:\/\//.test(d.buttonLink);
   return (
-    <div className="flex min-w-0 flex-col rounded-[10px] border border-black/10 bg-white p-5 shadow-[0_0_10px_rgba(0,0,0,0.05)]">
+    <div className="flex min-w-0 flex-col rounded-[10px] border border-black/10 bg-white p-5 shadow-[0_0_10px_rgba(0,0,0,0.05)] lg:p-4">
       <div className="flex items-center gap-3">
         <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#e7f3e8] text-[#135130]">
           <Store aria-hidden className="size-6" />
@@ -900,7 +900,7 @@ export async function WeatherUpdateSection({ slug, locale, data }: SectionProps)
   const loc = locale === "mr" ? "mr-IN" : "en-IN";
   return (
     // The row wrapper carries only the first section's id, so this card carries its own anchor.
-    <div id="weather-update" className="flex min-w-0 scroll-mt-[180px] flex-col rounded-[10px] border border-black/10 bg-white p-5 shadow-[0_0_10px_rgba(0,0,0,0.05)]">
+    <div id="weather-update" className="flex min-w-0 scroll-mt-[180px] flex-col rounded-[10px] border border-black/10 bg-white p-5 shadow-[0_0_10px_rgba(0,0,0,0.05)] lg:p-4">
       <div className="flex items-center gap-3">
         <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#e7f3e8] text-[#135130]">
           <TreePine aria-hidden className="size-6" />
@@ -910,7 +910,7 @@ export async function WeatherUpdateSection({ slug, locale, data }: SectionProps)
           {tx(d.location, locale) && <p className="text-[12px] text-[#414141]">{tx(d.location, locale)}</p>}
         </div>
       </div>
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-4 rounded-[8px] bg-[#135130] px-5 py-4 text-white">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-4 rounded-[8px] bg-[#135130] px-5 py-4 text-white lg:mt-2 lg:py-3">
         <div className="flex items-center gap-4">
           <span className="relative block size-16">
             <Sun aria-hidden className="absolute top-0 left-0 size-11 text-[#ffc83d]" fill="#ffc83d" />
@@ -932,10 +932,10 @@ export async function WeatherUpdateSection({ slug, locale, data }: SectionProps)
           {days.slice(0, 5).map((day, i) => {
             const date = day.date ? new Date(`${day.date}T00:00:00`) : null;
             return (
-              <li key={i} className="flex flex-col items-center rounded-[8px] border border-black/10 px-1 py-2 text-center">
+              <li key={i} className="flex flex-col items-center rounded-[8px] border border-black/10 px-1 py-2 text-center lg:py-0.5">
                 <span className="text-[12px] font-semibold text-[#135130]">{date ? date.toLocaleDateString(loc, { weekday: "short" }) : ""}</span>
                 <span className="text-[10px] text-[#414141]">{date ? date.toLocaleDateString(loc, { day: "numeric", month: "short" }) : ""}</span>
-                <WeatherGlyph name={day.icon} className="my-1 size-4 text-[#f5a623]" />
+                <WeatherGlyph name={day.icon} className="my-1 size-4 text-[#f5a623] lg:my-0.5" />
                 <span className="text-[13px] font-semibold text-black">{bare(day.maxTemp)}°C</span>
                 <span className="text-[13px] font-semibold text-black">{bare(day.minTemp)}°C</span>
               </li>
@@ -943,7 +943,7 @@ export async function WeatherUpdateSection({ slug, locale, data }: SectionProps)
           })}
         </ul>
       )}
-      <a href={DETAILED_FORECAST_URL} {...externalProps} className="mt-3 inline-flex items-center gap-2 self-start pl-2 text-[13px] font-semibold text-[#135130] hover:underline">
+      <a href={DETAILED_FORECAST_URL} {...externalProps} className="mt-3 inline-flex items-center gap-2 self-start pl-2 text-[13px] lg:mt-1 font-semibold text-[#135130] hover:underline">
         {t("detailedForecast")} <ArrowRight aria-hidden className="size-3.5" />
       </a>
     </div>
@@ -956,14 +956,14 @@ export async function GreenScoreboardSection({ locale, data }: SectionProps) {
   const items = list<{ icon?: string; iconImage?: string; title?: B; value?: B | string; description?: B; visible?: boolean }>((data as { items?: unknown }).items).filter((i) => i.visible !== false);
   if (items.length === 0) return null;
   return (
-    <section className="bg-cream py-8">
+    <section className="bg-cream py-8 lg:pb-[17px]">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[58px]">
-        <div className="rounded-[20px] bg-[#0e4a27] px-5 py-6 text-center text-white sm:px-7">
+        <div className="rounded-[20px] bg-[#0e4a27] px-5 py-6 text-center text-white sm:px-7 lg:py-[18px]">
           <h2 className="text-[26px] leading-9 font-semibold">{t("greenScoreboard")}</h2>
           <p className="mt-1 text-[16px] opacity-90">{t("greenScoreboardSub")}</p>
-          <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(170px,1fr))]">
+          <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:mt-4 lg:grid-cols-[repeat(auto-fit,minmax(170px,1fr))]">
             {items.map((s, i) => (
-              <li key={i} className="flex flex-col items-center rounded-[8px] bg-[#1d5c37] px-4 py-5">
+              <li key={i} className="flex flex-col items-center rounded-[8px] bg-[#1d5c37] px-4 py-5 lg:py-4">
                 {s.iconImage ? (
                   // eslint-disable-next-line @next/next/no-img-element -- static design asset
                   <img src={s.iconImage} alt="" width={66} height={62} className="h-[50px] w-auto" />
