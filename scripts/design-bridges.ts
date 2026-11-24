@@ -62,6 +62,16 @@ export const DESIGN_BRIDGES: Partial<Record<PageKey, Record<string, () => Obj | 
       if (!d) return undefined;
       return compact({ heading: bi(d.heading), items: rows(d.items).map((i, n) => ({ icon: ICONS[n % ICONS.length], title: bi(i.title), responsibilities: [bi(i.body)].filter(Boolean) })) });
     },
+    "vision-mission": () => {
+      const d = block("about", "about-vision");
+      if (!d) return undefined;
+      return compact({
+        vision: compact({ title: bi(d.vision), body: bi(d.visionBody) ?? bi(d.vision) }),
+        mission: compact({ title: bi(d.missionLabel), body: bi(d.mission) }),
+        valuesTitle: bi(d.valuesLabel),
+        values: rows(d.values).map((v) => bi(v)).filter(Boolean),
+      });
+    },
     "emergency-services": () => {
       const d = block("about", "about-emergency");
       if (!d) return undefined;
