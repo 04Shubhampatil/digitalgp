@@ -217,7 +217,7 @@ export async function VideoGallerySection({ slug, locale, data }: SectionProps) 
   if (items.length === 0) return null;
   return (
     <GalleryBand heading={t("videoGalleryTitle")} pad="lg:pb-[31px]">
-      <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
         {items.map((v, i) => {
           const thumb = mediaUrl(slug, v.thumbnailId);
           return (

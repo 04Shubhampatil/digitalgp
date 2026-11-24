@@ -386,12 +386,12 @@ export function AboutEmergencySection({ locale, data }: SectionProps) {
           {(d.items ?? []).map((it, i) => {
             const icon = it.icon && EMERGENCY_ICONS.includes(it.icon) ? it.icon : EMERGENCY_ICONS[i % EMERGENCY_ICONS.length]!;
             return (
-              <li key={i} className="flex min-h-[199px] w-[203px] flex-col items-center gap-4 rounded-[10px] border border-black/15 bg-white px-[26px] pt-6 pb-5 shadow-[0_0_10px_rgba(0,0,0,0.25)]">
+              <li key={i} className="flex min-h-[199px] w-[calc(50%-10px)] flex-col items-center gap-4 rounded-[10px] border border-black/15 bg-white px-1.5 pt-6 pb-5 sm:w-[203px] sm:px-[26px] shadow-[0_0_10px_rgba(0,0,0,0.25)]">
                 <FigmaIcon name={`emerg-${icon}`} width={80} height={69} className="-my-[5px]" />
                 <p className="text-center text-[14.8px] leading-4 font-semibold text-black">{pickText(it.label, locale)}</p>
                 <div className="flex flex-wrap justify-center gap-4">
                   {(it.numbers ?? []).map((n) => (
-                    <a key={n} href={`tel:${n.replace(/[^\d+]/g, "")}`} className="inline-flex h-[27px] items-center rounded-[8px] border-[0.8px] border-[#138808] pr-2 pl-2 text-[12.8px] leading-[17px] font-extrabold whitespace-nowrap text-[#138808] hover:bg-[#138808]/5">
+                    <a key={n} href={`tel:${n.replace(/[^\d+]/g, "")}`} className="inline-flex h-[27px] items-center rounded-[8px] border-[0.8px] border-[#138808] pr-2 pl-2 text-[11.5px] leading-[17px] font-extrabold whitespace-nowrap sm:text-[12.8px] text-[#138808] hover:bg-[#138808]/5">
                       <Phone className="size-[19px] -rotate-90 p-[3px]" aria-hidden /> {n}
                     </a>
                   ))}
