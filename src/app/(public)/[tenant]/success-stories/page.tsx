@@ -64,17 +64,17 @@ export default async function SuccessStoriesPage({ params }: { params: Params })
     <main>
       <DetailHero eyebrow={tp("culture")} title={t("allStoriesTitle")} back={{ href: `/${slug}/culture`, label: td("back", { page: tp("culture") }) }} />
       <section className="bg-cream pb-14">
-        <ul className="mx-auto grid max-w-[1440px] gap-5 px-4 sm:grid-cols-2 sm:px-8 lg:grid-cols-4 lg:px-[60px]">
+        <ul className="mx-auto grid max-w-[1440px] grid-cols-2 gap-3 px-4 sm:gap-5 sm:px-8 lg:grid-cols-4 lg:px-[60px]">
           {cards.map((c, i) => (
             <li key={i} className="flex flex-col overflow-hidden rounded-[10px] border border-black/10 bg-white shadow-[0_0_10px_rgba(0,0,0,0.06)]">
               {c.image && (
                 // eslint-disable-next-line @next/next/no-img-element -- website media served by the backend
-                <img src={c.image} alt="" loading="lazy" className="h-[180px] w-full object-cover" />
+                <img src={c.image} alt="" loading="lazy" className="h-[110px] w-full object-cover sm:h-[180px]" />
               )}
-              <div className="flex flex-1 flex-col px-5 pt-4 pb-5">
-                <p className="text-[16px] leading-6 font-semibold text-black">{c.title}</p>
-                {c.text && <p className="mt-2 line-clamp-3 text-[14px] leading-6 text-[#414141]">{c.text}</p>}
-                <div className="mt-auto pt-4">
+              <div className="flex flex-1 flex-col px-3 pt-3 pb-4 sm:px-5 sm:pt-4 sm:pb-5">
+                <p className="text-[14px] leading-5 font-semibold text-black sm:text-[16px] sm:leading-6">{c.title}</p>
+                {c.text && <p className="mt-1.5 line-clamp-3 text-[12.5px] leading-5 text-[#414141] sm:mt-2 sm:text-[14px] sm:leading-6">{c.text}</p>}
+                <div className="mt-auto pt-3 sm:pt-4">
                   {c.href ? (
                     <Link href={c.href} className="inline-flex items-center gap-2 text-[14px] font-semibold text-[#135130] hover:underline">
                       {td("readStory")} <ArrowRight className="size-4" aria-hidden />
