@@ -625,7 +625,7 @@ export async function KeyInitiativesSection({ slug, locale, data }: SectionProps
         <h2 className="text-center text-[26px] leading-9 font-semibold text-black">{tx(d.heading, locale) || t("keyInitiatives")}</h2>
         <span aria-hidden className="mx-auto mt-2 block h-0.5 w-[50px] rounded bg-[#135130]" />
         {tx(d.subheading, locale) && <p className="mx-auto mt-3 max-w-3xl text-center text-[15px] leading-6 text-[#414141]">{tx(d.subheading, locale)}</p>}
-        <ul className="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+        <ul className="mt-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
           {items.map((it, i) => {
             const body = (
               <>
@@ -961,7 +961,7 @@ export async function GreenScoreboardSection({ locale, data }: SectionProps) {
         <div className="rounded-[20px] bg-[#0e4a27] px-5 py-6 text-center text-white sm:px-7 lg:py-[18px]">
           <h2 className="text-[26px] leading-9 font-semibold">{t("greenScoreboard")}</h2>
           <p className="mt-1 text-[16px] opacity-90">{t("greenScoreboardSub")}</p>
-          <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:mt-4 lg:grid-cols-[repeat(auto-fit,minmax(170px,1fr))]">
+          <ul className="mt-5 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:mt-4 lg:grid-cols-[repeat(auto-fit,minmax(170px,1fr))]">
             {items.map((s, i) => (
               <li key={i} className="flex flex-col items-center rounded-[8px] bg-[#1d5c37] px-4 py-5 lg:min-h-[211px] lg:py-4">
                 {s.iconImage ? (

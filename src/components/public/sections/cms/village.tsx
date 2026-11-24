@@ -1168,7 +1168,7 @@ export async function StudentSpotlightSection({
   return (
     // Figma Education spotlight: 1318×374 card, 231×318 photo, 21.7 / 17.4px text, 234×128 stat boxes.
     <Band tone="cream" pad="py-8 lg:pt-[46px] lg:pb-[13px]">
-      <div className="grid items-center gap-8 rounded-[11px] border border-[#414141]/20 bg-white p-6 lg:grid-cols-[231px_minmax(0,1fr)_minmax(0,498px)] lg:gap-10 lg:py-[26px] lg:pr-[38px] lg:pl-[35px]">
+      <div className="grid items-center gap-8 rounded-[11px] border border-[#414141]/20 bg-white p-6 md:grid-cols-[231px_minmax(0,1fr)] md:[&>:last-child]:col-span-2 lg:grid-cols-[231px_minmax(0,1fr)_minmax(0,498px)] lg:[&>:last-child]:col-span-1 lg:gap-10 lg:py-[26px] lg:pr-[38px] lg:pl-[35px]">
         {photo && (
           // eslint-disable-next-line @next/next/no-img-element -- website media served by the backend
           <img
@@ -1351,7 +1351,7 @@ export async function SchemeCardsSection({ slug, locale, data }: SectionProps) {
   if (items.length === 0) return null;
   return (
     <Band heading={tx(d.heading, locale) || t("schemeCards")} tone="cream" headGap="mb-6 lg:mb-[49px]">
-      <ul className="grid gap-[14px] sm:grid-cols-2 lg:grid-cols-5">
+      <ul className="grid gap-[14px] sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
         {items.map((c, i) => {
           const tint = SCHEME_TINTS[i % SCHEME_TINTS.length]!;
           return (

@@ -63,7 +63,7 @@ export function FacilityGridSection({ locale, data }: SectionProps) {
           <h2 className="text-center text-[30px] leading-[41px] font-semibold text-black">
             {pickText(d.heading, locale)}
           </h2>
-          <ul className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-3 xl:mt-[33px] xl:grid-cols-5 xl:gap-x-[22px] xl:gap-y-0">
+          <ul className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-4 xl:mt-[33px] xl:grid-cols-5 xl:gap-x-[22px] xl:gap-y-0">
             {(d.items ?? []).map((it, i) => {
               const icon = FACILITY_ICONS[i % FACILITY_ICONS.length]!;
               // Rows start 95 / 330 / 550px into the card: 32.6px between the first two rows, 17.6px between the last two.
@@ -253,7 +253,7 @@ export async function StatusCardsSection({ slug, locale, data }: SectionProps) {
           {tx(d.subheading, locale) || t("statusCardsSub")}
         </p>
         <ul
-          className={`mt-6 grid gap-[15px] sm:grid-cols-2 lg:mt-6 ${items.length === 5 ? CARD_COLUMNS : "lg:[grid-template-columns:repeat(auto-fit,minmax(215px,1fr))]"}`}
+          className={`mt-6 grid gap-[15px] sm:grid-cols-2 md:grid-cols-3 lg:mt-6 ${items.length === 5 ? CARD_COLUMNS : "lg:[grid-template-columns:repeat(auto-fit,minmax(215px,1fr))]"}`}
         >
           {items.map((c, i) => {
             const th = THEMES[c.theme ?? "green"] ?? THEMES.green;
