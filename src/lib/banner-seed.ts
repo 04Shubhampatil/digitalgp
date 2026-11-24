@@ -184,6 +184,13 @@ type BridgeCtx = { officeEmail?: string; weatherPlace?: string };
 const pic = (row: Obj | undefined, from: string, to = from): Obj => (typeof row?.[from] === "string" && MEDIA_ID.test(row[from] as string) ? { [to]: row[from] } : {});
 
 const BRIDGES: Partial<Record<PageKey, Record<string, (block: (key: string) => Obj | undefined, ctx: BridgeCtx) => Obj | undefined>>> = {
+  finance: {
+    // The five documents of the design, listed without a file until a PDF is uploaded for each.
+    documents: (b) => {
+      const d = b("documents");
+      return d && { heading: d.heading, subtitle: d.subtitle, backgroundColour: d.backgroundColour, items: rows(d.items).map((i) => compact({ title: i.title, fileSize: str(i.size) })) };
+    },
+  },
   schemes: {
     // The three level cards (Central / State / District): label and key, the picture is uploaded.
     "category-strip": (b) => {

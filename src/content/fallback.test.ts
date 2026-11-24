@@ -311,6 +311,14 @@ describe("inner pages: section by section", () => {
 });
 
 describe("designSeed (what a section card shows before it is saved)", () => {
+  it("lists the five Finance documents without a file, ready to be published", () => {
+    const seed = designSeed("finance", "documents", "savardari")!;
+    const items = seed.items as { title: unknown; fileId?: string; fileSize?: string }[];
+    expect(items).toHaveLength(5);
+    expect(items.every((i) => !i.fileId && !!i.fileSize)).toBe(true);
+    expect(findSection("finance", "documents")!.schema.safeParse(seed).success).toBe(true);
+  });
+
   it("leaves out site picture files and fills Marathi", () => {
     const seed = designSeed("culture", "heritage-cards", "savardari")!;
     const items = seed.items as { title: { en: string; mr: string }; imageId?: string }[];

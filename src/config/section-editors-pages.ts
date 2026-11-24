@@ -209,7 +209,7 @@ const finance: SectionEditorSpec[] = [
   }),
   section("documents", "documents", {
     fields: [bi("heading", "heading", { required: true }), bi("subtitle", "subtitle"), bi("description", "description"), colour("backgroundColour", "backgroundColour", { required: true, default: "#FFFFFF" })],
-    items: list("items", "document", 50, [bi("title", "title", { required: true }), file("fileId", "pdfFile", { required: true }), txt("fileSize", "fileSize", 20, { placeholder: "2.4 MB" }), bi("buttonText", "buttonText")]),
+    items: list("items", "document", 50, [bi("title", "title", { required: true }), file("fileId", "pdfFile"), txt("fileSize", "fileSize", 20, { placeholder: "2.4 MB" }), bi("buttonText", "buttonText")]),
   }),
 ];
 

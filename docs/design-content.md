@@ -70,3 +70,11 @@ blocks and texts, except what is now dynamic (live counts and weather, announcem
 
 Marathi note: texts typed in one language (scheme category, deadline dates, weather place) show in the design's Marathi when the
 design has a translation, otherwise as typed.
+
+## Finance documents without a PDF
+
+The `documents` section of the Finance page no longer requires a PDF for every entry (`fileId` is optional in
+`src/config/sections-pages.ts`). The publish script seeds the five design documents (title and size label); until a
+PDF is uploaded for an entry the public page lists it with "File coming soon" instead of a Download link. Run
+`npm run content:publish-design -- --tenant savardari` once after deploying; it only adds sections that have no
+published revision, so existing admin edits are kept.
