@@ -398,7 +398,8 @@ function ContactSupportCards({ slug, locale, data }: { slug: string; locale: Sec
   const items = list<SupportItem & { link?: string }>(data.items).filter((i) => i.visible !== false);
   if (items.length === 0) return null;
   return (
-    <section className="bg-cream py-8">
+    // Figma 375:11347: cards 227px, 88px under the complaint form and 39px above the next heading.
+    <section className="bg-cream py-8 lg:pt-[52px] lg:pb-2">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
         <ul className={`grid gap-[10px] sm:grid-cols-2 ${SUPPORT_COLS[Math.min(items.length, 6)]}`}>
           {items.map((c, i) => {
@@ -411,7 +412,7 @@ function ContactSupportCards({ slug, locale, data }: { slug: string; locale: Sec
                 {tx(c.description, locale) && <span className="mt-2 text-[15px] text-[#414141]">{tx(c.description, locale)}</span>}
               </>
             );
-            const cls = "flex h-full min-h-[227px] flex-col items-center justify-center rounded-[10px] bg-white px-4 py-6 text-center shadow-[0_0_10px_rgba(0,0,0,0.12)]";
+            const cls = "flex h-full min-h-[227px] flex-col items-center justify-center rounded-[10px] bg-white px-4 py-6 text-center lg:px-2 shadow-[0_0_10px_rgba(0,0,0,0.12)]";
             return (
               <li key={i}>
                 {link ? (
