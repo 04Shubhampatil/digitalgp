@@ -407,7 +407,16 @@ function adaptToDesign(pageKey: PageKey, s: Published, design: FallbackSection[]
     const dev = (t: string) => t.replace(/d/g, (c) => "०१२३४५६७८९"[Number(c)] ?? c);
     return { en: [v, unit.en].filter(Boolean).join(" "), mr: dev([v, unit.mr || unit.en].filter(Boolean).join(" ")) };
   };
-  const items = pageKey === "infrastructure" ? rows.map((i) => ({ label: i.title, value: withUnit(i) })) : rows.map((i) => ({ label: i.title, value: i.value, unit: i.unit }));
+  // A facility keeps the design's wider name box (labelWidth) when its title is still the design's, so a long name does not
+  // wrap to a third line and push its figure out of the tile.
+  const designTiles = (base.data.items as Obj[] | undefined) ?? [];
+  const items =
+    pageKey === "infrastructure"
+      ? rows.map((i) => {
+          const w = designTiles.find((d) => labelOf(d.label) === labelOf(i.title))?.labelWidth;
+          return { label: i.title, value: withUnit(i), ...(typeof w === "number" ? { labelWidth: w } : {}) };
+        })
+      : rows.map((i) => ({ label: i.title, value: i.value, unit: i.unit }));
   return { ...s, sectionKey: target, sortOrder: base.sortOrder, data: { ...base.data, ...filled({ heading: s.data.heading }), items } };
 }
 

@@ -134,6 +134,8 @@ export async function SchemeShowcaseSection({ slug, locale, data }: SectionProps
           benefitCaption: pickText(s.benefitCaption, locale),
         }));
   if (cards.length === 0) return null;
+  // The level cells above start on the first level that has schemes, so the list starts filtered to it (no flash of all cards).
+  const startLevel = (["CENTRAL", "STATE", "DISTRICT"] as const).find((l) => cards.some((c) => c.levelCode === l));
   const btn = "inline-flex h-[45px] w-[176px] items-center justify-center rounded-full border-[0.77px] border-[#135130] text-[18px] whitespace-nowrap text-[#135130] hover:bg-[#135130]/5";
   return (
     <section className="bg-cream pt-8 pb-10 lg:pt-[51px] lg:pb-[47px]">
@@ -143,7 +145,7 @@ export async function SchemeShowcaseSection({ slug, locale, data }: SectionProps
           {cards.map((c, i) => {
             const pic = CARD_PICTURES.find((x) => x.re.test(`${c.name} ${c.category ?? ""}`))!.src;
             return (
-              <li key={i} data-level={c.levelCode} className="flex min-h-[473px] w-[256px] flex-col xl:w-[calc((100%-38px)/5)] xl:max-w-[256px] items-center rounded-[18.4px] border-[1.84px] border-[#414141]/15 bg-white px-[29px] pt-[22px] pb-[34px]">
+              <li key={i} data-level={c.levelCode} style={startLevel && c.levelCode && c.levelCode !== startLevel ? { display: "none" } : undefined} className="flex min-h-[473px] w-[256px] flex-col xl:w-[calc((100%-38px)/5)] xl:max-w-[256px] items-center rounded-[18.4px] border-[1.84px] border-[#414141]/15 bg-white px-[29px] pt-[22px] pb-[34px]">
                 {/* eslint-disable-next-line @next/next/no-img-element -- static design asset */}
                 <img src={pic} alt="" width={87} height={79} className="h-[79px] w-[87px] shrink-0" />
                 <h3 className="mt-[21px] flex h-[45px] w-[226px] items-start justify-center pt-[7px] text-center text-[14px] leading-[21px] font-semibold text-black" title={c.name}>

@@ -6,6 +6,8 @@ import { pickText, type Bilingual } from "@/i18n/text";
 import { resolveHref } from "@/lib/href";
 import type { SectionProps } from "../index";
 import { InfraMapClient } from "./infra-map-client";
+import { INFRA_MAP_FILE, INFRA_MAP_PINS, INFRA_MAP_SIZE } from "./infra-map-pins";
+import { isDesignPicture } from "../design-media";
 import {
   Icon,
   cardClass,
@@ -141,6 +143,8 @@ export async function InfraMapSection({
     (siblings?.["map-filters"] as { items?: unknown } | undefined)?.items,
   ).filter((x) => x.visible !== false);
   const heading = tx(d.heading, locale) || t("infraMap");
+  // The design picture has known pins, so the Facility Filters can keep the chosen categories bright and dim the rest.
+  const designMap = image ? await isDesignPicture(slug, d.mapImageId, INFRA_MAP_FILE) : false;
   return (
     <section className="bg-cream pt-8 lg:pt-[86px]">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[61px]">
@@ -160,8 +164,12 @@ export async function InfraMapSection({
                 zoomIn: t("mapZoomIn"),
                 zoomOut: t("mapZoomOut"),
                 fullscreen: t("mapFullscreen"),
+                showing: t("mapShowing"),
               }}
+              pins={designMap ? INFRA_MAP_PINS : undefined}
+              size={designMap ? INFRA_MAP_SIZE : undefined}
               filters={filters.map((x) => ({
+                key: x.icon,
                 name: tx(x.name, locale),
                 colour: x.colour ?? "#135130",
                 icon: <Icon name={x.icon} className="size-[19px]" />,

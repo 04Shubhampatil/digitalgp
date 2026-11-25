@@ -22,14 +22,16 @@ export const SCHEME_EMPTY_ID = "scheme-showcase-empty";
 
 /**
  * Central / State / District cells (Figma: one white card, three equal cells; the active one has the green underline).
- * Clicking a cell shows only that level's schemes in "Featured Schemes" below; clicking it again shows all of them.
+ * Clicking a cell shows only that level's schemes in "Featured Schemes" below (it starts on the first level with schemes).
  */
 export function SchemeLevelTabs({ tabs }: { tabs: LevelTab[] }) {
-  // null = all levels (the design starts with the first cell underlined).
-  const [active, setActive] = useState<string | null>(null);
+  // The first level that has schemes is shown from the start (the list below hides the others on the server too, so the
+  // underline and the list agree from the first paint).
+  const [active, setActive] = useState<string | null>(() => (tabs.find((t) => t.n === null || t.n > 0) ?? tabs[0])?.level ?? null);
 
   function choose(level: string) {
-    const next = active === level ? null : level;
+    if (active === level) return;
+    const next = level;
     setActive(next);
     const list = document.getElementById(SCHEME_LIST_ID);
     if (!list) return;
@@ -46,7 +48,7 @@ export function SchemeLevelTabs({ tabs }: { tabs: LevelTab[] }) {
   return (
     <ul className="grid overflow-hidden rounded-[16px] bg-white shadow-[0_0_16px_rgba(0,0,0,0.18)] md:grid-cols-3">
       {tabs.map((t, i) => {
-        const underlined = active ? active === t.level : i === 0;
+        const underlined = active === t.level;
         return (
           <li key={t.level + i} className="relative">
             <button
