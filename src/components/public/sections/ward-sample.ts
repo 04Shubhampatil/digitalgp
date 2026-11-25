@@ -30,11 +30,12 @@ function sampleRow(r: WardRow, factor: number, delta: number): WardRow {
   return { ...r, valueText: `${pre}${fmt(Math.max(1, parse(n!) * factor), n!)}${post}`, percent: typeof r.percent === "number" ? clampPct(r.percent + delta) : r.percent };
 }
 
-/** Two sample wards (2 and 3) built from the first ward's rows with other figures, until real wards are entered. */
+/** Three sample wards (2, 3 and 4: the four wards of the design map) built from the first ward's rows with other figures, until real wards are entered. */
 export function sampleWards(base: WardView, locale: string): WardView[] {
   const variants = [
     { k: 2, factor: 0.85, delta: -9 },
     { k: 3, factor: 1.15, delta: 7 },
+    { k: 4, factor: 1.05, delta: -4 },
   ];
   return variants.map(({ k, factor, delta }) => ({
     name: /[0-9०-९]+/.test(base.name) ? base.name.replace(/[0-9०-९]+/, num(k, locale)) : `${base.name} ${num(k, locale)}`,
