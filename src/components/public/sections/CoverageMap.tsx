@@ -121,8 +121,11 @@ export function SchemeCoverageClient({
     const my = ((z - 1) * H) / 2;
     return { x: Math.max(-mx, Math.min(mx, p.x)), y: Math.max(-my, Math.min(my, p.y)) };
   };
+  const zoomRef = useRef(1);
   const zoomBy = (delta: number) => {
-    const z = Math.max(1, Math.min(MAX_ZOOM, +(zoom + delta).toFixed(1)));
+    // Read the latest zoom from a ref, so two quick clicks in a row are two steps.
+    const z = Math.max(1, Math.min(MAX_ZOOM, +(zoomRef.current + delta).toFixed(1)));
+    zoomRef.current = z;
     setZoom(z);
     setPan((p) => clampPan(p, z));
   };
