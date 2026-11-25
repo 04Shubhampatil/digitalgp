@@ -9,6 +9,7 @@ import { mediaUrl } from "./cms/kit";
 import { resolveHref } from "@/lib/href";
 import type { SectionProps } from "./index";
 import { WardDetailsCard } from "./WardDetailsCard";
+import { sampleWards } from "./ward-sample";
 
 /** Underline under card headings: orange / white / green segments (Figma 375:12438). */
 function HeadingRule() {
@@ -318,7 +319,6 @@ export function MonthlyMetricsSection({ locale, data }: SectionProps) {
   );
 }
 
-/** Ward map placeholder from the design; swap via `mapImageUrl` once a ward map is uploaded. */
 /** `ward-details`: ward map + ward selector with per-ward progress rows (Figma 375:12497). */
 export async function WardDetailsSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public");
@@ -337,11 +337,16 @@ export async function WardDetailsSection({ slug, locale, data }: SectionProps) {
     items: (w.items ?? []).map((it) => ({ label: pickText(it.label, locale), valueText: it.valueText ?? "", percent: it.percent })),
   }));
   if (wards.length === 0) return null;
+  // Only one ward entered so far: add two sample wards (same rows, other figures), so the map and the ward selector can be tried out.
+  const sample = wards.length === 1;
+  const shown = sample ? [...wards, ...sampleWards(wards[0]!, locale)] : wards;
   const va = d.viewAll;
   return (
     <WardDetailsCard
       heading={pickText(d.heading, locale) || t("wardDetails")}
-      wards={wards}
+      wards={shown}
+      sample={sample}
+      labels={{ zoomIn: t("mapZoomIn"), zoomOut: t("mapZoomOut"), sampleData: t("sampleData") }}
       mapSrc={d.mapImageUrl}
       viewAll={va?.href && pickText(va.label, locale) ? { label: pickText(va.label, locale), href: resolveHref(va.href, slug) } : undefined}
     />
