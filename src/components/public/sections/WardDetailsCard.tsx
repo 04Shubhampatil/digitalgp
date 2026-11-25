@@ -225,7 +225,7 @@ function SchematicWardMap({ wards, active, focused, onSelect, onReset, labels, s
           );
         })}
       </svg>
-      <ul className="absolute bottom-2 left-2 space-y-1 rounded-[7px] bg-white px-2.5 py-2 text-[10px] leading-[13px] font-semibold text-[#222] shadow-[0_0_6px_rgba(0,0,0,0.25)]">
+      <ul className="absolute bottom-2 left-2 hidden space-y-1 rounded-[7px] bg-white px-2.5 py-2 sm:block text-[10px] leading-[13px] font-semibold text-[#222] shadow-[0_0_6px_rgba(0,0,0,0.25)]">
         {wards.slice(0, WARD_SHAPES.length).map((w, i) => (
           <li key={i}>
             <button type="button" onClick={() => onSelect(i)} aria-pressed={focused && i === active} className={cn("flex items-center gap-2", focused && i === active && "underline")}>
