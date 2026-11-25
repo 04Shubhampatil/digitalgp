@@ -413,7 +413,9 @@ function adaptToDesign(pageKey: PageKey, s: Published, design: FallbackSection[]
 
 const isObj = (v: unknown): v is Obj => !!v && typeof v === "object" && !Array.isArray(v);
 /** Fields that hold a picture, file or link of an item (imageId, logoIds, iconUrl, iconImage, …). */
-const MEDIA_KEY = /(Ids?|Url|iconImage)$/;
+// Also `labelWidth` (design pixels of a name box that overflows its tile, e.g. "Drinking Water Supply"): a look setting
+// the editor has no field for, so a published list item keeps the design's value.
+const MEDIA_KEY = /(Ids?|Url|iconImage|labelWidth)$/;
 const itemName = (v: unknown): string => (isObj(v) ? labelOf(v.title ?? v.name ?? v.label ?? v.heading ?? v.skillName ?? v.question) : "");
 
 /**

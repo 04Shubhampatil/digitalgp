@@ -13,7 +13,7 @@ export function CalloutSection({ locale, data }: SectionProps) {
   const hl = pickText(d.highlight, locale);
   const [before, after] = hl && text.includes(hl) ? text.split(hl) : [text, ""];
   return (
-    <section className="relative z-10 mx-auto -mt-10 max-w-[1097px] px-4 sm:px-8 lg:-mt-[69px]">
+    <section className="relative z-10 mx-auto -mt-10 max-w-[1097px] px-4 sm:px-8 lg:-mt-[69px] bg-[linear-gradient(to_bottom,transparent_40px,var(--color-cream)_40px)] lg:bg-[linear-gradient(to_bottom,transparent_69px,var(--color-cream)_69px)]">
       <div className="flex items-center gap-5 rounded-[20px] bg-white px-6 py-6 shadow-[0_2px_16px_rgba(0,0,0,0.18)]">
         <span aria-hidden className="flex size-[70px] shrink-0 items-center justify-center rounded-full bg-[#e3f1d4] text-[#5a9a1f]">
           <Users className="size-8" />

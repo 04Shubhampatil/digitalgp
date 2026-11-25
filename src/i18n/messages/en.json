@@ -1177,6 +1177,7 @@
       "mapZoomIn": "Zoom in",
       "mapZoomOut": "Zoom out",
       "mapFullscreen": "Full screen",
+      "mapShowing": "Showing {n} facilities",
       "adoptTreeNow": "Adopt a Tree Now",
       "treeFormTitle": "Tree Adoption Request",
       "treeClose": "Close",

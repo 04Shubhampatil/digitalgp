@@ -30,7 +30,7 @@ export async function SchemeLevelsSection({ slug, locale, data }: SectionProps) 
   const hasLive = (live?.data.length ?? 0) > 0;
   return (
     // Figma: one white card (62..1380, 138px tall, 16px radius), three equal cells; the first cell carries the 8px green underline.
-    <section className="relative z-10 mx-auto -mt-10 max-w-[1440px] px-4 sm:px-8 lg:-mt-[74px] lg:px-[62px]">
+    <section className="relative z-10 mx-auto -mt-10 max-w-[1440px] px-4 sm:px-8 lg:-mt-[74px] lg:px-[62px] bg-[linear-gradient(to_bottom,transparent_40px,var(--color-cream)_40px)] lg:bg-[linear-gradient(to_bottom,transparent_74px,var(--color-cream)_74px)]">
       <SchemeLevelTabs
         tabs={(d.items ?? []).map((it, i) => {
           const Icon = LEVEL_ICONS[i % LEVEL_ICONS.length]!;

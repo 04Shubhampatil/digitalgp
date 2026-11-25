@@ -466,7 +466,7 @@ const FACILITY_ICONS = ["water", "sanitation", "roads", "lighting", "schools", "
 export function FacilityGridSection({ locale, data }: SectionProps) {
   const d = data as { heading?: B; items?: { label?: B; value?: B }[] };
   return (
-    <section className="relative z-10 mx-auto -mt-16 max-w-[1440px] px-4 sm:px-8 lg:-mt-[94px] lg:px-[62px]">
+    <section className="relative z-10 mx-auto -mt-16 max-w-[1440px] px-4 sm:px-8 lg:-mt-[94px] lg:px-[62px] bg-[linear-gradient(to_bottom,transparent_64px,var(--color-cream)_64px)] lg:bg-[linear-gradient(to_bottom,transparent_94px,var(--color-cream)_94px)]">
       <div className="rounded-[20px] bg-white px-4 py-6 shadow-[0_2px_16px_rgba(0,0,0,0.18)] sm:px-9">
         <h2 className="text-center text-[30px] leading-[41px] font-semibold text-black">{pickText(d.heading, locale)}</h2>
         <ul className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-5">

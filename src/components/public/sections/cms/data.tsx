@@ -6,6 +6,8 @@ import { resolveHref } from "@/lib/href";
 import type { SectionProps } from "../index";
 import { BudgetChartClient, type BudgetChartData } from "./client";
 import { InfraMapClient } from "./infra-map-client";
+import { INFRA_MAP_FILE, INFRA_MAP_PINS, INFRA_MAP_SIZE } from "./infra-map-pins";
+import { isDesignPicture } from "../design-media";
 import { TreeAdoptionButton } from "./TreeAdoptionForm";
 import { MarketPricesClient, type MarketView } from "./MarketPricesClient";
 import { Band, Icon, cardClass, externalProps, list, mediaUrl, plain, readableText, tx, type B } from "./kit";
@@ -31,6 +33,8 @@ export async function InfraMapSection({ slug, locale, data, siblings }: SectionP
   if (!image && markers.length === 0) return null;
   const filters = list<FilterItem>((siblings?.["map-filters"] as { items?: unknown } | undefined)?.items).filter((x) => x.visible !== false);
   if (image && filters.length > 0 && d.showLegend !== false) {
+    // The design picture has known pins, so the filters can keep the chosen categories bright and dim the rest.
+    const designMap = await isDesignPicture(slug, d.mapImageId, INFRA_MAP_FILE);
     // Figma Infrastructure: one card — map picture, "Facility Filters" panel on its left edge, controls, legend row.
     return (
       <section className="bg-cream py-10">
@@ -42,8 +46,10 @@ export async function InfraMapSection({ slug, locale, data, siblings }: SectionP
               image={image}
               alt={tx(d.heading, locale) || t("infraMap")}
               title={t("facilityFilters")}
-              labels={{ zoomIn: t("mapZoomIn"), zoomOut: t("mapZoomOut"), fullscreen: t("mapFullscreen") }}
-              filters={filters.map((x) => ({ name: tx(x.name, locale), colour: x.colour ?? "#135130", icon: <Icon name={x.icon} className="size-[18px]" /> }))}
+              labels={{ zoomIn: t("mapZoomIn"), zoomOut: t("mapZoomOut"), fullscreen: t("mapFullscreen"), showing: t("mapShowing") }}
+              pins={designMap ? INFRA_MAP_PINS : undefined}
+              size={designMap ? INFRA_MAP_SIZE : undefined}
+              filters={filters.map((x) => ({ key: x.icon, name: tx(x.name, locale), colour: x.colour ?? "#135130", icon: <Icon name={x.icon} className="size-[18px]" /> }))}
             />
           </div>
           {markers.length > 0 && (
@@ -620,7 +626,7 @@ export async function KeyInitiativesSection({ slug, locale, data }: SectionProps
   if (items.length === 0) return null;
   const viewAll = d.viewAll?.href && tx(d.viewAll.label, locale) ? { href: d.viewAll.href, label: tx(d.viewAll.label, locale) } : null;
   return (
-    <section className="relative z-10 mx-auto max-w-[1440px] px-4 sm:px-8 lg:-mt-[78px] lg:px-[62px]">
+    <section className="relative z-10 mx-auto max-w-[1440px] px-4 sm:px-8 lg:-mt-[78px] lg:px-[62px] lg:bg-[linear-gradient(to_bottom,transparent_78px,var(--color-cream)_78px)]">
       <div className="rounded-[14px] bg-white px-4 pt-6 pb-4 shadow-[0_2px_14px_rgba(0,0,0,0.08)] sm:px-5">
         <h2 className="text-center text-[26px] leading-9 font-semibold text-black">{tx(d.heading, locale) || t("keyInitiatives")}</h2>
         <span aria-hidden className="mx-auto mt-2 block h-0.5 w-[50px] rounded bg-[#135130]" />
