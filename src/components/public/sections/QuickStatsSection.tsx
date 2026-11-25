@@ -41,7 +41,7 @@ export function QuickStatsSection({ locale, data, pageKey }: SectionProps) {
   return (
     // Home: the card sits fully below the hero photo (Figma 375:12978 overlaps it by 69px; changed on request so the card
     // never covers the photo). Other pages keep the Figma overlap.
-    <section className={`relative z-10 mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[62px] ${pageKey === "home" ? "mt-6 lg:mt-8" : "-mt-10 lg:-mt-[69px]"}`}>
+    <section className={`relative z-10 mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[62px] ${pageKey === "home" ? "mt-6 lg:mt-8 lg:-mb-[69px]" : "-mt-10 lg:-mt-[69px]"}`}>
       <dl className="grid grid-cols-2 gap-x-4 gap-y-6 rounded-[16px] bg-white px-6 py-6 shadow-[0_0_16px_rgba(0,0,0,0.25)] sm:grid-cols-4 xl:flex xl:justify-around xl:gap-4 xl:px-8 xl:pt-[11px] xl:pb-[22px]">
         {items.map(({ item, i }) => {
           const unit = pickText(item.unit, locale);
