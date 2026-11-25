@@ -346,7 +346,7 @@ export async function WardDetailsSection({ slug, locale, data }: SectionProps) {
       heading={pickText(d.heading, locale) || t("wardDetails")}
       wards={shown}
       sample={sample}
-      labels={{ zoomIn: t("mapZoomIn"), zoomOut: t("mapZoomOut"), sampleData: t("sampleData") }}
+      labels={{ zoomIn: t("mapZoomIn"), zoomOut: t("mapZoomOut"), sampleData: t("sampleData"), allWards: t("allWards") }}
       mapSrc={d.mapImageUrl}
       viewAll={va?.href && pickText(va.label, locale) ? { label: pickText(va.label, locale), href: resolveHref(va.href, slug) } : undefined}
     />
