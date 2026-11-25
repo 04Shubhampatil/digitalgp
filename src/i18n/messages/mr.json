@@ -1003,6 +1003,7 @@
     },
     "newBadge": "नवीन",
     "schemesAvailable": "{n} योजना उपलब्ध",
+    "noSchemesInLevel": "या स्तरावर अद्याप योजना नाहीत.",
     "viewFullCalendar": "संपूर्ण दिनदर्शिका पहा",
     "noEvents": "या महिन्यात कोणतेही कार्यक्रम नाहीत.",
     "cms": {

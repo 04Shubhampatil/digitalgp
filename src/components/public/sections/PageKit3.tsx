@@ -7,6 +7,7 @@ import { getPublicSchemeCoverage, listPublicSchemes, publicMediaUrl } from "@/li
 import { detailHref, resolveHref } from "@/lib/href";
 import { SchemeCoverageClient, type CoverageLabels, type CoverageView, type CoverageWard } from "./CoverageMap";
 import { DEMO_WARDS } from "./coverage-sample";
+import { SCHEME_EMPTY_ID, SCHEME_LIST_ID, SchemeLevelTabs } from "./SchemeLevelTabs";
 import type { SectionProps } from "./index";
 
 type B = Bilingual | undefined;
@@ -30,41 +31,27 @@ export async function SchemeLevelsSection({ slug, locale, data }: SectionProps) 
   return (
     // Figma: one white card (62..1380, 138px tall, 16px radius), three equal cells; the first cell carries the 8px green underline.
     <section className="relative z-10 mx-auto -mt-10 max-w-[1440px] px-4 sm:px-8 lg:-mt-[74px] lg:px-[62px]">
-      <ul className="grid overflow-hidden rounded-[16px] bg-white shadow-[0_0_16px_rgba(0,0,0,0.18)] md:grid-cols-3">
-        {(d.items ?? []).map((it, i) => {
+      <SchemeLevelTabs
+        tabs={(d.items ?? []).map((it, i) => {
           const Icon = LEVEL_ICONS[i % LEVEL_ICONS.length]!;
           const n = hasLive ? (counts[it.level ?? ""] ?? 0) : (it.count ?? 0);
           const msg = t("schemesAvailable", { n });
           const at = msg.indexOf(String(n));
-          return (
-            <li key={i} className="relative flex h-[110px] items-center justify-center gap-[34px] md:h-[138px]">
-              {it.iconImageId || it.iconUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element -- static design asset / uploaded picture
-                <img src={it.iconImageId ? publicMediaUrl(slug, it.iconImageId) : it.iconUrl} alt="" width={75} height={79} className="h-[79px] w-[75px] shrink-0" />
-              ) : (
-                <span aria-hidden className="flex size-[64px] shrink-0 items-center justify-center rounded-[14px] bg-[#e9f4e9] text-[#135130]">
-                  <Icon className="size-8" strokeWidth={1.7} />
-                </span>
-              )}
-              <div className="leading-[19px]">
-                <p className="text-[14px] font-bold whitespace-nowrap text-black">{pickText(it.label, locale)}</p>
-                <p className="mt-2 text-[14px] whitespace-nowrap text-black">
-                  {at >= 0 ? (
-                    <>
-                      {msg.slice(0, at)}
-                      <span className="font-semibold text-[#135130]">{n}</span>
-                      {msg.slice(at + String(n).length)}
-                    </>
-                  ) : (
-                    msg
-                  )}
-                </p>
-              </div>
-              {i === 0 && <span aria-hidden className="absolute bottom-0 left-0 h-[7px] w-[93%] bg-[#135130]" />}
-            </li>
-          );
+          return {
+            level: it.level ?? `LEVEL${i}`,
+            label: pickText(it.label, locale),
+            before: at >= 0 ? msg.slice(0, at) : msg,
+            n: at >= 0 ? n : null,
+            after: at >= 0 ? msg.slice(at + String(n).length) : "",
+            icon: it.iconImageId ? publicMediaUrl(slug, it.iconImageId) : it.iconUrl,
+            fallback: (
+              <span aria-hidden className="flex size-[64px] shrink-0 items-center justify-center rounded-[14px] bg-[#e9f4e9] text-[#135130]">
+                <Icon className="size-8" strokeWidth={1.7} />
+              </span>
+            ),
+          };
         })}
-      </ul>
+      />
     </section>
   );
 }
@@ -77,10 +64,18 @@ const CARD_PICTURES: { re: RegExp; src: string }[] = [
   { re: /./, src: "/images/figma/pages/sch-card-1.png" },
 ];
 
+/** "Central" / "State" / "District" (as typed in the design content) → the scheme level code. */
+function levelCodeOf(en: string | null | undefined): string | undefined {
+  const v = (en ?? "").trim().toUpperCase();
+  return v === "CENTRAL" || v === "STATE" || v === "DISTRICT" ? v : undefined;
+}
+
 interface SchemeCard {
   name: string;
   category?: string;
   level?: string;
+  /** CENTRAL / STATE / DISTRICT, for the level cells above the list. */
+  levelCode?: string;
   description: string;
   benefitLabel?: string;
   benefitValue?: string;
@@ -115,6 +110,7 @@ export async function SchemeShowcaseSection({ slug, locale, data }: SectionProps
           // A scheme's category is typed in one language: known ones show in the visitor's language, others as typed.
           category: s.category ? (/^[a-z]+$/.test(s.category.trim().toLowerCase()) && t.has(`schemeCategories.${s.category.trim().toLowerCase()}`) ? t(`schemeCategories.${s.category.trim().toLowerCase()}`) : s.category) : undefined,
           level: t(`schemeLevelShort.${s.level}`),
+          levelCode: s.level,
           description: pickText(pair(s.descriptionEn, s.descriptionMr), locale),
           // The scheme's own headline benefit ("₹1.20 Lakh" / "Financial Assistance") first, else its figures.
           benefitValue:
@@ -132,6 +128,7 @@ export async function SchemeShowcaseSection({ slug, locale, data }: SectionProps
           name: pickText(s.name, locale),
           category: pickText(s.category, locale),
           level: pickText(s.level, locale),
+          levelCode: levelCodeOf(s.level?.en),
           description: pickText(s.description, locale),
           benefitValue: pickText(s.benefitValue, locale),
           benefitCaption: pickText(s.benefitCaption, locale),
@@ -142,11 +139,11 @@ export async function SchemeShowcaseSection({ slug, locale, data }: SectionProps
     <section className="bg-cream pt-8 pb-10 lg:pt-[51px] lg:pb-[47px]">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[62px]">
         <h2 className="text-center text-[30px] leading-[45px] font-semibold text-black">{pickText(d.heading, locale)}</h2>
-        <ul className="mt-5 flex flex-wrap justify-center gap-x-[9.5px] gap-y-5">
+        <ul id={SCHEME_LIST_ID} className="mt-5 flex flex-wrap justify-center gap-x-[9.5px] gap-y-5">
           {cards.map((c, i) => {
             const pic = CARD_PICTURES.find((x) => x.re.test(`${c.name} ${c.category ?? ""}`))!.src;
             return (
-              <li key={i} className="flex min-h-[473px] w-[256px] flex-col xl:w-[calc((100%-38px)/5)] xl:max-w-[256px] items-center rounded-[18.4px] border-[1.84px] border-[#414141]/15 bg-white px-[29px] pt-[22px] pb-[34px]">
+              <li key={i} data-level={c.levelCode} className="flex min-h-[473px] w-[256px] flex-col xl:w-[calc((100%-38px)/5)] xl:max-w-[256px] items-center rounded-[18.4px] border-[1.84px] border-[#414141]/15 bg-white px-[29px] pt-[22px] pb-[34px]">
                 {/* eslint-disable-next-line @next/next/no-img-element -- static design asset */}
                 <img src={pic} alt="" width={87} height={79} className="h-[79px] w-[87px] shrink-0" />
                 <h3 className="mt-[21px] flex h-[45px] w-[226px] items-start justify-center pt-[7px] text-center text-[14px] leading-[21px] font-semibold text-black" title={c.name}>
@@ -187,6 +184,10 @@ export async function SchemeShowcaseSection({ slug, locale, data }: SectionProps
             );
           })}
         </ul>
+        {/* Shown by the level cells above when the chosen level has no scheme. */}
+        <p id={SCHEME_EMPTY_ID} hidden className="mt-5 text-center text-[16px] text-[#414141]">
+          {t("noSchemesInLevel")}
+        </p>
         {d.viewAll?.href && (
           <div className="mt-[31px] flex justify-center">
             <Link href={resolveHref(d.viewAll.href, slug)} className="inline-flex h-[33px] w-[135px] items-center justify-center rounded-[24px] border border-[#135130] bg-[#135130] text-[12.5px] font-medium whitespace-nowrap text-white hover:opacity-90">
