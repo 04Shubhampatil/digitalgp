@@ -1,9 +1,18 @@
 "use client";
 
-import { ArrowRight, ChevronDown, ClipboardList, Droplets, Layers, Lightbulb, Route, TreePine, type LucideIcon } from "lucide-react";
+import { ArrowRight, ChevronDown, ClipboardList, Droplets, Layers, Lightbulb, Minus, Plus, Route, TreePine, type LucideIcon } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/cn";
 import { projectGeometries, type WardGeometry } from "@/lib/geo";
+import { WARD_MAP_H, WARD_MAP_W, WARD_SHAPES, shapePath } from "./ward-shapes";
+
+export interface WardMapLabels {
+  zoomIn: string;
+  zoomOut: string;
+  /** Tag shown while the ward figures are samples. */
+  sampleData: string;
+}
 
 export interface WardRow {
   label: string;
@@ -44,16 +53,146 @@ function percentOf(r: WardRow): number {
   return m ? Math.max(0, Math.min(100, (Number(m[1]) / Number(m[2])) * 100)) : 0;
 }
 
-/** The design's ward map picture (Figma "image 50"), shown until the Gram Panchayat supplies boundaries or a map image. */
-const FIGMA_WARD_MAP = "/images/figma/ward-map.png";
-
 const WARD_COLOURS = ["#2f9e3f", "#e0a010", "#1a62e0", "#7b2cbf", "#d9480f", "#0b7285", "#c2255c", "#5c940d"];
+
+const MAX_ZOOM = 3;
+
+/**
+ * A map layer that zooms with the + / − buttons and moves by dragging when zoomed in (the design's controls, top left).
+ * `focus` (fractions of the map) re-centres a zoomed map on the selected ward whenever `focusKey` changes.
+ */
+function ZoomableFrame({ labels, className, style, focus, focusKey, sample, children }: { labels: WardMapLabels; className?: string; style?: React.CSSProperties; focus?: [number, number]; focusKey?: number; sample?: boolean; children: React.ReactNode }) {
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 }); // fractions of the frame size
+  const [dragging, setDragging] = useState(false);
+  const zoomRef = useRef(1);
+  const box = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ x: number; y: number; px: number; py: number; moved: boolean } | null>(null);
+
+  const clamp = (p: { x: number; y: number }, z: number) => {
+    const m = (z - 1) / 2;
+    return { x: Math.max(-m, Math.min(m, p.x)), y: Math.max(-m, Math.min(m, p.y)) };
+  };
+  const zoomBy = (delta: number) => {
+    // Latest zoom from a ref, so two quick clicks are two steps.
+    const z = Math.max(1, Math.min(MAX_ZOOM, +(zoomRef.current + delta).toFixed(1)));
+    zoomRef.current = z;
+    setZoom(z);
+    setPan((p) => clamp(p, z));
+  };
+
+  // Selecting another ward moves a zoomed map to it.
+  useEffect(() => {
+    const z = zoomRef.current;
+    if (z > 1 && focus) setPan(clamp({ x: -(focus[0] - 0.5) * z, y: -(focus[1] - 0.5) * z }, z));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only a new selection re-centres the map
+  }, [focusKey]);
+
+  return (
+    <div ref={box} className={cn("relative overflow-hidden rounded-[10px] border border-[#414141] bg-[#1d3b24]", className)} style={style}>
+      <div
+        className={cn("absolute inset-0", zoom > 1 && (dragging ? "cursor-grabbing" : "cursor-grab"))}
+        style={{ transform: `translate(${pan.x * 100}%, ${pan.y * 100}%) scale(${zoom})`, transformOrigin: "50% 50%", transition: dragging ? "none" : "transform .25s", touchAction: zoom > 1 ? "none" : undefined }}
+        onPointerDown={(e) => {
+          if (zoom <= 1) return;
+          drag.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y, moved: false };
+          setDragging(true);
+        }}
+        onPointerMove={(e) => {
+          const d = drag.current;
+          const r = box.current?.getBoundingClientRect();
+          if (!d || !r) return;
+          const dx = (e.clientX - d.x) / r.width;
+          const dy = (e.clientY - d.y) / r.height;
+          if (Math.abs(dx) + Math.abs(dy) > 0.01) d.moved = true;
+          setPan(clamp({ x: d.px + dx, y: d.py + dy }, zoomRef.current));
+        }}
+        onPointerUp={() => {
+          setDragging(false);
+          // A drag must not count as a click on the ward under the pointer.
+          window.setTimeout(() => (drag.current = null), 0);
+        }}
+        onPointerLeave={() => {
+          if (drag.current) {
+            setDragging(false);
+            drag.current = null;
+          }
+        }}
+        onClickCapture={(e) => {
+          if (drag.current?.moved) e.stopPropagation();
+        }}
+      >
+        {children}
+      </div>
+      <div className="absolute top-2 left-2 flex w-[26px] flex-col overflow-hidden rounded-[6px] bg-white shadow-[0_0_6px_rgba(0,0,0,0.25)]">
+        <button type="button" aria-label={labels.zoomIn} disabled={zoom >= MAX_ZOOM} onClick={() => zoomBy(0.5)} className="flex h-[24px] items-center justify-center text-[#222] hover:bg-black/5 disabled:opacity-35">
+          <Plus className="size-4" strokeWidth={2.6} aria-hidden />
+        </button>
+        <span aria-hidden className="mx-1 h-px bg-black/10" />
+        <button type="button" aria-label={labels.zoomOut} disabled={zoom <= 1} onClick={() => zoomBy(-0.5)} className="flex h-[24px] items-center justify-center text-[#222] hover:bg-black/5 disabled:opacity-35">
+          <Minus className="size-4" strokeWidth={2.6} aria-hidden />
+        </button>
+      </div>
+      {sample && <span className="absolute top-2 right-2 rounded-full bg-black/55 px-2.5 py-0.5 text-[10px] font-medium text-white">{labels.sampleData}</span>}
+    </div>
+  );
+}
+
+/**
+ * The design's ward map as a live map: the four traced outlines coloured per ward, the selected ward highlighted, the
+ * others dimmed; a click on a ward selects it (the figures below change), and a legend lists the wards.
+ */
+function SchematicWardMap({ wards, active, onSelect, labels, sample }: { wards: WardView[]; active: number; onSelect: (i: number) => void; labels: WardMapLabels; sample?: boolean }) {
+  const shape = WARD_SHAPES[active];
+  return (
+    <ZoomableFrame labels={labels} sample={sample} style={{ aspectRatio: `${WARD_MAP_W} / ${WARD_MAP_H}` }} className="w-full" focus={shape ? [shape.label[0] / WARD_MAP_W, shape.label[1] / WARD_MAP_H] : undefined} focusKey={active}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- static design texture */}
+      <img src="/images/figma/ward-map-base.jpg" alt="" draggable={false} className="absolute inset-0 size-full object-cover select-none" />
+      <svg viewBox={`0 0 ${WARD_MAP_W} ${WARD_MAP_H}`} className="absolute inset-0 size-full" role="group" aria-label="Ward map">
+        {WARD_SHAPES.map((s, i) => {
+          const w = wards[i];
+          const c = w ? (w.colour ?? WARD_COLOURS[i % WARD_COLOURS.length]!) : "#ffffff";
+          const on = i === active;
+          return (
+            <g
+              key={i}
+              role={w ? "button" : undefined}
+              tabIndex={w ? 0 : undefined}
+              aria-label={w?.name}
+              aria-pressed={w ? on : undefined}
+              className={cn("outline-none", w && "cursor-pointer")}
+              onClick={() => w && onSelect(i)}
+              onKeyDown={(e) => w && (e.key === "Enter" || e.key === " ") && onSelect(i)}
+            >
+              <path d={shapePath(s.points)} fill={c} fillOpacity={w ? (on ? 0.95 : 0.6) : 0.1} stroke="#ffffff" strokeWidth={on ? 6 : 3} strokeLinejoin="round" style={{ transition: "fill-opacity .2s" }} />
+              {w && (
+                <text x={s.label[0]} y={s.label[1]} textAnchor="middle" dominantBaseline="middle" fontSize={on ? 46 : 40} fontWeight={700} fill="#ffffff" stroke="rgba(0,0,0,0.4)" strokeWidth={5} paintOrder="stroke" pointerEvents="none">
+                  {w.name}
+                </text>
+              )}
+            </g>
+          );
+        })}
+      </svg>
+      <ul className="absolute bottom-2 left-2 space-y-0.5 rounded-[6px] bg-white px-2 py-1.5 text-[9px] leading-[12px] font-semibold text-[#222] shadow-[0_0_6px_rgba(0,0,0,0.25)]">
+        {wards.slice(0, WARD_SHAPES.length).map((w, i) => (
+          <li key={i}>
+            <button type="button" onClick={() => onSelect(i)} aria-pressed={i === active} className={cn("flex items-center gap-1.5", i === active && "underline")}>
+              <span aria-hidden className="size-2 rounded-full" style={{ backgroundColor: w.colour ?? WARD_COLOURS[i % WARD_COLOURS.length] }} />
+              {w.name}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </ZoomableFrame>
+  );
+}
 
 /**
  * Schematic ward map: one block per ward in the data (names and count follow the backend), with a
  * legend. Clicking a block selects the ward. It is not a survey map; real ward boundaries need map data.
  */
-function WardMap({ wards, active, onSelect }: { wards: WardView[]; active: number; onSelect: (i: number) => void }) {
+function WardMap({ wards, active, onSelect, labels }: { wards: WardView[]; active: number; onSelect: (i: number) => void; labels: WardMapLabels }) {
   const projected = projectGeometries(
     wards.map((x) => x.geometry),
     600,
@@ -61,8 +200,8 @@ function WardMap({ wards, active, onSelect }: { wards: WardView[]; active: numbe
   );
   if (projected && projected.shapes.some(Boolean)) {
     return (
-      <div className="relative overflow-hidden rounded-[10px] border border-[#414141] bg-[#1d3b24]">
-        <svg viewBox="0 0 600 420" role="group" aria-label="Ward map" className="block h-auto max-h-[300px] w-full">
+      <ZoomableFrame labels={labels} className="max-h-[300px] w-full" style={{ aspectRatio: "600 / 420" }}>
+        <svg viewBox="0 0 600 420" role="group" aria-label="Ward map" className="absolute inset-0 size-full">
           {wards.map((x, i) => {
             const s = projected.shapes[i];
             if (!s) return null;
@@ -77,7 +216,7 @@ function WardMap({ wards, active, onSelect }: { wards: WardView[]; active: numbe
             );
           })}
         </svg>
-      </div>
+      </ZoomableFrame>
     );
   }
   const cols = Math.min(wards.length, wards.length > 6 ? 4 : wards.length > 2 ? 3 : 2);
@@ -105,20 +244,24 @@ function WardMap({ wards, active, onSelect }: { wards: WardView[]; active: numbe
 }
 
 /** Ward map + "Ward Details" card with ward selector (Figma 375:12497). */
-export function WardDetailsCard({ heading, wards, mapSrc, viewAll }: { heading: string; wards: WardView[]; mapSrc?: string; viewAll?: { label: string; href: string } }) {
+export function WardDetailsCard({ heading, wards, mapSrc, viewAll, labels, sample }: { heading: string; wards: WardView[]; mapSrc?: string; viewAll?: { label: string; href: string }; labels: WardMapLabels; sample?: boolean }) {
   const [idx, setIdx] = useState(0);
   const ward = wards[idx] ?? wards[0];
   if (!ward) return null;
   const hasGeometry = wards.some((w) => w.geometry);
+  const picture = ward.mapImage ?? mapSrc;
   return (
     <div className="rounded-[10px] border border-[#414141]/20 bg-white px-3 py-2">
-      {mapSrc || ward.mapImage || !hasGeometry ? (
-        <div className="relative h-[249px] overflow-hidden rounded-[10px] border border-[#414141]">
-          {/* eslint-disable-next-line @next/next/no-img-element -- ward map image supplied by the Gram Panchayat, else the design's picture */}
-          <img src={ward.mapImage ?? mapSrc ?? FIGMA_WARD_MAP} alt="" className="h-full w-full object-cover object-top" loading="lazy" />
-        </div>
+      {picture ? (
+        // A map picture supplied by the Gram Panchayat: it zooms with the buttons too.
+        <ZoomableFrame labels={labels} sample={sample} className="h-[249px]">
+          {/* eslint-disable-next-line @next/next/no-img-element -- ward map image supplied by the Gram Panchayat */}
+          <img src={picture} alt="" draggable={false} className="absolute inset-0 size-full object-cover object-top select-none" loading="lazy" />
+        </ZoomableFrame>
+      ) : hasGeometry || wards.length > WARD_SHAPES.length ? (
+        <WardMap wards={wards} active={idx} onSelect={setIdx} labels={labels} />
       ) : (
-        <WardMap wards={wards} active={idx} onSelect={setIdx} />
+        <SchematicWardMap wards={wards} active={idx} onSelect={setIdx} labels={labels} sample={sample} />
       )}
       <div className="relative mt-0 overflow-hidden rounded-[10px] border border-[#414141]/20 bg-white px-3 pt-2 pb-4">
         <div className="flex items-center justify-between">
