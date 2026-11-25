@@ -134,7 +134,7 @@ export function BannerFields({ spec, control: ctl, tenantId, errors, canEdit, pr
   const ctaField = (name: string) => ctaSpec.fields.find((f) => f.name === name)!;
   const opt = (v: string) => (t.has(`options.${v}`) ? t(`options.${v}`) : v);
   const imageId = useWatch({ control: ctl, name: "imageId" }) as unknown;
-  const imageUrl = typeof imageId === "string" && imageId ? adminMediaUrl(imageId) : undefined;
+  const imageUrl = typeof imageId === "string" && imageId ? adminMediaUrl(imageId) : previewImage;
 
   /** Segmented choice (text position, content width). */
   const segment = ({ path, options, stacked }: { path: string; options: readonly string[]; stacked?: boolean }) => (
@@ -295,7 +295,7 @@ export function BannerFields({ spec, control: ctl, tenantId, errors, canEdit, pr
           {/* 3. Image */}
           <div className={card}>
             <p className={heading}>3. {t("sections.bannerImageSettings")}</p>
-            <FieldInput spec={field("imageId")} path="imageId" control={ctl} tenantId={tenantId} error={errors.imageId} />
+            <FieldInput spec={field("imageId")} path="imageId" control={ctl} tenantId={tenantId} error={errors.imageId} fallbackImage={previewImage} />
             <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted">
               <Crop className="size-3.5" aria-hidden /> {t("mediaHint")}
             </p>
