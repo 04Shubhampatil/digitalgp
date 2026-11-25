@@ -27,6 +27,7 @@ export function FieldInput({
   error,
   disabled,
   compact,
+  fallbackImage,
 }: {
   spec: FieldSpec;
   path: string;
@@ -35,6 +36,8 @@ export function FieldInput({
   error?: string;
   disabled?: boolean;
   compact?: boolean;
+  /** Image fields: the design photo the website shows until a picture is uploaded. */
+  fallbackImage?: string;
 }) {
   const t = useTranslations("editor");
   const label = t(`fields.${spec.labelKey}`) + (spec.required ? " *" : "");
@@ -90,7 +93,7 @@ export function FieldInput({
       <Controller
         control={control}
         name={path}
-        render={({ field }) => <MediaField label={label} value={String(field.value ?? "")} onChange={field.onChange} tenantId={tenantId} error={error} disabled={disabled} compact={compact} anyFile={spec.type === "file"} />}
+        render={({ field }) => <MediaField label={label} value={String(field.value ?? "")} onChange={field.onChange} tenantId={tenantId} error={error} disabled={disabled} compact={compact} anyFile={spec.type === "file"} fallbackUrl={fallbackImage} />}
       />
     );
   }

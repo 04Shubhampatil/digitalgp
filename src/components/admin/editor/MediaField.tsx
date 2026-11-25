@@ -17,6 +17,7 @@ export function MediaField({
   disabled,
   compact,
   anyFile,
+  fallbackUrl,
 }: {
   label: string;
   value: string;
@@ -28,6 +29,8 @@ export function MediaField({
   compact?: boolean;
   /** Accept PDFs and videos as well as images (file fields such as report PDFs). */
   anyFile?: boolean;
+  /** Picture the website shows until one is uploaded (a design photo): drawn as the preview while the field is empty. */
+  fallbackUrl?: string;
 }) {
   const t = useTranslations("editor");
   const tc = useTranslations("common");
@@ -100,6 +103,9 @@ export function MediaField({
           <span className="flex size-20 shrink-0 items-center justify-center rounded-[6px] bg-success-soft text-primary">
             <FileText className="size-8" aria-hidden />
           </span>
+        ) : fallbackUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- static design photo of the website
+          <img src={fallbackUrl} alt="" className="size-20 shrink-0 rounded-[6px] object-cover" />
         ) : (
           <span className="flex size-20 shrink-0 items-center justify-center rounded-[6px] bg-surface-table text-muted">
             <ImagePlus className="size-6" aria-hidden />
