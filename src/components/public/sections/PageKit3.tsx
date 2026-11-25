@@ -5,6 +5,7 @@ import { pair, pickText, type Bilingual } from "@/i18n/text";
 import { getPublicSchemeCoverage, listPublicSchemes, publicMediaUrl } from "@/lib/api/public";
 import { detailHref, resolveHref } from "@/lib/href";
 import { SchemeCoverageClient, type CoverageLabels, type CoverageView, type CoverageWard } from "./CoverageMap";
+import { DEMO_WARDS } from "./coverage-sample";
 import type { SectionProps } from "./index";
 
 type B = Bilingual | undefined;
@@ -223,13 +224,16 @@ export async function SchemeCoverageSection({ slug, locale, data, siblings }: Se
   } else {
     if (sectionWards.length === 0 && !sectionMap) return null;
     const benef = sectionWards.filter((w) => w.beneficiaries !== null);
-    initial = {
-      // The design picture already draws the sample wards; a backend section's wards are drawn as blocks.
-      wards: isDesignPicture ? [] : sectionWards,
-      totalHouseholds: isDesignPicture ? 0 : sectionWards.reduce((a, w) => a + w.households, 0),
-      totalBeneficiaries: isDesignPicture || benef.length === 0 ? null : benef.reduce((a, w) => a + (w.beneficiaries ?? 0), 0),
-      mapUrl: sectionMap,
-    };
+    initial = isDesignPicture
+      ? // No real figures yet (placeholder): sample wards on the interactive map, so zoom and ward details can be tried out.
+        { wards: DEMO_WARDS, totalHouseholds: DEMO_WARDS.reduce((a, w) => a + w.households, 0), totalBeneficiaries: DEMO_WARDS.reduce((a, w) => a + (w.beneficiaries ?? 0), 0), mapUrl: undefined, demo: true }
+      : {
+          // A backend section's wards are drawn as blocks.
+          wards: sectionWards,
+          totalHouseholds: sectionWards.reduce((a, w) => a + w.households, 0),
+          totalBeneficiaries: benef.length === 0 ? null : benef.reduce((a, w) => a + (w.beneficiaries ?? 0), 0),
+          mapUrl: sectionMap,
+        };
   }
   const labels: CoverageLabels = {
     heading: pickText(d.heading, locale) || t("coverageMap"),
@@ -248,11 +252,12 @@ export async function SchemeCoverageSection({ slug, locale, data, siblings }: Se
     totalHouseholds: td("totalHouseholds"),
     legend: td("beneficiaryHouseholds"),
     empty: td("noCoverage"),
+    sampleData: td("sampleData"),
   };
   // A backend picture stays the fallback for a scheme without ward figures; the design picture never stands in for real data.
   const fallbackPicture = isDesignPicture ? undefined : sectionMap;
   const client = (
-    <SchemeCoverageClient slug={slug} schemes={schemes} initialSchemeId={initialId} initial={initial} sectionMapUrl={fallbackPicture} labels={labels} locale={locale} card={!!siblings?.["link-cards"]} />
+    <SchemeCoverageClient slug={slug} schemes={schemes} initialSchemeId={initialId} initial={initial} sectionMapUrl={fallbackPicture} labels={labels} locale={locale} card={!!siblings?.["link-cards"]} demoWards={isDesignPicture ? DEMO_WARDS : undefined} />
   );
   if (siblings?.["link-cards"]) return client;
   return (
