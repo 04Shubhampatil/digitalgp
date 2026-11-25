@@ -16,7 +16,7 @@ import { SchemesManager } from "@/components/admin/websites/SchemesManager";
 import { PageEditorHeader } from "@/components/admin/editor/PageEditorHeader";
 import { content, tenants } from "@/lib/api/admin";
 import { publicAnchor } from "@/content/fallback";
-import { bannerSeed, designSeed, sectionSeed } from "@/lib/banner-seed";
+import { bannerPreviewImage, bannerSeed, designSeed, sectionSeed } from "@/lib/banner-seed";
 import { isEditorCard } from "@/lib/editor-sections";
 import { isApiError } from "@/lib/api/client";
 import { cookieHeader } from "@/lib/api/server";
@@ -138,6 +138,7 @@ export default async function PageEditor({ params, searchParams }: { params: Pro
         capabilities={user.capabilities}
         defaultOpen
         initialData={section.sectionKey === "banner" ? seed : (sectionSeed(pageKey, section.sectionKey, welcomeData) ?? (!section.draft && !section.published ? designSeed(pageKey, section.sectionKey, tenant.slug, tenant.settings.contact?.email, tenant.settings.weather?.location) : undefined))}
+        previewImage={section.sectionKey === "banner" ? bannerPreviewImage(pageKey) : undefined}
         viewHref={sitePublic ? `${pageHref(tenant.slug, pageKey)}?highlight=${PUBLIC_ANCHOR[section.sectionKey] ?? publicAnchor(pageKey, section.sectionKey, !!section.published)}` : undefined}
       />
     );

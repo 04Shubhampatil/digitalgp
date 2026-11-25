@@ -115,6 +115,16 @@ export function bannerSeed(pageKey: PageKey, heroData: Obj | null | undefined): 
   };
 }
 
+/**
+ * The photo the website shows in a page's banner until one is uploaded (the design hero photo). The editor's live
+ * preview draws it too, so the preview matches the page instead of an empty grey box.
+ */
+export function bannerPreviewImage(pageKey: PageKey): string | undefined {
+  const hero = (FALLBACK_SECTIONS[pageKey] ?? []).find((s) => ["hero", "page-hero", "about-hero"].includes(s.sectionKey))?.data;
+  const url = (hero?.imageUrl as string | undefined) ?? (hero?.backgroundImageUrl as string | undefined);
+  return url ?? (pageKey === "home" ? "/images/figma/home-hero.png" : undefined);
+}
+
 /** Design content in the shape an editor form can hold: Marathi filled in, site picture files left out. */
 function formReady(v: unknown): unknown {
   if (Array.isArray(v)) return v.map(formReady).filter((x) => x !== undefined);

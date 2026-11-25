@@ -117,6 +117,8 @@ export interface SectionEditorProps {
   initialData?: Record<string, unknown>;
   /** Public page address of this section ("View on website"); absent while the website or the page is not public. */
   viewHref?: string;
+  /** Banner card only: the design photo the website shows until a picture is uploaded (used by the live preview). */
+  previewImage?: string;
 }
 
 /**
@@ -124,7 +126,7 @@ export interface SectionEditorProps {
  * form from the editor spec → PUT …/draft, discard → DELETE …/draft, workflow → POST …/:action.
  * Editable only while the draft is DRAFT/REJECTED (or there is no draft yet).
  */
-export function SectionEditor({ tenantId, pageKey, spec, section, capabilities, defaultOpen = false, initialData, viewHref }: SectionEditorProps) {
+export function SectionEditor({ tenantId, pageKey, spec, section, capabilities, defaultOpen = false, initialData, viewHref, previewImage }: SectionEditorProps) {
   const t = useTranslations("editor");
   const ta = useTranslations("admin");
   const tc = useTranslations("common");
@@ -291,7 +293,7 @@ export function SectionEditor({ tenantId, pageKey, spec, section, capabilities, 
 
           <fieldset disabled={!canEdit || pending} className="grid gap-5">
             {spec.key === "banner" ? (
-              <BannerFields spec={spec} control={control} tenantId={tenantId} errors={fieldErrors} canEdit={canEdit} />
+              <BannerFields spec={spec} control={control} tenantId={tenantId} errors={fieldErrors} canEdit={canEdit} previewImage={previewImage} />
             ) : (
               <>
                 <div className="grid gap-4 sm:grid-cols-2">

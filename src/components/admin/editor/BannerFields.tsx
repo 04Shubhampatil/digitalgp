@@ -51,7 +51,7 @@ function rgba(hex: string, percent: number): string {
 }
 
 /** Live preview of the banner as the public page draws it (same layouts, text position, overlay and colours). */
-function BannerPreview({ control, emptyLabel }: { control: Control<FormRecord>; emptyLabel: string }) {
+function BannerPreview({ control, emptyLabel, fallbackImage }: { control: Control<FormRecord>; emptyLabel: string; fallbackImage?: string }) {
   const v = useWatch({ control }) as Record<string, unknown>;
   const str = (x: unknown) => (typeof x === "string" ? x : "");
   const two = (x: unknown) => {
@@ -59,7 +59,8 @@ function BannerPreview({ control, emptyLabel }: { control: Control<FormRecord>; 
     return o.en || o.mr || "";
   };
   const layout = str(v.layout) || "full-background";
-  const imageUrl = str(v.imageId) ? adminMediaUrl(str(v.imageId)) : "";
+  // No upload yet: the website shows the design photo, so the preview does too.
+  const imageUrl = str(v.imageId) ? adminMediaUrl(str(v.imageId)) : (fallbackImage ?? "");
   const heading = two(v.heading);
   const supporting = two(v.supportingText);
   const description = two(v.description);
@@ -124,7 +125,7 @@ function BannerPreview({ control, emptyLabel }: { control: Control<FormRecord>; 
   );
 }
 
-export function BannerFields({ spec, control: ctl, tenantId, errors, canEdit }: { spec: SectionEditorSpec; control: Control<FormRecord>; tenantId: string; errors: Record<string, string>; canEdit: boolean }) {
+export function BannerFields({ spec, control: ctl, tenantId, errors, canEdit, previewImage }: { spec: SectionEditorSpec; control: Control<FormRecord>; tenantId: string; errors: Record<string, string>; canEdit: boolean; previewImage?: string }) {
   const t = useTranslations("editor");
   const field = (name: string): FieldSpec => spec.fields.find((f) => f.name === name)!;
   const group = (name: string, fieldName: string): FieldSpec => spec.groups!.find((g) => g.name === name)!.fields.find((f) => f.name === fieldName)!;
@@ -239,7 +240,7 @@ export function BannerFields({ spec, control: ctl, tenantId, errors, canEdit }: 
       {/* Live preview: what the banner looks like with the current text, picture, layout and position. */}
       <div className={card}>
         <p className={heading}>{t("livePreview")}</p>
-        <BannerPreview control={ctl} emptyLabel={t("livePreviewEmpty")} />
+        <BannerPreview control={ctl} emptyLabel={t("livePreviewEmpty")} fallbackImage={previewImage} />
         <p className="mt-2 text-[11px] text-muted">{t("livePreviewHint")}</p>
       </div>
 
