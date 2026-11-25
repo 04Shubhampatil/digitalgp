@@ -13,12 +13,14 @@ interface QuickLinksData {
 }
 
 /** Figma "Citizen Services" (375:12910): centred heading + 6×2 grid of illustrated service tiles. */
-export async function QuickLinksSection({ slug, locale, data }: SectionProps) {
+export async function QuickLinksSection({ slug, locale, data, pageKey }: SectionProps) {
   const t = await getTranslations("public");
   const d = data as QuickLinksData;
   const items = d.items ?? [];
   if (items.length === 0) return null;
-  const all = { label: pickText(d.viewAll?.label, locale) || t("viewAllServices"), href: d.viewAll?.href ?? `/${slug}/services` };
+  // On the Citizen Services page itself the last tile jumps to the RTS card below instead of reloading the page.
+  const onServices = pageKey === "services";
+  const all = { label: pickText(d.viewAll?.label, locale) || t("viewAllServices"), href: onServices ? `/${slug}/services#rts-grid` : (d.viewAll?.href ?? `/${slug}/services`) };
   const tiles = [
     ...items.map((item) => ({
       label: pickText(item.label, locale),
@@ -31,7 +33,8 @@ export async function QuickLinksSection({ slug, locale, data }: SectionProps) {
   const cls =
     "flex h-[164px] flex-col items-center rounded-[10px] border border-black/15 bg-white px-2 pt-6 text-center shadow-[0_0_20px_rgba(0,0,0,0.25)] transition hover:-translate-y-0.5";
   return (
-    <section className="bg-cream pt-[104px] pb-16 max-lg:pt-12">
+    // Citizen Services page: the block sits between the hero and the RTS card (moved here from the home page).
+    <section className={onServices ? "bg-cream pt-10 pb-10 lg:pt-[56px] lg:pb-[52px]" : "bg-cream pt-[104px] pb-16 max-lg:pt-12"}>
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
         <h2 className="text-center text-[30px] leading-[45px] font-semibold text-black">{pickText(d.heading, locale) || t("services")}</h2>
         <ul className="mt-[44px] grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-6 lg:gap-y-4">

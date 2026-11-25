@@ -8,6 +8,8 @@ import type { SectionProps } from "./index";
 interface HeroData {
   title?: Bilingual;
   subtitle?: Bilingual;
+  /** Paragraph under the heading when the title holds the welcome line and the subtitle the heading. */
+  description?: Bilingual;
   backgroundImageId?: string;
   cta?: { label?: Bilingual; href?: string };
   /** All hero buttons from the design; falls back to the single `cta` for older content. */
@@ -33,17 +35,20 @@ export async function HeroSection({ slug, locale, data, tenantName }: SectionPro
     title = subtitle;
     subtitle = "";
   }
+  const description = pickText(d.description, locale);
+  if (!subtitle && description && description !== title) subtitle = description;
   const buttons = (d.actions?.length ? d.actions : d.cta ? [d.cta] : []).filter((b) => b.href && b.label);
   const image = d.backgroundImageId ? publicMediaUrl(slug, d.backgroundImageId) : FIGMA_HERO_IMAGE;
 
   return (
     <section className="overflow-hidden bg-cream">
       <div className="mx-auto grid max-w-[1440px] items-center gap-8 px-4 sm:px-8 lg:grid-cols-[444px_minmax(0,1fr)] lg:gap-0 lg:px-[62px]">
-        <div className="flex flex-col gap-10 py-12 lg:py-0">
-          <div className="flex flex-col gap-8">
-            {eyebrow && <p className="text-[18px] leading-normal font-medium sm:text-[22px] sm:whitespace-nowrap text-black">{eyebrow}</p>}
-            <h1 className="max-w-[444px] text-[30px] leading-[45px] font-semibold text-black">{title}</h1>
-            {subtitle && <p className="max-w-[444px] text-[15px] leading-[25px] text-[#414141]">{subtitle}</p>}
+        {/* Final home design (375:12281): orange upper-case welcome line on two lines, 32px/51px heading, 15px paragraph. The column may run a little over the photo's faded left edge (the heading is about 470px wide). */}
+        <div className="relative z-10 flex flex-col gap-10 py-12 lg:w-[480px] lg:py-0">
+          <div className="flex flex-col">
+            {eyebrow && <p className="max-w-[380px] text-[18px] leading-[26px] font-semibold text-[#ea7f14] uppercase sm:text-[22px] sm:leading-[30px]">{eyebrow}</p>}
+            <h1 className="mt-8 text-[28px] leading-[44px] font-semibold text-black lg:text-[32px] lg:leading-[51px]">{title}</h1>
+            {subtitle && <p className="mt-6 text-[15px] leading-[25.5px] text-[#414141]">{subtitle}</p>}
           </div>
           {buttons.length > 0 && (
             <div className="flex flex-wrap items-center gap-2">

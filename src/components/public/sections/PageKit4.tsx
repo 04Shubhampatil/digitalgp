@@ -596,7 +596,7 @@ const RTS_PICTURES = Array.from(
  * `rts-grid`: "Right to Service (RTS) – Apply Online" certificate tiles with a portal button; the card overlaps the hero by 128px
  * (Figma 1320×651 card: 231×191 tiles with a 68px picture, 58px button).
  */
-export function RtsGridSection({ slug, locale, data }: SectionProps) {
+export function RtsGridSection({ slug, locale, data, siblings }: SectionProps) {
   const d = data as {
     heading?: B;
     subheading?: B;
@@ -604,7 +604,8 @@ export function RtsGridSection({ slug, locale, data }: SectionProps) {
     action?: { label?: B; href?: string };
   };
   return (
-    <div className="relative z-10 -mt-10 lg:-mt-[128px] bg-[linear-gradient(to_bottom,transparent_40px,var(--color-cream)_40px)] lg:bg-[linear-gradient(to_bottom,transparent_128px,var(--color-cream)_128px)]">
+    // With the Citizen Services block above it (between the hero and this card) the card no longer overlaps the hero.
+    <div className={siblings?.["quick-links"] ? "relative z-10 bg-cream" : "relative z-10 -mt-10 lg:-mt-[128px] bg-[linear-gradient(to_bottom,transparent_40px,var(--color-cream)_40px)] lg:bg-[linear-gradient(to_bottom,transparent_128px,var(--color-cream)_128px)]"}>
       <section className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
         <div className="rounded-[20px] bg-white px-5 pt-8 pb-8 shadow-[0_2px_16px_rgba(0,0,0,0.12)] sm:px-[30px] lg:pt-[35px] lg:pb-[35px]">
           <h2 className="text-center text-[24px] leading-9 font-semibold text-black lg:text-[26px]">
