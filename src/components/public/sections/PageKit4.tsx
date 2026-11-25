@@ -195,7 +195,7 @@ export async function AnnounceCategoriesSection({ slug, locale, data }: SectionP
     return CAT_PICTURES[free]!;
   });
   return (
-    <section className="relative z-10 mx-auto -mt-10 max-w-[1440px] px-4 sm:px-8 lg:-mt-[110px] lg:px-[60px]">
+    <section className="relative z-10 mx-auto -mt-10 max-w-[1440px] px-4 sm:px-8 lg:-mt-[110px] lg:px-[60px] bg-[linear-gradient(to_bottom,transparent_40px,var(--color-cream)_40px)] lg:bg-[linear-gradient(to_bottom,transparent_110px,var(--color-cream)_110px)]">
       <ul className={`grid grid-cols-2 gap-y-4 rounded-[16px] bg-white px-2 py-5 shadow-[0_0_16px_rgba(0,0,0,0.18)] sm:grid-cols-3 lg:px-0 lg:py-[21px] ${tiles.length >= 6 ? "lg:grid-cols-6" : tiles.length === 5 ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
         {tiles.map((it, i) => (
           <li key={i} className="lg:border-l lg:border-[#414141]/20 lg:first:border-l-0">
@@ -602,7 +602,7 @@ export function RtsGridSection({ slug, locale, data }: SectionProps) {
     action?: { label?: B; href?: string };
   };
   return (
-    <section className="relative z-10 mx-auto -mt-10 max-w-[1440px] px-4 sm:px-8 lg:-mt-[128px] lg:px-[60px]">
+    <section className="relative z-10 mx-auto -mt-10 max-w-[1440px] px-4 sm:px-8 lg:-mt-[128px] lg:px-[60px] bg-[linear-gradient(to_bottom,transparent_40px,var(--color-cream)_40px)] lg:bg-[linear-gradient(to_bottom,transparent_128px,var(--color-cream)_128px)]">
       <div className="rounded-[20px] bg-white px-5 pt-8 pb-8 shadow-[0_2px_16px_rgba(0,0,0,0.12)] sm:px-[30px] lg:pt-[35px] lg:pb-[35px]">
         <h2 className="text-center text-[24px] leading-9 font-semibold text-black lg:text-[26px]">
           {pickText(d.heading, locale)}

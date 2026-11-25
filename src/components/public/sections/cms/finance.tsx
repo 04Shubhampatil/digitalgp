@@ -117,6 +117,9 @@ function InfoCardBlock({
   );
 }
 
+/** Smallest share of the circle (7%) a labelled slice is drawn with: wide enough for its "3.4%" label. */
+const MIN_SLICE = 0.07;
+
 /** Donut (SVG): segments clockwise from the top, each share written inside it, white centre with label and total. */
 function Donut({
   segments,
@@ -130,6 +133,15 @@ function Donut({
   size: string;
 }) {
   const total = segments.reduce((s, x) => s + x.value, 0) || 1;
+  // As in the Figma donut, a thin slice is drawn wider than its true share so its label fits inside it; the room comes
+  // from the larger slices. The labels still show the real percentages.
+  const labelled = segments.filter((x) => x.value / total >= 0.02 && x.value / total < MIN_SLICE);
+  const minSlice = Math.min(MIN_SLICE, 0.9 / Math.max(1, labelled.length));
+  const isThinSlice = (v: number) => v / total >= 0.02 && v / total < minSlice;
+  const thinCount = segments.filter((x) => isThinSlice(x.value)).length;
+  const restRaw = segments.reduce((s, x) => (isThinSlice(x.value) ? s : s + x.value / total), 0) || 1;
+  const restScale = (1 - thinCount * minSlice) / restRaw;
+  const displayShare = (v: number) => (isThinSlice(v) ? minSlice : (v / total) * restScale);
   const Ro = 100;
   const ri = 47;
   const pt = (a: number, rad: number) =>
@@ -145,7 +157,7 @@ function Donut({
     }[]
   >((acc, sg) => {
     const start = acc.length > 0 ? acc[acc.length - 1]!.end : 0;
-    const share = sg.value / total;
+    const share = displayShare(sg.value);
     const end = start + share * 2 * Math.PI;
     // A single 100% segment cannot be drawn as one arc; stop just short of the full circle.
     const stop = Math.min(end, start + 2 * Math.PI - 1e-4);
@@ -160,8 +172,6 @@ function Donut({
       { d, colour: sg.colour, pct: sg.pct, mid: (start + end) / 2, share, end },
     ];
   }, []);
-  // Neighbouring thin slices alternate between an inner and an outer radius so their labels do not collide.
-  let thin = 0;
   return (
     <div className={`relative mx-auto aspect-square w-full ${size}`}>
       <svg
@@ -182,9 +192,7 @@ function Donut({
         {arcs
           .filter((a) => a.share >= 0.02)
           .map((a, i) => {
-            const isThin = a.share < 0.05;
-            const rad = isThin ? (thin++ % 2 === 0 ? 60 : 87) : (Ro + ri) / 2;
-            const [x, y] = pt(a.mid, rad);
+            const [x, y] = pt(a.mid, (Ro + ri) / 2);
             return (
               <text
                 key={i}
@@ -192,7 +200,7 @@ function Donut({
                 y={y}
                 textAnchor="middle"
                 dominantBaseline="central"
-                fontSize={isThin ? 9 : 11}
+                fontSize={11}
                 fontWeight="700"
                 fill="#fff"
               >

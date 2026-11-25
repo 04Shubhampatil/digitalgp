@@ -620,7 +620,7 @@ export async function KeyInitiativesSection({ slug, locale, data }: SectionProps
   if (items.length === 0) return null;
   const viewAll = d.viewAll?.href && tx(d.viewAll.label, locale) ? { href: d.viewAll.href, label: tx(d.viewAll.label, locale) } : null;
   return (
-    <section className="relative z-10 mx-auto max-w-[1440px] px-4 sm:px-8 lg:-mt-[78px] lg:px-[62px]">
+    <section className="relative z-10 mx-auto max-w-[1440px] px-4 sm:px-8 lg:-mt-[78px] lg:px-[62px] lg:bg-[linear-gradient(to_bottom,transparent_78px,var(--color-cream)_78px)]">
       <div className="rounded-[14px] bg-white px-4 pt-6 pb-4 shadow-[0_2px_14px_rgba(0,0,0,0.08)] sm:px-5">
         <h2 className="text-center text-[26px] leading-9 font-semibold text-black">{tx(d.heading, locale) || t("keyInitiatives")}</h2>
         <span aria-hidden className="mx-auto mt-2 block h-0.5 w-[50px] rounded bg-[#135130]" />
