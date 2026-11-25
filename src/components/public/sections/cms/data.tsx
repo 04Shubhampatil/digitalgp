@@ -626,54 +626,56 @@ export async function KeyInitiativesSection({ slug, locale, data }: SectionProps
   if (items.length === 0) return null;
   const viewAll = d.viewAll?.href && tx(d.viewAll.label, locale) ? { href: d.viewAll.href, label: tx(d.viewAll.label, locale) } : null;
   return (
-    <section className="relative z-10 mx-auto max-w-[1440px] px-4 sm:px-8 lg:-mt-[78px] lg:px-[62px] lg:bg-[linear-gradient(to_bottom,transparent_78px,var(--color-cream)_78px)]">
-      <div className="rounded-[14px] bg-white px-4 pt-6 pb-4 shadow-[0_2px_14px_rgba(0,0,0,0.08)] sm:px-5">
-        <h2 className="text-center text-[26px] leading-9 font-semibold text-black">{tx(d.heading, locale) || t("keyInitiatives")}</h2>
-        <span aria-hidden className="mx-auto mt-2 block h-0.5 w-[50px] rounded bg-[#135130]" />
-        {tx(d.subheading, locale) && <p className="mx-auto mt-3 max-w-3xl text-center text-[15px] leading-6 text-[#414141]">{tx(d.subheading, locale)}</p>}
-        <ul className="mt-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
-          {items.map((it, i) => {
-            const body = (
-              <>
-                {it.iconImage ? (
-                  // Placeholder content: the Figma pictogram (filled glyph in its tinted circle), sliced from the design.
-                  // eslint-disable-next-line @next/next/no-img-element -- static design asset
-                  <img src={it.iconImage} alt="" width={64} height={64} className="size-16" />
-                ) : (
-                  <span className="flex size-16 items-center justify-center rounded-full bg-[#e7f3e8] text-[#135130]">
-                    <Icon name={it.icon} className="size-8" />
-                  </span>
-                )}
-                <span className="mt-3 max-w-[165px] text-[16px] leading-[27px] font-semibold whitespace-pre-line text-black">{tx(it.title, locale)}</span>
-              </>
-            );
-            const cls = "flex h-full flex-col items-center px-3 py-4 text-center lg:py-[9px]";
-            return (
-              <li key={i} className={`border-black/10 lg:min-h-[148px] lg:border-l lg:[&:nth-child(5n+1)]:border-l-0 ${i >= 5 ? "lg:border-t" : ""}`}>
-                {it.link && /^https?:\/\//.test(it.link) ? (
-                  <a href={it.link} {...externalProps} className={`${cls} rounded-[10px] hover:bg-[#f4faf4]`}>
-                    {body}
-                  </a>
-                ) : it.link ? (
-                  <Link href={resolveHref(it.link, slug)} className={`${cls} rounded-[10px] hover:bg-[#f4faf4]`}>
-                    {body}
-                  </Link>
-                ) : (
-                  <div className={cls}>{body}</div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-        {viewAll && (
-          <p className="mt-2 text-center">
-            <a href={resolveHref(viewAll.href, slug)} {...(/^https?:\/\//.test(viewAll.href) ? externalProps : {})} className="inline-flex items-center gap-2 text-[14px] font-semibold text-[#135130] hover:underline">
-              {viewAll.label} <ArrowRight aria-hidden className="size-4" />
-            </a>
-          </p>
-        )}
-      </div>
-    </section>
+    <div className="relative z-10 lg:-mt-[78px] lg:bg-[linear-gradient(to_bottom,transparent_78px,var(--color-cream)_78px)]">
+      <section className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[62px]">
+        <div className="rounded-[14px] bg-white px-4 pt-6 pb-4 shadow-[0_2px_14px_rgba(0,0,0,0.08)] sm:px-5">
+          <h2 className="text-center text-[26px] leading-9 font-semibold text-black">{tx(d.heading, locale) || t("keyInitiatives")}</h2>
+          <span aria-hidden className="mx-auto mt-2 block h-0.5 w-[50px] rounded bg-[#135130]" />
+          {tx(d.subheading, locale) && <p className="mx-auto mt-3 max-w-3xl text-center text-[15px] leading-6 text-[#414141]">{tx(d.subheading, locale)}</p>}
+          <ul className="mt-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
+            {items.map((it, i) => {
+              const body = (
+                <>
+                  {it.iconImage ? (
+                    // Placeholder content: the Figma pictogram (filled glyph in its tinted circle), sliced from the design.
+                    // eslint-disable-next-line @next/next/no-img-element -- static design asset
+                    <img src={it.iconImage} alt="" width={64} height={64} className="size-16" />
+                  ) : (
+                    <span className="flex size-16 items-center justify-center rounded-full bg-[#e7f3e8] text-[#135130]">
+                      <Icon name={it.icon} className="size-8" />
+                    </span>
+                  )}
+                  <span className="mt-3 max-w-[165px] text-[16px] leading-[27px] font-semibold whitespace-pre-line text-black">{tx(it.title, locale)}</span>
+                </>
+              );
+              const cls = "flex h-full flex-col items-center px-3 py-4 text-center lg:py-[9px]";
+              return (
+                <li key={i} className={`border-black/10 lg:min-h-[148px] lg:border-l lg:[&:nth-child(5n+1)]:border-l-0 ${i >= 5 ? "lg:border-t" : ""}`}>
+                  {it.link && /^https?:\/\//.test(it.link) ? (
+                    <a href={it.link} {...externalProps} className={`${cls} rounded-[10px] hover:bg-[#f4faf4]`}>
+                      {body}
+                    </a>
+                  ) : it.link ? (
+                    <Link href={resolveHref(it.link, slug)} className={`${cls} rounded-[10px] hover:bg-[#f4faf4]`}>
+                      {body}
+                    </Link>
+                  ) : (
+                    <div className={cls}>{body}</div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+          {viewAll && (
+            <p className="mt-2 text-center">
+              <a href={resolveHref(viewAll.href, slug)} {...(/^https?:\/\//.test(viewAll.href) ? externalProps : {})} className="inline-flex items-center gap-2 text-[14px] font-semibold text-[#135130] hover:underline">
+                {viewAll.label} <ArrowRight aria-hidden className="size-4" />
+              </a>
+            </p>
+          )}
+        </div>
+      </section>
+    </div>
   );
 }
 

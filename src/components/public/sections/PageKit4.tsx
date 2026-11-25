@@ -195,22 +195,24 @@ export async function AnnounceCategoriesSection({ slug, locale, data }: SectionP
     return CAT_PICTURES[free]!;
   });
   return (
-    <section className="relative z-10 mx-auto -mt-10 max-w-[1440px] px-4 sm:px-8 lg:-mt-[110px] lg:px-[60px] bg-[linear-gradient(to_bottom,transparent_40px,var(--color-cream)_40px)] lg:bg-[linear-gradient(to_bottom,transparent_110px,var(--color-cream)_110px)]">
-      <ul className={`grid grid-cols-2 gap-y-4 rounded-[16px] bg-white px-2 py-5 shadow-[0_0_16px_rgba(0,0,0,0.18)] sm:grid-cols-3 lg:px-0 lg:py-[21px] ${tiles.length >= 6 ? "lg:grid-cols-6" : tiles.length === 5 ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
-        {tiles.map((it, i) => (
-          <li key={i} className="lg:border-l lg:border-[#414141]/20 lg:first:border-l-0">
-            <Link href={it.href} className="group flex flex-col items-center px-2 text-center lg:h-[135px]">
-              {/* eslint-disable-next-line @next/next/no-img-element -- static design asset */}
-              <img src={pictures[i]} alt="" width={67} height={67} className="size-[67px] shrink-0" />
-              <span className="max-w-full truncate text-[23px] leading-[31px] font-semibold text-black group-hover:text-[#135130]" title={it.label}>
-                {it.label}
-              </span>
-              <span className="mt-[18px] text-[13.8px] leading-[19px] whitespace-nowrap text-black">{it.caption}</span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <div className="relative z-10 -mt-10 lg:-mt-[110px] bg-[linear-gradient(to_bottom,transparent_40px,var(--color-cream)_40px)] lg:bg-[linear-gradient(to_bottom,transparent_110px,var(--color-cream)_110px)]">
+      <section className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
+        <ul className={`grid grid-cols-2 gap-y-4 rounded-[16px] bg-white px-2 py-5 shadow-[0_0_16px_rgba(0,0,0,0.18)] sm:grid-cols-3 lg:px-0 lg:py-[21px] ${tiles.length >= 6 ? "lg:grid-cols-6" : tiles.length === 5 ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
+          {tiles.map((it, i) => (
+            <li key={i} className="lg:border-l lg:border-[#414141]/20 lg:first:border-l-0">
+              <Link href={it.href} className="group flex flex-col items-center px-2 text-center lg:h-[135px]">
+                {/* eslint-disable-next-line @next/next/no-img-element -- static design asset */}
+                <img src={pictures[i]} alt="" width={67} height={67} className="size-[67px] shrink-0" />
+                <span className="max-w-full truncate text-[23px] leading-[31px] font-semibold text-black group-hover:text-[#135130]" title={it.label}>
+                  {it.label}
+                </span>
+                <span className="mt-[18px] text-[13.8px] leading-[19px] whitespace-nowrap text-black">{it.caption}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
   );
 }
 
@@ -602,71 +604,73 @@ export function RtsGridSection({ slug, locale, data }: SectionProps) {
     action?: { label?: B; href?: string };
   };
   return (
-    <section className="relative z-10 mx-auto -mt-10 max-w-[1440px] px-4 sm:px-8 lg:-mt-[128px] lg:px-[60px] bg-[linear-gradient(to_bottom,transparent_40px,var(--color-cream)_40px)] lg:bg-[linear-gradient(to_bottom,transparent_128px,var(--color-cream)_128px)]">
-      <div className="rounded-[20px] bg-white px-5 pt-8 pb-8 shadow-[0_2px_16px_rgba(0,0,0,0.12)] sm:px-[30px] lg:pt-[35px] lg:pb-[35px]">
-        <h2 className="text-center text-[24px] leading-9 font-semibold text-black lg:text-[26px]">
-          {pickText(d.heading, locale)}
-        </h2>
-        <p className="mt-[9px] text-center text-[16px] leading-[26px] text-[#414141] lg:text-[17px]">
-          {pickText(d.subheading, locale)}
-        </p>
-        <ul className="mt-[23px] grid grid-cols-2 gap-[21px] sm:grid-cols-3 lg:grid-cols-5 lg:gap-x-[22px]">
-          {(d.items ?? []).map((it, i) => {
-            const Icon = RTS_ICONS[i % RTS_ICONS.length]!;
-            const pic = it.iconUrl ?? RTS_PICTURES[i];
-            return (
-              <li key={i}>
-                <Link
-                  href={resolveHref(it.href ?? "page:grievance", slug)}
-                  {...(it.href?.startsWith("http")
-                    ? { target: "_blank", rel: "noopener noreferrer" }
-                    : {})}
-                  className="flex h-full min-h-[191px] flex-col items-center rounded-[10px] border border-black/[0.07] bg-white px-2 pt-[26px] pb-5 text-center shadow-[0_0_8px_rgba(0,0,0,0.04)] transition-transform hover:-translate-y-0.5"
-                >
-                  {pic ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- static design asset
-                    <img
-                      src={pic}
-                      alt=""
-                      width={68}
-                      height={68}
-                      className="size-[68px] shrink-0"
-                    />
-                  ) : (
-                    <span
-                      aria-hidden
-                      className="flex size-[68px] items-center justify-center rounded-[17px] bg-[#e3f1e6] text-[#18803d]"
-                    >
-                      <Icon className="size-8" strokeWidth={2.2} />
+    <div className="relative z-10 -mt-10 lg:-mt-[128px] bg-[linear-gradient(to_bottom,transparent_40px,var(--color-cream)_40px)] lg:bg-[linear-gradient(to_bottom,transparent_128px,var(--color-cream)_128px)]">
+      <section className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[60px]">
+        <div className="rounded-[20px] bg-white px-5 pt-8 pb-8 shadow-[0_2px_16px_rgba(0,0,0,0.12)] sm:px-[30px] lg:pt-[35px] lg:pb-[35px]">
+          <h2 className="text-center text-[24px] leading-9 font-semibold text-black lg:text-[26px]">
+            {pickText(d.heading, locale)}
+          </h2>
+          <p className="mt-[9px] text-center text-[16px] leading-[26px] text-[#414141] lg:text-[17px]">
+            {pickText(d.subheading, locale)}
+          </p>
+          <ul className="mt-[23px] grid grid-cols-2 gap-[21px] sm:grid-cols-3 lg:grid-cols-5 lg:gap-x-[22px]">
+            {(d.items ?? []).map((it, i) => {
+              const Icon = RTS_ICONS[i % RTS_ICONS.length]!;
+              const pic = it.iconUrl ?? RTS_PICTURES[i];
+              return (
+                <li key={i}>
+                  <Link
+                    href={resolveHref(it.href ?? "page:grievance", slug)}
+                    {...(it.href?.startsWith("http")
+                      ? { target: "_blank", rel: "noopener noreferrer" }
+                      : {})}
+                    className="flex h-full min-h-[191px] flex-col items-center rounded-[10px] border border-black/[0.07] bg-white px-2 pt-[26px] pb-5 text-center shadow-[0_0_8px_rgba(0,0,0,0.04)] transition-transform hover:-translate-y-0.5"
+                  >
+                    {pic ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- static design asset
+                      <img
+                        src={pic}
+                        alt=""
+                        width={68}
+                        height={68}
+                        className="size-[68px] shrink-0"
+                      />
+                    ) : (
+                      <span
+                        aria-hidden
+                        className="flex size-[68px] items-center justify-center rounded-[17px] bg-[#e3f1e6] text-[#18803d]"
+                      >
+                        <Icon className="size-8" strokeWidth={2.2} />
+                      </span>
+                    )}
+                    <span className="mt-4 text-center text-[16px] leading-6 font-bold text-black sm:whitespace-nowrap">
+                      {pickText(it.label, locale)}
                     </span>
-                  )}
-                  <span className="mt-4 text-center text-[16px] leading-6 font-bold text-black sm:whitespace-nowrap">
-                    {pickText(it.label, locale)}
-                  </span>
-                  <span className="mt-[7px] text-center text-[13px] leading-5 text-[#333] sm:whitespace-nowrap">
-                    {pickText(it.caption, locale)}
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-        {d.action?.href && (
-          <div className="mt-[27px] flex justify-center">
-            <Link
-              href={resolveHref(d.action.href, slug)}
-              {...(d.action.href.startsWith("http")
-                ? { target: "_blank", rel: "noopener noreferrer" }
-                : {})}
-              className="inline-flex h-[58px] w-[232px] items-center justify-center gap-5 rounded-[8px] bg-[#135130] text-[16px] font-semibold whitespace-nowrap text-white shadow hover:opacity-90"
-            >
-              {pickText(d.action.label, locale)}{" "}
-              <ArrowRight className="size-5" aria-hidden />
-            </Link>
-          </div>
-        )}
-      </div>
-    </section>
+                    <span className="mt-[7px] text-center text-[13px] leading-5 text-[#333] sm:whitespace-nowrap">
+                      {pickText(it.caption, locale)}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+          {d.action?.href && (
+            <div className="mt-[27px] flex justify-center">
+              <Link
+                href={resolveHref(d.action.href, slug)}
+                {...(d.action.href.startsWith("http")
+                  ? { target: "_blank", rel: "noopener noreferrer" }
+                  : {})}
+                className="inline-flex h-[58px] w-[232px] items-center justify-center gap-5 rounded-[8px] bg-[#135130] text-[16px] font-semibold whitespace-nowrap text-white shadow hover:opacity-90"
+              >
+                {pickText(d.action.label, locale)}{" "}
+                <ArrowRight className="size-5" aria-hidden />
+              </Link>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
   );
 }
 

@@ -30,29 +30,31 @@ export async function SchemeLevelsSection({ slug, locale, data }: SectionProps) 
   const hasLive = (live?.data.length ?? 0) > 0;
   return (
     // Figma: one white card (62..1380, 138px tall, 16px radius), three equal cells; the first cell carries the 8px green underline.
-    <section className="relative z-10 mx-auto -mt-10 max-w-[1440px] px-4 sm:px-8 lg:-mt-[74px] lg:px-[62px] bg-[linear-gradient(to_bottom,transparent_40px,var(--color-cream)_40px)] lg:bg-[linear-gradient(to_bottom,transparent_74px,var(--color-cream)_74px)]">
-      <SchemeLevelTabs
-        tabs={(d.items ?? []).map((it, i) => {
-          const Icon = LEVEL_ICONS[i % LEVEL_ICONS.length]!;
-          const n = hasLive ? (counts[it.level ?? ""] ?? 0) : (it.count ?? 0);
-          const msg = t("schemesAvailable", { n });
-          const at = msg.indexOf(String(n));
-          return {
-            level: it.level ?? `LEVEL${i}`,
-            label: pickText(it.label, locale),
-            before: at >= 0 ? msg.slice(0, at) : msg,
-            n: at >= 0 ? n : null,
-            after: at >= 0 ? msg.slice(at + String(n).length) : "",
-            icon: it.iconImageId ? publicMediaUrl(slug, it.iconImageId) : it.iconUrl,
-            fallback: (
-              <span aria-hidden className="flex size-[64px] shrink-0 items-center justify-center rounded-[14px] bg-[#e9f4e9] text-[#135130]">
-                <Icon className="size-8" strokeWidth={1.7} />
-              </span>
-            ),
-          };
-        })}
-      />
-    </section>
+    <div className="relative z-10 -mt-10 lg:-mt-[74px] bg-[linear-gradient(to_bottom,transparent_40px,var(--color-cream)_40px)] lg:bg-[linear-gradient(to_bottom,transparent_74px,var(--color-cream)_74px)]">
+      <section className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[62px]">
+        <SchemeLevelTabs
+          tabs={(d.items ?? []).map((it, i) => {
+            const Icon = LEVEL_ICONS[i % LEVEL_ICONS.length]!;
+            const n = hasLive ? (counts[it.level ?? ""] ?? 0) : (it.count ?? 0);
+            const msg = t("schemesAvailable", { n });
+            const at = msg.indexOf(String(n));
+            return {
+              level: it.level ?? `LEVEL${i}`,
+              label: pickText(it.label, locale),
+              before: at >= 0 ? msg.slice(0, at) : msg,
+              n: at >= 0 ? n : null,
+              after: at >= 0 ? msg.slice(at + String(n).length) : "",
+              icon: it.iconImageId ? publicMediaUrl(slug, it.iconImageId) : it.iconUrl,
+              fallback: (
+                <span aria-hidden className="flex size-[64px] shrink-0 items-center justify-center rounded-[14px] bg-[#e9f4e9] text-[#135130]">
+                  <Icon className="size-8" strokeWidth={1.7} />
+                </span>
+              ),
+            };
+          })}
+        />
+      </section>
+    </div>
   );
 }
 

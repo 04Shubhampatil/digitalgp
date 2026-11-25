@@ -466,24 +466,26 @@ const FACILITY_ICONS = ["water", "sanitation", "roads", "lighting", "schools", "
 export function FacilityGridSection({ locale, data }: SectionProps) {
   const d = data as { heading?: B; items?: { label?: B; value?: B }[] };
   return (
-    <section className="relative z-10 mx-auto -mt-16 max-w-[1440px] px-4 sm:px-8 lg:-mt-[94px] lg:px-[62px] bg-[linear-gradient(to_bottom,transparent_64px,var(--color-cream)_64px)] lg:bg-[linear-gradient(to_bottom,transparent_94px,var(--color-cream)_94px)]">
-      <div className="rounded-[20px] bg-white px-4 py-6 shadow-[0_2px_16px_rgba(0,0,0,0.18)] sm:px-9">
-        <h2 className="text-center text-[30px] leading-[41px] font-semibold text-black">{pickText(d.heading, locale)}</h2>
-        <ul className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-5">
-          {(d.items ?? []).map((it, i) => {
-            const icon = FACILITY_ICONS[i % FACILITY_ICONS.length]!;
-            return (
-              <li key={i} className="flex min-h-[202px] flex-col items-center rounded-[10px] border border-black/15 bg-white px-3 py-4 text-center shadow-[0_0_10px_rgba(0,0,0,0.12)]">
-                <FigmaIcon name={`fac-${icon}`} width={71} />
-                {/* Figma 375:14772: 20px labels on up to two lines (62px box), 12px value at the foot. */}
-                <p className="mt-3 min-h-[62px] text-[20px] leading-[21px] font-medium text-black">{pickText(it.label, locale)}</p>
-                <p className="mt-auto pt-3 text-[12px] text-[#414141]">{pickText(it.value, locale)}</p>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    </section>
+    <div className="relative z-10 -mt-16 lg:-mt-[94px] bg-[linear-gradient(to_bottom,transparent_64px,var(--color-cream)_64px)] lg:bg-[linear-gradient(to_bottom,transparent_94px,var(--color-cream)_94px)]">
+      <section className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-[62px]">
+        <div className="rounded-[20px] bg-white px-4 py-6 shadow-[0_2px_16px_rgba(0,0,0,0.18)] sm:px-9">
+          <h2 className="text-center text-[30px] leading-[41px] font-semibold text-black">{pickText(d.heading, locale)}</h2>
+          <ul className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-5">
+            {(d.items ?? []).map((it, i) => {
+              const icon = FACILITY_ICONS[i % FACILITY_ICONS.length]!;
+              return (
+                <li key={i} className="flex min-h-[202px] flex-col items-center rounded-[10px] border border-black/15 bg-white px-3 py-4 text-center shadow-[0_0_10px_rgba(0,0,0,0.12)]">
+                  <FigmaIcon name={`fac-${icon}`} width={71} />
+                  {/* Figma 375:14772: 20px labels on up to two lines (62px box), 12px value at the foot. */}
+                  <p className="mt-3 min-h-[62px] text-[20px] leading-[21px] font-medium text-black">{pickText(it.label, locale)}</p>
+                  <p className="mt-auto pt-3 text-[12px] text-[#414141]">{pickText(it.value, locale)}</p>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </section>
+    </div>
   );
 }
 
