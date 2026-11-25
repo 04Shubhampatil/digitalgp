@@ -4,6 +4,7 @@ import { CircleAlert, Maximize, Minus, Plus } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { COVERAGE_SHAPES } from "./coverage-shapes";
+import { sampleWardsFor } from "./coverage-sample";
 
 export interface CoverageWard {
   wardNo: string;
@@ -17,6 +18,8 @@ export interface CoverageView {
   totalBeneficiaries: number | null;
   /** Map picture for the selected scheme. */
   mapUrl?: string;
+  /** The wards are sample figures (no real coverage recorded yet), shown so the map can be tried out. */
+  demo?: boolean;
 }
 export interface CoverageLabels {
   heading: string;
@@ -37,7 +40,11 @@ export interface CoverageLabels {
   zoomIn: string;
   zoomOut: string;
   fullscreen: string;
+  /** Tag shown on the map while the ward figures are samples. */
+  sampleData: string;
 }
+
+const MAX_ZOOM = 3;
 
 /** Legend of the Figma map: households per ward → colour. */
 const BINS = [
@@ -69,6 +76,7 @@ export function SchemeCoverageClient({
   labels,
   locale,
   card,
+  demoWards,
 }: {
   slug: string;
   schemes: { id: string; name: string }[];
@@ -80,12 +88,17 @@ export function SchemeCoverageClient({
   locale: string;
   /** Right-hand column beside "Scheme Information": carries the section anchor itself. */
   card?: boolean;
+  /** Sample wards shown while no real ward figures exist (undefined = never show samples). */
+  demoWards?: CoverageWard[];
 }) {
   const [schemeId, setSchemeId] = useState(initialSchemeId);
   const [view, setView] = useState<CoverageView>(initial);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
   const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState(false);
+  const drag = useRef<{ x: number; y: number; px: number; py: number; moved: boolean } | null>(null);
   const [scale, setScale] = useState(1);
   const outer = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLDivElement>(null);
@@ -102,6 +115,18 @@ export function SchemeCoverageClient({
     return () => ro.disconnect();
   }, []);
 
+  /** Zoom keeps the map centred when zooming out and never pans past the edge of the picture. */
+  const clampPan = (p: { x: number; y: number }, z: number) => {
+    const mx = ((z - 1) * W) / 2;
+    const my = ((z - 1) * H) / 2;
+    return { x: Math.max(-mx, Math.min(mx, p.x)), y: Math.max(-my, Math.min(my, p.y)) };
+  };
+  const zoomBy = (delta: number) => {
+    const z = Math.max(1, Math.min(MAX_ZOOM, +(zoom + delta).toFixed(1)));
+    setZoom(z);
+    setPan((p) => clampPan(p, z));
+  };
+
   async function choose(id: string) {
     setSchemeId(id);
     setLoading(true);
@@ -111,12 +136,18 @@ export function SchemeCoverageClient({
       const json = (await res.json()) as { data?: { wards: CoverageWard[]; totalHouseholds: number; totalBeneficiaries: number | null; mapImageId: string | null } };
       const d = json.data;
       if (res.ok && d) {
-        setView({
-          wards: d.wards,
-          totalHouseholds: d.totalHouseholds,
-          totalBeneficiaries: d.totalBeneficiaries,
-          mapUrl: d.mapImageId ? `/api/v1/public/${encodeURIComponent(slug)}/media/${encodeURIComponent(d.mapImageId)}` : undefined,
-        });
+        if (d.wards.length === 0 && demoWards) {
+          // No figures recorded for this scheme yet: sample wards (different numbers per scheme) so the map can be tried out.
+          const sample = sampleWardsFor(demoWards, id);
+          setView({ wards: sample, totalHouseholds: sample.reduce((a, w) => a + w.households, 0), totalBeneficiaries: sample.reduce((a, w) => a + (w.beneficiaries ?? 0), 0), mapUrl: undefined, demo: true });
+        } else {
+          setView({
+            wards: d.wards,
+            totalHouseholds: d.totalHouseholds,
+            totalBeneficiaries: d.totalBeneficiaries,
+            mapUrl: d.mapImageId ? `/api/v1/public/${encodeURIComponent(slug)}/media/${encodeURIComponent(d.mapImageId)}` : undefined,
+          });
+        }
       }
     } catch {
       // Network error: keep the figures already shown.
@@ -175,11 +206,44 @@ export function SchemeCoverageClient({
           <>
             <div ref={outer} className={cn("relative w-full overflow-hidden rounded-t-[10px] bg-[#2b3622] transition-opacity", loading && "opacity-60")} style={{ aspectRatio: `${W} / ${H}` }}>
               <div className="absolute top-0 left-0 origin-top-left" style={{ width: W, height: H, transform: `scale(${scale})` }}>
+                {/* The map (picture + ward outlines) is one layer that zooms and pans; the controls and panels stay put. */}
+                <div
+                  className={cn("absolute top-0 left-0", zoom > 1 && (dragging ? "cursor-grabbing" : "cursor-grab"))}
+                  style={{ width: W, height: H, transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: "50% 50%", transition: dragging ? "none" : "transform .25s", touchAction: zoom > 1 ? "none" : undefined }}
+                  onPointerDown={(e) => {
+                    if (zoom <= 1) return;
+                    drag.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y, moved: false };
+                    setDragging(true);
+                  }}
+                  onPointerMove={(e) => {
+                    const d = drag.current;
+                    if (!d) return;
+                    const dx = (e.clientX - d.x) / scale;
+                    const dy = (e.clientY - d.y) / scale;
+                    if (Math.abs(dx) + Math.abs(dy) > 4) d.moved = true;
+                    setPan(clampPan({ x: d.px + dx, y: d.py + dy }, zoom));
+                  }}
+                  onPointerUp={() => {
+                    setDragging(false);
+                    // A drag must not count as a click on the ward under the pointer.
+                    window.setTimeout(() => (drag.current = null), 0);
+                  }}
+                  onPointerLeave={() => {
+                    if (drag.current) {
+                      setDragging(false);
+                      drag.current = null;
+                    }
+                  }}
+                  onPointerCancel={() => {
+                    setDragging(false);
+                    drag.current = null;
+                  }}
+                >
                 {/* eslint-disable-next-line @next/next/no-img-element -- design picture, cropped to its map area */}
-                <img src={picture ?? DESIGN_MAP} alt="" width={W} height={510} className={cn("absolute top-0 left-0 h-[510px] w-[873px] max-w-none object-cover", !picture && "object-top")} />
+                <img src={picture ?? DESIGN_MAP} alt="" width={W} height={510} draggable={false} className={cn("absolute top-0 left-0 h-[510px] w-[873px] max-w-none object-cover select-none", !picture && "object-top")} />
                 {!picture && wards.length > 0 && (
                   <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="absolute top-0 left-0" role="group" aria-label={labels.heading}>
-                    <g style={{ transform: `scale(${zoom})`, transformOrigin: `${W / 2}px ${H / 2}px`, transition: "transform .25s" }}>
+                    <g>
                       {/* Hides the sample outlines of the design picture below the live ones. */}
                       {COVERAGE_SHAPES.map((s, i) => (
                         <path key={`u${i}`} d={s.d} fill="#2b3622" stroke="#2b3622" strokeWidth={9} strokeLinejoin="round" />
@@ -196,7 +260,7 @@ export function SchemeCoverageClient({
                             aria-label={w ? `${wardName(w.wardNo)}: ${nf.format(w.households)} ${labels.households}` : undefined}
                             aria-pressed={w ? on : undefined}
                             className={cn("outline-none", w && "cursor-pointer")}
-                            onClick={() => w && setSelected(on ? null : i)}
+                            onClick={() => w && !drag.current?.moved && setSelected(on ? null : i)}
                             onKeyDown={(e) => {
                               if (w && (e.key === "Enter" || e.key === " ")) {
                                 e.preventDefault();
@@ -216,6 +280,7 @@ export function SchemeCoverageClient({
                     </g>
                   </svg>
                 )}
+                </div>
                 {wards.length === 0 && !picture && <p className="absolute inset-0 flex items-center justify-center bg-[#2b3622]/85 px-6 text-center text-[14px] text-white">{labels.empty}</p>}
                 {selectBox}
                 {!picture && wards.length > 0 && (
@@ -231,14 +296,15 @@ export function SchemeCoverageClient({
                     </ul>
                   </div>
                 )}
-                {!picture && wards.length > 0 && (
+                {view.demo && <span className="absolute right-3 bottom-3 rounded-full bg-black/55 px-3 py-1 text-[12px] font-medium text-white">{labels.sampleData}</span>}
+                {(picture || wards.length > 0) && (
                   <div className="absolute top-5 left-[815px] flex flex-col gap-[17px]">
                     <div className="flex w-[43px] flex-col overflow-hidden rounded-[10px] bg-white shadow-[0_0_10px_rgba(0,0,0,0.15)]">
-                      <button type="button" aria-label={labels.zoomIn} onClick={() => setZoom((z) => Math.min(2.2, +(z + 0.4).toFixed(1)))} className="flex h-[41px] items-center justify-center text-[#222] hover:bg-black/5">
+                      <button type="button" aria-label={labels.zoomIn} disabled={zoom >= MAX_ZOOM} onClick={() => zoomBy(0.5)} className="flex h-[41px] items-center justify-center text-[#222] hover:bg-black/5 disabled:opacity-35">
                         <Plus className="size-5" strokeWidth={2.6} aria-hidden />
                       </button>
                       <span aria-hidden className="mx-1.5 h-px bg-black/10" />
-                      <button type="button" aria-label={labels.zoomOut} onClick={() => setZoom((z) => Math.max(1, +(z - 0.4).toFixed(1)))} className="flex h-[41px] items-center justify-center text-[#222] hover:bg-black/5">
+                      <button type="button" aria-label={labels.zoomOut} disabled={zoom <= 1} onClick={() => zoomBy(-0.5)} className="flex h-[41px] items-center justify-center text-[#222] hover:bg-black/5 disabled:opacity-35">
                         <Minus className="size-5" strokeWidth={2.6} aria-hidden />
                       </button>
                     </div>

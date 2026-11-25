@@ -1250,6 +1250,7 @@
       "zoomIn": "Zoom in",
       "zoomOut": "Zoom out",
       "fullscreen": "Full screen",
+      "sampleData": "Sample data",
       "householdsLabel": "Households",
       "beneficiariesLabel": "Beneficiaries"
     },
