@@ -65,8 +65,8 @@ export async function HeroSection({ slug, locale, data, tenantName }: SectionPro
         </div>
         {/* Figma: the 933×539 photo runs to the right edge of the page (no right padding). */}
         <div className="relative h-[300px] sm:-mr-8 sm:h-[420px] lg:-mr-[62px] lg:h-[539px]">
-          {/* eslint-disable-next-line @next/next/no-img-element -- static design asset / backend-served media */}
           {/* The design photo (1400×600) is drawn as in Figma: 1440px wide, bottom-aligned, so the temple ends above the stats card that overlaps the hero by 69px. An uploaded photo keeps the plain cover fit. */}
+          {/* eslint-disable-next-line @next/next/no-img-element -- static design asset / backend-served media */}
           <img
             src={image}
             alt=""
