@@ -2,6 +2,7 @@ import { Building2, Landmark, MapPinned, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { pair, pickText, type Bilingual } from "@/i18n/text";
+import { buildUrl } from "@/lib/api/client";
 import { getPublicSchemeCoverage, listPublicSchemes, publicMediaUrl } from "@/lib/api/public";
 import { detailHref, resolveHref } from "@/lib/href";
 import { SchemeCoverageClient, type CoverageLabels, type CoverageView, type CoverageWard } from "./CoverageMap";
@@ -198,6 +199,16 @@ export async function SchemeShowcaseSection({ slug, locale, data }: SectionProps
   );
 }
 
+/** True when the media record is the Figma placeholder map (the public media route redirects shared design pictures to their file). */
+async function isDesignMap(slug: string, mediaId: string): Promise<boolean> {
+  try {
+    const res = await fetch(buildUrl(`/public/${encodeURIComponent(slug)}/media/${encodeURIComponent(mediaId)}`), { redirect: "manual", next: { revalidate: 3600 } });
+    return (res.headers.get("location") ?? "").endsWith("/images/figma/pages/sch-coverage-map.png");
+  } catch {
+    return false;
+  }
+}
+
 /**
  * `coverage-map`: "Scheme Coverage Map". With published schemes the "Select Scheme" dropdown switches between them
  * (GET /public/:slug/schemes/coverage?schemeId=: beneficiaries per ward, totalBeneficiaries, mapImageId); the first
@@ -210,7 +221,8 @@ export async function SchemeCoverageSection({ slug, locale, data, siblings }: Se
   const d = data as { heading?: B; subheading?: B; mapImageId?: string; wards?: { wardNo?: string; households?: number; beneficiaries?: number; colour?: string }[] };
   const live = await listPublicSchemes(slug, { limit: 100 }).catch(() => null);
   const schemes = (live?.data ?? []).map((s) => ({ id: s.id, name: pickText(pair(s.nameEn, s.nameMr), locale) }));
-  const isDesignPicture = !!d.mapImageId?.startsWith("/");
+  // The design picture is either a site path or, once the design content is published, a shared media record that redirects to it.
+  const isDesignPicture = !!d.mapImageId?.startsWith("/") || (!!d.mapImageId && (await isDesignMap(slug, d.mapImageId)));
   const sectionMap = d.mapImageId ? (isDesignPicture ? d.mapImageId : publicMediaUrl(slug, d.mapImageId)) : undefined;
   const sectionWards: CoverageWard[] = (d.wards ?? []).map((w) => ({ wardNo: w.wardNo ?? "", households: w.households ?? 0, beneficiaries: w.beneficiaries ?? null, colour: w.colour }));
 
