@@ -39,7 +39,7 @@ export async function HeroSection({ slug, locale, data, tenantName }: SectionPro
   return (
     <section className="overflow-hidden bg-cream">
       <div className="mx-auto grid max-w-[1440px] items-center gap-8 px-4 sm:px-8 lg:grid-cols-[444px_minmax(0,1fr)] lg:gap-0 lg:px-[62px]">
-        <div className="flex flex-col gap-10 py-12 lg:py-0">
+        <div className="relative z-10 flex flex-col gap-10 py-12 lg:py-0">
           <div className="flex flex-col gap-8">
             {eyebrow && <p className="text-[18px] leading-normal font-medium sm:text-[22px] sm:whitespace-nowrap text-black">{eyebrow}</p>}
             <h1 className="max-w-[444px] text-[30px] leading-[45px] font-semibold text-black">{title}</h1>
@@ -65,8 +65,13 @@ export async function HeroSection({ slug, locale, data, tenantName }: SectionPro
         </div>
         {/* Figma: the 933×539 photo runs to the right edge of the page (no right padding). */}
         <div className="relative h-[300px] sm:-mr-8 sm:h-[420px] lg:-mr-[62px] lg:h-[539px]">
+          {/* The design photo (1400×600) is drawn as in Figma: 1440px wide, bottom-aligned, so the temple ends above the stats card that overlaps the hero by 69px. An uploaded photo keeps the plain cover fit. */}
           {/* eslint-disable-next-line @next/next/no-img-element -- static design asset / backend-served media */}
-          <img src={image} alt="" className="absolute inset-0 size-full object-cover object-right" />
+          <img
+            src={image}
+            alt=""
+            className={image === FIGMA_HERO_IMAGE ? "absolute inset-0 size-full object-cover object-right lg:inset-auto lg:right-0 lg:bottom-0 lg:h-[617px] lg:w-auto lg:max-w-none" : "absolute inset-0 size-full object-cover object-right"}
+          />
         </div>
       </div>
     </section>
