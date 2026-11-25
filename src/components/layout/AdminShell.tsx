@@ -3,13 +3,12 @@ import Link from "next/link";
 import type { CurrentUserDto } from "@/types/api";
 import { Emblem } from "@/components/ui/Emblem";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
-import type { AdminUnitLevel } from "@/types/api";
-import { hierarchy } from "@/lib/api/admin";
-import { cookieHeader } from "@/lib/api/server";
+import { Suspense } from "react";
 import { getLocale } from "next-intl/server";
 import { hasCapability, primaryRole } from "@/lib/session";
 import { ChevronDown } from "lucide-react";
 import { AdminSearch } from "./AdminSearch";
+import { AdminScopePicker } from "./AdminScopePicker";
 import { AdminNav, type NavGroup } from "./AdminNav";
 import { LogoutButton } from "./LogoutButton";
 
@@ -109,23 +108,8 @@ export async function AdminShell({ user, children }: { user: CurrentUserDto; chi
     },
   ];
 
-  // District / Taluka / Gram Panchayat of the user's first active assignment (names from the hierarchy).
   const locale = await getLocale();
-  const scope: Partial<Record<AdminUnitLevel, string>> = {};
-  const first = active[0];
-  if (first) {
-    try {
-      const { unit, ancestors } = await hierarchy.get(first.unitId, { cookie: await cookieHeader() });
-      for (const u of [...ancestors, unit]) scope[u.level] = locale === "mr" ? u.nameMr || u.nameEn : u.nameEn;
-    } catch {
-      scope[first.unitLevel] = locale === "mr" ? first.unitNameMr || first.unitNameEn : first.unitNameEn;
-    }
-  }
-  const scopeBoxes: { label: string; value: string | undefined }[] = [
-    { label: t("topbar.district"), value: scope.DISTRICT },
-    { label: t("topbar.taluka"), value: scope.TALUKA },
-    { label: t("topbar.gramPanchayat"), value: scope.GRAM_PANCHAYAT },
-  ];
+  const scopeLabels = { district: t("topbar.district"), taluka: t("topbar.taluka"), gramPanchayat: t("topbar.gramPanchayat") };
   const searchEntries = groups.flatMap((g) => g.items.filter((i) => i.show !== false).map((i) => ({ href: i.href, label: i.label })));
 
   return (
@@ -159,12 +143,9 @@ export async function AdminShell({ user, children }: { user: CurrentUserDto; chi
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-[64px] items-center justify-between gap-4 border-b border-line bg-canvas px-5">
           <div className="flex items-center gap-3">
-            {scopeBoxes.map((b) => (
-              <div key={b.label} title={b.label} className="hidden h-9 min-w-[110px] items-center justify-between gap-2 rounded-[4px] border border-line-strong bg-surface px-3 text-xs text-ink md:flex">
-                <span className="truncate">{b.value ?? b.label}</span>
-                <ChevronDown aria-hidden className="size-3.5 shrink-0 text-muted" />
-              </div>
-            ))}
+            <Suspense fallback={null}>
+              <AdminScopePicker labels={scopeLabels} locale={locale} />
+            </Suspense>
             <AdminSearch entries={searchEntries} placeholder={t("topbar.search")} />
           </div>
           <div className="flex items-center gap-4">
