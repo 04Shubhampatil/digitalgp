@@ -55,7 +55,7 @@ export function SchemeLevelTabs({ tabs }: { tabs: LevelTab[] }) {
               type="button"
               aria-pressed={active === t.level}
               onClick={() => choose(t.level)}
-              className="relative flex h-[110px] w-full cursor-pointer items-center justify-center gap-[34px] text-left transition-colors hover:bg-[#135130]/[0.04] focus-visible:bg-[#135130]/[0.04] focus-visible:outline-none md:h-[138px]"
+              className="relative flex h-[110px] w-full cursor-pointer items-center justify-center gap-[34px] text-left transition-colors hover:bg-[#135130]/[0.04] focus-visible:bg-[#135130]/[0.04] focus-visible:outline-none md:h-[138px] md:max-lg:h-auto md:max-lg:flex-col md:max-lg:gap-2 md:max-lg:px-2 md:max-lg:pt-4 md:max-lg:pb-5 md:max-lg:text-center"
             >
               {t.icon ? (
                 // eslint-disable-next-line @next/next/no-img-element -- static design asset / uploaded picture

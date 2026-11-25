@@ -84,7 +84,7 @@ export function InfraMapClient({
   const H = size?.h ?? 620;
   return (
     <div className="overflow-hidden rounded-[10px] bg-white shadow-[0_0_10px_rgba(0,0,0,0.12)]">
-      <div ref={box} className="relative h-[300px] overflow-hidden bg-[#1f3a24] sm:h-[420px] lg:h-[496px]">
+      <div ref={box} className="relative h-[300px] overflow-hidden bg-[#1f3a24] sm:h-[420px] md:h-[470px] lg:h-[496px]">
         <div
           ref={mapBox}
           className={`absolute inset-y-0 right-0 left-0 md:left-[240px] ${zoom > 1 ? (dragging ? "cursor-grabbing" : "cursor-grab") : ""}`}
@@ -183,11 +183,14 @@ export function InfraMapClient({
       </div>
       <ul className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 px-4 py-5 lg:h-[81px] lg:flex-nowrap lg:justify-between lg:px-[38px] lg:py-0">
         {filters.map((f, i) => (
-          <li key={i} className={`flex items-center gap-2.5 text-[14px] font-semibold whitespace-nowrap text-black transition-opacity ${dim(i) ? "opacity-30" : ""}`}>
-            <span aria-hidden className="flex size-5 items-center justify-center" style={{ color: f.colour }}>
-              {f.icon}
-            </span>
-            {f.name}
+          <li key={i} className={`text-[14px] font-semibold whitespace-nowrap text-black transition-opacity ${dim(i) ? "opacity-30" : ""}`}>
+            {/* On phones the filter panel is hidden, so these chips are the filters; on larger screens they mirror the panel. */}
+            <button type="button" aria-pressed={checked.has(i)} onClick={() => toggle(i)} className={`flex items-center gap-2.5 rounded-full px-2 py-1 ${checked.has(i) ? "bg-black/[0.06]" : ""}`}>
+              <span aria-hidden className="flex size-5 items-center justify-center" style={{ color: f.colour }}>
+                {f.icon}
+              </span>
+              {f.name}
+            </button>
           </li>
         ))}
       </ul>
