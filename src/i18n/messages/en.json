@@ -1003,6 +1003,7 @@
     },
     "newBadge": "NEW",
     "schemesAvailable": "{n} Schemes Available",
+    "noSchemesInLevel": "No schemes at this level yet.",
     "viewFullCalendar": "View Full Calendar",
     "noEvents": "No events this month.",
     "cms": {
