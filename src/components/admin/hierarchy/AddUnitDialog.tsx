@@ -19,14 +19,15 @@ import { isApiError } from "@/lib/api/client";
 type FormValues = z.input<typeof createUnitSchema>;
 
 /** Figma "Add New Taluka" modal, generalised to any child level of the current unit. */
-export function AddUnitDialog({ parent }: { parent: AdminUnitDto | null }) {
+export function AddUnitDialog({ parent, onlyGramPanchayat = false }: { parent: AdminUnitDto | null; onlyGramPanchayat?: boolean }) {
   const t = useTranslations("admin");
   const tc = useTranslations("common");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const levels: AdminUnitLevel[] = parent ? childLevels(parent.level) : ["STATE"];
+  // A Taluka Admin may only add Gram Panchayats under their taluka; Super Admin can add any lower level.
+  const levels: AdminUnitLevel[] = onlyGramPanchayat ? ["GRAM_PANCHAYAT"] : parent ? childLevels(parent.level) : ["STATE"];
 
   const {
     register,

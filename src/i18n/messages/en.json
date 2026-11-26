@@ -670,6 +670,7 @@
       "cap": {
         "hierarchy_read": "View districts and talukas",
         "hierarchy_manage": "Manage all districts",
+        "hierarchy_create-gp": "Add Gram Panchayats in a taluka",
         "tenant_read": "View GP websites",
         "tenant_create": "Create GP websites",
         "tenant_update": "Edit GP website settings",
@@ -791,6 +792,7 @@
     "nav": {
       "gpWebsites": "GP Websites",
       "blockAdmins": "Taluka Admins",
+      "gramPanchayats": "Gram Panchayats",
       "assignedWebsites": "Assigned GP Websites",
       "publishAnnouncement": "Publish Announcement",
       "logOut": "Log Out"

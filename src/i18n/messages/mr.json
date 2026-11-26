@@ -670,6 +670,7 @@
       "cap": {
         "hierarchy_read": "जिल्हे व तालुके पाहणे",
         "hierarchy_manage": "सर्व जिल्हे व्यवस्थापित करणे",
+        "hierarchy_create-gp": "तालुक्यात ग्रामपंचायती जोडणे",
         "tenant_read": "ग्रामपंचायत संकेतस्थळे पाहणे",
         "tenant_create": "ग्रामपंचायत संकेतस्थळे तयार करणे",
         "tenant_update": "संकेतस्थळ सेटिंग्ज संपादित करणे",
@@ -791,6 +792,7 @@
     "nav": {
       "gpWebsites": "ग्रामपंचायत संकेतस्थळे",
       "blockAdmins": "तालुका ॲडमिन",
+      "gramPanchayats": "ग्रामपंचायती",
       "assignedWebsites": "नेमलेली ग्रामपंचायत संकेतस्थळे",
       "publishAnnouncement": "सूचना प्रकाशित करा",
       "logOut": "बाहेर पडा"

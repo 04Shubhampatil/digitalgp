@@ -42,9 +42,9 @@ UI can hide controls — **the server re-checks every call**.
 
 | Role                  | Assigned at      | Summary |
 |-----------------------|------------------|---------|
-| `SUPER_ADMIN`         | STATE / DISTRICT | Everything in scope, hierarchy management, role management |
+| `TALUKA_ADMIN`        | TALUKA           | Adds Gram Panchayats and websites in the taluka, creates GP admins and operators, shared content (Block Admin was merged into this role) |
 | `TALUKA_ADMIN`        | TALUKA           | Websites, GP/Block admins, operators, shared content in the taluka |
-| `BLOCK_ADMIN`         | BLOCK            | Same as taluka admin within the block, cannot create websites |
+| `GP_ADMIN`            | GRAM_PANCHAYAT   | Edits, reviews and publishes the one Gram Panchayat allocated to them; cannot create or manage users |
 | `GP_ADMIN`            | GRAM_PANCHAYAT   | Own website, operators, review + publish own content |
 | `DATA_ENTRY_OPERATOR` | GRAM_PANCHAYAT   | Draft/submit in granted modules only; no review, publish, or user management |
 
@@ -78,7 +78,7 @@ Password policy: 10–128 chars with letters and digits. Session lifetime 24 h, 
 |--------|----------------------------|---------------------|--------------|----------|
 | GET    | `/hierarchy/units`         | any assignment      | `?parentId&level&q&limit&cursor` — only units inside the caller's scope | paginated `AdminUnitDto` |
 | GET    | `/hierarchy/units/:unitId` | in scope            | –            | `{ data: { unit: AdminUnitDto, ancestors: AdminUnitDto[] } }` |
-| POST   | `/hierarchy/units`         | `hierarchy:manage`  | `{ level, parentId \| null, slug, nameEn, nameMr, code? }` — level must be deeper than the parent's; only SUPER_ADMIN may create a root STATE | `201 AdminUnitDto` |
+| POST   | `/hierarchy/units`         | `hierarchy:manage`, or `hierarchy:create-gp` when adding a GRAM_PANCHAYAT under a TALUKA | `{ level, parentId \| null, slug, nameEn, nameMr, code? }` — level must be deeper than the parent's; only SUPER_ADMIN may create a root STATE | `201 AdminUnitDto` |
 | PATCH  | `/hierarchy/units/:unitId` | `hierarchy:manage`  | `{ slug?, nameEn?, nameMr?, code? }` | `AdminUnitDto` |
 
 Levels: `STATE > DISTRICT > TALUKA > BLOCK (optional) > GRAM_PANCHAYAT`.

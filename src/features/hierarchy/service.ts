@@ -89,7 +89,9 @@ export async function createUnit(ctx: AuthContext, input: CreateUnitInput, clien
   let parentPath = "/";
   if (input.parentId) {
     const parent = await getUnitForActor(ctx, input.parentId);
-    assertCan(ctx, "hierarchy:manage", { unitPath: parent.path });
+    // Adding a Gram Panchayat under a taluka is also allowed for that taluka's admin; every other unit needs hierarchy:manage.
+    const addsGramPanchayat = input.level === "GRAM_PANCHAYAT" && parent.level === "TALUKA";
+    assertCan(ctx, addsGramPanchayat ? "hierarchy:create-gp" : "hierarchy:manage", { unitPath: parent.path });
     if (LEVEL_ORDER[input.level] <= LEVEL_ORDER[parent.level]) {
       throw Errors.badRequest(`A ${input.level} unit cannot be created under a ${parent.level} unit`);
     }

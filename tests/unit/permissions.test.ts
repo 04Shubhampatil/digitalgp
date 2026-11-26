@@ -49,8 +49,29 @@ describe("capability matrix", () => {
     expect(ROLE_CAPABILITIES.GP_ADMIN.has("tenant:create")).toBe(false);
   });
 
+  it("only Super Admin and Taluka Admin add Gram Panchayats", () => {
+    expect(ROLE_CAPABILITIES.SUPER_ADMIN.has("hierarchy:create-gp")).toBe(true);
+    expect(ROLE_CAPABILITIES.TALUKA_ADMIN.has("hierarchy:create-gp")).toBe(true);
+    expect(ROLE_CAPABILITIES.GP_ADMIN.has("hierarchy:create-gp")).toBe(false);
+    expect(ROLE_CAPABILITIES.DATA_ENTRY_OPERATOR.has("hierarchy:create-gp")).toBe(false);
+    const taluka = ctx([{ role: "TALUKA_ADMIN", unitPath: "/s/d/t/", unitLevel: "TALUKA" }]);
+    expect(can(taluka, "hierarchy:create-gp", { unitPath: "/s/d/t/" })).toBe(true);
+    expect(can(taluka, "hierarchy:create-gp", { unitPath: "/s/d/t2/" })).toBe(false);
+  });
+
+  it("GP admins only edit their own Gram Panchayat: no user management", () => {
+    expect(ROLE_CAPABILITIES.GP_ADMIN.has("user:manage")).toBe(false);
+    expect(ROLE_CAPABILITIES.GP_ADMIN.has("tenant:update")).toBe(true);
+    expect(CREATABLE_ROLES.GP_ADMIN.size).toBe(0);
+    const gp = ctx([{ role: "GP_ADMIN", unitPath: "/s/d/t/gpA/" }]);
+    expect(canGrantRole(gp, "DATA_ENTRY_OPERATOR", "/s/d/t/gpA/")).toBe(false);
+  });
+
   it("role creation follows the hierarchy", () => {
-    expect(CREATABLE_ROLES.GP_ADMIN.has("DATA_ENTRY_OPERATOR")).toBe(true);
+    expect(CREATABLE_ROLES.SUPER_ADMIN.has("TALUKA_ADMIN")).toBe(true);
+    expect(CREATABLE_ROLES.SUPER_ADMIN.has("GP_ADMIN")).toBe(true);
+    expect(CREATABLE_ROLES.SUPER_ADMIN.has("DATA_ENTRY_OPERATOR")).toBe(true);
+    expect(CREATABLE_ROLES.TALUKA_ADMIN.has("DATA_ENTRY_OPERATOR")).toBe(true);
     expect(CREATABLE_ROLES.GP_ADMIN.has("GP_ADMIN")).toBe(false);
     expect(CREATABLE_ROLES.TALUKA_ADMIN.has("GP_ADMIN")).toBe(true);
     expect(CREATABLE_ROLES.TALUKA_ADMIN.has("TALUKA_ADMIN")).toBe(false);

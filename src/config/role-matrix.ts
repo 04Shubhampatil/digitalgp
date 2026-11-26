@@ -8,6 +8,7 @@ import type { Role } from "@/types/api";
 export const CAPABILITIES = [
   "hierarchy:read",
   "hierarchy:manage",
+  "hierarchy:create-gp",
   "tenant:read",
   "tenant:create",
   "tenant:update",
@@ -32,11 +33,11 @@ const ALL_CONTENT: Capability[] = ["content:read", "content:edit", "content:subm
 
 export const ROLE_MATRIX: Record<Role, ReadonlySet<Capability>> = {
   SUPER_ADMIN: new Set<Capability>([
-    "hierarchy:read", "hierarchy:manage", "tenant:read", "tenant:create", "tenant:update", "tenant:publish",
+    "hierarchy:read", "hierarchy:manage", "hierarchy:create-gp", "tenant:read", "tenant:create", "tenant:update", "tenant:publish",
     "user:read", "user:manage", ...ALL_CONTENT, "content:share", "media:manage", "grievance:manage", "audit:read", "roles:manage",
   ]),
   TALUKA_ADMIN: new Set<Capability>([
-    "hierarchy:read", "tenant:read", "tenant:create", "tenant:update", "tenant:publish",
+    "hierarchy:read", "hierarchy:create-gp", "tenant:read", "tenant:create", "tenant:update", "tenant:publish",
     "user:read", "user:manage", ...ALL_CONTENT, "content:share", "media:manage", "grievance:manage", "audit:read",
   ]),
   BLOCK_ADMIN: new Set<Capability>([
@@ -45,9 +46,10 @@ export const ROLE_MATRIX: Record<Role, ReadonlySet<Capability>> = {
   ]),
   GP_ADMIN: new Set<Capability>([
     "hierarchy:read", "tenant:read", "tenant:update", "tenant:publish",
-    "user:read", "user:manage", ...ALL_CONTENT, "media:manage", "grievance:manage", "audit:read",
+    "user:read", ...ALL_CONTENT, "media:manage", "grievance:manage", "audit:read",
   ]),
   DATA_ENTRY_OPERATOR: new Set<Capability>(["tenant:read", "content:read", "content:edit", "content:submit", "media:manage", "audit:read-own"]),
 };
 
-export const ROLES: Role[] = ["SUPER_ADMIN", "TALUKA_ADMIN", "BLOCK_ADMIN", "GP_ADMIN", "DATA_ENTRY_OPERATOR"];
+// Block Admin was merged into Taluka Admin, so the Roles screen has no column for it.
+export const ROLES: Role[] = ["SUPER_ADMIN", "TALUKA_ADMIN", "GP_ADMIN", "DATA_ENTRY_OPERATOR"];

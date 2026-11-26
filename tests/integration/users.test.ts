@@ -13,9 +13,9 @@ const expectCode = async (p: Promise<unknown>, code: string) => {
 const op = (unitId: string) => ({ role: "DATA_ENTRY_OPERATOR" as const, unitId, modules: [{ moduleKey: "announcements" as const, canWrite: true }] });
 
 describe("user management", () => {
-  it("a GP admin creates an operator in their own tenant with a temporary password", async () => {
+  it("a taluka admin creates an operator in a Gram Panchayat of their taluka with a temporary password", async () => {
     const w = await buildWorld();
-    const { ctx } = await actor("GP_ADMIN", w.gpA.id);
+    const { ctx } = await actor("TALUKA_ADMIN", w.taluka1.id);
     const result = await createUser(ctx, { email: "op@test.local", name: "Op", assignment: op(w.gpA.id) }, client);
     expect(result.temporaryPassword).toBeTruthy();
     expect(result.user.mustResetPassword).toBe(true);
@@ -24,9 +24,10 @@ describe("user management", () => {
     expect(audit).toHaveLength(1);
   });
 
-  it("a GP admin cannot create operators in another tenant or grant higher roles", async () => {
+  it("a GP admin only edits their Gram Panchayat: they cannot create any user, here or elsewhere", async () => {
     const w = await buildWorld();
     const { ctx } = await actor("GP_ADMIN", w.gpA.id);
+    await expectCode(createUser(ctx, { email: "own@test.local", name: "Own", assignment: op(w.gpA.id) }, client), "FORBIDDEN");
     await expectCode(createUser(ctx, { email: "x@test.local", name: "X", assignment: op(w.gpB.id) }, client), "NOT_FOUND");
     await expectCode(createUser(ctx, { email: "y@test.local", name: "Y", assignment: { role: "GP_ADMIN", unitId: w.gpA.id } }, client), "FORBIDDEN");
     await expectCode(createUser(ctx, { email: "z@test.local", name: "Z", assignment: { role: "TALUKA_ADMIN", unitId: w.taluka1.id } }, client), "NOT_FOUND");
@@ -57,14 +58,14 @@ describe("user management", () => {
 
   it("duplicate emails are rejected", async () => {
     const w = await buildWorld();
-    const { ctx } = await actor("GP_ADMIN", w.gpA.id);
+    const { ctx } = await actor("TALUKA_ADMIN", w.taluka1.id);
     await createUser(ctx, { email: "dup@test.local", name: "D", assignment: op(w.gpA.id) }, client);
     await expectCode(createUser(ctx, { email: "DUP@test.local", name: "D2", assignment: op(w.gpA.id) }, client), "CONFLICT");
   });
 
   it("suspending a user revokes their sessions; self-suspension is refused", async () => {
     const w = await buildWorld();
-    const admin = await actor("GP_ADMIN", w.gpA.id);
+    const admin = await actor("TALUKA_ADMIN", w.taluka1.id);
     const operator = await actor("DATA_ENTRY_OPERATOR", w.gpA.id, [{ moduleKey: "announcements" }]);
     const { token } = await createSession(operator.user.id);
     expect(await validateSessionToken(token)).not.toBeNull();
@@ -76,7 +77,7 @@ describe("user management", () => {
 
   it("revoking the last assignment logs the user out; module grants can be replaced", async () => {
     const w = await buildWorld();
-    const admin = await actor("GP_ADMIN", w.gpA.id);
+    const admin = await actor("TALUKA_ADMIN", w.taluka1.id);
     const created = await createUser(admin.ctx, { email: "rev@test.local", name: "R", assignment: op(w.gpA.id) }, client);
     const assignmentId = created.user.assignments[0]!.id;
 
@@ -90,11 +91,11 @@ describe("user management", () => {
     await expectCode(revokeAssignment(admin.ctx, admin.user.id, admin.ctx.assignments[0]!.id, client), "BAD_REQUEST");
   });
 
-  it("a GP admin cannot add an out-of-scope assignment to a visible user", async () => {
+  it("a taluka admin cannot add an out-of-scope assignment to a visible user", async () => {
     const w = await buildWorld();
-    const admin = await actor("GP_ADMIN", w.gpA.id);
+    const admin = await actor("TALUKA_ADMIN", w.taluka1.id);
     const created = await createUser(admin.ctx, { email: "add@test.local", name: "A", assignment: op(w.gpA.id) }, client);
-    await expectCode(addAssignment(admin.ctx, created.user.id, op(w.gpB.id), client), "NOT_FOUND");
+    await expectCode(addAssignment(admin.ctx, created.user.id, op(w.gpC.id), client), "NOT_FOUND");
   });
 
   it("super admin creates each user type at its own level, each logs in with its own credentials", async () => {
@@ -156,7 +157,7 @@ describe("user management", () => {
     await expectCode(deleteUser(sup.ctx, sup.user.id, client), "BAD_REQUEST");
   });
 
-  it("a GP admin cannot delete a user who also holds a role outside the GP; operators cannot delete", async () => {
+  it("GP admins and operators cannot delete users; a taluka admin can within the taluka", async () => {
     const w = await buildWorld();
     const sup = await actor("SUPER_ADMIN", w.state.id);
     const both = await createUser(sup.ctx, { email: "both@test.local", name: "Both", assignment: op(w.gpA.id) }, client);
@@ -165,9 +166,11 @@ describe("user management", () => {
     await expectCode(deleteUser(gpAdmin.ctx, both.user.id, client), "FORBIDDEN");
     const operator = await actor("DATA_ENTRY_OPERATOR", w.gpA.id, [{ moduleKey: "announcements" }]);
     await expectCode(deleteUser(operator.ctx, both.user.id, client), "FORBIDDEN");
-    // The GP admin can delete a user who is only in their GP.
-    const only = await createUser(gpAdmin.ctx, { email: "only@test.local", name: "Only", assignment: op(w.gpA.id) }, client);
-    await deleteUser(gpAdmin.ctx, only.user.id, client);
+    // A GP admin cannot delete anyone, even a user only in their GP; the taluka admin can.
+    const only = await createUser(sup.ctx, { email: "only@test.local", name: "Only", assignment: op(w.gpA.id) }, client);
+    await expectCode(deleteUser(gpAdmin.ctx, only.user.id, client), "FORBIDDEN");
+    const talukaAdmin = await actor("TALUKA_ADMIN", w.taluka1.id);
+    await deleteUser(talukaAdmin.ctx, only.user.id, client);
   });
 
   it("an admin password reset gives a working temporary password and signs the user out", async () => {
