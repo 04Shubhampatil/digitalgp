@@ -39,6 +39,7 @@ export default async function HierarchyPage({ searchParams }: { searchParams: Se
   ]);
   const ui = locale as UiLocale;
   const canManage = hasCapability(user, "hierarchy:manage");
+  const canAddGp = hasCapability(user, "hierarchy:create-gp");
 
   // Super admin landing view from the design: totals and one row per district.
   if (!parentId && primaryRole(user) === "SUPER_ADMIN") {
@@ -130,6 +131,9 @@ export default async function HierarchyPage({ searchParams }: { searchParams: Se
               <EditUnitDialog unit={parent} />
               {childLevel ? <AddUnitDialog parent={parent} /> : null}
             </div>
+          ) : canAddGp && parent?.level === "TALUKA" ? (
+            // Taluka Admin: add Gram Panchayats inside their own taluka.
+            <AddUnitDialog parent={parent} onlyGramPanchayat />
           ) : null
         }
       />

@@ -20,6 +20,7 @@ import type { ModuleKey } from "@/config/modules";
 export type Capability =
   | "hierarchy:read"
   | "hierarchy:manage"
+  | "hierarchy:create-gp" // add Gram Panchayats under a taluka in scope (Super Admin anywhere, Taluka Admin in their own taluka)
   | "tenant:read"
   | "tenant:create"
   | "tenant:update"
@@ -44,6 +45,7 @@ export const ROLE_CAPABILITIES: Readonly<Record<Role, ReadonlySet<Capability>>> 
   SUPER_ADMIN: new Set<Capability>([
     "hierarchy:read",
     "hierarchy:manage",
+    "hierarchy:create-gp",
     "tenant:read",
     "tenant:create",
     "tenant:update",
@@ -59,6 +61,7 @@ export const ROLE_CAPABILITIES: Readonly<Record<Role, ReadonlySet<Capability>>> 
   ]),
   TALUKA_ADMIN: new Set<Capability>([
     "hierarchy:read",
+    "hierarchy:create-gp",
     "tenant:read",
     "tenant:create",
     "tenant:update",
@@ -84,13 +87,13 @@ export const ROLE_CAPABILITIES: Readonly<Record<Role, ReadonlySet<Capability>>> 
     "grievance:manage",
     "audit:read",
   ]),
+  // A Gram Panchayat Admin only edits the Gram Panchayat allocated to them: no user management.
   GP_ADMIN: new Set<Capability>([
     "hierarchy:read",
     "tenant:read",
     "tenant:update",
     "tenant:publish",
     "user:read",
-    "user:manage",
     ...ALL_CONTENT,
     "media:manage",
     "grievance:manage",
@@ -111,7 +114,7 @@ export const CREATABLE_ROLES: Readonly<Record<Role, ReadonlySet<Role>>> = {
   SUPER_ADMIN: new Set<Role>([Role.SUPER_ADMIN, Role.TALUKA_ADMIN, Role.BLOCK_ADMIN, Role.GP_ADMIN, Role.DATA_ENTRY_OPERATOR]),
   TALUKA_ADMIN: new Set<Role>([Role.BLOCK_ADMIN, Role.GP_ADMIN, Role.DATA_ENTRY_OPERATOR]),
   BLOCK_ADMIN: new Set<Role>([Role.GP_ADMIN, Role.DATA_ENTRY_OPERATOR]),
-  GP_ADMIN: new Set<Role>([Role.DATA_ENTRY_OPERATOR]),
+  GP_ADMIN: new Set<Role>(),
   DATA_ENTRY_OPERATOR: new Set<Role>(),
 };
 

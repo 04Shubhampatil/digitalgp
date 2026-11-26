@@ -64,6 +64,7 @@ export async function AdminShell({ user, children }: { user: CurrentUserDto; chi
     {
       label: t("management"),
       items: [
+        { href: "/admin/hierarchy", label: t("nav.gramPanchayats"), show: hasCapability(user, "hierarchy:create-gp") },
         { href: "/admin/websites", label: t("nav.assignedWebsites"), show: hasCapability(user, "tenant:read") },
         { href: "/admin/announcements", label: t("nav.publishAnnouncement"), show: hasCapability(user, "content:read") },
       ],
