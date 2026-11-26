@@ -46,8 +46,8 @@ export function designFallbacksOn(): boolean {
 
 /**
  * Home page section order from the Figma design. Backend sort orders are overridden for these
- * keys so the page always follows the design (hero → stats → Citizen Services → About → indicators
- * → achievements → weather → welcome → leaders → notices).
+ * keys so the page always follows the final design, Figma "1. Home page" 375:12279 (hero → stats → Our Leaders → About
+ * → indicators + ward map → what is new + achievements → weather + Sarpanch → welcome video + progress → notices).
  */
 const HOME_ORDER: Record<string, number> = {
   banner: 0,
@@ -64,13 +64,16 @@ const HOME_ORDER: Record<string, number> = {
   "sarpanch-message": 31,
   "welcome-video": 34,
   "village-progress": 35,
-  leaders: 45,
+  leaders: 12,
   notices: 50,
   "home-gallery": 55,
 };
 
-/** Published sections the Figma home does not show (Our Leaders lives on the About page). */
-const HOME_HIDDEN = new Set(["leaders"]);
+/**
+ * Published sections the final Figma home does not show: Citizen Services (quick-links) is drawn on the Citizen Services
+ * page instead (between its hero and the RTS card, see the services page), and the design has no photo gallery.
+ */
+const HOME_HIDDEN = new Set(["quick-links", "home-gallery"]);
 
 /**
  * Merge published backend sections with Figma placeholders for the same page.
@@ -548,7 +551,8 @@ function withSections(pageKey: PageKey, page: PublicPageDto | null, override: Fa
         const designActions = (designHero?.data.actions as Obj[] | undefined) ?? [];
         published[bannerAt] = {
           ...published[bannerAt]!,
-          data: { designHero: "hero", title: b.heading, subtitle: has(b.supportingText) ? b.supportingText : b.description, backgroundImageId: b.imageId, actions: ctas.length ? ctas : designActions },
+          // `description` is the paragraph under the heading: the banner's own, else the design text (the design shows one).
+          data: { designHero: "hero", title: b.heading, subtitle: has(b.supportingText) ? b.supportingText : b.description, description: has(b.description) ? b.description : designHero?.data.subtitle, backgroundImageId: b.imageId, actions: ctas.length ? ctas : designActions },
         };
       } else if (designHero) {
         published[bannerAt] = { ...published[bannerAt]!, data: pageHeroFromBanner(designHero.data, b, ctas) };

@@ -149,11 +149,12 @@ describe("home About block (about-cards)", () => {
 describe("home Gallery strip, Welcome video and What's New", () => {
   const sec = (out: PublicPageDto, key: string) => out.sections.find((s) => s.sectionKey === key)!.data as Record<string, unknown>;
 
-  it("gallery: uploaded photos replace the design photos; an empty list keeps them", () => {
-    const withPhotos = withFallback("home", page("home", [{ sectionKey: "home-gallery", data: { photos: [{ imageId: "media000001" }] } }]));
-    expect(sec(withPhotos, "home-gallery").photos).toEqual([{ imageId: "media000001" }]);
-    const empty = withFallback("home", page("home", [{ sectionKey: "home-gallery", data: { photos: [] } }]));
-    expect((sec(empty, "home-gallery").photos as unknown[]).length).toBeGreaterThan(2);
+  it("final home design: Our Leaders follows the stats; Citizen Services and the gallery are not on the home page", () => {
+    const out = withFallback("home", page("home", [{ sectionKey: "home-gallery", data: { photos: [{ imageId: "media000001" }] } }, { sectionKey: "quick-links", data: { items: [{ label: { en: "Property Tax" }, href: "page:services" }] } }]));
+    const keys = out.sections.slice().sort((a, b) => a.sortOrder - b.sortOrder).map((s) => s.sectionKey);
+    expect(keys).not.toContain("home-gallery");
+    expect(keys).not.toContain("quick-links");
+    expect(keys.indexOf("leaders")).toBe(keys.indexOf("quick-stats") + 1);
   });
 
   it("welcome video: a published link and thumbnail are used, the design text stays", () => {

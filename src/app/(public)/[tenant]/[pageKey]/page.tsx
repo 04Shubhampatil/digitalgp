@@ -54,7 +54,18 @@ export default async function TenantPage({ params }: { params: Params }) {
   const [tenant, locale, t] = await Promise.all([loadTenant(slug), getLocale(), getTranslations("public")]);
   const ui = locale as UiLocale;
   const page = await loadPage(slug, pageKey);
-  const sections = renderSections(withFallback(pageKey, page), slug, ui, pickText(pair(tenant.nameEn, tenant.nameMr), ui, slug)).filter(Boolean);
+  let shown = withFallback(pageKey, page);
+  if (pageKey === "services") {
+    // The home page's "Citizen Services" tiles are shown here, between the hero and the RTS card (the final home design
+    // has no such block). They are still edited in the Home page editor ("Quick links").
+    const links = (await loadPage(slug, "home"))?.sections.find((s) => s.sectionKey === "quick-links");
+    const order = shown.sections.map((s) => s.sortOrder).sort((a, b) => a - b);
+    if (links && order.length > 0) {
+      const sortOrder = order.length > 1 ? (order[0]! + order[1]!) / 2 : order[0]! + 1;
+      shown = { ...shown, sections: [...shown.sections, { ...links, sortOrder }] };
+    }
+  }
+  const sections = renderSections(shown, slug, ui, pickText(pair(tenant.nameEn, tenant.nameMr), ui, slug)).filter(Boolean);
 
   const dataBlock = DATA_PAGES[pageKey] ? <DataBlock pageKey={pageKey} slug={slug} locale={ui} tenant={tenant} /> : null;
 
