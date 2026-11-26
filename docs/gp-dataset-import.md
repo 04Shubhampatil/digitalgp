@@ -32,7 +32,7 @@ rendered in a browser and read). Marathi text is verbatim; English is a translat
 
 | Dataset | Target |
 | --- | --- |
-| Name, place, tagline, welcome, about, village photos | Home `banner`, `hero`, `welcome`, `about-cards`; About `banner`, `overview`, `history` |
+| Name, place, tagline, welcome, about, village photos | Home `hero`, `welcome`, `about-cards`; About `banner`, `overview`, `history` (the Home `banner` — the hero at the top of the site — is never changed) |
 | Population, programmes, year, area, members, schemes | Home `quick-stats` (the old `about/geography` area and households are removed — the source gives no unit) |
 | Sarpanch + thought of the day | Home `sarpanch-message` |
 | Attractions | Home `achievements` |

@@ -45,6 +45,12 @@ describe("Ganeshwadi content dataset", () => {
     expect(geo.pinCode).toBe("415110");
   });
 
+  it("never changes the Home banner (the website's own hero)", () => {
+    const banner = { layout: "image-right", heading: { en: "Welcome to Gram Panchayat Savardari" }, imageId: "mediaid000001" };
+    const r = buildSections(gpDatasetSchema.parse(raw), () => "mediaid000002", (page, key) => (page === "home" && key === "banner" ? banner : undefined));
+    expect(r.sections.some((s) => s.pageKey === "home" && s.sectionKey === "banner")).toBe(false);
+  });
+
   it("rejects datasets that point outside the site or miss a source", () => {
     const bad = structuredClone(raw) as { gallery: { photos: { photo: string }[] }; assets: Record<string, string> };
     bad.gallery.photos[0]!.photo = "https://evil.example/x.jpg";

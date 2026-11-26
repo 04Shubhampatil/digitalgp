@@ -174,16 +174,7 @@ export function buildSections(d: GpDataset, media: (path: string) => string, cur
   add("home", "welcome", { ...keep("home", "welcome"), heading: v.welcome, body: v.about });
   const img = v.images ?? {};
   const imageIf = (field: string, path?: string) => (path ? { [field]: media(path) } : {});
-  const homeBanner = current("home", "banner");
-  if (homeBanner) {
-    add("home", "banner", {
-      ...homeBanner,
-      heading: { en: `Welcome to ${gpName.en}`, mr: `${gpName.mr}मध्ये आपले स्वागत` },
-      supportingText: place,
-      description: v.tagline,
-      ...imageIf("imageId", img.village1),
-    });
-  }
+  // The Home banner (the hero at the top of the site) is the website's own design and is never changed by an import.
   add("home", "weather", { ...keep("home", "weather"), place: d.contact.weatherLocation, location: `${v.name.en}, ${v.state.en}` });
   if (d.events.length) {
     const shortDate = (iso?: string) => (iso ? new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" }) : "");
