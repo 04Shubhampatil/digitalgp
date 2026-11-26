@@ -30,7 +30,8 @@ export function GeographySection({ locale, data }: SectionProps) {
     ["pinCode", d.pinCode],
     ["nearestCity", pickText(d.nearestCity, locale) || undefined],
   ];
-  const shown = tiles.filter(([, v]) => v !== undefined && v !== "");
+  // A figure that is not entered (absent or empty) has no tile: never a 0 or a design value.
+  const shown = tiles.filter(([, v]) => v != null && v !== "");
   const description = pickText(d.description, locale);
   if (shown.length === 0 && !description) return null;
   return (

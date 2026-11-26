@@ -43,6 +43,8 @@ type NewsItem = { title?: B; date?: B | string; status?: string; imageUrl?: stri
 export async function WhatsNewSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public");
   const d = data as { heading?: B; source?: "announcements"; viewAll?: { label?: B; href?: string }; items?: NewsItem[] };
+  // Rows of a published section (the design's sample rows come with `source: "announcements"`).
+  const typed = d.source !== "announcements";
   let items: NewsItem[] = (d.items ?? []).map((i) => (i.imageId && !i.imageUrl ? { ...i, imageUrl: publicMediaUrl(slug, i.imageId) } : i));
   if (d.source === "announcements") {
     const live = await listPublicAnnouncements(slug, { page: "home", limit: 5 }).catch(() => null);
@@ -81,9 +83,21 @@ export async function WhatsNewSection({ slug, locale, data }: SectionProps) {
         )}
       </div>
       <ul className="mt-[10px] rounded-[10px] border border-[#414141]/20 px-3">
-        {items.map((n, i) => (
+        {items.map((n, i) => {
+          const date = typeof n.date === "string" ? n.date : pickText(n.date, locale);
+          // A row typed in the editor without a link is plain text (nothing to open); sample and announcement rows are links.
+          const href = n.href ? resolveHref(n.href, slug) : typed ? undefined : d.viewAll?.href ? resolveHref(d.viewAll.href, slug) : pageHref(slug, "announcements");
+          const Row = ({ children }: { children: React.ReactNode }) =>
+            href ? (
+              <Link href={href} className="flex min-h-[94px] items-center gap-[14px] py-[13px] hover:bg-[#f4faf6]">
+                {children}
+              </Link>
+            ) : (
+              <div className="flex min-h-[94px] items-center gap-[14px] py-[13px]">{children}</div>
+            );
+          return (
           <li key={i} className="border-b border-black last:border-b-0">
-            <Link href={n.href ? resolveHref(n.href, slug) : d.viewAll?.href ? resolveHref(d.viewAll.href, slug) : pageHref(slug, "announcements")} className="flex min-h-[94px] items-center gap-[14px] py-[13px] hover:bg-[#f4faf6]">
+            <Row>
             {n.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- static design asset / backend media
               <img src={n.imageUrl} alt="" width={92} height={68} className="h-[68px] w-[92px] shrink-0 rounded-[10px] object-cover" loading="lazy" />
@@ -97,15 +111,16 @@ export async function WhatsNewSection({ slug, locale, data }: SectionProps) {
               <p className="text-[16px] leading-[24px] font-semibold text-black">{pickText(n.title, locale)}</p>
               <p className="mt-2 flex items-center text-[12px] leading-6 font-medium text-[#414141]">
                 {/* Figma: the status chip sits in a fixed column 88px after the date. */}
-                <span className="min-w-[88px] pr-2">{typeof n.date === "string" ? n.date : pickText(n.date, locale)}</span>
+                {date && <span className="min-w-[88px] pr-2">{date}</span>}
                 {n.status && (
                   <span className={`rounded-[27px] px-2.5 py-0.5 text-[12px] leading-6 font-medium ${CHIP[n.status] ?? "bg-[#ececec] text-[#414141]"}`}>{n.status in CHIP ? t(`status.${n.status}`) : locale === "mr" ? (marathiFor(n.status) ?? n.status) : n.status}</span>
                 )}
               </p>
             </div>
-            </Link>
+            </Row>
           </li>
-        ))}
+          );
+        })}
       </ul>
     </div>
   );

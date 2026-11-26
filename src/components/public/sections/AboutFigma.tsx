@@ -1,4 +1,4 @@
-import { Phone } from "lucide-react";
+import { Phone, User } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { FigmaIcon } from "@/components/ui/FigmaIcon";
@@ -274,7 +274,7 @@ export function AboutStructureSection({ slug, locale, data }: SectionProps) {
   const d = data as {
     eyebrow?: B;
     heading?: B;
-    members?: { role?: B; title?: B; body?: B; accent?: string; photoId?: string }[];
+    members?: { role?: B; title?: B; body?: B; accent?: string; photoId?: string; /** A real member (from the database), not a design sample. */ person?: boolean }[];
     office?: { eyebrow?: B; heading?: B; addressLabel?: B; address?: B; hoursLabel?: B; hours?: B; phoneLabel?: B; phone?: string; emailLabel?: B; email?: string };
   };
   const o = d.office ?? {};
@@ -291,13 +291,23 @@ export function AboutStructureSection({ slug, locale, data }: SectionProps) {
             {(d.members ?? []).map((m, i) => (
               <li key={i} className="flex min-h-[176px] gap-[10px] rounded-[10px] border border-black/15 bg-white py-[13px] pr-3 pl-[11px]" style={{ borderTop: `3px solid ${m.accent ?? "#ff9933"}` }}>
                 <span className="relative block h-[146px] w-[122px] shrink-0 overflow-hidden rounded-[8px] bg-[#f4f1ea]">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- static design asset */}
-                  {m.photoId ? <img src={publicMediaUrl(slug, m.photoId)} alt="" className="size-full object-cover" loading="lazy" /> : <img src="/images/figma/about-person.png" alt="" className="absolute top-0 -left-[30px] h-[145px] w-[182px] max-w-none object-cover" loading="lazy" />}
+                  {m.photoId ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- backend-served media
+                    <img src={publicMediaUrl(slug, m.photoId)} alt="" className="size-full object-cover" loading="lazy" />
+                  ) : m.person ? (
+                    // A real member without a photo: a neutral avatar, never the design's sample portrait.
+                    <span className="flex size-full items-center justify-center bg-success-soft text-primary">
+                      <User className="size-14" aria-hidden />
+                    </span>
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element -- static design asset
+                    <img src="/images/figma/about-person.png" alt="" className="absolute top-0 -left-[30px] h-[145px] w-[182px] max-w-none object-cover" loading="lazy" />
+                  )}
                 </span>
                 <div>
                   <p className="pt-0.5 text-[15.2px] leading-[21px] font-bold text-[#f38c28] uppercase">{pickText(m.role, locale)}</p>
                   <p className="mt-[13px] text-[15.5px] leading-[21px] font-bold text-black">{pickText(m.title, locale)}</p>
-                  <p className="mt-2 text-[11.6px] leading-[19.3px] text-[#414141]">{pickText(m.body, locale)}</p>
+                  {pickText(m.body, locale) && <p className="mt-2 text-[11.6px] leading-[19.3px] text-[#414141]">{pickText(m.body, locale)}</p>}
                 </div>
               </li>
             ))}

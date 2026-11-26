@@ -270,10 +270,11 @@ function mergeAbout(fallback: FallbackSection, legacy: Map<string, Obj>): Obj {
       const people = ((membersSection.items as Obj[] | undefined) ?? []) as { name?: Obj; designation?: Obj; photoId?: string }[];
       const members = ((d.members as Obj[] | undefined) ?? []).map((m) => {
         const hit = people.find((p) => labelOf(p.designation) === labelOf(m.role));
-        return hit?.name ? { ...m, title: hit.name, ...(hit.photoId ? { photoId: hit.photoId } : {}) } : m;
+        // `person`: the card shows a real member, so without a photo it gets a neutral avatar, not the design's sample portrait.
+        return hit?.name ? { ...m, title: hit.name, person: true, ...(hit.photoId ? { photoId: hit.photoId } : {}) } : m;
       });
       // Published members whose designation has no card in the design get a card of their own.
-      const extra = people.filter((p) => p.name && !members.some((m) => labelOf(m.role) === labelOf(p.designation))).map((p) => ({ role: p.designation, title: p.name, ...(p.photoId ? { photoId: p.photoId } : {}) }));
+      const extra = people.filter((p) => p.name && !members.some((m) => labelOf(m.role) === labelOf(p.designation))).map((p) => ({ role: p.designation, title: p.name, person: true, ...(p.photoId ? { photoId: p.photoId } : {}) }));
       const base = (d.office as Obj | undefined) ?? {};
       const keep = (k: string) => (office[k] ? { [k]: office[k] } : {});
       return { ...d, ...filled({ heading: membersSection.heading }), members: [...members, ...extra], office: { ...base, ...keep("address"), ...keep("hours"), ...keep("phone"), ...keep("email") } };
@@ -310,6 +311,23 @@ function mergeAbout(fallback: FallbackSection, legacy: Map<string, Obj>): Obj {
     default:
       return d;
   }
+}
+
+/**
+ * "Our Leaders" of the home page (final design: under the stats strip) when Home has no leaders section of its own: the
+ * leaders published on the About page (leaders-profile-grid), so they are edited in one place. The title stays the
+ * design's "Our Leaders"; the line under it is the heading typed for the section (e.g. "Hon. ministers and officials")
+ * instead of the design's fixed line.
+ */
+export function homeLeadersFromAbout(about: PublicPageDto | null): PublicPageDto["sections"][number] | undefined {
+  const leaders = withFallback("about", about).sections.find((s) => s.sectionKey === "leaders");
+  if (!leaders) return undefined;
+  const design = (FALLBACK_SECTIONS.home ?? []).find((s) => s.sectionKey === "leaders")?.data ?? {};
+  const d = leaders.data as Obj;
+  // The About block replaced its title with the typed heading (no accent word left): on Home that heading is the subtitle.
+  const typedHeading = has(d.heading) && !has(d.headingAccent) ? d.heading : undefined;
+  const data = typedHeading ? { ...d, heading: design.heading, headingAccent: design.headingAccent, subheading: typedHeading } : d;
+  return { ...leaders, sortOrder: HOME_ORDER.leaders ?? 12, data };
 }
 
 export function withFallback(pageKey: PageKey, page: PublicPageDto | null): PublicPageDto {

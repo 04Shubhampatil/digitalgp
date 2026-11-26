@@ -165,7 +165,8 @@ export function SarpanchMessageSection({ slug, locale, data }: SectionProps) {
           {initials}
         </span>
       )}
-      <blockquote className="mt-[14px] max-w-[575px] text-[14px] leading-6 tracking-[0.14px] text-black italic">“{message}”</blockquote>
+      {/* The message may have paragraphs (a blank line between them): the breaks are kept. */}
+      <blockquote className="mt-[14px] max-w-[575px] text-[14px] leading-6 tracking-[0.14px] whitespace-pre-line text-black italic">“{message.trim()}”</blockquote>
       <figcaption className="mt-2.5 text-[12px] leading-6 tracking-[0.12px] text-[#414141]">
         — {name}
         {pickText(d.designation, locale) && <>, {pickText(d.designation, locale)}</>}
