@@ -45,7 +45,8 @@ export async function QuickLinksSection({ slug, locale, data, pageKey }: Section
                 <span className="flex size-[73px] shrink-0 items-center justify-center">
                   <FigmaIcon name={tile.icon} width={73} height={73} className="size-[73px] object-cover" />
                 </span>
-                <span className="mt-[9px] text-[16px] leading-[45px] font-semibold whitespace-nowrap text-black">{tile.label}</span>
+                {/* One line as in the design from tablet up; on phones a long name wraps inside its tile instead of spilling out. */}
+                <span className="mt-[9px] text-[14px] leading-[18px] font-semibold text-black max-sm:flex max-sm:h-[45px] max-sm:items-center sm:text-[16px] sm:leading-[45px] sm:whitespace-nowrap">{tile.label}</span>
               </>
             );
             return (
