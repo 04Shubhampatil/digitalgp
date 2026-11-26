@@ -644,7 +644,8 @@ describe("published sections drawn by the design's own blocks", () => {
     const members = out.sections.find((s) => s.sectionKey === "about-structure")!.data.members as { title: { en: string }; person?: boolean; photoId?: string }[];
     expect(members.find((m) => m.title.en === "Real Sarpanch")).toMatchObject({ person: true });
     expect(members.find((m) => m.title.en === "Extra Person")).toMatchObject({ person: true, photoId: "abcdefghij1" });
-    expect(members.some((m) => !m.person)).toBe(true);
+    // With real members entered, the design's unmatched sample cards (sample portraits, generic text) are gone.
+    expect(members.every((m) => m.person)).toBe(true);
   });
 
   it("services: help card takes the typed contact (number written as the design writes it) and the uploaded picture", () => {

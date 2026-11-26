@@ -277,7 +277,9 @@ function mergeAbout(fallback: FallbackSection, legacy: Map<string, Obj>): Obj {
       const extra = people.filter((p) => p.name && !members.some((m) => labelOf(m.role) === labelOf(p.designation))).map((p) => ({ role: p.designation, title: p.name, person: true, ...(p.photoId ? { photoId: p.photoId } : {}) }));
       const base = (d.office as Obj | undefined) ?? {};
       const keep = (k: string) => (office[k] ? { [k]: office[k] } : {});
-      return { ...d, ...filled({ heading: membersSection.heading }), members: [...members, ...extra], office: { ...base, ...keep("address"), ...keep("hours"), ...keep("phone"), ...keep("email") } };
+      // With real members entered, the design's sample cards that matched nobody (sample portraits, generic text) go.
+      const shownMembers = people.length > 0 ? [...members.filter((m) => (m as Obj).person), ...extra] : members;
+      return { ...d, ...filled({ heading: membersSection.heading }), members: shownMembers, office: { ...base, ...keep("address"), ...keep("hours"), ...keep("phone"), ...keep("email") } };
     }
     case "about-vision": {
       const v = legacy.get("vision-mission");
