@@ -109,8 +109,8 @@ export function LinkCardsSection({ slug, locale, data }: SectionProps) {
                   </span>
                 )}
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[18px] leading-6 font-semibold whitespace-nowrap text-black group-hover:text-[#135130]">{pickText(it.title, locale)}</span>
-                  <span className="mt-1.5 block text-[14px] leading-6 font-medium whitespace-nowrap text-[#414141]">{pickText(it.body, locale)}</span>
+                  <span className="block text-[18px] leading-6 font-semibold text-black group-hover:text-[#135130] sm:whitespace-nowrap">{pickText(it.title, locale)}</span>
+                  <span className="mt-1.5 block text-[14px] leading-6 font-medium text-[#414141] sm:whitespace-nowrap">{pickText(it.body, locale)}</span>
                 </span>
                 <ChevronRight aria-hidden className="size-6 shrink-0 text-black" />
               </Link>
