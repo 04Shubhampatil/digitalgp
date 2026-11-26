@@ -32,11 +32,12 @@ export default async function AssignAccessPage({ params }: { params: Promise<{ u
     throw err;
   }
   const active = user.assignments.filter((a) => !a.revokedAt);
-  const own = active.find((a) => a.role === "BLOCK_ADMIN") ?? active.find((a) => a.role === "TALUKA_ADMIN");
-  // Only block and taluka admins get this screen; other roles use the assignment manager on the profile.
+  // Block Admin was merged into Taluka Admin: older Block Admin accounts open here as Taluka Admins, with their own block area kept.
+  const own = active.find((a) => a.role === "TALUKA_ADMIN") ?? active.find((a) => a.role === "BLOCK_ADMIN");
+  // Only taluka admins get this screen; other roles use the assignment manager on the profile.
   if (!own && active.length > 0) redirect(`/admin/users/${userId}#access`);
-  const role = own?.role === "TALUKA_ADMIN" ? "TALUKA_ADMIN" : "BLOCK_ADMIN";
-  const areaLevel = role === "TALUKA_ADMIN" ? "TALUKA" : "BLOCK";
+  const role = own?.role === "BLOCK_ADMIN" ? "BLOCK_ADMIN" : "TALUKA_ADMIN";
+  const areaLevel = role === "BLOCK_ADMIN" ? "BLOCK" : "TALUKA";
 
   const [districts, areas, gps, sites] = await Promise.all([
     hierarchy.list({ level: "DISTRICT", limit: 100 }, { cookie }).catch(() => ({ data: [] as AdminUnitDto[] })),
