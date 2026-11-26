@@ -24,6 +24,9 @@ describe("site assets (design pictures registered as media)", () => {
     for (const bad of ["/images/../.env", "https://evil.example/x.png", "/images/x.png?y=1", "//evil.example/x.png", "/api/v1/x.png", "/images/x.js"]) {
       expect(isSiteAssetPath(bad)).toBe(false);
     }
+    // PDFs only under /documents/, pictures only under /images/.
+    expect(isSiteAssetPath("/documents/gp/ganeshwadi/gr-1.pdf")).toBe(true);
+    for (const bad of ["/documents/x.png", "/images/x.pdf", "/documents/../x.pdf", "/documents/x.pdf.js"]) expect(isSiteAssetPath(bad)).toBe(false);
     expect(siteAssetPath("site:/images/a/b.webp")).toBe("/images/a/b.webp");
     expect(siteAssetPath("site:/images/../secret.png")).toBeNull();
     expect(siteAssetPath("2026/11/abc.png")).toBeNull();

@@ -7,8 +7,12 @@
  */
 export const SITE_ASSET_PREFIX = "site:";
 
-/** Only plain paths under /images/ (no "..", no query, no scheme): the redirect can never leave the website. */
-export const SITE_ASSET_PATH = /^\/images\/(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_.-]+\.(?:png|jpe?g|webp|gif|svg|avif)$/;
+/**
+ * Only plain paths under /images/ (pictures) or /documents/ (PDFs) — no "..", no query, no scheme: the redirect can
+ * never leave the website.
+ */
+export const SITE_ASSET_PATH =
+  /^\/(?:images\/(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_.-]+\.(?:png|jpe?g|webp|gif|svg|avif)|documents\/(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_.-]+\.pdf)$/;
 
 /** Media sources an admin may reference from content (citizen complaint uploads never). */
 export const LIBRARY_SOURCES = ["ADMIN", "SITE_ASSET"] as const;
@@ -37,8 +41,14 @@ const MIME: Record<string, string> = {
   gif: "image/gif",
   svg: "image/svg+xml",
   avif: "image/avif",
+  pdf: "application/pdf",
 };
 
 export function siteAssetMime(path: string): string {
   return MIME[path.split(".").pop()!.toLowerCase()] ?? "application/octet-stream";
+}
+
+/** Media kind of a site asset: PDFs under /documents/ are documents, everything else a picture. */
+export function siteAssetKind(path: string): "IMAGE" | "DOCUMENT" {
+  return path.toLowerCase().endsWith(".pdf") ? "DOCUMENT" : "IMAGE";
 }
