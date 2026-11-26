@@ -19,7 +19,15 @@ export default async function TenantHomePage({ params }: { params: Promise<{ ten
     if (!isApiError(err, "NOT_FOUND")) throw err;
   }
 
-  const sections = renderSections(withFallback("home", page), slug, locale as UiLocale, pickText(pair(tenant.nameEn, tenant.nameMr), locale as UiLocale, slug)).filter(Boolean);
+  let shown = withFallback("home", page);
+  if (!shown.sections.some((s) => s.sectionKey === "leaders")) {
+    // Final home design: "Our Leaders" sits under the stats strip. When the home page has no leaders section of its own,
+    // it shows the leaders of the About page (the same people, edited in one place).
+    const about = await getPublicPage(slug, "about").catch(() => null);
+    const leaders = withFallback("about", about).sections.find((s) => s.sectionKey === "leaders");
+    if (leaders) shown = { ...shown, sections: [...shown.sections, { ...leaders, sortOrder: 12 }].sort((a, b) => a.sortOrder - b.sortOrder) };
+  }
+  const sections = renderSections(shown, slug, locale as UiLocale, pickText(pair(tenant.nameEn, tenant.nameMr), locale as UiLocale, slug)).filter(Boolean);
   if (sections.length === 0) {
     return (
       <section className="mx-auto max-w-7xl px-4 py-24 text-center sm:px-6">
