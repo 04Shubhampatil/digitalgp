@@ -37,8 +37,11 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
-/** Figma 09 "Create Block Admin" + 10 "Assign access", for every role the caller may grant. POST /users. */
-export function CreateUserForm({ assignments }: { assignments: AssignmentDto[] }) {
+/**
+ * Figma 09 "Create Block Admin" + 10 "Assign access", for every role the caller may grant. POST /users.
+ * With `fixedRole` it is one of the separate per-type forms (GP Admin, Taluka Admin, Data Operator): no role picker.
+ */
+export function CreateUserForm({ assignments, fixedRole }: { assignments: AssignmentDto[]; fixedRole?: Role }) {
   const t = useTranslations("admin");
   const tc = useTranslations("common");
   const router = useRouter();
@@ -48,7 +51,7 @@ export function CreateUserForm({ assignments }: { assignments: AssignmentDto[] }
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", email: "", phone: "", locale: "MR", password: "", role: "BLOCK_ADMIN", unitId: "", modules: [] },
+    defaultValues: { name: "", email: "", phone: "", locale: "MR", password: "", role: fixedRole ?? "BLOCK_ADMIN", unitId: "", modules: [] },
   });
   const { register, handleSubmit, control, setValue, setError, formState } = form;
   const role = useWatch({ control, name: "role" });
@@ -126,17 +129,24 @@ export function CreateUserForm({ assignments }: { assignments: AssignmentDto[] }
       <section className="rounded-card border border-line bg-surface p-5">
         <h2 className="mb-4 text-[17px] font-bold text-ink">{t("users.scope")}</h2>
         <div className="grid gap-4">
-          <Select
-            label={t("users.roleField")}
-            options={ROLES.map((r) => ({ value: r, label: t(`role.${r}`) }))}
-            error={formState.errors.role?.message}
-            {...register("role", {
-              onChange: () => {
-                setValue("unitId", "");
-                setValue("modules", []);
-              },
-            })}
-          />
+          {fixedRole ? (
+            <p className="text-sm text-ink">
+              <span className="mr-2 text-[11px] font-semibold tracking-wide text-muted uppercase">{t("users.roleField")}</span>
+              <span className="font-semibold">{t(`role.${fixedRole}`)}</span>
+            </p>
+          ) : (
+            <Select
+              label={t("users.roleField")}
+              options={ROLES.map((r) => ({ value: r, label: t(`role.${r}`) }))}
+              error={formState.errors.role?.message}
+              {...register("role", {
+                onChange: () => {
+                  setValue("unitId", "");
+                  setValue("modules", []);
+                },
+              })}
+            />
+          )}
           <div>
             <p className="mb-1.5 text-[11px] font-semibold tracking-wide text-muted uppercase">
               {t("users.scope")} · {t(`level.${ROLE_LEVEL[role]}`)}

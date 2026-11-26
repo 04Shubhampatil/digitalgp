@@ -147,7 +147,7 @@ export async function validateSessionToken(token: string): Promise<AuthContext |
     await db.session.delete({ where: { id: sessionId } }).catch(() => undefined);
     return null;
   }
-  if (session.user.status !== "ACTIVE") {
+  if (session.user.status !== "ACTIVE" || session.user.deletedAt) {
     await db.session.deleteMany({ where: { userId: session.userId } }).catch(() => undefined);
     return null;
   }

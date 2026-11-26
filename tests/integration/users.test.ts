@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { addAssignment, createUser, revokeAssignment, updateAssignmentModules, updateUser } from "@/features/users/service";
+import { login } from "@/features/auth/service";
+import { addAssignment, createUser, deleteUser, getUser, listUsers, resetUserPassword, revokeAssignment, updateAssignmentModules, updateUser } from "@/features/users/service";
 import { createSession, validateSessionToken } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
@@ -94,5 +95,93 @@ describe("user management", () => {
     const admin = await actor("GP_ADMIN", w.gpA.id);
     const created = await createUser(admin.ctx, { email: "add@test.local", name: "A", assignment: op(w.gpA.id) }, client);
     await expectCode(addAssignment(admin.ctx, created.user.id, op(w.gpB.id), client), "NOT_FOUND");
+  });
+
+  it("super admin creates each user type at its own level, each logs in with its own credentials", async () => {
+    const w = await buildWorld();
+    const { ctx } = await actor("SUPER_ADMIN", w.state.id);
+    const gp = await createUser(ctx, { email: "gp@test.local", name: "GP", password: "Strong-Pass-123", assignment: { role: "GP_ADMIN", unitId: w.gpA.id } }, client);
+    const tk = await createUser(ctx, { email: "tk@test.local", name: "TK", password: "Strong-Pass-456", assignment: { role: "TALUKA_ADMIN", unitId: w.taluka1.id } }, client);
+    const opr = await createUser(ctx, { email: "opr@test.local", name: "OP", password: "Strong-Pass-789", assignment: op(w.gpB.id) }, client);
+    expect([gp, tk, opr].map((r) => r.user.assignments[0]!.role)).toEqual(["GP_ADMIN", "TALUKA_ADMIN", "DATA_ENTRY_OPERATOR"]);
+    // Wrong level for the type is refused.
+    await expectCode(createUser(ctx, { email: "bad1@test.local", name: "B", assignment: { role: "TALUKA_ADMIN", unitId: w.gpA.id } }, client), "BAD_REQUEST");
+    await expectCode(createUser(ctx, { email: "bad2@test.local", name: "B", assignment: { role: "GP_ADMIN", unitId: w.taluka1.id } }, client), "BAD_REQUEST");
+    // Separate credentials: each password only opens its own account.
+    expect(await login({ email: "gp@test.local", password: "Strong-Pass-123", rememberMe: false }, client)).toBeTruthy();
+    await expectCode(login({ email: "gp@test.local", password: "Strong-Pass-456", rememberMe: false }, client), "UNAUTHENTICATED");
+  });
+
+  it("data isolation: a GP admin sees only users of their own Gram Panchayat; a taluka admin only their taluka", async () => {
+    const w = await buildWorld();
+    const sup = await actor("SUPER_ADMIN", w.state.id);
+    const inA = await createUser(sup.ctx, { email: "a@test.local", name: "A", assignment: op(w.gpA.id) }, client);
+    const inB = await createUser(sup.ctx, { email: "b@test.local", name: "B", assignment: op(w.gpB.id) }, client);
+    const inC = await createUser(sup.ctx, { email: "c@test.local", name: "C", assignment: op(w.gpC.id) }, client);
+
+    const gpAdmin = await actor("GP_ADMIN", w.gpA.id);
+    const gpIds = (await listUsers(gpAdmin.ctx, { limit: 100 } as never)).items.map((u) => u.id);
+    expect(gpIds).toContain(inA.user.id);
+    expect(gpIds).not.toContain(inB.user.id);
+    await expectCode(getUser(gpAdmin.ctx, inB.user.id), "NOT_FOUND");
+    await expectCode(deleteUser(gpAdmin.ctx, inB.user.id, client), "NOT_FOUND");
+    await expectCode(resetUserPassword(gpAdmin.ctx, inB.user.id, client), "NOT_FOUND");
+
+    const talukaAdmin = await actor("TALUKA_ADMIN", w.taluka1.id);
+    const tkIds = (await listUsers(talukaAdmin.ctx, { limit: 100 } as never)).items.map((u) => u.id);
+    expect(tkIds).toEqual(expect.arrayContaining([inA.user.id, inB.user.id]));
+    expect(tkIds).not.toContain(inC.user.id);
+    await expectCode(updateUser(talukaAdmin.ctx, inC.user.id, { status: "SUSPENDED" }, client), "NOT_FOUND");
+  });
+
+  it("deleting a user revokes roles, ends sessions, blocks sign-in, hides them and frees the email", async () => {
+    const w = await buildWorld();
+    const sup = await actor("SUPER_ADMIN", w.state.id);
+    const created = await createUser(sup.ctx, { email: "gone@test.local", name: "Gone", password: "Strong-Pass-123", assignment: { role: "GP_ADMIN", unitId: w.gpA.id } }, client);
+    const { token } = await createSession(created.user.id);
+
+    await deleteUser(sup.ctx, created.user.id, client);
+    expect(await validateSessionToken(token)).toBeNull();
+    await expectCode(login({ email: "gone@test.local", password: "Strong-Pass-123", rememberMe: false }, client), "UNAUTHENTICATED");
+    await expectCode(getUser(sup.ctx, created.user.id), "NOT_FOUND");
+    expect((await listUsers(sup.ctx, { limit: 100 } as never)).items.map((u) => u.id)).not.toContain(created.user.id);
+    const row = await db.user.findUniqueOrThrow({ where: { id: created.user.id } });
+    expect(row.deletedAt).not.toBeNull();
+    expect(row.status).toBe("SUSPENDED");
+    expect(await db.roleAssignment.count({ where: { userId: created.user.id, revokedAt: null } })).toBe(0);
+    expect(await db.auditLog.count({ where: { entityId: created.user.id, action: "user.delete" } })).toBe(1);
+    // The email can be used again.
+    await createUser(sup.ctx, { email: "gone@test.local", name: "Back", assignment: { role: "GP_ADMIN", unitId: w.gpA.id } }, client);
+    // Self-delete is refused.
+    await expectCode(deleteUser(sup.ctx, sup.user.id, client), "BAD_REQUEST");
+  });
+
+  it("a GP admin cannot delete a user who also holds a role outside the GP; operators cannot delete", async () => {
+    const w = await buildWorld();
+    const sup = await actor("SUPER_ADMIN", w.state.id);
+    const both = await createUser(sup.ctx, { email: "both@test.local", name: "Both", assignment: op(w.gpA.id) }, client);
+    await addAssignment(sup.ctx, both.user.id, op(w.gpB.id), client);
+    const gpAdmin = await actor("GP_ADMIN", w.gpA.id);
+    await expectCode(deleteUser(gpAdmin.ctx, both.user.id, client), "FORBIDDEN");
+    const operator = await actor("DATA_ENTRY_OPERATOR", w.gpA.id, [{ moduleKey: "announcements" }]);
+    await expectCode(deleteUser(operator.ctx, both.user.id, client), "FORBIDDEN");
+    // The GP admin can delete a user who is only in their GP.
+    const only = await createUser(gpAdmin.ctx, { email: "only@test.local", name: "Only", assignment: op(w.gpA.id) }, client);
+    await deleteUser(gpAdmin.ctx, only.user.id, client);
+  });
+
+  it("an admin password reset gives a working temporary password and signs the user out", async () => {
+    const w = await buildWorld();
+    const sup = await actor("SUPER_ADMIN", w.state.id);
+    const created = await createUser(sup.ctx, { email: "rp@test.local", name: "RP", password: "Strong-Pass-123", assignment: { role: "TALUKA_ADMIN", unitId: w.taluka1.id } }, client);
+    const { token } = await createSession(created.user.id);
+    const res = await resetUserPassword(sup.ctx, created.user.id, client);
+    expect(res.user.mustResetPassword).toBe(true);
+    expect(await validateSessionToken(token)).toBeNull();
+    await expectCode(login({ email: "rp@test.local", password: "Strong-Pass-123", rememberMe: false }, client), "UNAUTHENTICATED");
+    expect(await login({ email: "rp@test.local", password: res.temporaryPassword, rememberMe: false }, client)).toBeTruthy();
+    const audit = await db.auditLog.findFirstOrThrow({ where: { entityId: created.user.id, action: "user.password_reset" } });
+    expect(JSON.stringify(audit)).not.toContain(res.temporaryPassword);
+    await expectCode(resetUserPassword(sup.ctx, sup.user.id, client), "BAD_REQUEST");
   });
 });

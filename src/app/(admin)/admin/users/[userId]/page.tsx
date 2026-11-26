@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import type { AdminUnitDto } from "@/types/api";
 import { ROLE_MATRIX, type Capability } from "@/config/role-matrix";
+import { UserAccountActions } from "@/components/admin/users/UserAccountActions";
 import { UserManagement } from "@/components/admin/users/UserManagement";
 import { UserStatusButton } from "@/components/admin/users/UserStatusButton";
 import { PageHeader } from "@/components/ui/Card";
@@ -111,6 +112,11 @@ export default async function UserDetailPage({ params }: { params: Promise<{ use
           {canManage && (
             <div className="mt-4">
               <UserStatusButton userId={user.id} status={user.status} disabled={isSelf} />
+            </div>
+          )}
+          {canManage && !isSelf && (
+            <div className="mt-3">
+              <UserAccountActions userId={user.id} userName={user.name} />
             </div>
           )}
         </section>

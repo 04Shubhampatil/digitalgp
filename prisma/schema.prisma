@@ -188,6 +188,9 @@ model User {
   status            UserStatus @default(ACTIVE)
   mustResetPassword Boolean    @default(false)
   lastLoginAt       DateTime?
+  /// Soft delete: the account can no longer sign in, is hidden from user management, and its roles are revoked.
+  /// The row stays so audit logs keep the actor's name; the email is freed (renamed) on deletion.
+  deletedAt         DateTime?
   createdById       String?
   createdBy         User?      @relation("UserCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   createdUsers      User[]     @relation("UserCreatedBy")

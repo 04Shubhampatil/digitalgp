@@ -757,7 +757,12 @@
       "profile": "Profile",
       "needModule": "Choose at least one module for a data entry operator.",
       "none": "No assignments",
-      "revokeConfirm": "Revoke the role {role} at {unit}? The user loses that access immediately."
+      "revokeConfirm": "Revoke the role {role} at {unit}? The user loses that access immediately.",
+      "resetPassword": "Reset password",
+      "deleteUser": "Delete user",
+      "deleteConfirm": "Delete {name}? Their roles are removed, they are signed out and can no longer sign in. Their past activity stays in the audit log. This cannot be undone.",
+      "resetConfirm": "Give {name} a new temporary password? They are signed out everywhere and must change it at the next sign-in.",
+      "resetDone": "Password reset"
     },
     "attach": {
       "pickScopeFirst": "Choose the website or unit first, then attach a file.",
@@ -823,7 +828,27 @@
     "takeBackBody": "The item goes back to its author for editing. After saving your changes, submit it again for review.",
     "takeBackBodyPublished": "The item is taken off the website while you edit it. After saving your changes, submit it for review and publish it again.",
     "takeBackConfirm": "Take back and edit",
-    "takeBackNote": "Taken back for editing."
+    "takeBackNote": "Taken back for editing.",
+    "userTypes": {
+      "gp-admin": {
+        "title": "Create Gram Panchayat Admin",
+        "subtitle": "An admin for one Gram Panchayat website and its records.",
+        "next": "Pick the Gram Panchayat this admin manages",
+        "access": "Manages one Gram Panchayat: website pages, announcements, schemes, projects, media and grievances, and its data operators. Cannot see other Gram Panchayats."
+      },
+      "taluka-admin": {
+        "title": "Create Taluka Admin",
+        "subtitle": "An admin for a taluka and every Gram Panchayat under it.",
+        "next": "Pick the taluka this admin manages",
+        "access": "Manages every Gram Panchayat in one taluka: reviews and publishes content, handles grievances, and creates block admins, GP admins and data operators inside the taluka only."
+      },
+      "data-operator": {
+        "title": "Create Data Operator",
+        "subtitle": "A data entry account for one Gram Panchayat, limited to the modules you choose.",
+        "next": "Pick the Gram Panchayat and the modules",
+        "access": "Enters and submits content for one Gram Panchayat, only in the chosen modules. Cannot publish, manage users or see other Gram Panchayats."
+      }
+    }
   },
   "public": {
     "home": "Home",

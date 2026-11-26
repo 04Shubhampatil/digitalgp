@@ -84,6 +84,11 @@ export const users = {
     apiFetch<UserDto>(`/users/${userId}/assignments`, { method: "POST", body, ...o }),
   revokeAssignment: (userId: string, assignmentId: string, o: Opts = {}) =>
     apiFetch<UserDto>(`/users/${userId}/assignments/${assignmentId}`, { method: "DELETE", ...o }),
+  /** Soft delete: roles revoked, sessions ended, hidden from user management. */
+  remove: (userId: string, o: Opts = {}) => apiFetch<void>(`/users/${userId}`, { method: "DELETE", ...o }),
+  /** New temporary password, returned once; the user must change it at the next sign-in. */
+  resetPassword: (userId: string, o: Opts = {}) =>
+    apiFetch<{ user: UserDto; temporaryPassword: string }>(`/users/${userId}/reset-password`, { method: "POST", ...o }),
 };
 
 // ------------------------------------------------------------ announcements

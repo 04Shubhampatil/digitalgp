@@ -60,10 +60,14 @@ export function UnitPicker({ assignments, targetLevel, onChange, allowIntermedia
   useEffect(() => {
     if (!loadKey || !current || !nextLevel) return;
     let cancelled = false;
+    // A level may be skipped in the hierarchy (e.g. Gram Panchayats directly under a taluka, no block), so load the
+    // unit's real children and keep those no deeper than the target level.
+    const maxDepth = LEVEL_ORDER.indexOf(targetLevel);
     hierarchy
-      .list({ parentId: current.id, level: nextLevel, limit: 100 })
+      .list({ parentId: current.id, limit: 100 })
       .then((page) => {
-        if (!cancelled) setLoaded({ key: loadKey, items: page.data, error: null });
+        const items = page.data.filter((c) => LEVEL_ORDER.indexOf(c.level) <= maxDepth);
+        if (!cancelled) setLoaded({ key: loadKey, items, error: null });
       })
       .catch((err: unknown) => {
         if (!cancelled) setLoaded({ key: loadKey, items: [], error: err instanceof Error ? err.message : "Failed to load" });
@@ -71,11 +75,13 @@ export function UnitPicker({ assignments, targetLevel, onChange, allowIntermedia
     return () => {
       cancelled = true;
     };
-  }, [loadKey, current, nextLevel]);
+  }, [loadKey, current, nextLevel, targetLevel]);
 
   const children = loaded?.key === loadKey ? loaded.items : [];
   const loading = !!loadKey && loaded?.key !== loadKey;
   const loadError = loaded?.key === loadKey ? loaded.error : null;
+  // Label the select by the children's own level when they share one (a skipped level shows the real one).
+  const childLevel: AdminUnitLevel | null = children.length > 0 && children.every((c) => c.level === children[0]!.level) ? children[0]!.level : nextLevel;
 
   useEffect(() => {
     if (current && (current.level === targetLevel || allowIntermediate)) onChange(current);
@@ -127,11 +133,11 @@ export function UnitPicker({ assignments, targetLevel, onChange, allowIntermedia
 
       {nextLevel && current && (
         <Select
-          label={levelLabel(nextLevel)}
+          label={levelLabel(childLevel ?? nextLevel)}
           value=""
           placeholder={loading ? t("picker.loading") : children.length === 0 && !loading ? t("picker.none") : t("picker.choose")}
           disabled={disabled || loading}
-          error={loadError ?? (nextLevel === targetLevel ? error : undefined)}
+          error={loadError ?? (childLevel === targetLevel ? error : undefined)}
           onChange={(e) => {
             const unit = children.find((c) => c.id === e.target.value);
             if (unit) setPath((p) => [...p, unit]);

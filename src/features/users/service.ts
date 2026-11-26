@@ -25,7 +25,7 @@ import type { AssignmentInput, CreateUserInput, ListUsersQuery, UpdateUserInput 
 
 async function findVisibleUser(ctx: AuthContext, userId: string) {
   const user = await db.user.findFirst({
-    where: { id: userId, roleAssignments: { some: { revokedAt: null, unit: unitPathScopeFilter(ctx) } } },
+    where: { id: userId, deletedAt: null, roleAssignments: { some: { revokedAt: null, unit: unitPathScopeFilter(ctx) } } },
     include: userWithAssignmentsInclude,
   });
   if (!user) throw Errors.notFound("User");
@@ -88,6 +88,7 @@ export async function listUsers(ctx: AuthContext, query: ListUsersQuery) {
   };
   const rows = await db.user.findMany({
     where: {
+      deletedAt: null,
       roleAssignments: { some: assignmentFilter },
       ...(query.status ? { status: query.status } : {}),
       ...(query.q ? { OR: [{ name: { contains: query.q, mode: "insensitive" } }, { email: { contains: query.q, mode: "insensitive" } }] } : {}),
@@ -208,6 +209,62 @@ export async function revokeAssignment(ctx: AuthContext, userId: string, assignm
   });
   if (user.roleAssignments.length === 0) await revokeAllUserSessions(userId);
   return toUserDto(user);
+}
+
+/**
+ * New temporary password for a user the actor manages (the user is logged out everywhere and must change it at the
+ * next sign-in). Returned once, never stored in plain text or written to the audit log.
+ */
+export async function resetUserPassword(ctx: AuthContext, userId: string, client: ClientInfo): Promise<{ user: UserDto; temporaryPassword: string }> {
+  if (userId === ctx.user.id) throw Errors.badRequest("Change your own password from your profile");
+  await findManageableUser(ctx, userId);
+  const temporaryPassword = `Tmp-${randomBytes(9).toString("base64url")}1`;
+  const passwordHash = await hashPassword(temporaryPassword);
+  const user = await db.$transaction(async (tx) => {
+    const row = await tx.user.update({ where: { id: userId }, data: { passwordHash, mustResetPassword: true }, include: userWithAssignmentsInclude });
+    await tx.session.deleteMany({ where: { userId } });
+    await writeAudit(actorFromContext(ctx, client), { action: "user.password_reset", entityType: "User", entityId: userId }, tx);
+    return row;
+  });
+  return { user: toUserDto(user), temporaryPassword };
+}
+
+/**
+ * Delete an account (soft): every active role is revoked, all sessions are ended, the account can never sign in
+ * again, and it disappears from user management. The row is kept so audit logs keep the actor's name; the email is
+ * freed so the person can be created again later.
+ *
+ * Isolation: the actor must be able to manage *every* active role the user holds. A GP admin cannot delete someone
+ * who also holds a role outside the GP (that role must be revoked by its own admin first).
+ */
+export async function deleteUser(ctx: AuthContext, userId: string, client: ClientInfo): Promise<void> {
+  if (userId === ctx.user.id) throw Errors.badRequest("You cannot delete your own account");
+  const user = await findManageableUser(ctx, userId);
+  const units = await db.adminUnit.findMany({ where: { id: { in: user.roleAssignments.map((a) => a.unitId) } }, select: { id: true, path: true } });
+  const pathById = new Map(units.map((u) => [u.id, u.path]));
+  const outside = user.roleAssignments.filter((a) => !canGrantRole(ctx, a.role, pathById.get(a.unitId) ?? "\u0000"));
+  if (outside.length) throw Errors.forbidden("This user holds roles outside your area; revoke those roles first");
+
+  const now = new Date();
+  await db.$transaction(async (tx) => {
+    await tx.roleAssignment.updateMany({ where: { userId, revokedAt: null }, data: { revokedAt: now } });
+    await tx.session.deleteMany({ where: { userId } });
+    await tx.passwordResetToken.deleteMany({ where: { userId } });
+    await tx.user.update({
+      where: { id: userId },
+      data: { deletedAt: now, status: "SUSPENDED", email: `deleted-${userId}@deleted.invalid`, phone: null },
+    });
+    await writeAudit(
+      actorFromContext(ctx, client),
+      {
+        action: "user.delete",
+        entityType: "User",
+        entityId: userId,
+        before: { email: user.email, name: user.name, roles: user.roleAssignments.map((a) => ({ role: a.role, unitId: a.unitId })) },
+      },
+      tx,
+    );
+  });
 }
 
 export async function updateAssignmentModules(

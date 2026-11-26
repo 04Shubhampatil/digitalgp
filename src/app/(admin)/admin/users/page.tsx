@@ -8,6 +8,7 @@ import type { UiLocale } from "@/i18n/config";
 import { pair, pickText } from "@/i18n/text";
 import { hierarchy, users } from "@/lib/api/admin";
 import { cookieHeader } from "@/lib/api/server";
+import { USER_TYPES, canCreateRole } from "@/lib/roles";
 import { getCurrentUser, hasCapability } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Block Admins" };
@@ -50,6 +51,11 @@ export default async function UsersPage({ searchParams }: { searchParams: Search
     return { u, area, district, taluka, websites, state: u.status === "SUSPENDED" ? "SUSPENDED" : never ? "PENDING" : "ACTIVE" };
   });
 
+  const callerRoles = user.assignments.filter((a) => !a.revokedAt).map((a) => a.role);
+  const canManage = hasCapability(user, "user:manage");
+  const createTypes = canManage ? (Object.entries(USER_TYPES) as [keyof typeof USER_TYPES, Role][]).filter(([, r]) => canCreateRole(callerRoles, r)) : [];
+  const roleTab = (r: Role | "ALL") => (r === "ALL" ? "all" : r);
+
   const needle = (sp.q ?? "").trim().toLowerCase();
   const shown = rows.filter((r) => (!sp.district || r.district?.id === sp.district) && (!sp.taluka || r.taluka?.id === sp.taluka) && (!needle || r.u.name.toLowerCase().includes(needle) || r.u.email.toLowerCase().includes(needle)));
   const count = (s: string) => rows.filter((r) => r.state === s).length;
@@ -71,13 +77,23 @@ export default async function UsersPage({ searchParams }: { searchParams: Search
         title={t("users.pageTitle")}
         description={t("users.pageSubtitle")}
         actions={
-          hasCapability(user, "user:manage") ? (
+          canManage && canCreateRole(callerRoles, "BLOCK_ADMIN") ? (
             <Link href="/admin/users/new" className="inline-flex h-10 items-center gap-2 rounded-button bg-primary px-5 text-sm font-semibold text-white hover:bg-primary-hover">
               + {t("users.createBlockAdmin")}
             </Link>
           ) : null
         }
       />
+
+      {createTypes.length > 0 && (
+        <div className="mb-5 flex flex-wrap gap-2">
+          {createTypes.map(([slug, r]) => (
+            <Link key={slug} href={`/admin/users/new/${slug}`} className="inline-flex h-10 items-center gap-2 rounded-button border border-line-strong bg-surface px-4 text-sm font-semibold text-primary hover:bg-surface-soft">
+              + {t(`role.${r}`)}
+            </Link>
+          ))}
+        </div>
+      )}
 
       <div className="mb-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard label={t("users.totalAdmins")} value={rows.length.toLocaleString()} tone="info" />
@@ -125,6 +141,23 @@ export default async function UsersPage({ searchParams }: { searchParams: Search
           </div>
         </div>
       </form>
+
+      <nav aria-label={t("users.roleFilter")} className="mb-4 flex flex-wrap gap-2">
+        {(["ALL", ...ROLES] as const).map((r) => (
+          <Link
+            key={r}
+            href={`/admin/users?role=${roleTab(r)}`}
+            aria-current={roleFilter === r ? "page" : undefined}
+            className={
+              roleFilter === r
+                ? "inline-flex h-9 items-center rounded-pill bg-primary px-4 text-xs font-semibold text-white"
+                : "inline-flex h-9 items-center rounded-pill border border-line-strong bg-surface px-4 text-xs font-semibold text-ink hover:bg-surface-soft"
+            }
+          >
+            {r === "ALL" ? tc("all") : t(`role.${r}`)}
+          </Link>
+        ))}
+      </nav>
 
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-2 px-5 pt-5 pb-3">

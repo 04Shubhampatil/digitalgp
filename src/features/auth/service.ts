@@ -42,7 +42,8 @@ export async function login(input: LoginInput, client: ClientInfo) {
     omit: { passwordHash: false },
   });
 
-  const valid = user ? await verifyPassword(user.passwordHash, input.password) : (await burnPasswordVerification(), false);
+  // A deleted account behaves exactly like an unknown email (no hint that it ever existed).
+  const valid = user && !user.deletedAt ? await verifyPassword(user.passwordHash, input.password) : (await burnPasswordVerification(), false);
 
   if (!user || !valid) {
     await writeAudit({ userId: user?.id ?? null, client }, { action: "auth.login_failed", entityType: "User", entityId: user?.id ?? null, result: "FAILURE" });
@@ -91,7 +92,7 @@ export async function getCurrentUser(ctx: AuthContext): Promise<CurrentUserDto> 
 export async function requestPasswordReset(email: string, client: ClientInfo): Promise<void> {
   await consumeRateLimit(`reset:email:${email}`, RESET_LIMIT_PER_EMAIL, RESET_WINDOW_MS);
   const user = await db.user.findUnique({ where: { email } });
-  if (!user || user.status !== "ACTIVE") return;
+  if (!user || user.status !== "ACTIVE" || user.deletedAt) return;
 
   const token = generateToken();
   await db.passwordResetToken.create({

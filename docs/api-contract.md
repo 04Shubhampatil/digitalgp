@@ -106,9 +106,15 @@ Levels: `STATE > DISTRICT > TALUKA > BLOCK (optional) > GRAM_PANCHAYAT`.
 | POST   | `/users/:userId/assignments`                     | `canGrantRole`    | `{ role, unitId, modules? }` | `201 UserDto` |
 | PUT    | `/users/:userId/assignments/:assignmentId`       | `canGrantRole`    | `{ modules: [{ moduleKey, canWrite }] }` (operators only) | `UserDto` |
 | DELETE | `/users/:userId/assignments/:assignmentId`       | `canGrantRole`    | –            | `UserDto` (assignment kept with `revokedAt`; last revocation logs the user out) |
+| POST   | `/users/:userId/reset-password`                  | manageable        | –            | `{ user: UserDto, temporaryPassword }` — returned **once**; all sessions ended, `mustResetPassword = true`; not for yourself |
+| DELETE | `/users/:userId`                                 | manageable, and every active role of the user must be grantable by the actor | – | `204` — soft delete: all roles revoked, sessions and reset links removed, `status = SUSPENDED`, `deletedAt` set, email freed (`deleted-<id>@deleted.invalid`). The user can no longer sign in and is hidden from `/users`; audit logs keep the row. Not for yourself |
 
 Rules: a role may only be granted at its level (`ROLE_LEVELS`); operators need ≥ 1 module, other roles
 none; the actor can grant only roles in `CREATABLE_ROLES[actorRole]` and only within scope.
+
+Admin UI: separate create forms at `/admin/users/new/gp-admin`, `/taluka-admin`, `/data-operator` (fixed role, matching
+scope picker; shown only when the caller's role may create that type). Migration `20261125090000_user_soft_delete` adds
+`User.deletedAt` (additive, nullable).
 
 ## Announcements (admin)
 
