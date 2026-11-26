@@ -6,6 +6,10 @@ import { pickText, type Bilingual } from "@/i18n/text";
 import { publicMediaUrl } from "@/lib/api/public";
 import { resolveHref } from "@/lib/href";
 import type { SectionProps } from "./index";
+import { isDesignAsset } from "./design-media";
+
+/** An uploaded hero photo (the village's own), as opposed to one of the design's cut-out pictures. */
+const isOwnPhoto = async (slug: string, imageId: string | undefined) => !!imageId && !(await isDesignAsset(slug, imageId));
 
 type B = Bilingual | undefined;
 interface Btn {
@@ -24,7 +28,7 @@ interface Btn {
  * `about-hero` / `page-hero`: eyebrow, heading (optional green accent, default the village name),
  * paragraph, pill buttons (first filled) and photo on the right. Shared by every inner page.
  */
-export function AboutHeroSection({ slug, locale, data, tenantName }: SectionProps) {
+export async function AboutHeroSection({ slug, locale, data, tenantName }: SectionProps) {
   const d = data as {
     eyebrow?: B;
     title?: B;
@@ -132,12 +136,23 @@ export function AboutHeroSection({ slug, locale, data, tenantName }: SectionProp
               ))}
             </div>
           </div>
-          {/* eslint-disable-next-line @next/next/no-img-element -- static design asset */}
-          <img
-            src={heroImage ?? "/images/figma/about-hero.png"}
-            alt=""
-            className="mt-2 h-auto w-full lg:absolute lg:top-0 lg:left-[var(--hx)] lg:mt-0 lg:h-[var(--hh)] lg:w-[var(--hw)] lg:max-w-none"
-          />
+          {(await isOwnPhoto(slug, d.imageId)) ? (
+            // A photo of the village's own (not a design picture) is a plain rectangle: it fills the design's picture box
+            // and gets the design's torn left edge and birds laid over it, so the hero keeps the Figma look.
+            <div className="relative mt-2 w-full overflow-hidden lg:absolute lg:top-0 lg:left-[var(--hx)] lg:mt-0 lg:h-[var(--hh)] lg:w-[var(--hw)]" style={{ aspectRatio: `${box.width} / ${box.height}` }}>
+              {/* eslint-disable-next-line @next/next/no-img-element -- backend-served media */}
+              <img src={heroImage} alt="" className="absolute inset-0 size-full object-cover" />
+              {/* eslint-disable-next-line @next/next/no-img-element -- static design asset */}
+              <img src="/images/figma/pages/hero-torn-overlay.png" alt="" aria-hidden className="absolute inset-0 size-full" />
+            </div>
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element -- static design asset
+            <img
+              src={heroImage ?? "/images/figma/about-hero.png"}
+              alt=""
+              className="mt-2 h-auto w-full lg:absolute lg:top-0 lg:left-[var(--hx)] lg:mt-0 lg:h-[var(--hh)] lg:w-[var(--hw)] lg:max-w-none"
+            />
+          )}
         </div>
       </section>
     );

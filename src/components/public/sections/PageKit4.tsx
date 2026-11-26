@@ -118,7 +118,8 @@ export async function liveDownloads(
     limit: 20,
   }).catch(() => null);
   return (res?.data ?? [])
-    .filter((a) => a.attachment)
+    // A picture attached to an announcement (an event photo) is shown with the announcement; it is not a download.
+    .filter((a) => a.attachment && a.attachment.kind !== "IMAGE")
     .map((a) => {
       const f = a.attachment!;
       const ext = f.name.includes(".")

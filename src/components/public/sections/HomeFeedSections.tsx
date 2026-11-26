@@ -70,6 +70,8 @@ export async function WhatsNewSection({ slug, locale, data }: SectionProps) {
       });
     }
   }
+  // A status typed as "Event" / "Completed" gets the same coloured chip as the design's lower-case keys.
+  items = items.map((i) => (i.status && i.status.trim().toLowerCase() in CHIP ? { ...i, status: i.status.trim().toLowerCase() } : i));
   if (items.length === 0) return null;
   return (
     // Figma 375:13391: 649×549 card, 623px list box 55px from the top, 94px rows split by 599px rules.
