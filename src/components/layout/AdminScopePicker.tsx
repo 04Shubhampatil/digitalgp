@@ -57,7 +57,8 @@ export function AdminScopePicker({ labels, locale }: { labels: ScopeLabels; loca
     router.push(s ? `/admin/websites?${s}` : "/admin/websites");
   };
 
-  const box = "relative hidden h-9 min-w-[110px] items-center rounded-[4px] border border-line-strong bg-surface text-xs text-ink focus-within:border-primary md:flex";
+  // From 1024px the three boxes share the room that is left (so the language switch and the profile never get cut off); 110px each from 1280px.
+  const box = "relative hidden h-9 min-w-0 max-w-[160px] flex-1 items-center rounded-[4px] border border-line-strong bg-surface text-xs text-ink focus-within:border-primary lg:flex xl:min-w-[110px] xl:flex-none";
   const select = "h-full w-full cursor-pointer appearance-none truncate rounded-[4px] bg-transparent pr-8 pl-3 text-xs outline-none disabled:cursor-default disabled:opacity-60";
   const chevron = <ChevronDown aria-hidden className="pointer-events-none absolute right-2.5 size-3.5 shrink-0 text-muted" />;
 

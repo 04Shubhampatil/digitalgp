@@ -11,7 +11,11 @@ import { cookieHeader } from "@/lib/api/server";
 import { USER_TYPES, canCreateRole } from "@/lib/roles";
 import { getCurrentUser, hasCapability } from "@/lib/session";
 
-export const metadata: Metadata = { title: "Block Admins" };
+/** The list shows block admins by default; with another role tab (or "All") the title says so. */
+export async function generateMetadata({ searchParams }: { searchParams: Search }): Promise<Metadata> {
+  const { role } = await searchParams;
+  return { title: !role || role === "BLOCK_ADMIN" ? "Block Admins" : "Users" };
+}
 
 const ROLES: Role[] = ["SUPER_ADMIN", "TALUKA_ADMIN", "BLOCK_ADMIN", "GP_ADMIN", "DATA_ENTRY_OPERATOR"];
 type Search = Promise<{ role?: string; district?: string; taluka?: string; q?: string }>;
@@ -54,7 +58,13 @@ export default async function UsersPage({ searchParams }: { searchParams: Search
   const callerRoles = user.assignments.filter((a) => !a.revokedAt).map((a) => a.role);
   const canManage = hasCapability(user, "user:manage");
   const createTypes = canManage ? (Object.entries(USER_TYPES) as [keyof typeof USER_TYPES, Role][]).filter(([, r]) => canCreateRole(callerRoles, r)) : [];
-  const roleTab = (r: Role | "ALL") => (r === "ALL" ? "all" : r);
+  // A role tab keeps the district / taluka / search filters that are set.
+  const roleTab = (r: Role | "ALL") => {
+    const p = new URLSearchParams({ role: r === "ALL" ? "all" : r });
+    for (const k of ["district", "taluka", "q"] as const) if (sp[k]) p.set(k, sp[k]!);
+    return p.toString();
+  };
+  const blockView = roleFilter === "BLOCK_ADMIN";
 
   const needle = (sp.q ?? "").trim().toLowerCase();
   const shown = rows.filter((r) => (!sp.district || r.district?.id === sp.district) && (!sp.taluka || r.taluka?.id === sp.taluka) && (!needle || r.u.name.toLowerCase().includes(needle) || r.u.email.toLowerCase().includes(needle)));
@@ -74,7 +84,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Search
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader
-        title={t("users.pageTitle")}
+        title={blockView ? t("users.pageTitle") : t("usersUi.listTitle")}
         description={t("users.pageSubtitle")}
         actions={
           canManage && canCreateRole(callerRoles, "BLOCK_ADMIN") ? (
@@ -146,7 +156,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Search
         {(["ALL", ...ROLES] as const).map((r) => (
           <Link
             key={r}
-            href={`/admin/users?role=${roleTab(r)}`}
+            href={`/admin/users?${roleTab(r)}`}
             aria-current={roleFilter === r ? "page" : undefined}
             className={
               roleFilter === r
@@ -161,7 +171,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Search
 
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-2 px-5 pt-5 pb-3">
-          <h2 className="text-[19px] font-bold text-ink">{t("users.overviewTitle")}</h2>
+          <h2 className="text-[19px] font-bold text-ink">{blockView ? t("users.overviewTitle") : roleFilter === "ALL" ? t("usersUi.listOverview") : t(`role.${roleFilter}`)}</h2>
           <p className="text-xs text-muted">
             {roleFilter === "ALL" ? (
               <Link href="/admin/users" className="font-semibold text-primary hover:underline">

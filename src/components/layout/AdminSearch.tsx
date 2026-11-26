@@ -18,7 +18,7 @@ export function AdminSearch({ entries, placeholder }: { entries: SearchEntry[]; 
     return needle ? entries.filter((e) => e.label.toLowerCase().includes(needle)).slice(0, 8) : [];
   }, [q, entries]);
   return (
-    <div className="relative hidden w-[190px] lg:block">
+    <div className="relative hidden w-[190px] shrink-0 xl:block">
       <label className="relative block">
         <span className="sr-only">{placeholder}</span>
         <input
