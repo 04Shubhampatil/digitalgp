@@ -142,13 +142,13 @@ export async function AdminShell({ user, children }: { user: CurrentUserDto; chi
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-[64px] items-center justify-between gap-4 border-b border-line bg-canvas px-5">
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
             <Suspense fallback={null}>
               <AdminScopePicker labels={scopeLabels} locale={locale} />
             </Suspense>
             <AdminSearch entries={searchEntries} placeholder={t("topbar.search")} />
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex shrink-0 items-center gap-4">
             <LanguageSwitcher />
             <Link href="/admin/profile" className="flex items-center gap-2 hover:opacity-80">
               <span aria-hidden className="flex size-8 items-center justify-center rounded-full bg-primary font-brand-sub text-xs font-semibold text-white">

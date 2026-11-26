@@ -762,7 +762,11 @@
       "deleteUser": "Delete user",
       "deleteConfirm": "Delete {name}? Their roles are removed, they are signed out and can no longer sign in. Their past activity stays in the audit log. This cannot be undone.",
       "resetConfirm": "Give {name} a new temporary password? They are signed out everywhere and must change it at the next sign-in.",
-      "resetDone": "Password reset"
+      "resetDone": "Password reset",
+      "copy": "Copy",
+      "copied": "Copied",
+      "listTitle": "User Management",
+      "listOverview": "All Users"
     },
     "attach": {
       "pickScopeFirst": "Choose the website or unit first, then attach a file.",

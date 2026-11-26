@@ -99,7 +99,7 @@ export function UserAccountActions({ userId, userName }: { userId: string; userN
               setCopied(true);
             }}
           >
-            <Copy className="size-4" aria-hidden /> {copied ? tc("saved") : "Copy"}
+            <Copy className="size-4" aria-hidden /> {copied ? t("usersUi.copied") : t("usersUi.copy")}
           </Button>
         </div>
         <p className="mt-3 text-xs text-muted">{t("users.tempPasswordHint")}</p>
