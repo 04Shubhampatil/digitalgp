@@ -838,16 +838,16 @@
         "title": "Create Gram Panchayat Admin",
         "subtitle": "An admin for one Gram Panchayat website and its records.",
         "next": "Pick the Gram Panchayat this admin manages",
-        "access": "Manages one Gram Panchayat: website pages, announcements, schemes, projects, media and grievances, and its data operators. Cannot see other Gram Panchayats."
+        "access": "Manages one Gram Panchayat: website pages, announcements, schemes, projects, media and grievances, and its data entry operators. Cannot see other Gram Panchayats."
       },
       "taluka-admin": {
         "title": "Create Taluka Admin",
         "subtitle": "An admin for a taluka and every Gram Panchayat under it.",
         "next": "Pick the taluka this admin manages",
-        "access": "Manages every Gram Panchayat in one taluka: reviews and publishes content, handles grievances, and creates block admins, GP admins and data operators inside the taluka only."
+        "access": "Manages every Gram Panchayat in one taluka: reviews and publishes content, handles grievances, and creates block admins, Gram Panchayat admins and data entry operators inside the taluka only."
       },
       "data-operator": {
-        "title": "Create Data Operator",
+        "title": "Create Data Entry Operator",
         "subtitle": "A data entry account for one Gram Panchayat, limited to the modules you choose.",
         "next": "Pick the Gram Panchayat and the modules",
         "access": "Enters and submits content for one Gram Panchayat, only in the chosen modules. Cannot publish, manage users or see other Gram Panchayats."
