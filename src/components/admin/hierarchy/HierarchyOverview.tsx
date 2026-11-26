@@ -40,7 +40,7 @@ export async function HierarchyOverview({
   const allUnits = [...districts, ...talukas, ...gps];
   const unitById = new Map(allUnits.map((u) => [u.id, u]));
   const blockAdminsIn = (districtId: string) =>
-    users.filter((u) => u.assignments.some((a) => !a.revokedAt && a.role === "BLOCK_ADMIN" && (a.unitId === districtId || (unitById.get(a.unitId) && within(unitById.get(a.unitId)!, districtId))))).length;
+    users.filter((u) => u.assignments.some((a) => !a.revokedAt && (a.role === "TALUKA_ADMIN" || a.role === "BLOCK_ADMIN") && (a.unitId === districtId || (unitById.get(a.unitId) && within(unitById.get(a.unitId)!, districtId))))).length;
 
   const rows = districts.map((d) => {
     const ts = talukas.filter((x) => within(x, d.id));

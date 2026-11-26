@@ -9,12 +9,13 @@ export const ROLE_LEVEL: Record<Role, AdminUnitLevel> = {
   DATA_ENTRY_OPERATOR: "GRAM_PANCHAYAT",
 };
 
-export const ROLES = Object.keys(ROLE_LEVEL) as Role[];
+/** Roles offered in the UI. Block Admin was merged into Taluka Admin; the type keeps it for older accounts. */
+export const ROLES = (Object.keys(ROLE_LEVEL) as Role[]).filter((r) => r !== "BLOCK_ADMIN");
 
 /** Roles each role may create — mirrors CREATABLE_ROLES in src/lib/permissions.ts (UI hint only; the server decides). */
 export const CREATABLE_ROLES: Record<Role, readonly Role[]> = {
-  SUPER_ADMIN: ["SUPER_ADMIN", "TALUKA_ADMIN", "BLOCK_ADMIN", "GP_ADMIN", "DATA_ENTRY_OPERATOR"],
-  TALUKA_ADMIN: ["BLOCK_ADMIN", "GP_ADMIN", "DATA_ENTRY_OPERATOR"],
+  SUPER_ADMIN: ["SUPER_ADMIN", "TALUKA_ADMIN", "GP_ADMIN", "DATA_ENTRY_OPERATOR"],
+  TALUKA_ADMIN: ["GP_ADMIN", "DATA_ENTRY_OPERATOR"],
   BLOCK_ADMIN: ["GP_ADMIN", "DATA_ENTRY_OPERATOR"],
   GP_ADMIN: ["DATA_ENTRY_OPERATOR"],
   DATA_ENTRY_OPERATOR: [],

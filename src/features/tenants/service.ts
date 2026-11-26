@@ -48,14 +48,14 @@ function tenantListWhere(ctx: AuthContext, query: Omit<ListTenantsQuery, "limit"
 type TenantWithUnit = TenantRow & { unit: { path: string } };
 
 /**
- * Active Block Admins whose block contains each website (the "Block Admin" column).
+ * Active Taluka Admins (and older Block Admin accounts) whose area contains each website (the "Taluka Admin" column).
  * Only names and emails of staff are returned, and only to callers who can already see the website.
  */
 async function blockAdminsByTenant(rows: TenantWithUnit[]): Promise<Map<string, TenantAdminRefDto[]>> {
   const ancestorIds = [...new Set(rows.flatMap((t) => t.unit.path.split("/").filter(Boolean)))];
   const assignments = ancestorIds.length
     ? await db.roleAssignment.findMany({
-        where: { role: "BLOCK_ADMIN", revokedAt: null, unitId: { in: ancestorIds }, user: { status: "ACTIVE" } },
+        where: { role: { in: ["TALUKA_ADMIN", "BLOCK_ADMIN"] }, revokedAt: null, unitId: { in: ancestorIds }, user: { status: "ACTIVE" } },
         select: { unitId: true, user: { select: { id: true, name: true, email: true } } },
       })
     : [];

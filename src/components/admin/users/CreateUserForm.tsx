@@ -51,7 +51,7 @@ export function CreateUserForm({ assignments, fixedRole }: { assignments: Assign
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", email: "", phone: "", locale: "MR", password: "", role: fixedRole ?? "BLOCK_ADMIN", unitId: "", modules: [] },
+    defaultValues: { name: "", email: "", phone: "", locale: "MR", password: "", role: fixedRole ?? "TALUKA_ADMIN", unitId: "", modules: [] },
   });
   const { register, handleSubmit, control, setValue, setError, formState } = form;
   const role = useWatch({ control, name: "role" });

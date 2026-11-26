@@ -14,10 +14,11 @@ import { getCurrentUser, hasCapability } from "@/lib/session";
 /** The list shows block admins by default; with another role tab (or "All") the title says so. */
 export async function generateMetadata({ searchParams }: { searchParams: Search }): Promise<Metadata> {
   const { role } = await searchParams;
-  return { title: !role || role === "BLOCK_ADMIN" ? "Block Admins" : "Users" };
+  return { title: !role || role === "TALUKA_ADMIN" ? "Taluka Admins" : "Users" };
 }
 
-const ROLES: Role[] = ["SUPER_ADMIN", "TALUKA_ADMIN", "BLOCK_ADMIN", "GP_ADMIN", "DATA_ENTRY_OPERATOR"];
+// Block Admin was merged into Taluka Admin, so there is no separate tab for it.
+const ROLES: Role[] = ["SUPER_ADMIN", "TALUKA_ADMIN", "GP_ADMIN", "DATA_ENTRY_OPERATOR"];
 type Search = Promise<{ role?: string; district?: string; taluka?: string; q?: string }>;
 
 const selectCls = "h-11 w-full rounded-card border border-line-strong bg-surface px-3 text-sm text-ink outline-none focus:border-primary";
@@ -32,10 +33,12 @@ export default async function UsersPage({ searchParams }: { searchParams: Search
   if (!user) redirect("/login");
   const [sp, t, tc, locale, cookie] = await Promise.all([searchParams, getTranslations("admin"), getTranslations("common"), getLocale(), cookieHeader()]);
   const ui = locale as UiLocale;
-  const roleFilter: Role | "ALL" = sp.role === "all" ? "ALL" : ROLES.includes(sp.role as Role) ? (sp.role as Role) : "BLOCK_ADMIN";
+  const roleFilter: Role | "ALL" = sp.role === "all" ? "ALL" : ROLES.includes(sp.role as Role) ? (sp.role as Role) : "TALUKA_ADMIN";
 
-  const [list, districts, talukas, gps] = await Promise.all([
+  const [list, legacyBlock, districts, talukas, gps] = await Promise.all([
     users.list({ role: roleFilter === "ALL" ? undefined : roleFilter, limit: 100 }, { cookie }),
+    // Accounts created before the merge still hold the Block Admin role; they are listed as Taluka Admins.
+    roleFilter === "TALUKA_ADMIN" ? users.list({ role: "BLOCK_ADMIN", limit: 100 }, { cookie }).catch(() => ({ data: [] as UserDto[] })) : Promise.resolve({ data: [] as UserDto[] }),
     hierarchy.list({ level: "DISTRICT", limit: 100 }, { cookie }).catch(() => ({ data: [] as AdminUnitDto[] })),
     hierarchy.list({ level: "TALUKA", limit: 100 }, { cookie }).catch(() => ({ data: [] as AdminUnitDto[] })),
     hierarchy.list({ level: "GRAM_PANCHAYAT", limit: 100 }, { cookie }).catch(() => ({ data: [] as AdminUnitDto[] })),
@@ -43,7 +46,9 @@ export default async function UsersPage({ searchParams }: { searchParams: Search
   const unitById = new Map<string, AdminUnitDto>([...districts.data, ...talukas.data, ...gps.data].map((u) => [u.id, u]));
   const name = (u: { nameEn: string; nameMr: string; slug?: string }) => pickText(pair(u.nameEn, u.nameMr), ui, u.slug ?? "");
 
-  const rows = list.data.map((u: UserDto) => {
+  const seen = new Set(list.data.map((u) => u.id));
+  const everyone = [...list.data, ...legacyBlock.data.filter((u) => !seen.has(u.id))];
+  const rows = everyone.map((u: UserDto) => {
     const active = u.assignments.filter((a) => !a.revokedAt);
     const unit = active.map((a) => unitById.get(a.unitId)).find(Boolean);
     const ids = unit ? unit.path.split("/").filter(Boolean) : [];
@@ -64,7 +69,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Search
     for (const k of ["district", "taluka", "q"] as const) if (sp[k]) p.set(k, sp[k]!);
     return p.toString();
   };
-  const blockView = roleFilter === "BLOCK_ADMIN";
+  const blockView = roleFilter === "TALUKA_ADMIN";
 
   const needle = (sp.q ?? "").trim().toLowerCase();
   const shown = rows.filter((r) => (!sp.district || r.district?.id === sp.district) && (!sp.taluka || r.taluka?.id === sp.taluka) && (!needle || r.u.name.toLowerCase().includes(needle) || r.u.email.toLowerCase().includes(needle)));
@@ -87,7 +92,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Search
         title={blockView ? t("users.pageTitle") : t("usersUi.listTitle")}
         description={t("users.pageSubtitle")}
         actions={
-          canManage && canCreateRole(callerRoles, "BLOCK_ADMIN") ? (
+          canManage && canCreateRole(callerRoles, "TALUKA_ADMIN") ? (
             <Link href="/admin/users/new" className="inline-flex h-10 items-center gap-2 rounded-button bg-primary px-5 text-sm font-semibold text-white hover:bg-primary-hover">
               + {t("users.createBlockAdmin")}
             </Link>
@@ -188,7 +193,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Search
           <table className="w-full min-w-[720px] text-sm">
             <thead>
               <tr className="bg-surface-table text-left text-[11px] font-semibold text-muted">
-                <th className="px-5 py-2.5">{roleFilter === "BLOCK_ADMIN" ? t("nav.blockAdmins") : t("users.admin")}</th>
+                <th className="px-5 py-2.5">{roleFilter === "TALUKA_ADMIN" ? t("nav.blockAdmins") : t("users.admin")}</th>
                 <th className="px-3 py-2.5">{t("users.assignedArea")}</th>
                 <th className="px-3 py-2.5">{t("users.gpAccess")}</th>
                 <th className="px-3 py-2.5">{tc("status")}</th>

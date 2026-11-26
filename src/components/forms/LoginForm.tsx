@@ -14,7 +14,8 @@ import { Select } from "@/components/ui/Select";
 import { login, logout, me } from "@/lib/api/auth";
 import { isApiError } from "@/lib/api/client";
 
-const ROLES = ["SUPER_ADMIN", "TALUKA_ADMIN", "BLOCK_ADMIN", "GP_ADMIN", "DATA_ENTRY_OPERATOR"] as const;
+// Block Admin was merged into Taluka Admin, so it is no longer offered here.
+const ROLES = ["SUPER_ADMIN", "TALUKA_ADMIN", "GP_ADMIN", "DATA_ENTRY_OPERATOR"] as const;
 
 const schema = z.object({
   role: z.enum(ROLES, { error: "Select your role" }),
@@ -49,7 +50,7 @@ export function LoginForm({ redirectTo = "/admin/dashboard" }: { redirectTo?: st
       await login(credentials);
       // The chosen role must be one this account actually holds; otherwise sign out again.
       const current = await me();
-      if (!current.assignments.some((a) => a.role === role && !a.revokedAt)) {
+      if (!current.assignments.some((a) => (a.role === role || (role === "TALUKA_ADMIN" && a.role === "BLOCK_ADMIN")) && !a.revokedAt)) {
         await logout();
         return setFormError(t("roleMismatch"));
       }
