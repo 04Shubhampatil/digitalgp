@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import type { AdminUnitDto, AdminUnitLevel, AssignmentDto } from "@/types/api";
 import { Select } from "@/components/ui/Select";
@@ -39,6 +39,7 @@ function rootAsUnit(a: AssignmentDto): AdminUnitDto {
  */
 export function UnitPicker({ assignments, targetLevel, onChange, allowIntermediate = false, error, disabled }: UnitPickerProps) {
   const t = useTranslations("admin");
+  const locale = useLocale();
   const roots = useMemo(() => {
     const seen = new Map<string, AdminUnitDto>();
     for (const a of assignments) if (!a.revokedAt && !seen.has(a.unitId)) seen.set(a.unitId, rootAsUnit(a));
@@ -90,7 +91,11 @@ export function UnitPicker({ assignments, targetLevel, onChange, allowIntermedia
   }, [current, targetLevel, allowIntermediate]);
 
   const levelLabel = (l: AdminUnitLevel) => t(`level.${l}`);
+  // Units show in the admin's language (the Marathi name on the Marathi admin, when there is one).
+  const unitName = (u: { nameEn: string; nameMr?: string | null }) => (locale === "mr" && u.nameMr ? u.nameMr : u.nameEn);
   const chosen = [...(root ? [root] : []), ...path];
+  // Nothing further down to choose and the current unit is already a valid choice: no empty "No units here" dropdown.
+  const nothingBelow = allowIntermediate && !loading && !loadError && children.length === 0;
 
   return (
     <div className="flex flex-col gap-3">
@@ -101,7 +106,7 @@ export function UnitPicker({ assignments, targetLevel, onChange, allowIntermedia
           placeholder={t("picker.choose")}
           disabled={disabled}
           onChange={(e) => setRoot(roots.find((r) => r.id === e.target.value) ?? null)}
-          options={roots.map((r) => ({ value: r.id, label: `${levelLabel(r.level)} · ${r.nameEn}` }))}
+          options={roots.map((r) => ({ value: r.id, label: `${levelLabel(r.level)} · ${unitName(r)}` }))}
         />
       )}
 
@@ -110,11 +115,11 @@ export function UnitPicker({ assignments, targetLevel, onChange, allowIntermedia
           {chosen.map((u, i) => (
             <li key={u.id} className="inline-flex items-center gap-1 rounded-pill bg-success-soft py-1 pr-1 pl-3 text-success">
               <span className="text-[10px] uppercase opacity-70">{levelLabel(u.level)}</span>
-              <span className="font-semibold">{u.nameEn}</span>
+              <span className="font-semibold">{unitName(u)}</span>
               {!disabled && (i > 0 || roots.length > 1) && (
                 <button
                   type="button"
-                  aria-label={t("picker.remove", { name: u.nameEn })}
+                  aria-label={t("picker.remove", { name: unitName(u) })}
                   onClick={() => {
                     if (i === 0) {
                       setRoot(null);
@@ -131,7 +136,7 @@ export function UnitPicker({ assignments, targetLevel, onChange, allowIntermedia
         </ol>
       )}
 
-      {nextLevel && current && (
+      {nextLevel && current && !nothingBelow && (
         <Select
           label={levelLabel(childLevel ?? nextLevel)}
           value=""
