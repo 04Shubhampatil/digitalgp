@@ -1,6 +1,6 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import { renderSections } from "@/components/public/sections";
-import { withFallback } from "@/content/fallback";
+import { homeLeadersFromAbout, withFallback } from "@/content/fallback";
 import type { UiLocale } from "@/i18n/config";
 import { pair, pickText } from "@/i18n/text";
 import { isApiError } from "@/lib/api/client";
@@ -24,8 +24,8 @@ export default async function TenantHomePage({ params }: { params: Promise<{ ten
     // Final home design: "Our Leaders" sits under the stats strip. When the home page has no leaders section of its own,
     // it shows the leaders of the About page (the same people, edited in one place).
     const about = await getPublicPage(slug, "about").catch(() => null);
-    const leaders = withFallback("about", about).sections.find((s) => s.sectionKey === "leaders");
-    if (leaders) shown = { ...shown, sections: [...shown.sections, { ...leaders, sortOrder: 12 }].sort((a, b) => a.sortOrder - b.sortOrder) };
+    const leaders = homeLeadersFromAbout(about);
+    if (leaders) shown = { ...shown, sections: [...shown.sections, leaders].sort((a, b) => a.sortOrder - b.sortOrder) };
   }
   const sections = renderSections(shown, slug, locale as UiLocale, pickText(pair(tenant.nameEn, tenant.nameMr), locale as UiLocale, slug)).filter(Boolean);
   if (sections.length === 0) {

@@ -373,14 +373,19 @@ export async function DeadlinesDownloadsSection({ slug, locale, data }: SectionP
     viewAll?: Btn;
     downloadsViewAll?: Btn;
     deadlines?: { date?: B; title?: B; caption?: B }[];
-    files?: { name?: B; type?: string; size?: string; fileId?: string; href?: string }[];
+    files?: { name?: B; caption?: B; type?: string; size?: string; fileId?: string; href?: string }[];
   };
   const t = await getTranslations("public");
   const filesViewAll = d.downloadsViewAll ?? d.viewAll;
-  // Published announcements with a file replace the design's sample files (each downloads the file, with its size).
+  // The files typed into the Downloads section come first; files attached to published announcements follow (each
+  // downloads the file, with its size). The design's sample files (no real file behind them) go once there is a real one.
   const live = await liveDownloads(slug, locale);
-  const files: { name?: B; type?: string; size?: string; fileId?: string; href?: string }[] =
-    live.length > 0 ? live.slice(0, 5).map((f) => ({ name: { en: f.name, mr: f.name }, type: f.type, size: f.size, fileId: f.fileId })) : (d.files ?? []).slice(0, 5);
+  const typed = (d.files ?? []).filter((f) => f.fileId);
+  const real: { name?: B; caption?: B; type?: string; size?: string; fileId?: string; href?: string }[] = [
+    ...typed,
+    ...live.filter((f) => !typed.some((x) => x.fileId === f.fileId)).map((f) => ({ name: { en: f.name, mr: f.name }, type: f.type, size: f.size, fileId: f.fileId })),
+  ];
+  const files = (real.length > 0 ? real : (d.files ?? [])).slice(0, 5);
   return (
     <section className="bg-cream pt-5 pb-8 lg:pt-[29px] lg:pb-[46px]">
       <div className="mx-auto grid max-w-[1440px] grid-cols-[minmax(0,1fr)] gap-5 px-4 sm:px-8 xl:grid-cols-[minmax(0,835px)_minmax(0,1fr)] lg:px-[61px]">
@@ -436,8 +441,10 @@ export async function DeadlinesDownloadsSection({ slug, locale, data }: SectionP
                 <>
                   {/* eslint-disable-next-line @next/next/no-img-element -- static design asset */}
                   <img src="/images/figma/pages/ann-pdf.png" alt="" width={28} height={29} className="h-[29px] w-7 shrink-0" />
-                  <span className="min-w-0 flex-1 truncate text-[14px] leading-6 font-medium text-black" title={name}>
-                    {name}
+                  {/* A typed file has a caption under its name (e.g. "Government resolution (PDF)"); the row keeps its 58px height. */}
+                  <span className="min-w-0 flex-1" title={name}>
+                    <span className={`block truncate font-medium text-black ${pickText(f.caption, locale) ? "text-[13px] leading-[18px]" : "text-[14px] leading-6"}`}>{name}</span>
+                    {pickText(f.caption, locale) && <span className="block truncate text-[11px] leading-4 text-[#707070]">{pickText(f.caption, locale)}</span>}
                   </span>
                   <span className="flex shrink-0 items-center gap-[10px] text-[14px] leading-6 font-medium whitespace-nowrap text-[#707070]">
                     {f.type}

@@ -57,11 +57,11 @@ export const FIGMA_ABOUT_SECTIONS: FallbackSection[] = [
       members: [
         { role: t("Sarpanch"), title: t("Head of the Gram Panchayat"), body: t("Leads elected governance, chairs meetings, and represents the village"), accent: "#ff9933" },
         { role: t("Deputy Sarpanch"), title: t("Administrative Support"), body: t("Supports the Sarpanch and coordinates implementation priorities") },
-        { role: t("Members"), title: t("Ward Respresntatives"), body: t("Raise local issues, monitor works, and assist residents with services") },
-        { role: t("Gram Sevak"), title: t("Secretary and records"), body: t("Leads elected governance, chairs meetings, and represents the village") },
+        { role: t("Members"), title: t("Ward Representatives"), body: t("Raise local issues, monitor works, and assist residents with services") },
+        { role: t("Gram Sevak"), title: t("Secretary and records"), body: t("Keeps the records and accounts and carries out the Panchayat's decisions") },
       ],
       office: {
-        eyebrow: t("Office Infomation"),
+        eyebrow: t("Office Information"),
         heading: t("Visit the office"),
         addressLabel: t("Address"),
         address: t(ADDRESS),
@@ -78,7 +78,7 @@ export const FIGMA_ABOUT_SECTIONS: FallbackSection[] = [
     sectionKey: "about-roles",
     sortOrder: 30,
     data: {
-      eyebrow: t("Roles & Responsibilitis"),
+      eyebrow: t("Roles & Responsibilities"),
       heading: t("What Panchayat officials do"),
       items: [
         { title: t("Village Development"), body: t("Plan and monitor road, water supply, drainage, sanitation lighting, and public assets") },

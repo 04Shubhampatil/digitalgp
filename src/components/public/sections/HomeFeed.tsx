@@ -57,8 +57,9 @@ export function AchievementsCard({ heading, selectLabel, allLabel, wards, items,
                 </span>
                 <div>
                   <p className="text-[16px] leading-[24px] font-semibold text-black">{a.title}</p>
-                  <p className="text-[12px] leading-[24px] font-medium text-[#414141]">{a.body}</p>
-                  <p className="text-[12px] leading-[24px] font-medium text-[#414141]">{a.completed}</p>
+                  {a.body && <p className="text-[12px] leading-[24px] font-medium text-[#414141]">{a.body}</p>}
+                  {/* No completion date entered: no empty line. */}
+                  {a.completed && <p className="text-[12px] leading-[24px] font-medium text-[#414141]">{a.completed}</p>}
                 </div>
               </Row>
             </li>

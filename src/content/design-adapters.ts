@@ -48,6 +48,9 @@ function clock(start: unknown, end: unknown): string | undefined {
   return a && b ? `${a} - ${b}` : (a ?? b);
 }
 
+/** Data key listing the fields of a shared design block that a section supplies (see mergeSameBlock). */
+const OWN = "ownFields";
+
 export interface AdaptContext {
   /** Sample rows of the design (placeholder content) may be shown: false when the design fallbacks are off. */
   samples: boolean;
@@ -85,14 +88,16 @@ const ADAPTERS: Partial<Record<PageKey, Record<string, { target: string; adapt: 
       target: "deadlines-downloads",
       adapt: (s, base, ctx) => {
         const deadlines = rows(s.data.items).filter((i) => has(i.title)).map((i) => ({ date: both(i.date), title: i.title, caption: i.subtitle }));
-        return { ...base.data, deadlines, files: ctx.samples ? base.data.files : [] };
+        // Only the deadlines are this section's; the files belong to "download-forms" (see mergeSameBlock).
+        return { ...base.data, deadlines, files: ctx.samples ? base.data.files : [], [OWN]: ["deadlines"] };
       },
     },
     "download-forms": {
       target: "deadlines-downloads",
       adapt: (s, base) => {
-        const files = rows(s.data.items).filter((i) => has(i.name) && typeof i.fileId === "string").map((i) => ({ name: i.name, fileId: i.fileId }));
-        return { ...base.data, deadlines: [], files };
+        // `caption` is the line under the name (e.g. "Government resolution (PDF)").
+        const files = rows(s.data.items).filter((i) => has(i.name) && typeof i.fileId === "string").map((i) => ({ name: i.name, fileId: i.fileId, ...(has(i.description) ? { caption: i.description } : {}) }));
+        return { ...base.data, deadlines: [], files, [OWN]: ["files"] };
       },
     },
     "support-cards": {
@@ -216,7 +221,14 @@ const ADAPTERS: Partial<Record<PageKey, Record<string, { target: string; adapt: 
         const items = rows(s.data.items);
         if (!items.length) return null;
         const labels = { ...((base.data.labels as Obj | undefined) ?? {}) };
-        const [reach, hours, address] = items;
+        // Cards are told apart by what they hold, not by their position (the order is the editor's choice): the one with
+        // a phone number or an e-mail is "General inquiries", the one that names hours / times is "Office hours".
+        const text = (i: Obj | undefined) => `${labelOf(i?.title)} ${String((i?.details as { en?: string } | undefined)?.en ?? "")}`.toLowerCase();
+        const isReach = (i: Obj) => /@|\+?\d[\d\s-]{7,}\d/.test(text(i)) && !/\d{1,2}[:.]\d{2}/.test(text(i));
+        const isHours = (i: Obj) => /hour|timing|\d{1,2}[:.]\d{2}\s*(am|pm)?|monday|mon\b/.test(text(i));
+        const reach = items.find(isReach) ?? items[0];
+        const hours = items.find((i) => i !== reach && isHours(i)) ?? items.find((i) => i !== reach);
+        const address = items.find((i) => i !== reach && i !== hours);
         if (has(reach?.title)) labels.inquiries = reach!.title;
         if (has(hours?.title)) labels.hours = hours!.title;
         if (has(address?.title)) labels.address = address!.title;
@@ -248,16 +260,26 @@ export function adaptWithDesign(pageKey: PageKey, s: AdaptedSection, design: Des
   return data ? { ...s, sectionKey: a.target, sortOrder: base.sortOrder, data } : null;
 }
 
-/** Two sections drawn by one block (deadlines + downloads): one block, the later fields filling the earlier. */
+/**
+ * Two sections drawn by one block (deadlines + downloads): one block. A section that names the fields it owns (OWN)
+ * always supplies those, whatever order the sections come in, so the deadlines never wipe the downloads (or the other
+ * way round); otherwise the later section's filled fields fill the earlier one.
+ */
 export function mergeSameBlock<T extends { sectionKey: string; data: Obj }>(list: T[]): T[] {
   const out: T[] = [];
   for (const s of list) {
     const first = out.find((x) => x.sectionKey === s.sectionKey);
     if (!first) {
-      out.push(s);
+      out.push({ ...s, data: { ...s.data } });
       continue;
     }
-    first.data = { ...first.data, ...filled(s.data) };
+    const mine = s.data[OWN] as string[] | undefined;
+    const theirs = first.data[OWN] as string[] | undefined;
+    if (mine && theirs) {
+      first.data = { ...first.data, ...Object.fromEntries(mine.map((k) => [k, s.data[k]])), [OWN]: [...new Set([...theirs, ...mine])] };
+    } else {
+      first.data = { ...first.data, ...filled(s.data) };
+    }
   }
   return out;
 }

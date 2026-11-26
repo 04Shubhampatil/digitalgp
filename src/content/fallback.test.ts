@@ -5,7 +5,7 @@ import { findSection } from "@/config/sections";
 import { toApiData, toFormValues } from "@/lib/section-data";
 import { bannerSeed, designSeed, sectionSeed } from "@/lib/banner-seed";
 import { isEditorCard } from "@/lib/editor-sections";
-import { publicAnchor, withFallback } from "./fallback";
+import { homeLeadersFromAbout, publicAnchor, withFallback } from "./fallback";
 
 // The tests describe the default (design fallbacks on); a local .env may switch them off.
 vi.stubEnv("NEXT_PUBLIC_DESIGN_FALLBACKS", "on");
@@ -601,6 +601,50 @@ describe("published sections drawn by the design's own blocks", () => {
     expect(dd).toHaveLength(1);
     expect(dd[0]!.data).toMatchObject({ deadlines: [{ title: { en: "Tax" } }], files: [{ fileId: "abcdefghij1" }] });
     expect(keys(out)).not.toContain("calendar");
+  });
+
+  it("announcements: the downloads survive whatever order deadlines and downloads come in (and keep their caption)", () => {
+    const deadlines = { sectionKey: "deadline-cards", data: { items: [{ date: "July 31, 2026", title: { en: "Tax" } }] } };
+    const downloads = { sectionKey: "download-forms", data: { items: [{ name: { en: "GR 1" }, description: { en: "Government resolution (PDF)" }, fileId: "abcdefghij1" }, { name: { en: "GR 2" }, fileId: "abcdefghij2" }] } };
+    for (const order of [[deadlines, downloads], [downloads, deadlines]]) {
+      const dd = withFallback("announcements", page("announcements", order)).sections.filter((s) => s.sectionKey === "deadlines-downloads");
+      expect(dd).toHaveLength(1);
+      expect((dd[0]!.data.files as { fileId: string }[]).map((f) => f.fileId)).toEqual(["abcdefghij1", "abcdefghij2"]);
+      expect((dd[0]!.data.files as { caption?: { en: string } }[])[0]!.caption).toEqual({ en: "Government resolution (PDF)" });
+      expect(dd[0]!.data.deadlines).toMatchObject([{ title: { en: "Tax" } }]);
+    }
+  });
+
+  it("home: Our Leaders comes from the About page's leaders; a typed heading is the line under the design title", () => {
+    const about = page("about", [{ sectionKey: "leaders-profile-grid", data: { heading: { en: "Hon. ministers and officials", mr: "माननीय मंत्री व पदाधिकारी" }, items: [{ name: { en: "A Leader" }, designation: { en: "Sarpanch" }, photoId: "abcdefghij1" }, { name: { en: "No Photo" }, designation: { en: "Member" } }] } }]);
+    const leaders = homeLeadersFromAbout(about)!;
+    expect(leaders.sectionKey).toBe("leaders");
+    expect((leaders.data.items as { name: { en: string } }[]).map((i) => i.name.en)).toEqual(["A Leader", "No Photo"]);
+    expect(leaders.data.subheading).toEqual({ en: "Hon. ministers and officials", mr: "माननीय मंत्री व पदाधिकारी" });
+    expect((leaders.data.heading as { en: string }).en).toBe("Our");
+    expect((leaders.data.headingAccent as { en: string }).en).toBe("Leaders");
+  });
+
+  it("contact: the cards are told apart by their content, in any order (inquiries, address, hours)", () => {
+    const items = [
+      { title: { en: "General inquiries" }, details: { en: "+91 98765 43210\noffice@example.in" } },
+      { title: { en: "Office address" }, details: { en: "Gram Panchayat Office,\nMain Road, 410501" } },
+      { title: { en: "Office hours" }, details: { en: "Monday to Friday: 10:00 am to 5:45 pm" } },
+    ];
+    const d = withFallback("contact", page("contact", [{ sectionKey: "contact-cards", data: { items } }])).sections.find((s) => s.sectionKey === "contact-cards-figma")!.data;
+    expect(d.phone).toBe("+91 98765 43210");
+    expect(d.email).toBe("office@example.in");
+    expect((d.address as { en: string }).en).toContain("Main Road");
+    expect((d.hours as { en: string }).en).toContain("Monday");
+    expect((d.labels as { address: { en: string }; hours: { en: string } }).address.en).toBe("Office address");
+  });
+
+  it("about: a card that shows a real member is marked, so it never gets the design's sample portrait", () => {
+    const out = withFallback("about", page("about", [{ sectionKey: "members", data: { items: [{ name: { en: "Real Sarpanch" }, designation: { en: "Sarpanch" } }, { name: { en: "Extra Person" }, designation: { en: "Clerk" }, photoId: "abcdefghij1" }] } }]));
+    const members = out.sections.find((s) => s.sectionKey === "about-structure")!.data.members as { title: { en: string }; person?: boolean; photoId?: string }[];
+    expect(members.find((m) => m.title.en === "Real Sarpanch")).toMatchObject({ person: true });
+    expect(members.find((m) => m.title.en === "Extra Person")).toMatchObject({ person: true, photoId: "abcdefghij1" });
+    expect(members.some((m) => !m.person)).toBe(true);
   });
 
   it("services: help card takes the typed contact (number written as the design writes it) and the uploaded picture", () => {
