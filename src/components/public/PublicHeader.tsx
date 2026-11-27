@@ -5,6 +5,7 @@ import type { PublicTenantDto } from "@/types/api";
 import { Emblem } from "@/components/ui/Emblem";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { PUBLIC_NAV, pageHref } from "@/config/public-nav";
+import { DESIGN_SLUG } from "@/content/design-names";
 import { FIGMA_CHROME } from "@/content/figma-chrome";
 import type { UiLocale } from "@/i18n/config";
 import { pair, pickText } from "@/i18n/text";
@@ -20,9 +21,11 @@ export async function PublicHeader({ tenant }: { tenant: PublicTenantDto }) {
   const t = await getTranslations();
   const name = pickText(pair(tenant.nameEn, tenant.nameMr), locale, tenant.slug);
   // Settings first; the design's values fill in whatever the website has not set yet.
-  const contact = { phone: FIGMA_CHROME.phone, email: FIGMA_CHROME.email, ...tenant.settings.contact };
+  // The design's placeholder phone, e-mail and tagline belong to the design's own website only.
+  const demo = tenant.slug === DESIGN_SLUG;
+  const contact = { ...(demo ? { phone: FIGMA_CHROME.phone, email: FIGMA_CHROME.email } : {}), ...tenant.settings.contact };
   const tagline = tenant.settings.branding?.tagline;
-  const taglineText = tagline?.en || tagline?.mr ? pickText(pair(tagline.en ?? "", tagline.mr ?? ""), locale, "") : pickText(FIGMA_CHROME.tagline, locale, "");
+  const taglineText = tagline?.en || tagline?.mr ? pickText(pair(tagline.en ?? "", tagline.mr ?? ""), locale, "") : demo ? pickText(FIGMA_CHROME.tagline, locale, "") : areaTagline(tenant, locale);
 
   const groups = PUBLIC_NAV.map((g) => ({
     label: g.labelKey ? t(`public.nav.${g.labelKey}`) : null,
@@ -90,4 +93,12 @@ export async function PublicHeader({ tenant }: { tenant: PublicTenantDto }) {
       </div>
     </header>
   );
+}
+
+/** "ता. बारामती, जि. पुणे" from the website's own taluka and district (nothing when they are unknown). */
+function areaTagline(tenant: PublicTenantDto, locale: UiLocale): string {
+  const mr = locale === "mr";
+  const taluka = tenant.area?.taluka;
+  const district = tenant.area?.district;
+  return [taluka && `${mr ? "ता." : "Tal."} ${mr ? taluka.nameMr : taluka.nameEn}`, district && `${mr ? "जि." : "Dist."} ${mr ? district.nameMr : district.nameEn}`].filter(Boolean).join(", ");
 }

@@ -263,9 +263,10 @@ const ROW_GROUPS: { keys: string[]; cols: string; all?: boolean; /** Vertical pa
 ];
 
 import { MR_MIN_HEIGHT_CLASS, marathiMinHeights } from "./mr-heights";
+import { localizeDesign, type Pair } from "@/content/design-names";
 
-export function renderSections(page: PublicPageDto, slug: string, locale: UiLocale, tenantName?: string): React.ReactNode[] {
-  const sorted = page.sections.map((s) => ({ ...s, data: withIconPictures(s.data, slug) })).sort((a, b) => a.sortOrder - b.sortOrder);
+export function renderSections(page: PublicPageDto, slug: string, locale: UiLocale, tenantName?: string, names?: Pair[] | null): React.ReactNode[] {
+  const sorted = page.sections.map((s) => ({ ...s, data: withIconPictures(localizeDesign(s.data, names ?? null), slug) })).sort((a, b) => a.sortOrder - b.sortOrder);
   const out: React.ReactNode[] = [];
   const done = new Set<string>();
   const siblings = Object.fromEntries(sorted.map((s) => [s.sectionKey, s.data]));

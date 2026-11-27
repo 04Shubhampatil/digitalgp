@@ -10,6 +10,7 @@ import { PublicSchemes } from "@/components/public/PublicSchemes";
 import { renderSections } from "@/components/public/sections";
 import { withFallback } from "@/content/fallback";
 import type { UiLocale } from "@/i18n/config";
+import { designNames } from "@/content/design-names";
 import { pair, pickText } from "@/i18n/text";
 import { isApiError } from "@/lib/api/client";
 import { getPublicPage } from "@/lib/api/public";
@@ -65,7 +66,7 @@ export default async function TenantPage({ params }: { params: Params }) {
       shown = { ...shown, sections: [...shown.sections, { ...links, sortOrder }] };
     }
   }
-  const sections = renderSections(shown, slug, ui, pickText(pair(tenant.nameEn, tenant.nameMr), ui, slug)).filter(Boolean);
+  const sections = renderSections(shown, slug, ui, pickText(pair(tenant.nameEn, tenant.nameMr), ui, slug), designNames(tenant)).filter(Boolean);
 
   const dataBlock = DATA_PAGES[pageKey] ? <DataBlock pageKey={pageKey} slug={slug} locale={ui} tenant={tenant} /> : null;
 

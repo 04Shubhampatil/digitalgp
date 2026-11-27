@@ -2,6 +2,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { renderSections } from "@/components/public/sections";
 import { homeLeadersFromAbout, withFallback } from "@/content/fallback";
 import type { UiLocale } from "@/i18n/config";
+import { designNames } from "@/content/design-names";
 import { pair, pickText } from "@/i18n/text";
 import { isApiError } from "@/lib/api/client";
 import { getPublicPage } from "@/lib/api/public";
@@ -27,7 +28,7 @@ export default async function TenantHomePage({ params }: { params: Promise<{ ten
     const leaders = homeLeadersFromAbout(about);
     if (leaders) shown = { ...shown, sections: [...shown.sections, leaders].sort((a, b) => a.sortOrder - b.sortOrder) };
   }
-  const sections = renderSections(shown, slug, locale as UiLocale, pickText(pair(tenant.nameEn, tenant.nameMr), locale as UiLocale, slug)).filter(Boolean);
+  const sections = renderSections(shown, slug, locale as UiLocale, pickText(pair(tenant.nameEn, tenant.nameMr), locale as UiLocale, slug), designNames(tenant)).filter(Boolean);
   if (sections.length === 0) {
     return (
       <section className="mx-auto max-w-7xl px-4 py-24 text-center sm:px-6">

@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { PublicTenantDto } from "@/types/api";
 import { Emblem } from "@/components/ui/Emblem";
 import { pageHref } from "@/config/public-nav";
+import { DESIGN_SLUG } from "@/content/design-names";
 import { FIGMA_CHROME } from "@/content/figma-chrome";
 import type { UiLocale } from "@/i18n/config";
 import { marathiFor } from "@/i18n/mr-fallback";
@@ -22,13 +23,22 @@ export async function PublicFooter({ tenant }: { tenant: PublicTenantDto }) {
   const name = pickText(pair(tenant.nameEn, tenant.nameMr), locale, tenant.slug);
   const contact = tenant.settings.contact ?? {};
   const social = tenant.settings.social ?? {};
-  const rawAddress = contact.address || FIGMA_CONTACT.address;
+  // The design's placeholder contact details belong to the design's own website only; any other website with no
+  // details of its own shows its own name, taluka and district (and no invented phone or e-mail).
+  const demo = tenant.slug === DESIGN_SLUG;
+  const own: { label: { en: string; mr: string }; name: { en: string; mr: string } }[] = [
+    { label: { en: "Gram Panchayat", mr: "ग्रामपंचायत" }, name: { en: tenant.nameEn, mr: tenant.nameMr } },
+    ...(tenant.area?.taluka ? [{ label: { en: "Taluka", mr: "तालुका" }, name: { en: tenant.area.taluka.nameEn, mr: tenant.area.taluka.nameMr } }] : []),
+    ...(tenant.area?.district ? [{ label: { en: "District", mr: "जिल्हा" }, name: { en: tenant.area.district.nameEn, mr: tenant.area.district.nameMr } }] : []),
+  ];
+  const ownAddress = (l: "en" | "mr") => own.map((x) => `${x.label[l]}: ${x.name[l]}`).join(", ");
+  const rawAddress = contact.address || (demo ? FIGMA_CONTACT.address : ownAddress("en"));
   // Marathi site: the website's own Marathi address, else a known translation, else the English text.
-  const addressText = locale === "mr" ? (contact.addressMr?.trim() || marathiFor(rawAddress) || rawAddress) : rawAddress;
+  const addressText = locale === "mr" ? (contact.addressMr?.trim() || (contact.address || demo ? marathiFor(rawAddress) || rawAddress : ownAddress("mr"))) : rawAddress;
   // The design stacks the address ("Gram Panchayat: Savardari, / Taluka: Khed, / District: Pune – 410501").
   const address = addressText.includes("\n") ? addressText : addressText.replace(/,\s+/g, ",\n");
-  const phone = contact.phone || FIGMA_CONTACT.phone;
-  const email = contact.email || FIGMA_CONTACT.email;
+  const phone = contact.phone || (demo ? FIGMA_CONTACT.phone : "");
+  const email = contact.email || (demo ? FIGMA_CONTACT.email : "");
   const year = new Date().getFullYear();
 
   // Figma quick links, row by row in two columns (Home | About Us, Citizen Services | Notices & GRs, …).
@@ -70,18 +80,22 @@ export async function PublicFooter({ tenant }: { tenant: PublicTenantDto }) {
                 <MapPin className="mt-0.5 size-5 shrink-0 text-[#135130]" aria-hidden />
                 <span className="whitespace-pre-line">{address}</span>
               </li>
-              <li className="flex items-center gap-3">
-                <Phone className="size-5 shrink-0 text-[#135130]" aria-hidden />
-                <a href={`tel:${phone}`} className="hover:underline">
-                  {phone}
-                </a>
-              </li>
-              <li className="flex items-center gap-3">
-                <Mail className="size-5 shrink-0 text-[#135130]" aria-hidden />
-                <a href={`mailto:${email}`} className="break-all hover:underline">
-                  {email}
-                </a>
-              </li>
+              {phone && (
+                <li className="flex items-center gap-3">
+                  <Phone className="size-5 shrink-0 text-[#135130]" aria-hidden />
+                  <a href={`tel:${phone}`} className="hover:underline">
+                    {phone}
+                  </a>
+                </li>
+              )}
+              {email && (
+                <li className="flex items-center gap-3">
+                  <Mail className="size-5 shrink-0 text-[#135130]" aria-hidden />
+                  <a href={`mailto:${email}`} className="break-all hover:underline">
+                    {email}
+                  </a>
+                </li>
+              )}
             </ul>
             <h2 className="mt-3.5 text-[14px] font-bold tracking-wide text-[#135130] uppercase">{t("public.followUs")}</h2>
             {/* Figma always shows Facebook, Instagram and YouTube; until the website settings hold its own URLs they open the networks' home pages. */}
