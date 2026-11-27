@@ -27,7 +27,8 @@ describe("designNames", () => {
     const out = localizeDesign(data, names);
     expect(out.title.en).toBe("Welcome to Test Gram Panchayat");
     expect(out.title.mr).toBe("चाचणी ग्रामपंचायत मध्ये स्वागत");
-    expect(out.body.mr).toContain("ग्रामपंचायत चाचणी ग्रामपंचायत निसर्गसंवर्धन");
+    expect(out.body.mr).toContain("चाचणी ग्रामपंचायत निसर्गसंवर्धन");
+    expect(out.body.mr).not.toContain("ग्रामपंचायत चाचणी ग्रामपंचायत");
     expect(out.body.mr).toContain("बारामती तालुक्यातील");
     expect(out.body.mr).toContain("चाचणी ग्रामपंचायतचे स्वरूप");
     expect(out.address).toBe("Gram Panchayat: Test Gram Panchayat, Taluka: Baramati, District: Pune");
@@ -44,5 +45,20 @@ describe("designNames", () => {
   it("without area names only the village is swapped", () => {
     const out = localizeDesign({ t: "Savardari, Khed" }, designNames(tenant({ area: undefined })));
     expect(out.t).toBe("Test Gram Panchayat, Khed");
+  });
+});
+
+describe("design text that is translated by lookup", () => {
+  it("stays Marathi after the English has the name swapped", () => {
+    const out = localizeDesign({ en: "Sarpanch, Gram Panchayat Savardari" }, designNames(tenant())) as { en: string; mr?: string };
+    expect(out.en).toBe("Sarpanch, Test Gram Panchayat");
+    expect(out.mr).toBe("सरपंच, चाचणी ग्रामपंचायत");
+    const live = localizeDesign({ en: "Savardari, Maharashtra" }, designNames(tenant())) as { en: string; mr?: string };
+    expect(live.mr).toBe("चाचणी ग्रामपंचायत, महाराष्ट्र");
+  });
+
+  it("leaves text that already has its own Marathi alone", () => {
+    const out = localizeDesign({ en: "Savardari", mr: "सवरदरी" }, designNames(tenant())) as { en: string; mr?: string };
+    expect(out).toEqual({ en: "Test Gram Panchayat", mr: "चाचणी ग्रामपंचायत" });
   });
 });
