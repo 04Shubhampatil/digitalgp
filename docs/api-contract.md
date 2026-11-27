@@ -93,6 +93,7 @@ Levels: `STATE > DISTRICT > TALUKA > BLOCK (optional) > GRAM_PANCHAYAT`.
 | GET    | `/tenants/:tenantId/users`   | `user:read` on the site | – | `TenantUserDto[]` (GP Admin + operators with status) |
 | GET    | `/tenants/:tenantId`         | in scope          | –            | `TenantDto` |
 | PATCH  | `/tenants/:tenantId`         | `tenant:update`   | any of the create fields except `unitId`; `settings` is merged shallowly | `TenantDto` |
+| DELETE | `/tenants/:tenantId`         | `hierarchy:manage` (Super Admin) | `{ confirmSlug }`, the website address typed to confirm | `204`; `409` while `PUBLISHED`; `400` when `confirmSlug` does not match. Removes the website, its pages, sections, announcements, schemes, projects, stories, media (and files), grievances and form entries; the Gram Panchayat unit and its users stay. Audited as `tenant.delete` |
 | POST   | `/tenants/:tenantId/status`  | `tenant:publish`  | `{ status: "DRAFT" \| "PUBLISHED" \| "SUSPENDED" }` | `TenantDto` |
 
 `settings` shape = `TenantSettingsDto` (`contact`, `social`, `branding`, `seo`); unknown keys are rejected.
