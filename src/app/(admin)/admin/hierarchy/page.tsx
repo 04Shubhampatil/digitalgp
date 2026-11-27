@@ -75,7 +75,8 @@ export default async function HierarchyPage({ searchParams }: { searchParams: Se
     rows = (await Promise.all(ids.map((id) => hierarchy.get(id, { cookie })))).map((r) => r.unit);
   }
 
-  const childLevel = parent ? childLevels(parent.level)[0] : null;
+  // There is no block level in use: a taluka lists Gram Panchayats directly.
+  const childLevel = parent ? (childLevels(parent.level).find((l) => l !== "BLOCK") ?? null) : null;
   const name = (u: AdminUnitDto) => pickText(pair(u.nameEn, u.nameMr), ui, u.slug);
 
   const columns: Column<AdminUnitDto>[] = [
