@@ -27,6 +27,7 @@ const SUMMARY_CAPS: Capability[] = ["content:edit", "content:publish", "grievanc
 export default async function UserDetailPage({ params }: { params: Promise<{ userId: string }> }) {
   const me = await getCurrentUser();
   if (!me) redirect("/login");
+  if (!hasCapability(me, "user:manage")) redirect("/admin/dashboard");
   const [{ userId }, t, tc, locale, cookie] = await Promise.all([params, getTranslations("admin"), getTranslations("common"), getLocale(), cookieHeader()]);
   const ui = locale as UiLocale;
 

@@ -5,12 +5,15 @@ import { getCurrentUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
-/** Server-side session guard: no valid `dgp_session` → /login?next=<current path>. */
+/**
+ * Server-side session guard: no valid `dgp_session` → /login?next=<current path>.
+ * An account with a temporary password (just created, or reset by an admin) can only use the profile page, where it
+ * sets its own password; every other admin page sends it there until it has done so.
+ */
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
-  if (!user) {
-    const path = (await headers()).get("x-pathname") ?? "/admin/dashboard";
-    redirect(`/login?next=${encodeURIComponent(path)}`);
-  }
+  const path = (await headers()).get("x-pathname") ?? "/admin/dashboard";
+  if (!user) redirect(`/login?next=${encodeURIComponent(path)}`);
+  if (user.user.mustResetPassword && !path.startsWith("/admin/profile")) redirect("/admin/profile");
   return <AdminShell user={user}>{children}</AdminShell>;
 }

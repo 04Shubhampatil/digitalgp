@@ -31,6 +31,8 @@ type Search = Promise<{ parentId?: string; q?: string; cursor?: string; district
 export default async function HierarchyPage({ searchParams }: { searchParams: Search }) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+  // Super Admin and Taluka Admin only; a Gram Panchayat Admin has no hierarchy screen.
+  if (!hasCapability(user, "hierarchy:manage") && !hasCapability(user, "hierarchy:create-gp")) redirect("/admin/dashboard");
   const [{ parentId, q, cursor, taluka }, t, tc, locale, cookie] = await Promise.all([
     searchParams,
     getTranslations("admin"),

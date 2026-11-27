@@ -6,7 +6,7 @@ import type { Role } from "@/types/api";
 import { CAPABILITIES, ROLES, ROLE_MATRIX, type Capability } from "@/config/role-matrix";
 import { PageHeader } from "@/components/ui/Card";
 import { cn } from "@/lib/cn";
-import { getCurrentUser } from "@/lib/session";
+import { getCurrentUser, hasCapability } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Roles & Permissions" };
 type Search = Promise<{ role?: string }>;
@@ -26,6 +26,8 @@ const TINT: Record<Role, string> = {
 export default async function RolesPage({ searchParams }: { searchParams: Search }) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+  // The platform permissions table is for the Super Admin only.
+  if (!hasCapability(user, "roles:manage")) redirect("/admin/dashboard");
   const [{ role }, t] = await Promise.all([searchParams, getTranslations("admin")]);
   const selected: Role = ROLES.includes(role as Role) ? (role as Role) : "SUPER_ADMIN";
 

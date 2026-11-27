@@ -54,6 +54,11 @@ export function PasswordForm({ mode }: { mode: PasswordFormMode }) {
         if (!values.currentPassword) return setError("currentPassword", { message: t("required") });
         await changePassword(values.currentPassword, values.newPassword);
         setDone(true);
+        // An account that had to set its own password goes on to its dashboard (the other pages were locked until now).
+        setTimeout(() => {
+          router.replace("/admin/dashboard");
+          router.refresh();
+        }, 1200);
       }
     } catch (err) {
       if (isApiError(err, "VALIDATION_ERROR")) {
