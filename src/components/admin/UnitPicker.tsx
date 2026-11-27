@@ -147,7 +147,7 @@ export function UnitPicker({ assignments, targetLevel, onChange, allowIntermedia
             const unit = children.find((c) => c.id === e.target.value);
             if (unit) setPath((p) => [...p, unit]);
           }}
-          options={children.map((c) => ({ value: c.id, label: c.nameMr ? `${c.nameEn} / ${c.nameMr}` : c.nameEn }))}
+          options={children.map((c) => ({ value: c.id, label: unitName(c) }))}
         />
       )}
       {!nextLevel && error && (
