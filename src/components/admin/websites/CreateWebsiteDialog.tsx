@@ -1,14 +1,28 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, House, Plus } from "lucide-react";
+import { Check, House, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useMemo, useState } from "react";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import type { AdminUnitDto, AssignmentDto } from "@/types/api";
-import { createTenantSchema } from "@/features/tenants/validators";
+import { MAX_WEBSITE_OPERATORS, createTenantSchema } from "@/features/tenants/validators";
+import { AccountFields } from "@/components/admin/websites/AccountFields";
+import {
+  accountShape,
+  checkTypedPassword,
+  emptyAccount,
+  emptyOperator,
+  toAccountBody,
+  translateServerMessage,
+  type AccountMessages,
+  type AccountValues,
+  type OperatorValues,
+} from "@/components/admin/websites/accountForm";
+import { ModuleGrants } from "@/components/admin/websites/ModuleGrants";
+import { TempPasswordList, type TempPasswordEntry } from "@/components/admin/websites/TempPasswordList";
 import { UnitPicker } from "@/components/admin/UnitPicker";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
@@ -17,16 +31,62 @@ import { Select } from "@/components/ui/Select";
 import { tenants } from "@/lib/api/admin";
 import { isApiError } from "@/lib/api/client";
 
-const formSchema = createTenantSchema.pick({ unitId: true, slug: true, nameEn: true, nameMr: true, defaultLocale: true });
-type FormValues = z.input<typeof formSchema>;
+type FormValues = Pick<z.input<typeof createTenantSchema>, "unitId" | "slug" | "nameEn" | "nameMr" | "defaultLocale"> & {
+  gpAdmin: AccountValues;
+  operators: OperatorValues[];
+};
 
-/** Figma "Create GP Website": pick the Gram Panchayat, confirm slug + names → POST /tenants. */
-export function CreateWebsiteDialog({ assignments, unit, area, compact }: { assignments: AssignmentDto[]; /** Gram Panchayat chosen in the list: the picker is skipped. */ unit?: AdminUnitDto; /** "District / Taluka" text shown for a chosen Gram Panchayat. */ area?: string; /** Small button used inside table rows. */ compact?: boolean }) {
+function buildSchema(m: AccountMessages) {
+  const account = accountShape(m);
+  return createTenantSchema
+    .pick({ unitId: true, slug: true, nameEn: true, nameMr: true, defaultLocale: true })
+    .extend({
+      gpAdmin: z.object(account),
+      operators: z.array(z.object({ ...account, modules: z.array(z.object({ moduleKey: z.string(), canWrite: z.boolean() })).min(1, m.modules) })).max(MAX_WEBSITE_OPERATORS),
+    })
+    .superRefine((v, ctx) => {
+      checkTypedPassword(v.gpAdmin, ["gpAdmin"], ctx, m);
+      v.operators.forEach((o, i) => checkTypedPassword(o, ["operators", i], ctx, m));
+    });
+}
+
+type FieldErrs<T> = Partial<Record<keyof T, { message?: string }>>;
+
+/**
+ * One-step "Create GP Website": pick the Gram Panchayat, confirm slug + names, set the GP Admin account and optional
+ * Data Entry Operators → POST /tenants/with-users (all created together, or nothing is). Temporary passwords are
+ * shown once afterwards with a copy button.
+ */
+export function CreateWebsiteDialog({
+  assignments,
+  unit,
+  area,
+  compact,
+  defaultOpen,
+}: {
+  assignments: AssignmentDto[];
+  /** Gram Panchayat chosen in the list: the picker is skipped. */
+  unit?: AdminUnitDto;
+  /** "District / Taluka" text shown for a chosen Gram Panchayat. */
+  area?: string;
+  /** Small button used inside table rows. */
+  compact?: boolean;
+  /** Open straight away (the dashboard quick action links here). */
+  defaultOpen?: boolean;
+}) {
   const t = useTranslations("admin");
+  const ts = useTranslations("admin.websiteSetup");
   const tc = useTranslations("common");
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(!!defaultOpen);
   const [formError, setFormError] = useState<string | null>(null);
+  const [created, setCreated] = useState<{ tenantId: string; entries: TempPasswordEntry[] } | null>(null);
+
+  const messages: AccountMessages = useMemo(
+    () => ({ required: tc("required"), email: ts("errEmail"), phone: ts("errPhone"), password: ts("errPassword"), modules: ts("modulesRequired") }),
+    [tc, ts],
+  );
+  const schema = useMemo(() => buildSchema(messages), [messages]);
 
   const {
     register,
@@ -35,11 +95,15 @@ export function CreateWebsiteDialog({ assignments, unit, area, compact }: { assi
     setError,
     setValue,
     getValues,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: { unitId: "", slug: "", nameEn: "", nameMr: "", defaultLocale: "MR" },
+    resolver: zodResolver(schema) as never,
+    defaultValues: { unitId: "", slug: "", nameEn: "", nameMr: "", defaultLocale: "MR", gpAdmin: emptyAccount(), operators: [] },
   });
+  const operators = useFieldArray({ control, name: "operators" });
+  const adminGenerate = useWatch({ control, name: "gpAdmin.generate" });
+  const operatorValues = useWatch({ control, name: "operators" });
 
   function close() {
     setOpen(false);
@@ -56,22 +120,59 @@ export function CreateWebsiteDialog({ assignments, unit, area, compact }: { assi
     }
   }
 
+  function finish() {
+    // The dialog also fires onClose once it is dismissed here; only the first call may navigate.
+    if (!created) return;
+    const id = created.tenantId;
+    setCreated(null);
+    router.push(`/admin/websites/${id}`);
+    router.refresh();
+  }
+
   async function onSubmit(values: FormValues) {
     setFormError(null);
     try {
-      const tenant = await tenants.create(values as Parameters<typeof tenants.create>[0]);
-      close();
-      router.push(`/admin/websites/${tenant.id}`);
-      router.refresh();
+      const res = await tenants.createWithUsers({
+        unitId: values.unitId,
+        slug: values.slug,
+        nameEn: values.nameEn,
+        nameMr: values.nameMr,
+        defaultLocale: values.defaultLocale,
+        gpAdmin: toAccountBody(values.gpAdmin),
+        operators: values.operators.map((o) => ({ ...toAccountBody(o), modules: o.modules })),
+      } as Parameters<typeof tenants.createWithUsers>[0]);
+      const entries: TempPasswordEntry[] = [
+        { label: `${res.gpAdmin.user.name} · ${t("role.GP_ADMIN")}`, email: res.gpAdmin.user.email, password: res.gpAdmin.temporaryPassword },
+        ...res.operators.map((o) => ({ label: `${o.user.name} · ${t("role.DATA_ENTRY_OPERATOR")}`, email: o.user.email, password: o.temporaryPassword })),
+      ];
+      setOpen(false);
+      reset();
+      if (entries.some((e) => e.password)) setCreated({ tenantId: res.tenant.id, entries });
+      else {
+        router.push(`/admin/websites/${res.tenant.id}`);
+        router.refresh();
+      }
     } catch (err) {
       if (isApiError(err, "VALIDATION_ERROR")) {
-        for (const i of err.issues) setError(i.path as keyof FormValues, { message: i.message });
+        let general = false;
+        for (const i of err.issues) {
+          const message = translateServerMessage(i.message, ts, tc("errorGeneric"));
+          if (i.path) setError(i.path as never, { message });
+          else general = true;
+        }
+        if (general) setFormError(tc("errorGeneric"));
         return;
       }
-      if (isApiError(err, "CONFLICT")) return setFormError(err.message);
-      setFormError(err instanceof Error ? err.message : tc("errorGeneric"));
+      if (isApiError(err, "CONFLICT")) return setFormError(translateServerMessage(err.message, ts, tc("errorGeneric")));
+      if (isApiError(err, "FORBIDDEN")) return setFormError(ts("noPermission"));
+      setFormError(tc("errorGeneric"));
     }
   }
+
+  const errs = errors as unknown as {
+    gpAdmin?: FieldErrs<AccountValues>;
+    operators?: (FieldErrs<OperatorValues> | undefined)[];
+  };
 
   return (
     <>
@@ -87,6 +188,7 @@ export function CreateWebsiteDialog({ assignments, unit, area, compact }: { assi
       <Dialog
         open={open}
         onClose={close}
+        size="lg"
         title={unit ? t("websites.createQuestion") : t("websites.create")}
         closeLabel={tc("close")}
         footer={
@@ -95,7 +197,7 @@ export function CreateWebsiteDialog({ assignments, unit, area, compact }: { assi
               {tc("cancel")}
             </Button>
             <Button type="submit" form="create-website-form" loading={isSubmitting}>
-              {t("websites.create")}
+              {ts("createAll")}
             </Button>
           </>
         }
@@ -142,12 +244,61 @@ export function CreateWebsiteDialog({ assignments, unit, area, compact }: { assi
               {...register("defaultLocale")}
             />
           </div>
+          {unit && errors.slug?.message && (
+            <p role="alert" className="text-xs text-danger">
+              {errors.slug.message}
+            </p>
+          )}
+
+          <section className="rounded-card border border-line p-4">
+            <h3 className="text-[15px] font-bold text-ink">{ts("gpAdminTitle")}</h3>
+            <p className="mt-1 mb-4 text-xs text-muted">{ts("gpAdminHint")}</p>
+            <AccountFields reg={(f) => register(`gpAdmin.${f}`)} generate={adminGenerate} errors={errs.gpAdmin} />
+          </section>
+
+          <section className="rounded-card border border-line p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 className="text-[15px] font-bold text-ink">{ts("operatorsTitle")}</h3>
+                <p className="mt-1 text-xs text-muted">{ts("operatorsHint")}</p>
+              </div>
+              {operators.fields.length < MAX_WEBSITE_OPERATORS && (
+                <Button variant="secondary" size="sm" onClick={() => operators.append(emptyOperator())}>
+                  <Plus className="size-4" aria-hidden /> {ts("addOperator")}
+                </Button>
+              )}
+            </div>
+            <div className="mt-4 grid gap-4">
+              {operators.fields.map((f, i) => (
+                <div key={f.id} className="grid gap-4 rounded-card border border-line bg-surface-soft p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-ink">{ts("operatorN", { n: i + 1 })}</p>
+                    <Button variant="secondary" size="sm" onClick={() => operators.remove(i)}>
+                      <Trash2 className="size-4" aria-hidden /> {ts("removeOperator")}
+                    </Button>
+                  </div>
+                  <AccountFields reg={(field) => register(`operators.${i}.${field}`)} generate={operatorValues?.[i]?.generate ?? true} errors={errs.operators?.[i]} />
+                  <Controller
+                    control={control}
+                    name={`operators.${i}.modules`}
+                    render={({ field }) => <ModuleGrants value={field.value} onChange={field.onChange} error={errs.operators?.[i]?.modules?.message} />}
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+
           {formError && (
             <p role="alert" className="rounded-input bg-danger-soft px-4 py-3 text-sm text-danger">
               {formError}
             </p>
           )}
         </form>
+      </Dialog>
+
+      <Dialog open={!!created} onClose={finish} title={ts("createdTitle")} closeLabel={tc("close")} size="md" footer={<Button onClick={finish}>{ts("openWebsite")}</Button>}>
+        <p className="mb-4 text-sm text-muted">{ts("createdHint")}</p>
+        {created && <TempPasswordList entries={created.entries} />}
       </Dialog>
     </>
   );

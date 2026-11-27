@@ -3,10 +3,11 @@ import { CircleCheck, ExternalLink } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import type { PageDto } from "@/types/api";
+import type { PageDto, Role, TenantUserDto } from "@/types/api";
 import { DataTable, type Column } from "@/components/admin/DataTable";
 import { TenantSettingsForm } from "@/components/admin/websites/TenantSettingsForm";
 import { TenantStatusActions } from "@/components/admin/websites/TenantStatusActions";
+import { WebsiteUsers } from "@/components/admin/websites/WebsiteUsers";
 import { Card, CardHeader, MetricCard, PageHeader } from "@/components/ui/Card";
 import { StatusPill } from "@/components/ui/StatusPill";
 import type { UiLocale } from "@/i18n/config";
@@ -16,6 +17,7 @@ import { isApiError } from "@/lib/api/client";
 import { cookieHeader } from "@/lib/api/server";
 import { formatDate } from "@/lib/format";
 import { isEditorCard } from "@/lib/editor-sections";
+import { canCreateRole } from "@/lib/roles";
 import { getCurrentUser, hasCapability } from "@/lib/session";
 import type { PageKey } from "@/config/pages";
 
@@ -45,6 +47,11 @@ export default async function WebsitePage({ params }: { params: Promise<{ tenant
     if (isApiError(err, "NOT_FOUND")) notFound();
     throw err;
   }
+
+  // GP Admin and operators of this site; a caller without user access simply sees none.
+  const members: TenantUserDto[] = await tenants.users(tenantId, { cookie }).catch(() => []);
+  const callerRoles = user.assignments.filter((a) => !a.revokedAt).map((a) => a.role);
+  const addableRoles = hasCapability(user, "user:manage") ? (["GP_ADMIN", "DATA_ENTRY_OPERATOR"] as Role[]).filter((r) => canCreateRole(callerRoles, r)) : [];
 
   // District / Taluka from the unit's ancestors; a GP admin without hierarchy access simply sees no row.
   const ancestors = await hierarchy.get(tenant.unitId, { cookie }).then((r) => r.ancestors, () => []);
@@ -189,6 +196,10 @@ export default async function WebsitePage({ params }: { params: Promise<{ tenant
 
       <div id="settings" className="mb-5 scroll-mt-4">
         <TenantSettingsForm tenant={tenant} canUpdate={hasCapability(user, "tenant:update")} />
+      </div>
+
+      <div className="mb-5">
+        <WebsiteUsers unitId={tenant.unitId} members={members} currentUserId={user.user.id} addableRoles={addableRoles} />
       </div>
 
       <Card>

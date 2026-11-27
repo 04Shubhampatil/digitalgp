@@ -110,40 +110,61 @@ export async function getUser(ctx: AuthContext, userId: string): Promise<UserDto
 // Mutations
 // ---------------------------------------------------------------------------
 
-export async function createUser(ctx: AuthContext, input: CreateUserInput, client: ClientInfo) {
+/** Fresh temporary password (shown once to the creator, stored only as a hash, never audited). */
+export function generateTemporaryPassword(): string {
+  return `Tmp-${randomBytes(9).toString("base64url")}1`;
+}
+
+export interface PreparedUser {
+  email: string;
+  input: CreateUserInput;
+  unitId: string;
+  passwordHash: string;
+  temporaryPassword: string | null;
+}
+
+/**
+ * Everything createUser checks before the transaction: assignment (scope, role, level, modules), duplicate email
+ * and password hashing. Shared by createUser and the one-step website creation.
+ */
+export async function prepareUser(ctx: AuthContext, input: CreateUserInput): Promise<PreparedUser> {
   const unit = await validateAssignment(ctx, input.assignment);
   const email = input.email.trim().toLowerCase();
-
   const existing = await db.user.findUnique({ where: { email } });
   if (existing) throw Errors.conflict("A user with this email already exists");
-
-  const temporaryPassword = input.password ? null : `Tmp-${randomBytes(9).toString("base64url")}1`;
+  const temporaryPassword = input.password ? null : generateTemporaryPassword();
   const passwordHash = await hashPassword(input.password ?? temporaryPassword!);
+  return { email, input, unitId: unit.id, passwordHash, temporaryPassword };
+}
 
-  const user = await db.$transaction(async (tx) => {
-    const created = await tx.user.create({
-      data: {
-        email,
-        name: input.name,
-        phone: input.phone ?? null,
-        locale: input.locale ?? "MR",
-        passwordHash,
-        mustResetPassword: !input.password,
-        createdById: ctx.user.id,
-      },
-    });
-    const assignment = await createAssignment(tx, created.id, input.assignment, ctx.user.id);
-    const actor = actorFromContext(ctx, client);
-    await writeAudit(actor, { action: "user.create", entityType: "User", entityId: created.id, unitId: unit.id, after: { email: created.email, name: created.name } }, tx);
-    await writeAudit(
-      actor,
-      { action: "user.assignment_grant", entityType: "RoleAssignment", entityId: assignment.id, unitId: unit.id, after: { userId: created.id, role: input.assignment.role, unitId: unit.id, modules: input.assignment.modules ?? [] } },
-      tx,
-    );
-    return tx.user.findUniqueOrThrow({ where: { id: created.id }, include: userWithAssignmentsInclude });
+/** Insert a prepared user, its assignment and the `user.create` / `user.assignment_grant` audit entries in `tx`. */
+export async function insertPreparedUser(tx: Tx, ctx: AuthContext, p: PreparedUser, client: ClientInfo): Promise<UserDto> {
+  const created = await tx.user.create({
+    data: {
+      email: p.email,
+      name: p.input.name,
+      phone: p.input.phone ?? null,
+      locale: p.input.locale ?? "MR",
+      passwordHash: p.passwordHash,
+      mustResetPassword: !p.input.password,
+      createdById: ctx.user.id,
+    },
   });
+  const assignment = await createAssignment(tx, created.id, p.input.assignment, ctx.user.id);
+  const actor = actorFromContext(ctx, client);
+  await writeAudit(actor, { action: "user.create", entityType: "User", entityId: created.id, unitId: p.unitId, after: { email: created.email, name: created.name } }, tx);
+  await writeAudit(
+    actor,
+    { action: "user.assignment_grant", entityType: "RoleAssignment", entityId: assignment.id, unitId: p.unitId, after: { userId: created.id, role: p.input.assignment.role, unitId: p.unitId, modules: p.input.assignment.modules ?? [] } },
+    tx,
+  );
+  return toUserDto(await tx.user.findUniqueOrThrow({ where: { id: created.id }, include: userWithAssignmentsInclude }));
+}
 
-  return { user: toUserDto(user), temporaryPassword };
+export async function createUser(ctx: AuthContext, input: CreateUserInput, client: ClientInfo) {
+  const prepared = await prepareUser(ctx, input);
+  const user = await db.$transaction((tx) => insertPreparedUser(tx, ctx, prepared, client));
+  return { user, temporaryPassword: prepared.temporaryPassword };
 }
 
 export async function updateUser(ctx: AuthContext, userId: string, input: UpdateUserInput, client: ClientInfo): Promise<UserDto> {
@@ -218,7 +239,7 @@ export async function revokeAssignment(ctx: AuthContext, userId: string, assignm
 export async function resetUserPassword(ctx: AuthContext, userId: string, client: ClientInfo): Promise<{ user: UserDto; temporaryPassword: string }> {
   if (userId === ctx.user.id) throw Errors.badRequest("Change your own password from your profile");
   await findManageableUser(ctx, userId);
-  const temporaryPassword = `Tmp-${randomBytes(9).toString("base64url")}1`;
+  const temporaryPassword = generateTemporaryPassword();
   const passwordHash = await hashPassword(temporaryPassword);
   const user = await db.$transaction(async (tx) => {
     const row = await tx.user.update({ where: { id: userId }, data: { passwordHash, mustResetPassword: true }, include: userWithAssignmentsInclude });

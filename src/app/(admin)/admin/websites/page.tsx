@@ -16,7 +16,7 @@ import { getCurrentUser, hasCapability, primaryRole } from "@/lib/session";
 
 export const metadata: Metadata = { title: "GP Websites" };
 
-type Search = Promise<{ district?: string; taluka?: string; status?: string; q?: string; page?: string }>;
+type Search = Promise<{ district?: string; taluka?: string; status?: string; q?: string; page?: string; create?: string }>;
 type RowStatus = TenantStatus | "NOT_CREATED";
 const PAGE_SIZE = 8;
 
@@ -83,7 +83,7 @@ export default async function WebsitesPage({ searchParams }: { searchParams: Sea
 
   return (
     <div className="mx-auto max-w-6xl">
-      <PageHeader title={assignedView ? t("nav.assignedWebsites") : t("websites.title")} description={assignedView ? t("websites.assignedSubtitle") : t("websites.subtitleLong")} actions={canCreate ? <CreateWebsiteDialog assignments={user.assignments} /> : null} />
+      <PageHeader title={assignedView ? t("nav.assignedWebsites") : t("websites.title")} description={assignedView ? t("websites.assignedSubtitle") : t("websites.subtitleLong")} actions={canCreate ? <CreateWebsiteDialog assignments={user.assignments} defaultOpen={sp.create === "1"} /> : null} />
 
       <div className={assignedView ? "hidden" : "mb-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"}>
         <MetricCard label={t("websites.allGps")} value={rows.length.toLocaleString()} tone="info" />
@@ -152,7 +152,7 @@ export default async function WebsitesPage({ searchParams }: { searchParams: Sea
           )}
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-sm">
+          <table className="w-full min-w-[860px] text-sm">
             <thead>
               <tr className="bg-surface-table text-left text-[11px] font-semibold text-muted">
                 <th className="px-5 py-2.5">#</th>
@@ -160,6 +160,7 @@ export default async function WebsitesPage({ searchParams }: { searchParams: Sea
                 <th className="px-3 py-2.5">{t("websites.districtTaluka")}</th>
                 <th className="px-3 py-2.5">{t("websites.website")}</th>
                 <th className="px-3 py-2.5">{t("websites.blockAdmin")}</th>
+                <th className="px-3 py-2.5">{t("websiteSetup.gpAdminColumn")}</th>
                 <th className="px-3 py-2.5">{t("websites.lastUpdated")}</th>
                 <th className="px-5 py-2.5 text-right">{tc("actions")}</th>
               </tr>
@@ -167,7 +168,7 @@ export default async function WebsitesPage({ searchParams }: { searchParams: Sea
             <tbody className="divide-y divide-line">
               {view.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-3 py-10 text-center text-muted">
+                  <td colSpan={8} className="px-3 py-10 text-center text-muted">
                     {tc("noResults")}
                   </td>
                 </tr>
@@ -193,6 +194,16 @@ export default async function WebsitesPage({ searchParams }: { searchParams: Sea
                     ) : (
                       <span className="text-muted">{t("websites.unassigned")}</span>
                     )}
+                  </td>
+                  <td className="px-3 py-3.5">
+                    {r.site && r.site.gpAdmins.length > 0 ? (
+                      <span className="font-medium text-ink" title={r.site.gpAdmins.map((a) => a.email).join(", ")}>
+                        {r.site.gpAdmins.map((a) => a.name).join(", ")}
+                      </span>
+                    ) : (
+                      <span className="text-muted">{r.site ? t("websiteSetup.noGpAdmin") : "—"}</span>
+                    )}
+                    {r.site && r.site.operatorCount > 0 && <p className="text-xs text-muted">{t("websiteSetup.operatorsCount", { n: r.site.operatorCount })}</p>}
                   </td>
                   <td className="px-3 py-3.5 text-muted">{r.site ? formatDate(r.site.updatedAt, ui) : "—"}</td>
                   <td className="px-5 py-3.5 text-right">
