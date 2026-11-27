@@ -17,6 +17,7 @@ import { content, hierarchy, tenants } from "@/lib/api/admin";
 import { isApiError } from "@/lib/api/client";
 import { cookieHeader } from "@/lib/api/server";
 import { formatDate } from "@/lib/format";
+import { publicSiteUrl } from "@/lib/public-url";
 import { isEditorCard } from "@/lib/editor-sections";
 import { canCreateRole } from "@/lib/roles";
 import { getCurrentUser, hasCapability } from "@/lib/session";
@@ -77,7 +78,7 @@ export default async function WebsitePage({ params }: { params: Promise<{ tenant
     return published > 0 || cards.some((sec) => sec.draft) ? "inProgress" : "notStarted";
   };
   const completedPages = pages.filter((p) => pageState(p) === "completed").length;
-  const base = process.env.APP_BASE_HOST && process.env.APP_BASE_HOST !== "localhost" ? `https://${tenant.slug}.${process.env.APP_BASE_HOST}` : `/${tenant.slug}`;
+  const base = publicSiteUrl(tenant.slug);
 
   const stateTone = { completed: "text-success", inProgress: "text-warning", notStarted: "text-muted" } as const;
   const columns: Column<PageDto>[] = [
