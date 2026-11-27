@@ -84,7 +84,7 @@ export default async function HierarchyPage({ searchParams }: { searchParams: Se
         <div>
           <p className="font-semibold text-ink">{name(u)}</p>
           <p className="text-xs text-muted">
-            {ui === "mr" ? u.nameEn : u.nameMr} · {u.slug}
+            {ui === "mr" ? u.slug : `${u.nameMr} · ${u.slug}`}
           </p>
         </div>
       ),
