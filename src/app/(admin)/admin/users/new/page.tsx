@@ -1,50 +1,55 @@
 import type { Metadata } from "next";
+import { ChevronRight } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CreateUserForm } from "@/components/admin/users/CreateUserForm";
+import type { Role } from "@/types/api";
 import { PageHeader } from "@/components/ui/Card";
+import { USER_TYPES, canCreateRole } from "@/lib/roles";
 import { getCurrentUser, hasCapability } from "@/lib/session";
 
-export const metadata: Metadata = { title: "Create block admin" };
+export const metadata: Metadata = { title: "Create user" };
 
-/** Figma "Create Block Admin": the form beside a "What happens next?" list and a security note. */
+/**
+ * The separate "Create User" section: one card per account type the signed-in admin may create, each opening its own
+ * form (/admin/users/new/<type>). Super Admin sees Taluka Admin, Gram Panchayat Admin and Data Entry Operator;
+ * a Taluka Admin sees the last two. POST /users re-checks everything on the server.
+ */
 export default async function NewUserPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   if (!hasCapability(user, "user:manage")) redirect("/admin/users");
   const t = await getTranslations("admin");
-  const steps = [t("users.step1"), t("users.step2"), t("users.step3"), t("users.step4")];
+  const callerRoles = user.assignments.filter((a) => !a.revokedAt).map((a) => a.role);
+  const types = (Object.entries(USER_TYPES) as [keyof typeof USER_TYPES, Role][]).filter(([, r]) => canCreateRole(callerRoles, r));
+  if (types.length === 0) redirect("/admin/users");
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader
-        title={t("users.createBlockAdmin")}
-        description={t("users.createSubtitle")}
+        title={t("usersUi.hubTitle")}
+        description={t("usersUi.hubSubtitle")}
         actions={
           <Link href="/admin/users" className="inline-flex h-10 items-center rounded-button border border-line-strong bg-surface px-8 text-sm font-semibold text-ink hover:bg-surface-soft">
             {t("users.cancel")}
           </Link>
         }
       />
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)]">
-        <CreateUserForm assignments={user.assignments} />
-        <div className="grid gap-5">
-          <section className="rounded-card border border-line bg-surface p-5">
-            <h2 className="mb-4 text-[17px] font-bold text-ink">{t("users.whatNext")}</h2>
-            <ol className="grid gap-4">
-              {steps.map((s, i) => (
-                <li key={s} className="flex items-center gap-3 text-sm text-ink">
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-success-soft text-xs font-bold text-primary">{i + 1}</span>
-                  {s}
-                </li>
-              ))}
-            </ol>
-          </section>
-          <section className="rounded-card border border-line bg-surface p-5">
-            <h2 className="text-[17px] font-bold text-ink">{t("users.securityNote")}</h2>
-            <p className="mt-2 text-xs leading-5 text-muted">{t("users.securityText")}</p>
-          </section>
-        </div>
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        {types.map(([slug]) => (
+          <Link
+            key={slug}
+            href={`/admin/users/new/${slug}`}
+            className="group flex flex-col rounded-card border border-line bg-surface p-5 transition-colors hover:border-primary hover:bg-surface-soft"
+          >
+            <h2 className="text-[17px] font-bold text-ink group-hover:text-primary">{t(`userTypes.${slug}.title`)}</h2>
+            <p className="mt-1 text-sm text-muted">{t(`userTypes.${slug}.subtitle`)}</p>
+            <p className="mt-3 flex-1 text-xs leading-5 text-muted">{t(`userTypes.${slug}.access`)}</p>
+            <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-primary">
+              {t("usersUi.hubOpen")}
+              <ChevronRight className="size-4" aria-hidden />
+            </span>
+          </Link>
+        ))}
       </div>
     </div>
   );

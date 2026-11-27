@@ -46,8 +46,15 @@ export async function AdminShell({ user, children }: { user: CurrentUserDto; chi
       items: [
         { href: "/admin/hierarchy", label: t("hierarchy.title"), show: hasCapability(user, "hierarchy:read") },
         { href: "/admin/websites", label: t("nav.gpWebsites"), show: hasCapability(user, "tenant:read") },
-        { href: "/admin/users", label: t("nav.blockAdmins"), show: hasCapability(user, "user:read") },
         { href: "/admin/announcements", label: t("announcements.title"), show: hasCapability(user, "content:read") },
+      ],
+    },
+    // Users and admins have their own section: the list with status, and a separate place to create accounts.
+    {
+      label: t("usersUi.navGroup"),
+      items: [
+        { href: "/admin/users", label: t("usersUi.navUsers"), show: hasCapability(user, "user:read") },
+        { href: "/admin/users/new", label: t("usersUi.navCreate"), show: hasCapability(user, "user:manage") },
       ],
     },
     {
@@ -67,6 +74,13 @@ export async function AdminShell({ user, children }: { user: CurrentUserDto; chi
         { href: "/admin/hierarchy", label: t("nav.gramPanchayats"), show: hasCapability(user, "hierarchy:create-gp") },
         { href: "/admin/websites", label: t("nav.assignedWebsites"), show: hasCapability(user, "tenant:read") },
         { href: "/admin/announcements", label: t("nav.publishAnnouncement"), show: hasCapability(user, "content:read") },
+      ],
+    },
+    {
+      label: t("usersUi.navGroup"),
+      items: [
+        { href: "/admin/users", label: t("usersUi.navUsers"), show: hasCapability(user, "user:read") },
+        { href: "/admin/users/new", label: t("usersUi.navCreate"), show: hasCapability(user, "user:manage") },
       ],
     },
     { label: t("settings"), items: [{ href: "#", label: t("nav.logOut"), action: "logout" as const }] },

@@ -3,7 +3,7 @@ import { ChevronRight } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import type { ApiPaginated, DashboardPendingItemDto, DashboardWebsiteDto } from "@/types/api";
+import type { ApiPaginated, DashboardPendingItemDto, DashboardWebsiteDto, Role } from "@/types/api";
 import { DataTable, type Column } from "@/components/admin/DataTable";
 import { Card, CardHeader, MetricCard, PageHeader } from "@/components/ui/Card";
 import { StatusPill } from "@/components/ui/StatusPill";
@@ -82,6 +82,25 @@ export default async function DashboardPage() {
   const pendingTitle = (p: DashboardPendingItemDto) =>
     p.type === "SECTION" ? `${p.pageKey ? t(`pageNames.${p.pageKey}`) : ""} › ${p.sectionKey ?? ""}` : pickText(pair(p.titleEn, p.titleMr), ui, "—");
 
+  // Users and admins under the signed-in admin: Active = signed in and not suspended; Pending = never signed in.
+  // Older Block Admin accounts count as Taluka Admins; Super Admins are not listed.
+  const tileRoles = (isBlock ? ["GP_ADMIN", "DATA_ENTRY_OPERATOR"] : ["TALUKA_ADMIN", "GP_ADMIN", "DATA_ENTRY_OPERATOR"]) as Role[];
+  const rank: Role[] = ["TALUKA_ADMIN", "GP_ADMIN", "DATA_ENTRY_OPERATOR"];
+  const people = (staff?.data ?? [])
+    .filter((u) => u.id !== user.user.id)
+    .map((u) => {
+      const held: Role[] = u.assignments.filter((a) => !a.revokedAt).map((a) => (a.role === "BLOCK_ADMIN" ? "TALUKA_ADMIN" : a.role));
+      const r = rank.find((x) => held.includes(x));
+      return { u, r, state: u.status === "SUSPENDED" ? "SUSPENDED" : u.lastLoginAt ? "ACTIVE" : "PENDING" };
+    })
+    .filter((p): p is typeof p & { r: Role } => !!p.r && tileRoles.includes(p.r));
+  const activePeople = people.filter((p) => p.state === "ACTIVE");
+  const recentlyIn = activePeople
+    .slice()
+    .sort((a, b) => (b.u.lastLoginAt ?? "").localeCompare(a.u.lastLoginAt ?? ""))
+    .slice(0, 5);
+  const canCreateUsers = hasCapability(user, "user:manage");
+
   const quick = isBlock
     ? [
         { href: "/admin/websites", label: t("dashboardUi.editGp"), hint: "", show: true },
@@ -151,12 +170,63 @@ export default async function DashboardPage() {
         ) : (
           <>
         <MetricCard label={t("websites.title")} value={countOf(all)} caption={`${countOf(published)} ${t("tenantStatus.PUBLISHED").toLowerCase()}`} tone="info" />
-        {canUsers ? <MetricCard label={t("users.title")} value={countOf(staff)} tone="violet" /> : <MetricCard label={t("tenantStatus.DRAFT")} value={countOf(draft)} tone="warning" />}
+        {canUsers ? <MetricCard label={t("usersUi.metricActive")} value={staff ? `${activePeople.length}${staff.page.nextCursor ? "+" : ""}` : "—"} caption={staff ? t("usersUi.pendingCount", { n: people.filter((p) => p.state === "PENDING").length }) : undefined} tone="violet" /> : <MetricCard label={t("tenantStatus.DRAFT")} value={countOf(draft)} tone="warning" />}
         {canReview && <MetricCard label={t("dashboardUi.pendingUpdates")} value={pendingTotal} caption={t("dashboardUi.pendingCaption")} tone="warning" />}
         {canGrievances && <MetricCard label={t("dashboardUi.openGrievances")} value={countOf(open)} tone="danger" />}
           </>
         )}
       </div>
+
+      {canUsers && staff && (
+        <Card className="mb-5">
+          <CardHeader
+            title={t("usersUi.dashTitle")}
+            description={t("usersUi.dashHint")}
+            actions={
+              <div className="flex flex-wrap gap-2">
+                {canCreateUsers && (
+                  <Link href="/admin/users/new" className="rounded-button bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-hover">
+                    + {t("usersUi.createUser")}
+                  </Link>
+                )}
+                <Link href="/admin/users" className="rounded-button border border-line px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-soft">
+                  {t("usersUi.manage")}
+                </Link>
+              </div>
+            }
+          />
+          <div className={`grid gap-3 px-5 pb-5 ${tileRoles.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+            {tileRoles.map((r) => {
+              const mine = people.filter((p) => p.r === r);
+              const n = (s: string) => mine.filter((p) => p.state === s).length;
+              return (
+                <Link key={r} href={`/admin/users?role=${r}`} className="rounded-card border border-line bg-surface-soft px-4 py-3 hover:border-primary">
+                  <span className="block text-xs font-semibold text-muted">{t(`role.${r}`)}</span>
+                  <span className="mt-1 block text-2xl font-bold text-ink">{t("usersUi.activeCount", { n: n("ACTIVE") })}</span>
+                  <span className="mt-1 block text-[11px] text-muted">
+                    {t("usersUi.pendingCount", { n: n("PENDING") })} · {t("usersUi.suspendedCount", { n: n("SUSPENDED") })}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+          <div className="border-t border-line px-5 py-4">
+            <h3 className="mb-2 text-xs font-semibold text-muted uppercase">{t("usersUi.recentTitle")}</h3>
+            <ul className="grid gap-2 text-sm sm:grid-cols-2">
+              {recentlyIn.map((p) => (
+                <li key={p.u.id} className="flex items-center justify-between gap-3">
+                  <Link href={`/admin/users/${p.u.id}`} className="min-w-0 truncate font-semibold text-ink hover:text-primary hover:underline">
+                    {p.u.name}
+                    <span className="ml-2 font-normal text-muted">{t(`role.${p.r}`)}</span>
+                  </Link>
+                  <span className="shrink-0 text-[11px] text-muted">{p.u.lastLoginAt ? formatDateTime(p.u.lastLoginAt, ui) : ""}</span>
+                </li>
+              ))}
+              {recentlyIn.length === 0 && <li className="text-muted">{t("usersUi.noSignIns")}</li>}
+            </ul>
+          </div>
+        </Card>
+      )}
 
       <div className="mb-5 grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
