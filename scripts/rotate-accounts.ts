@@ -1,8 +1,11 @@
 /**
  * Replace the sample sign-in accounts (seed's *@digitalgp.local) with real ones.
  *
- *   npx tsx scripts/rotate-accounts.ts --super-admin you@example.com --gp-admin gp@example.com \
- *       --tenant savardari [--operator op@example.com] [--out credentials.txt] [--dry-run]
+ *   npx tsx scripts/rotate-accounts.ts --tenant savardari --super-admin you@example.com --gp-admin gp@example.com \
+ *       [--taluka-admin ta@example.com] [--operator op@example.com] [--no-remove] [--out credentials.txt] [--dry-run]
+ *
+ * Only the accounts given are created / reset. --no-remove keeps the other sample accounts (e.g. to add one more
+ * account later without touching the rest).
  *
  * What it does is described in src/features/users/rotate-accounts.ts. The new temporary passwords are written ONCE
  * to the --out file (default credentials-<timestamp>.txt in the current folder, git-ignored) — never to the terminal,
@@ -21,21 +24,27 @@ function arg(name: string): string | undefined {
 
 async function main() {
   const superAdmin = arg("super-admin");
+  const talukaAdmin = arg("taluka-admin");
   const gpAdmin = arg("gp-admin");
   const tenantSlug = arg("tenant");
   const operator = arg("operator");
   const dryRun = process.argv.includes("--dry-run");
-  if (!superAdmin || !gpAdmin || !tenantSlug) {
-    throw new Error("Usage: npx tsx scripts/rotate-accounts.ts --super-admin <email> --gp-admin <email> --tenant <slug> [--operator <email>] [--out <file>] [--dry-run]");
+  const removeSamples = !process.argv.includes("--no-remove");
+  if (!tenantSlug || !(superAdmin || talukaAdmin || gpAdmin || operator)) {
+    throw new Error(
+      "Usage: npx tsx scripts/rotate-accounts.ts --tenant <slug> [--super-admin <email>] [--taluka-admin <email>] [--gp-admin <email>] [--operator <email>] [--no-remove] [--out <file>] [--dry-run]",
+    );
   }
   const out = arg("out") ?? `credentials-${new Date().toISOString().replace(/[:T]/g, "-").slice(0, 16)}.txt`;
   if (!dryRun && existsSync(out)) throw new Error(`${out} already exists; choose another --out file`);
 
   const r = await rotateAccounts(db, {
-    superAdmin: { email: superAdmin, name: arg("super-admin-name") },
-    gpAdmin: { email: gpAdmin, name: arg("gp-admin-name") },
+    superAdmin: superAdmin ? { email: superAdmin, name: arg("super-admin-name") } : undefined,
+    talukaAdmin: talukaAdmin ? { email: talukaAdmin, name: arg("taluka-admin-name") } : undefined,
+    gpAdmin: gpAdmin ? { email: gpAdmin, name: arg("gp-admin-name") } : undefined,
     operator: operator ? { email: operator, name: arg("operator-name") } : undefined,
     tenantSlug,
+    removeSamples,
     dryRun,
   });
 

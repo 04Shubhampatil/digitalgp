@@ -8,9 +8,9 @@ import type { db as Db, Tx } from "@/lib/db";
 /**
  * Replace the sample sign-in accounts of a deployment with real ones.
  *
- * - The Super Admin, the GP Admin of one website and (optionally) one Data Entry Operator are created, or kept if
- *   they already exist, each with a fresh random temporary password that must be changed at first sign-in. Their
- *   sessions are signed out.
+ * - The accounts given (Super Admin, Taluka Admin of the website's taluka, GP Admin of the website, one Data Entry
+ *   Operator) are created, or kept if they already exist, each with a fresh random temporary password that must be
+ *   changed at first sign-in. Their sessions are signed out.
  * - Every other account whose email ends with `removeDomain` (the seed's `@digitalgp.local`) is removed the same
  *   way as "Delete user" in the admin: it can no longer sign in, its roles are revoked, its email is freed, and the
  *   row stays so the audit log keeps the name. Villages, websites and content are not touched.
@@ -19,11 +19,15 @@ import type { db as Db, Tx } from "@/lib/db";
  * Passwords are returned once in the report and are never written to the audit log.
  */
 export interface RotateAccountsOptions {
-  superAdmin: { email: string; name?: string };
-  gpAdmin: { email: string; name?: string };
+  superAdmin?: { email: string; name?: string };
+  /** Taluka Admin of the taluka the website belongs to. */
+  talukaAdmin?: { email: string; name?: string };
+  gpAdmin?: { email: string; name?: string };
   operator?: { email: string; name?: string; modules?: ModuleKey[] };
-  /** Website (slug) the GP Admin and operator belong to. */
+  /** Website (slug) the GP Admin, operator and taluka admin belong to. */
   tenantSlug: string;
+  /** Remove the remaining sample accounts (default true). false = only create / reset the accounts given. */
+  removeSamples?: boolean;
   /** Sample accounts to remove: every active account whose email ends with this (default "@digitalgp.local"). */
   removeDomain?: string;
   /** Report what would happen and change nothing. */
@@ -50,14 +54,21 @@ class DryRunRollback extends Error {}
 
 export async function rotateAccounts(db: typeof Db, opts: RotateAccountsOptions): Promise<RotateAccountsReport> {
   const removeDomain = (opts.removeDomain ?? "@digitalgp.local").toLowerCase();
-  const superEmail = normalize(opts.superAdmin.email);
-  const gpEmail = normalize(opts.gpAdmin.email);
+  const superEmail = opts.superAdmin ? normalize(opts.superAdmin.email) : null;
+  const talukaEmail = opts.talukaAdmin ? normalize(opts.talukaAdmin.email) : null;
+  const gpEmail = opts.gpAdmin ? normalize(opts.gpAdmin.email) : null;
   const opEmail = opts.operator ? normalize(opts.operator.email) : null;
-  const distinct = new Set([superEmail, gpEmail, ...(opEmail ? [opEmail] : [])]);
-  if (distinct.size !== (opEmail ? 3 : 2)) throw new Error("Each account needs its own email");
+  const emails = [superEmail, talukaEmail, gpEmail, opEmail].filter((e): e is string => e !== null);
+  if (!emails.length) throw new Error("Give at least one account to create or reset");
+  const distinct = new Set(emails);
+  if (distinct.size !== emails.length) throw new Error("Each account needs its own email");
 
-  const tenant = await db.tenant.findUnique({ where: { slug: opts.tenantSlug }, select: { unitId: true, nameEn: true } });
+  const tenant = await db.tenant.findUnique({ where: { slug: opts.tenantSlug }, select: { unitId: true, nameEn: true, unit: { select: { path: true } } } });
   if (!tenant) throw new Error(`No website with address "${opts.tenantSlug}"`);
+  const taluka = talukaEmail
+    ? await db.adminUnit.findFirst({ where: { id: { in: tenant.unit.path.split("/").filter(Boolean) }, level: "TALUKA" }, select: { id: true, nameEn: true } })
+    : null;
+  if (talukaEmail && !taluka) throw new Error(`The website "${opts.tenantSlug}" is not inside a taluka`);
   // The Super Admin sits on the root of the hierarchy: the unit of the current super admin, else the (only) state.
   const currentSuper = await db.roleAssignment.findFirst({ where: { role: "SUPER_ADMIN", revokedAt: null }, select: { unitId: true } });
   const root = currentSuper ?? (await db.adminUnit.findFirst({ where: { level: "STATE" }, select: { id: true } }).then((u) => (u ? { unitId: u.id } : null)));
@@ -69,13 +80,26 @@ export async function rotateAccounts(db: typeof Db, opts: RotateAccountsOptions)
   try {
     await db.$transaction(
       async (tx) => {
-        const superUser = await ensureAccount(tx, { email: superEmail, name: opts.superAdmin.name ?? "Super Admin", role: "SUPER_ADMIN", unitId: root.unitId }, report, now);
-        const actor = { userId: superUser.id, role: "SUPER_ADMIN" as Role };
-        // Audit the super admin itself (it had no actor before it existed).
-        await writeAudit(actor, { action: superUser.outcome === "created" ? "user.create" : "user.password_reset", entityType: "User", entityId: superUser.id, unitId: root.unitId, after: { email: superEmail, role: "SUPER_ADMIN" } }, tx);
+        // Changes are audited as the Super Admin: the one created/reset here, else the deployment's current one.
+        let actor: { userId: string | null; role: Role } = { userId: null, role: "SUPER_ADMIN" };
+        if (opts.superAdmin && superEmail) {
+          const superUser = await ensureAccount(tx, { email: superEmail, name: opts.superAdmin.name ?? "Super Admin", role: "SUPER_ADMIN", unitId: root.unitId }, report, now);
+          actor = { userId: superUser.id, role: "SUPER_ADMIN" };
+          await writeAudit(actor, { action: superUser.outcome === "created" ? "user.create" : "user.password_reset", entityType: "User", entityId: superUser.id, unitId: root.unitId, after: { email: superEmail, role: "SUPER_ADMIN" } }, tx);
+        } else {
+          const current = await tx.roleAssignment.findFirst({ where: { role: "SUPER_ADMIN", revokedAt: null, user: { deletedAt: null } }, select: { userId: true } });
+          actor = { userId: current?.userId ?? null, role: "SUPER_ADMIN" };
+        }
 
-        const gp = await ensureAccount(tx, { email: gpEmail, name: opts.gpAdmin.name ?? `${tenant.nameEn} GP Admin`, role: "GP_ADMIN", unitId: tenant.unitId }, report, now);
-        await writeAudit(actor, { action: gp.outcome === "created" ? "user.create" : "user.password_reset", entityType: "User", entityId: gp.id, unitId: tenant.unitId, after: { email: gpEmail, role: "GP_ADMIN" } }, tx);
+        if (opts.talukaAdmin && talukaEmail && taluka) {
+          const ta = await ensureAccount(tx, { email: talukaEmail, name: opts.talukaAdmin.name ?? `${taluka.nameEn} Taluka Admin`, role: "TALUKA_ADMIN", unitId: taluka.id }, report, now);
+          await writeAudit(actor, { action: ta.outcome === "created" ? "user.create" : "user.password_reset", entityType: "User", entityId: ta.id, unitId: taluka.id, after: { email: talukaEmail, role: "TALUKA_ADMIN" } }, tx);
+        }
+
+        if (opts.gpAdmin && gpEmail) {
+          const gp = await ensureAccount(tx, { email: gpEmail, name: opts.gpAdmin.name ?? `${tenant.nameEn} GP Admin`, role: "GP_ADMIN", unitId: tenant.unitId }, report, now);
+          await writeAudit(actor, { action: gp.outcome === "created" ? "user.create" : "user.password_reset", entityType: "User", entityId: gp.id, unitId: tenant.unitId, after: { email: gpEmail, role: "GP_ADMIN" } }, tx);
+        }
 
         if (opts.operator && opEmail) {
           const modules = opts.operator.modules?.length ? opts.operator.modules : DEFAULT_OPERATOR_MODULES;
@@ -84,10 +108,13 @@ export async function rotateAccounts(db: typeof Db, opts: RotateAccountsOptions)
         }
 
         // Remove the remaining sample accounts.
-        const samples = await tx.user.findMany({
-          where: { email: { endsWith: removeDomain }, deletedAt: null, NOT: { email: { in: [...distinct] } } },
-          select: { id: true, email: true, name: true, roleAssignments: { where: { revokedAt: null }, select: { role: true, unitId: true } } },
-        });
+        const samples =
+          opts.removeSamples === false
+            ? []
+            : await tx.user.findMany({
+                where: { email: { endsWith: removeDomain }, deletedAt: null, NOT: { email: { in: [...distinct] } } },
+                select: { id: true, email: true, name: true, roleAssignments: { where: { revokedAt: null }, select: { role: true, unitId: true } } },
+              });
         for (const u of samples) {
           await tx.roleAssignment.updateMany({ where: { userId: u.id, revokedAt: null }, data: { revokedAt: now } });
           await tx.session.deleteMany({ where: { userId: u.id } });

@@ -42,8 +42,9 @@ npx tsx scripts/rotate-accounts.ts --super-admin you@example.com --gp-admin gp@e
 npx tsx scripts/rotate-accounts.ts --super-admin you@example.com --gp-admin gp@example.com --tenant savardari --operator op@example.com
 ```
 
-Creates (or keeps) the Super Admin, the website's GP Admin and one Data Entry Operator with random one-time
-passwords (must be changed at first sign-in) and removes every other `*@digitalgp.local` sample account the way
+Creates (or keeps) the accounts given — Super Admin, `--taluka-admin` of the website's taluka, the website's GP
+Admin, one Data Entry Operator — with random one-time passwords (must be changed at first sign-in) and, unless
+`--no-remove` is passed, removes every other `*@digitalgp.local` sample account the way
 "Delete user" does (signed out, roles revoked, email freed, row kept for the audit log). The passwords are written
 once to `credentials-<timestamp>.txt` (git-ignored) — never to the terminal, the audit log or the database. Hand
 each line over, then delete the file. Uses `DATABASE_URL`, so point it at the live database on purpose.

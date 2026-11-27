@@ -90,6 +90,18 @@ describe("rotating the sample accounts", () => {
     expect((await db.user.findUniqueOrThrow({ where: { id: oldSuper.id } })).deletedAt).toBeNull();
   });
 
+  it("adds a taluka admin of the website's taluka without touching the other accounts (--no-remove)", async () => {
+    const { w, site, oldSuper, oldGp } = await world();
+    const r = await rotateAccounts(db, { talukaAdmin: { email: `taluka${domain}` }, tenantSlug: site.slug, removeDomain: domain, removeSamples: false });
+    expect(r.accounts.map((a) => [a.role, a.outcome])).toEqual([["TALUKA_ADMIN", "created"]]);
+    expect(r.removed).toEqual([]);
+    const ta = await db.user.findUniqueOrThrow({ where: { email: `taluka${domain}` }, include: { roleAssignments: { where: { revokedAt: null } } } });
+    expect(ta.roleAssignments.map((x) => [x.role, x.unitId])).toEqual([["TALUKA_ADMIN", w.taluka1.id]]);
+    for (const id of [oldSuper.id, oldGp.id]) expect((await db.user.findUniqueOrThrow({ where: { id } })).deletedAt).toBeNull();
+    // Audited as the existing super admin.
+    expect(await db.auditLog.count({ where: { action: "user.create", entityId: ta.id, actorId: oldSuper.id } })).toBe(1);
+  });
+
   it("refuses duplicate emails and unknown websites", async () => {
     const { site } = await world();
     await expect(rotateAccounts(db, { superAdmin: { email: `a${domain}` }, gpAdmin: { email: `A${domain}` }, tenantSlug: site.slug, removeDomain: domain })).rejects.toThrow(/own email/);
