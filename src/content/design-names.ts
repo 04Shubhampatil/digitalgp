@@ -1,3 +1,4 @@
+import { marathiFor } from "@/i18n/mr-fallback";
 import type { PublicTenantDto } from "@/types/api";
 
 /** The website the Figma design was drawn for: its placeholder text is already about the right village. */
@@ -18,6 +19,9 @@ export function designNames(tenant: Pick<PublicTenantDto, "slug" | "nameEn" | "n
     if (to && to.trim()) pairs.push({ from, to: to.trim() });
   };
   const MR_END = "(?![\u0900-\u0903\u093A-\u094F])";
+  // A name that already says "Gram Panchayat" replaces the whole phrase, so it does not read "Gram Panchayat Test Gram Panchayat".
+  if (/gram panchayat/i.test(tenant.nameEn)) add(/\bGram Panchayat Savardari\b/g, tenant.nameEn);
+  if (tenant.nameMr.includes("ग्रामपंचायत")) add(new RegExp(`ग्रामपंचायत सवरदरी${MR_END}`, "g"), tenant.nameMr);
   add(/\bSavardari\b/g, tenant.nameEn);
   add(new RegExp(`सवरदरी${MR_END}`, "g"), tenant.nameMr);
   // Marathi forms continue with a suffix ("सवरदरीचे"), so those are swapped too.
@@ -32,10 +36,21 @@ export function designNames(tenant: Pick<PublicTenantDto, "slug" | "nameEn" | "n
 /** Deep copy of section data with every string passed through the name swaps; other values are untouched. */
 export function localizeDesign<T>(value: T, pairs: Pair[] | null): T {
   if (!pairs) return value;
+  const swap = (v: string) => pairs.reduce((s, p) => s.replace(p.from, p.to), v);
   const walk = (v: unknown): unknown => {
-    if (typeof v === "string") return pairs.reduce((s, p) => s.replace(p.from, p.to), v);
+    if (typeof v === "string") return swap(v);
     if (Array.isArray(v)) return v.map(walk);
-    if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk(x)]));
+    if (v && typeof v === "object") {
+      const o = v as Record<string, unknown>;
+      const out = Object.fromEntries(Object.entries(o).map(([k, x]) => [k, walk(x)]));
+      // English-only design text is translated by a lookup on its English wording. Once the English has the name
+      // swapped that lookup no longer matches, so the Marathi is looked up first and swapped the same way.
+      if (typeof o.en === "string" && (o.mr === undefined || o.mr === null)) {
+        const mr = marathiFor(o.en);
+        if (mr) out.mr = swap(mr);
+      }
+      return out;
+    }
     return v;
   };
   return walk(value) as T;
