@@ -8,7 +8,7 @@ import { Card, MetricCard, PageHeader } from "@/components/ui/Card";
 import type { UiLocale } from "@/i18n/config";
 import { pair, pickText } from "@/i18n/text";
 
-const selectCls = "h-11 w-full rounded-card border border-line-strong bg-surface px-3 text-sm text-ink outline-none focus:border-primary";
+const selectCls = "h-11 w-full rounded-card border border-line-strong bg-surface px-3 text-sm text-ink outline-none focus:border-primary select-native";
 const labelCls = "mb-1.5 block text-[11px] font-semibold tracking-wide text-muted uppercase";
 
 /**

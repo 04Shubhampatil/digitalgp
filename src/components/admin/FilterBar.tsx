@@ -63,7 +63,7 @@ export function FilterSelect({
       <select
         name={name}
         defaultValue={value ?? ""}
-        className="h-11 rounded-card border border-line-strong bg-surface-select px-3 text-sm text-ink outline-none focus:border-primary"
+        className="h-11 rounded-card border border-line-strong bg-surface-select px-3 text-sm text-ink outline-none focus:border-primary select-native"
       >
         <option value="">{allLabel}</option>
         {options.map((o) => (

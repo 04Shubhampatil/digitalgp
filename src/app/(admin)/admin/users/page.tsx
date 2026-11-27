@@ -21,7 +21,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Search 
 const ROLES: Role[] = ["SUPER_ADMIN", "TALUKA_ADMIN", "GP_ADMIN", "DATA_ENTRY_OPERATOR"];
 type Search = Promise<{ role?: string; district?: string; taluka?: string; q?: string; status?: string }>;
 
-const selectCls = "h-11 w-full rounded-card border border-line-strong bg-surface px-3 text-sm text-ink outline-none focus:border-primary";
+const selectCls = "h-11 w-full rounded-card border border-line-strong bg-surface px-3 text-sm text-ink outline-none focus:border-primary select-native";
 const labelCls = "mb-1.5 block text-[11px] font-semibold tracking-wide text-muted uppercase";
 
 /**
