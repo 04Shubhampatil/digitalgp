@@ -75,6 +75,8 @@ export interface SectionProps {
   slug: string;
   /** Display name of the website in the active language (e.g. for the hero eyebrow). */
   tenantName?: string;
+  /** Name swaps for the design placeholders used by blocks that bring their own design text (null on the design's own website). */
+  designNames?: Pair[] | null;
   locale: UiLocale;
   /** Published section JSON; shape is defined by the backend registry (src/config/sections.ts). */
   data: Record<string, unknown>;
@@ -285,7 +287,7 @@ export function renderSections(page: PublicPageDto, slug: string, locale: UiLoca
           <div className={`mx-auto grid max-w-[1440px] gap-5 px-4 sm:px-8 ${grp.cols} lg:gap-[20px] lg:px-[60px] [&>*:only-child]:lg:col-span-full`}>
             {members.map((m) => {
               const Card = RENDERERS[m.sectionKey]!;
-              return <Card key={m.sectionKey} slug={slug} locale={locale} data={m.data} tenantName={tenantName} siblings={siblings} pageKey={page.pageKey} />;
+              return <Card key={m.sectionKey} slug={slug} locale={locale} data={m.data} tenantName={tenantName} designNames={names ?? null} siblings={siblings} pageKey={page.pageKey} />;
             })}
           </div>
         </section>,
@@ -295,7 +297,7 @@ export function renderSections(page: PublicPageDto, slug: string, locale: UiLoca
     out.push(
       // Every section is an anchor target ("page:x#<sectionKey>") so hero buttons can jump to it.
       <div key={`${s.sectionKey}-${s.sortOrder}`} id={s.sectionKey} className={`scroll-mt-[180px] ${marathiMinHeights(slug, page.pageKey, s.sectionKey, locale) ? MR_MIN_HEIGHT_CLASS : ""}`} style={marathiMinHeights(slug, page.pageKey, s.sectionKey, locale)}>
-        <Section slug={slug} locale={locale} data={s.data} tenantName={tenantName} siblings={siblings} pageKey={page.pageKey} />
+        <Section slug={slug} locale={locale} data={s.data} tenantName={tenantName} designNames={names ?? null} siblings={siblings} pageKey={page.pageKey} />
       </div>,
     );
   }
