@@ -17,9 +17,17 @@ import { findSection } from "../src/config/sections";
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL ?? "" });
 const prisma = new PrismaClient({ adapter });
 
+// Accounts are only seeded when their password is given in .env (never a default: the repository is public).
+// Without SEED_SUPER_ADMIN_PASSWORD no super admin is created (see scripts/bootstrap-admin.ts for deployments);
+// without SEED_SAMPLE_PASSWORD no sample taluka / GP admin / operator accounts are created.
 const SUPER_EMAIL = (process.env.SEED_SUPER_ADMIN_EMAIL ?? "superadmin@digitalgp.local").toLowerCase();
-const SUPER_PASSWORD = process.env.SEED_SUPER_ADMIN_PASSWORD ?? "ChangeMe-Now-2026!";
-const SAMPLE_PASSWORD = "Sample-Pass-2026!";
+const SUPER_PASSWORD = process.env.SEED_SUPER_ADMIN_PASSWORD;
+const SAMPLE_PASSWORD = process.env.SEED_SAMPLE_PASSWORD;
+for (const [name, value] of [["SEED_SUPER_ADMIN_PASSWORD", SUPER_PASSWORD], ["SEED_SAMPLE_PASSWORD", SAMPLE_PASSWORD]] as const) {
+  if (value !== undefined && (value.length < 12 || !/[A-Za-z]/.test(value) || !/[0-9]/.test(value))) {
+    throw new Error(`${name} must be at least 12 characters with letters and digits`);
+  }
+}
 
 type UnitInput = { level: "STATE" | "DISTRICT" | "TALUKA" | "BLOCK" | "GRAM_PANCHAYAT"; slug: string; nameEn: string; nameMr: string; code?: string };
 
@@ -148,13 +156,15 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
     },
   });
 
-  // Accounts for the test website
-  const khedAdmin = await upsertUser("khed.admin@digitalgp.local", "Khed Taluka Admin", SAMPLE_PASSWORD);
-  await ensureAssignment(khedAdmin.id, "TALUKA_ADMIN", khed.id);
-  const gpAdmin = await upsertUser("savardari.admin@digitalgp.local", "Savardari GP Admin", SAMPLE_PASSWORD);
-  await ensureAssignment(gpAdmin.id, "GP_ADMIN", unit.id);
-  const operator = await upsertUser("savardari.operator@digitalgp.local", "Savardari Data Entry Operator", SAMPLE_PASSWORD);
-  await ensureAssignment(operator.id, "DATA_ENTRY_OPERATOR", unit.id, ["announcements", "projects", "schemes", "media"]);
+  // Sample accounts for the test website (local development only; see SEED_SAMPLE_PASSWORD)
+  if (SAMPLE_PASSWORD) {
+    const khedAdmin = await upsertUser("khed.admin@digitalgp.local", "Khed Taluka Admin", SAMPLE_PASSWORD);
+    await ensureAssignment(khedAdmin.id, "TALUKA_ADMIN", khed.id);
+    const sampleGpAdmin = await upsertUser("savardari.admin@digitalgp.local", "Savardari GP Admin", SAMPLE_PASSWORD);
+    await ensureAssignment(sampleGpAdmin.id, "GP_ADMIN", unit.id);
+    const operator = await upsertUser("savardari.operator@digitalgp.local", "Savardari Data Entry Operator", SAMPLE_PASSWORD);
+    await ensureAssignment(operator.id, "DATA_ENTRY_OPERATOR", unit.id, ["announcements", "projects", "schemes", "media"]);
+  }
 
   // ---- Home page (design: hero, quick statistics, welcome, Message from the Sarpanch, Citizen Services)
   // The hero title is the slogan; the "Welcome to Gram Panchayat <name>" line comes from the tenant name.
@@ -166,7 +176,7 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
       { label: { en: "Explore Services" }, href: "/savardari/services" },
       { label: { en: "Register Complaint" }, href: "/savardari/grievance" },
     ],
-  }, gpAdmin.id);
+  }, superAdminId);
 
   await publishSection(tenant.id, "home", "quick-stats", 10, {
     items: [
@@ -179,12 +189,12 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
       { label: { en: "Water Resources" }, value: "100%" },
       { label: { en: "Ongoing Projects" }, value: "12" },
     ],
-  }, gpAdmin.id);
+  }, superAdminId);
 
   await publishSection(tenant.id, "home", "welcome", 20, {
     heading: { en: "Welcome to Savardari" },
     body: { en: "Gram Panchayat: Savardari, Taluka: Khed, District: Pune This village is a progressive village that combines natural wealth with industrial development" },
-  }, gpAdmin.id);
+  }, superAdminId);
 
   await publishSection(tenant.id, "home", "sarpanch-message", 25, {
     heading: { en: "Message from the Sarpanch" },
@@ -193,7 +203,7 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
     },
     name: { en: "Smt. Sabitabai Gaikwad" },
     designation: { en: "Sarpanch, Gram Panchayat Savardari" },
-  }, gpAdmin.id);
+  }, superAdminId);
 
   await publishSection(tenant.id, "home", "monthly-metrics", 30, {
     period: { en: "this month" },
@@ -208,7 +218,7 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
       { label: { en: "Grievance Redressal" }, value: "92%", change: "4.1%" },
       { label: { en: "Tree Plantation" }, value: "18,560", change: "8.7%" },
     ],
-  }, gpAdmin.id);
+  }, superAdminId);
 
   await publishSection(tenant.id, "home", "village-progress", 35, {
     heading: { en: "Village Development Progress" },
@@ -222,7 +232,7 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
       { label: { en: "All-Weather Road Connectivity" }, valueText: "82%" },
       { label: { en: "Digital Literacy Enrolment" }, valueText: "60%" },
     ],
-  }, gpAdmin.id);
+  }, superAdminId);
 
   await publishSection(tenant.id, "home", "ward-details", 40, {
     heading: { en: "Ward Details" },
@@ -237,7 +247,7 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
         ],
       },
     ],
-  }, gpAdmin.id);
+  }, superAdminId);
 
   // The old home "leaders" section is replaced by "sarpanch-message" above.
   await prisma.section.deleteMany({ where: { tenantId: tenant.id, sectionKey: "leaders", page: { pageKey: "home" } } });
@@ -256,7 +266,7 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
       { label: { en: "Aadhar Card Services" }, href: "/savardari/services#aadhar-card" },
       { label: { en: "Complaint Registration" }, href: "/savardari/grievance" },
     ],
-  }, gpAdmin.id);
+  }, superAdminId);
 
   // ---- About page (design "2. About us": hero, history, structure, office, roles, emergency numbers, vision)
   await publishSection(tenant.id, "about", "overview", 0, {
@@ -269,7 +279,7 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
       { label: { en: "Know Our Leaders" }, href: "page:about#members" },
       { label: { en: "Emergency Contacts" }, href: "page:about#emergency-services" },
     ],
-  }, gpAdmin.id);
+  }, superAdminId);
 
   await publishSection(tenant.id, "about", "vision-mission", 15, {
     vision: {
@@ -288,7 +298,7 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
       { en: "Equal access to services" },
       { en: "Respect for culture and environment" },
     ],
-  }, gpAdmin.id);
+  }, superAdminId);
 
   await publishSection(tenant.id, "about", "roles-cards", 35, {
     heading: { en: "What Panchayat officials do" },
@@ -300,7 +310,7 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
       { icon: "tree", title: { en: "Environment" }, responsibilities: [{ en: "Protect trees, water bodies, cleanliness drives, waste management, and climate-ready local planning" }] },
       { icon: "eye", title: { en: "Transparency" }, responsibilities: [{ en: "Publish notices, resolution, tenders, beneficiary lists, and development updates for residents" }] },
     ],
-  }, gpAdmin.id);
+  }, superAdminId);
 
   await publishSection(tenant.id, "about", "emergency-services", 45, {
     heading: { en: "Emergency and Public Support" },
@@ -317,12 +327,12 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
       { title: { en: "Women's Aid" }, number: "1091", category: "police", icon: "shield", active: true },
       { title: { en: "Women's Helpline" }, number: "181", category: "police", icon: "shield", active: true },
     ],
-  }, gpAdmin.id);
+  }, superAdminId);
 
   await publishSection(tenant.id, "about", "history", 10, {
     heading: { en: "Vision & Governance" },
     body: { en: "Gram Panchayat Savardari is working by prioritizing the values of nature conservation, industrial development, cleanliness, education and social inclusion . Gram Panchayat Savardari is known for embracing modern development while preserving the traditional lifestyle, maintaining a balance between agriculture and industry, and setting an example of sustainable development" },
-  }, gpAdmin.id);
+  }, superAdminId);
 
   await publishSection(tenant.id, "about", "geography", 20, {
     areaSqKm: 12.43,
@@ -332,19 +342,19 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
     description: {
       en: "Industrial Growth\n\nIndustrially, Savardari has become an important center for employment generation as it is located in close proximity to the growing industrial area of ​​Khed taluka. The nearby industrial estates, small and medium industries and service sector are providing employment opportunities to the youth of the village at the local level. Due to this, the economic development of the village is rapid and it is moving towards modernity\n\nNature & Agriculture\n\nDue to the mountainous terrain, green agriculture, fertile land and local water resources, the geographical form of Savardari is very rich and environmentally friendly. Most of the citizens of the village depend on agriculture and related businesses and the traditional agricultural culture is preserved here even today",
     },
-  }, gpAdmin.id);
+  }, superAdminId);
 
   await publishSection(tenant.id, "about", "members", 30, {
     heading: { en: "Local Administration" },
     items: [{ name: { en: "Smt. Sabitabai Gaikwad" }, designation: { en: "Sarpanch" } }],
-  }, gpAdmin.id);
+  }, superAdminId);
 
   await publishSection(tenant.id, "about", "office", 40, {
     address: { en: "Gram Panchayat: Savardari, Taluka: Khed, District: Pune – 410501" },
     hours: { en: "Monday to Friday: 9:45 am to 6:15 pm. Weekends and Sundays: Closed" },
     phone: "+919767694340",
     email: "savardarigrampanchayat@gmail.com",
-  }, gpAdmin.id);
+  }, superAdminId);
 
   // ---- Announcements ("Notice & Announcement" and the "What's New This Week?" list), in design order
   // Replaced on every run: Savardari's announcements, projects and schemes come only from this seed.
@@ -369,11 +379,11 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
         status: "PUBLISHED",
         publishAt: a.at ?? null,
         publishedAt: a.at ?? new Date(),
-        publishedById: gpAdmin.id,
+        publishedById: superAdminId,
         submittedAt: a.at ?? new Date(),
-        reviewedById: gpAdmin.id,
+        reviewedById: superAdminId,
         reviewedAt: a.at ?? new Date(),
-        createdById: gpAdmin.id,
+        createdById: superAdminId,
       },
     });
   }
@@ -402,9 +412,9 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
         year: 2026,
         outcomeEn: p.outcomeEn,
         status: "PUBLISHED",
-        publishedById: gpAdmin.id,
+        publishedById: superAdminId,
         publishedAt: new Date(),
-        createdById: gpAdmin.id,
+        createdById: superAdminId,
       },
     });
   }
@@ -413,7 +423,7 @@ async function seedSavardari(pune: { id: string }, superAdminId: string) {
   // not as named scheme records, so no scheme rows are created here.
   await prisma.scheme.deleteMany({ where: { tenantId: tenant.id } });
 
-  return { gpAdmin, unit, tenant, superAdminId };
+  return { unit, tenant, superAdminId };
 }
 
 async function main() {
@@ -428,32 +438,41 @@ async function main() {
     { parent: mulshi, slug: "vasantpuri", nameEn: "Vasantpuri", nameMr: "वसंतपुरी" },
   ];
 
-  const superAdmin = await upsertUser(SUPER_EMAIL, "Super Admin", SUPER_PASSWORD);
-  await ensureAssignment(superAdmin.id, "SUPER_ADMIN", state.id);
-
-  const talukaAdmin = await upsertUser("haveli.admin@digitalgp.local", "Haveli Taluka Admin", SAMPLE_PASSWORD);
-  await ensureAssignment(talukaAdmin.id, "TALUKA_ADMIN", haveli.id);
+  // Content is published by the seeded super admin, else by an existing one.
+  const superAdmin = SUPER_PASSWORD ? await upsertUser(SUPER_EMAIL, "Super Admin", SUPER_PASSWORD) : null;
+  if (superAdmin) await ensureAssignment(superAdmin.id, "SUPER_ADMIN", state.id);
+  const author =
+    superAdmin ?? (await prisma.user.findFirst({ where: { deletedAt: null, roleAssignments: { some: { role: "SUPER_ADMIN", revokedAt: null } } }, select: { id: true } }));
+  if (!author) throw new Error("No super admin: set SEED_SUPER_ADMIN_PASSWORD in .env (or create one with scripts/bootstrap-admin.ts) before seeding");
 
   for (const gp of gps) {
     const unit = await upsertUnit({ level: "GRAM_PANCHAYAT", slug: gp.slug, nameEn: gp.nameEn, nameMr: gp.nameMr }, gp.parent.id);
     await ensureTenant(unit.id, gp.slug, gp.nameEn, gp.nameMr);
-    const admin = await upsertUser(`${gp.slug}.admin@digitalgp.local`, `${gp.nameEn} GP Admin`, SAMPLE_PASSWORD);
-    await ensureAssignment(admin.id, "GP_ADMIN", unit.id);
-    const operator = await upsertUser(`${gp.slug}.operator@digitalgp.local`, `${gp.nameEn} Data Entry Operator`, SAMPLE_PASSWORD);
-    await ensureAssignment(operator.id, "DATA_ENTRY_OPERATOR", unit.id, ["announcements", "projects", "media"]);
+    if (SAMPLE_PASSWORD) {
+      const admin = await upsertUser(`${gp.slug}.admin@digitalgp.local`, `${gp.nameEn} GP Admin`, SAMPLE_PASSWORD);
+      await ensureAssignment(admin.id, "GP_ADMIN", unit.id);
+      const operator = await upsertUser(`${gp.slug}.operator@digitalgp.local`, `${gp.nameEn} Data Entry Operator`, SAMPLE_PASSWORD);
+      await ensureAssignment(operator.id, "DATA_ENTRY_OPERATOR", unit.id, ["announcements", "projects", "media"]);
+    }
+  }
+  if (SAMPLE_PASSWORD) {
+    const talukaAdmin = await upsertUser("haveli.admin@digitalgp.local", "Haveli Taluka Admin", SAMPLE_PASSWORD);
+    await ensureAssignment(talukaAdmin.id, "TALUKA_ADMIN", haveli.id);
   }
 
-  await seedSavardari(pune, superAdmin.id);
+  await seedSavardari(pune, author.id);
 
   console.log("Seed complete.");
   console.log(`  Savardari website: /savardari  (Khed taluka, Pune district) — Figma test data`);
-  console.log(`  Savardari admins:  savardari.admin@digitalgp.local / ${SAMPLE_PASSWORD}  (GP admin)`);
-  console.log(`                     savardari.operator@digitalgp.local / ${SAMPLE_PASSWORD}  (operator)`);
-  console.log(`                     khed.admin@digitalgp.local / ${SAMPLE_PASSWORD}  (taluka admin)`);
-  console.log(`  Super admin:   ${SUPER_EMAIL} / (SEED_SUPER_ADMIN_PASSWORD)`);
-  console.log(`  Taluka admin:  haveli.admin@digitalgp.local / ${SAMPLE_PASSWORD}`);
-  console.log(`  GP admins:     <slug>.admin@digitalgp.local / ${SAMPLE_PASSWORD}  (ganeshwadi, padegaon, vasantpuri)`);
-  console.log(`  Operators:     <slug>.operator@digitalgp.local / ${SAMPLE_PASSWORD}`);
+  console.log(`  Super admin:   ${superAdmin ? `${SUPER_EMAIL} / (SEED_SUPER_ADMIN_PASSWORD)` : "not seeded (SEED_SUPER_ADMIN_PASSWORD unset)"}`);
+  if (SAMPLE_PASSWORD) {
+    console.log(`  Sample accounts (password: SEED_SAMPLE_PASSWORD from .env):`);
+    console.log(`    Taluka admins: khed.admin@digitalgp.local, haveli.admin@digitalgp.local`);
+    console.log(`    GP admins:     <slug>.admin@digitalgp.local     (savardari, ganeshwadi, padegaon, vasantpuri)`);
+    console.log(`    Operators:     <slug>.operator@digitalgp.local`);
+  } else {
+    console.log(`  Sample accounts: not seeded (set SEED_SAMPLE_PASSWORD in .env for local sign-ins)`);
+  }
 }
 
 main()

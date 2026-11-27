@@ -15,6 +15,7 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
+    "accounts:rotate": "tsx scripts/rotate-accounts.ts",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
     "test:ui": "vitest run --config vitest.frontend.config.ts",

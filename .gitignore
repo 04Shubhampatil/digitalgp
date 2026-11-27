@@ -21,6 +21,8 @@ test-results/
 !.env.example
 *.pem
 *.key
+# one-time passwords written by scripts/rotate-accounts.ts
+credentials-*.txt
 
 # tooling
 .turbo/

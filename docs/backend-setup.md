@@ -29,10 +29,24 @@ npm run db:migrate
 npm run db:seed
 ```
 
-The seed is idempotent. It creates Maharashtra > Pune > Haveli/Mulshi talukas, three published GP
-websites (`ganeshwadi`, `padegaon`, `vasantpuri`), a super admin (`SEED_SUPER_ADMIN_*` from `.env`),
-one taluka admin, one GP admin and one operator per GP. Sample passwords are printed by the seed.
-**Change them in any shared environment.**
+The seed is idempotent. It creates Maharashtra > Pune > Haveli/Mulshi/Khed talukas and four published GP
+websites (`savardari`, `ganeshwadi`, `padegaon`, `vasantpuri`). Accounts are created only when their password
+is in `.env` — there are no built-in passwords: a super admin from `SEED_SUPER_ADMIN_EMAIL` /
+`SEED_SUPER_ADMIN_PASSWORD`, and with `SEED_SAMPLE_PASSWORD` one taluka admin, one GP admin and one operator
+per GP (`<slug>.admin@digitalgp.local`, `<slug>.operator@digitalgp.local`). Use these on your own machine only.
+
+### Real accounts on a shared or live database
+
+```bash
+npx tsx scripts/rotate-accounts.ts --super-admin you@example.com --gp-admin gp@example.com --tenant savardari --operator op@example.com --dry-run
+npx tsx scripts/rotate-accounts.ts --super-admin you@example.com --gp-admin gp@example.com --tenant savardari --operator op@example.com
+```
+
+Creates (or keeps) the Super Admin, the website's GP Admin and one Data Entry Operator with random one-time
+passwords (must be changed at first sign-in) and removes every other `*@digitalgp.local` sample account the way
+"Delete user" does (signed out, roles revoked, email freed, row kept for the audit log). The passwords are written
+once to `credentials-<timestamp>.txt` (git-ignored) — never to the terminal, the audit log or the database. Hand
+each line over, then delete the file. Uses `DATABASE_URL`, so point it at the live database on purpose.
 
 ```bash
 npm run dev
@@ -48,7 +62,7 @@ Check `http://localhost:3000/api/health`.
 | `APP_BASE_HOST`            | Base host for subdomain tenant resolution, e.g. `digitalgp.in` |
 | `APP_ORIGIN`               | Public origin of the admin app — CSRF origin check + password-reset links |
 | `SESSION_COOKIE_NAME`      | Optional, default `dgp_session` |
-| `SEED_SUPER_ADMIN_EMAIL` / `SEED_SUPER_ADMIN_PASSWORD` | Seed only |
+| `SEED_SUPER_ADMIN_EMAIL` / `SEED_SUPER_ADMIN_PASSWORD` / `SEED_SAMPLE_PASSWORD` | Seed only; accounts are seeded only when the password is set |
 | `TEST_DATABASE_URL`        | Optional; tests default to `<DATABASE_URL database>_test` |
 | `UPLOADS_DIR`              | Optional, default `uploads` — media files on disk (git-ignored); back it up with the database |
 | `GRIEVANCE_UPLOAD_TTL_HOURS` | Optional, default `24` — how long a citizen's complaint attachment may stay unattached before `npm run forms:purge` deletes it |
@@ -67,6 +81,7 @@ Never commit `.env`. `.env.example` documents every variable.
 | `npm run db:migrate` | `prisma migrate dev` (creates a migration from schema changes — development only) |
 | `npm run db:deploy`  | `prisma migrate deploy` (production / CI) |
 | `npm run db:seed`    | Seed development data |
+| `npm run accounts:rotate -- --super-admin … --gp-admin … --tenant …` | Replace sample accounts with real ones (see above) |
 | `npm run db:studio`  | Prisma Studio |
 
 ## Tests
