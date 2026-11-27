@@ -1,7 +1,7 @@
 import { ArrowRight, Building2, CircleCheck, ClipboardPlus, Droplet, GlassWater, GraduationCap, Hourglass, House, Leaf, Lightbulb, Monitor, Plug, Recycle, Route, Star, Toilet, TreePine, Users, Wifi, Zap, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { pair, pickText, type Bilingual } from "@/i18n/text";
+import { localizeDate, pair, pickText, type Bilingual } from "@/i18n/text";
 import { listPublicProjects, listPublicSuccessStories, publicMediaUrl } from "@/lib/api/public";
 import { detailHref, resolveHref } from "@/lib/href";
 import { FigmaIcon } from "@/components/ui/FigmaIcon";
@@ -183,7 +183,7 @@ export async function ProgressTrackerSection({ locale, data }: SectionProps) {
           const label = pickText(it.label ?? it.title, locale);
           if (it.status && it.percent === undefined) {
             const st = RESOLUTION_STYLE[it.status] ?? RESOLUTION_STYLE.open!;
-            const note = [pickText(it.updateNote, locale), it.wardNo ? t("ward", { no: it.wardNo }) : "", it.date ?? ""].filter(Boolean).join(" · ");
+            const note = [pickText(it.updateNote, locale), it.wardNo ? t("ward", { no: it.wardNo }) : "", localizeDate(it.date, locale)].filter(Boolean).join(" · ");
             return (
               <li key={i} className="flex items-center gap-4 text-[13px]">
                 <span aria-hidden className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#135130] text-white">

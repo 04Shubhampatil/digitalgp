@@ -23,7 +23,8 @@ export async function PublicFooter({ tenant }: { tenant: PublicTenantDto }) {
   const contact = tenant.settings.contact ?? {};
   const social = tenant.settings.social ?? {};
   const rawAddress = contact.address || FIGMA_CONTACT.address;
-  const addressText = locale === "mr" ? (marathiFor(rawAddress) ?? rawAddress) : rawAddress;
+  // Marathi site: the website's own Marathi address, else a known translation, else the English text.
+  const addressText = locale === "mr" ? (contact.addressMr?.trim() || marathiFor(rawAddress) || rawAddress) : rawAddress;
   // The design stacks the address ("Gram Panchayat: Savardari, / Taluka: Khed, / District: Pune – 410501").
   const address = addressText.includes("\n") ? addressText : addressText.replace(/,\s+/g, ",\n");
   const phone = contact.phone || FIGMA_CONTACT.phone;

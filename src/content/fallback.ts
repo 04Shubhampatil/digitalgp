@@ -256,8 +256,11 @@ function mergeAbout(fallback: FallbackSection, legacy: Map<string, Obj>): Obj {
       const office = legacy.get("office") ?? {};
       // The two info cards under the text show the published office hours and contact details.
       const designCards = (d.cards as Obj[] | undefined) ?? [];
-      const contact = [office.phone ? `Phone number: ${String(office.phone)}` : "", office.email ? `Email id: ${String(office.email)}` : ""].filter(Boolean).join("\n");
-      const cards = designCards.map((c, i) => (i === 0 && has(office.hours) ? { ...c, body: office.hours } : i === 1 && contact ? { ...c, body: { en: contact } } : c));
+      const contactLines = (phone: string, email: string) => [office.phone ? `${phone}: ${String(office.phone)}` : "", office.email ? `${email}: ${String(office.email)}` : ""].filter(Boolean).join("\n");
+      const contact = contactLines("Phone number", "Email id");
+      // The labels are translated too, so the Marathi page does not mix English labels with Marathi text.
+      const contactMr = contactLines("फोन क्रमांक", "ई-मेल");
+      const cards = designCards.map((c, i) => (i === 0 && has(office.hours) ? { ...c, body: office.hours } : i === 1 && contact ? { ...c, body: { en: contact, mr: contactMr } } : c));
       return {
         ...d,
         cards,

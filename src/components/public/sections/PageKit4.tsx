@@ -31,7 +31,7 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { pageHref } from "@/config/public-nav";
 import type { PublicAnnouncementCategoryDto } from "@/types/api";
-import { pair, pickText, type Bilingual } from "@/i18n/text";
+import { localizeDate, pair, pickText, type Bilingual } from "@/i18n/text";
 import {
   listPublicAnnouncementCategories,
   listPublicAnnouncements,
@@ -269,7 +269,7 @@ export async function AnnounceFeedSection({ slug, locale, data }: SectionProps) 
               {r.title}
             </span>
             <span className="flex shrink-0 items-center gap-2 sm:w-[148px] sm:justify-between text-[14px] leading-6 font-medium whitespace-nowrap text-[#414141]">
-              {r.date}
+              {localizeDate(r.date, locale)}
               {r.isNew && <span className="inline-flex h-6 w-[46px] items-center justify-center rounded-[2px] bg-[#ff0000] text-[14px] font-medium text-white">{pickText(d.newLabel, locale) || t("newBadge")}</span>}
             </span>
           </span>

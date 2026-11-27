@@ -741,6 +741,8 @@
       "phone": "Phone",
       "email": "Email",
       "hours": "Office hours",
+      "addressMr": "Address (Marathi)",
+      "hoursMr": "Office hours (Marathi)",
       "social": "Social links",
       "branding": "Branding & search",
       "tagline": "Tagline",

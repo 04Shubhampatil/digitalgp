@@ -131,7 +131,7 @@ export interface TenantListItemDto extends TenantDto {
 }
 
 export interface TenantSettingsDto {
-  contact?: { address?: string; phone?: string; email?: string; hours?: string };
+  contact?: { address?: string; addressMr?: string; phone?: string; email?: string; hours?: string; hoursMr?: string };
   social?: { facebook?: string; instagram?: string; youtube?: string; twitter?: string };
   branding?: { logoMediaId?: string; tagline?: { en?: string; mr?: string } };
   seo?: { title?: { en?: string; mr?: string }; description?: { en?: string; mr?: string } };

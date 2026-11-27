@@ -36,8 +36,8 @@ export async function ContactCardsSection({ slug, locale, data }: SectionProps) 
   const d = data as ContactData;
   const phone = c.phone || d.phone;
   const email = c.email || d.email;
-  const address = c.address ? pickText({ en: c.address }, locale) : pickText(d.address, locale);
-  const hours = c.hours ? pickText({ en: c.hours }, locale) : pickText(d.hours, locale);
+  const address = c.address || c.addressMr ? pickText({ en: c.address, mr: c.addressMr }, locale) : pickText(d.address, locale);
+  const hours = c.hours || c.hoursMr ? pickText({ en: c.hours, mr: c.hoursMr }, locale) : pickText(d.hours, locale);
   const L = d.labels ?? {};
   const card = "flex min-h-[269px] flex-col items-center rounded-[10px] bg-white px-3 pt-[29px] pb-[26px] text-center shadow-[0_0_14px_rgba(0,0,0,0.2)]";
   const ring = "flex size-[86px] items-center justify-center rounded-full bg-[#e9f4e9] text-[#135130]";
