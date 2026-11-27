@@ -122,7 +122,7 @@ async function DataBlock({ pageKey, slug, locale, tenant }: { pageKey: PageKey; 
               {c.address && (
                 <div>
                   <dt className="text-xs text-muted uppercase">{t("address")}</dt>
-                  <dd className="whitespace-pre-line text-ink">{c.address}</dd>
+                  <dd className="whitespace-pre-line text-ink">{pickText({ en: c.address, mr: c.addressMr }, locale)}</dd>
                 </div>
               )}
               {c.phone && (

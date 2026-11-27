@@ -10,9 +10,12 @@ export const tenantSettingsSchema = z
     contact: z
       .object({
         address: z.string().trim().max(500).optional(),
+        // Marathi versions shown on the Marathi site (the English text is the fallback).
+        addressMr: z.string().trim().max(500).optional(),
         phone: z.string().trim().max(30).optional(),
         email: z.string().trim().email().max(254).optional(),
         hours: z.string().trim().max(200).optional(),
+        hoursMr: z.string().trim().max(200).optional(),
       })
       .strict()
       .optional(),

@@ -129,7 +129,9 @@ export async function importGpDataset(db: Db, opts: ImportOptions): Promise<Impo
       email: d.contact.email,
       phone: d.contact.phone,
       address: d.contact.address.en.slice(0, 500),
+      addressMr: d.contact.address.mr.slice(0, 500),
       hours: d.contact.hours.en.slice(0, 200),
+      hoursMr: d.contact.hours.mr.slice(0, 200),
     },
     weather: { location: d.contact.weatherLocation },
   };

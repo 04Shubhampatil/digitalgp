@@ -2,7 +2,7 @@ import { marathiFor } from "@/i18n/mr-fallback";
 import { Megaphone } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { pair, pickText, type Bilingual } from "@/i18n/text";
+import { localizeDate, pair, pickText, type Bilingual } from "@/i18n/text";
 import { pageHref } from "@/config/public-nav";
 import { listPublicAnnouncements, publicMediaUrl } from "@/lib/api/public";
 import { detailHref, resolveHref } from "@/lib/href";
@@ -86,7 +86,7 @@ export async function WhatsNewSection({ slug, locale, data }: SectionProps) {
       </div>
       <ul className="mt-[10px] rounded-[10px] border border-[#414141]/20 px-3">
         {items.map((n, i) => {
-          const date = typeof n.date === "string" ? n.date : pickText(n.date, locale);
+          const date = typeof n.date === "string" ? localizeDate(n.date, locale) : pickText(n.date, locale);
           // A row typed in the editor without a link is plain text (nothing to open); sample and announcement rows are links.
           const href = n.href ? resolveHref(n.href, slug) : typed ? undefined : d.viewAll?.href ? resolveHref(d.viewAll.href, slug) : pageHref(slug, "announcements");
           const Row = ({ children }: { children: React.ReactNode }) =>

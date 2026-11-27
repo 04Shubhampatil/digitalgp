@@ -56,7 +56,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { createElement, type ReactNode } from "react";
-import { pickText, type Bilingual } from "@/i18n/text";
+import { localizeDate, pickText, type Bilingual } from "@/i18n/text";
 import { publicMediaUrl } from "@/lib/api/public";
 import { qrMatrix } from "@/lib/qr";
 import type { UiLocale } from "@/i18n/config";
@@ -301,7 +301,7 @@ export const tx = (b: B, locale: UiLocale): string => pickText(b, locale);
  * { en, mr } so it can be translated.
  */
 export function plain(v: unknown, locale: UiLocale): string {
-  if (typeof v === "string") return v;
+  if (typeof v === "string") return localizeDate(v, locale);
   if (v && typeof v === "object") return pickText(v as Bilingual, locale);
   return "";
 }

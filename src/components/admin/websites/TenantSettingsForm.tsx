@@ -27,6 +27,8 @@ const schema = z
   contactPhone: z.string().trim().max(30),
   contactEmail: z.string().trim().max(254),
   contactHours: z.string().trim().max(200),
+  contactAddressMr: z.string().trim().max(500),
+  contactHoursMr: z.string().trim().max(200),
   facebook: z.string().trim().max(500),
   instagram: z.string().trim().max(500),
   youtube: z.string().trim().max(500),
@@ -61,7 +63,7 @@ function toPayload(v: Values, before: TenantDto) {
     customDomain: opt(v.customDomain) ?? null,
     defaultLocale: v.defaultLocale,
     settings: {
-      contact: { address: opt(v.contactAddress), phone: opt(v.contactPhone), email: opt(v.contactEmail), hours: opt(v.contactHours) },
+      contact: { address: opt(v.contactAddress), addressMr: opt(v.contactAddressMr), phone: opt(v.contactPhone), email: opt(v.contactEmail), hours: opt(v.contactHours), hoursMr: opt(v.contactHoursMr) },
       social: { facebook: opt(v.facebook), instagram: opt(v.instagram), youtube: opt(v.youtube), twitter: opt(v.twitter) },
       // Keep the logo (edited elsewhere): `branding` is replaced as a whole.
       branding: { ...before.settings.branding, tagline: { en: opt(v.taglineEn), mr: opt(v.taglineMr) } },
@@ -89,6 +91,8 @@ function defaults(tn: TenantDto): Values {
     contactPhone: c.phone ?? "",
     contactEmail: c.email ?? "",
     contactHours: c.hours ?? "",
+    contactAddressMr: c.addressMr ?? "",
+    contactHoursMr: c.hoursMr ?? "",
     facebook: s.facebook ?? "",
     instagram: s.instagram ?? "",
     youtube: s.youtube ?? "",
@@ -165,6 +169,11 @@ export function TenantSettingsForm({ tenant, canUpdate }: { tenant: TenantDto; c
             <Input label={t("settingsUi.phone")} type="tel" error={errors.contactPhone?.message} {...register("contactPhone")} />
             <Input label={t("settingsUi.email")} type="email" error={errors.contactEmail?.message} {...register("contactEmail")} />
             <Input label={t("settingsUi.hours")} placeholder="Mon–Fri 9:45–18:15" error={errors.contactHours?.message} {...register("contactHours")} />
+            {/* Marathi versions: the Marathi site shows these; without them it falls back to the English text. */}
+            <div className="sm:col-span-2">
+              <Textarea label={t("settingsUi.addressMr")} rows={3} error={errors.contactAddressMr?.message} {...register("contactAddressMr")} />
+            </div>
+            <Input label={t("settingsUi.hoursMr")} error={errors.contactHoursMr?.message} {...register("contactHoursMr")} />
           </fieldset>
 
           <fieldset className="grid gap-4 sm:grid-cols-2">
