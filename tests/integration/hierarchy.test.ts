@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { createUnit, deleteUnit } from "@/features/hierarchy/service";
 import { AppError } from "@/lib/errors";
-import { actor, buildWorld, client } from "../helpers/factories";
+import { db } from "@/lib/db";
+import { actor, assign, buildWorld, client, createUser } from "../helpers/factories";
 
 const expectCode = async (p: Promise<unknown>, code: string) => {
   await expect(p).rejects.toSatisfy((e: unknown) => e instanceof AppError && e.code === code);
@@ -64,5 +65,21 @@ describe("deleting units", () => {
     const taluka = await actor("TALUKA_ADMIN", w.taluka1.id);
     const fresh = await createUnit(taluka.ctx, gp(w.taluka1.id, "gp-to-keep"), client);
     await expectCode(deleteUnit(taluka.ctx, fresh.id, client), "FORBIDDEN");
+  });
+
+  it("a revoked role does not block deleting a Gram Panchayat and is removed with it", async () => {
+    const w = await buildWorld();
+    const { ctx } = await actor("SUPER_ADMIN", w.state.id);
+    const unit = await createUnit(ctx, gp(w.taluka1.id, "had-an-admin"), client);
+    const user = await createUser({ email: "old.admin@test.local" });
+    const assignment = await assign(user.id, "GP_ADMIN", unit.id);
+    // Active access blocks the delete.
+    await expectCode(deleteUnit(ctx, unit.id, client), "CONFLICT");
+    // Once the role is revoked (kept only as history) the unit can go.
+    await db.roleAssignment.update({ where: { id: assignment.id }, data: { revokedAt: new Date() } });
+    await deleteUnit(ctx, unit.id, client);
+    expect(await db.adminUnit.count({ where: { id: unit.id } })).toBe(0);
+    expect(await db.roleAssignment.count({ where: { id: assignment.id } })).toBe(0);
+    expect(await db.user.count({ where: { id: user.id } })).toBe(1);
   });
 });

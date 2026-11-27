@@ -146,8 +146,10 @@ export async function updateUnit(ctx: AuthContext, unitId: string, input: Update
 }
 
 /**
- * Delete a taluka, block or Gram Panchayat that is empty: no units inside it, no website, no user roles (current or
- * past, they are kept for the audit trail) and no content owned by it. States and districts are never deleted.
+ * Delete a taluka, block or Gram Panchayat that is empty: no units inside it, no website, no user with an active role
+ * on it and no content owned by it. Roles that were revoked earlier (for example of a deleted account) do not block
+ * the delete: they are removed with the unit, while the audit log keeps who did what. States and districts are never
+ * deleted.
  * Needs `hierarchy:manage`, so Super Admin only; the reason is returned so the admin knows what to clear first.
  */
 export async function deleteUnit(ctx: AuthContext, unitId: string, client: ClientInfo): Promise<void> {
@@ -158,18 +160,20 @@ export async function deleteUnit(ctx: AuthContext, unitId: string, client: Clien
   const [children, tenant, assignments, announcements, schemes, media] = await Promise.all([
     db.adminUnit.count({ where: { parentId: unit.id } }),
     db.tenant.count({ where: { unitId: unit.id } }),
-    db.roleAssignment.count({ where: { unitId: unit.id } }),
+    db.roleAssignment.count({ where: { unitId: unit.id, revokedAt: null } }),
     db.announcement.count({ where: { ownerUnitId: unit.id } }),
     db.scheme.count({ where: { ownerUnitId: unit.id } }),
     db.media.count({ where: { ownerUnitId: unit.id } }),
   ]);
   if (children > 0) throw Errors.conflict("Delete the units inside it first");
   if (tenant > 0) throw Errors.conflict("It has a website. Delete or move the website first");
-  if (assignments > 0) throw Errors.conflict("Users are assigned to it (or were). Remove their access first");
+  if (assignments > 0) throw Errors.conflict("Users still have access to it. Remove their access first");
   if (announcements + schemes + media > 0) throw Errors.conflict("It owns announcements, schemes or media, so it cannot be deleted");
 
   const before = await db.adminUnit.findUniqueOrThrow({ where: { id: unit.id }, select: unitSelect });
   await db.$transaction(async (tx) => {
+    // Revoked roles (kept only as history) would block the delete through their foreign key; their module grants go with them.
+    await tx.roleAssignment.deleteMany({ where: { unitId: unit.id, revokedAt: { not: null } } });
     await tx.adminUnit.delete({ where: { id: unit.id } });
     await writeAudit(
       actorFromContext(ctx, client),
