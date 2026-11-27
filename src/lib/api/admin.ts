@@ -46,6 +46,8 @@ export const hierarchy = {
   update: (unitId: string, body: UpdateUnitInput, o: Opts = {}) =>
     apiFetch<AdminUnitDto>(`/hierarchy/units/${unitId}`, { method: "PATCH", body, ...o }),
   create: (body: CreateUnitInput, o: Opts = {}) => apiFetch<AdminUnitDto>("/hierarchy/units", { method: "POST", body, ...o }),
+  /** Delete an empty taluka / block / Gram Panchayat (Super Admin; refused while it still has units, a website, users or content). */
+  remove: (unitId: string, o: Opts = {}) => apiFetch<void>(`/hierarchy/units/${unitId}`, { method: "DELETE", ...o }),
 };
 
 export const LEVEL_ORDER: AdminUnitLevel[] = ["STATE", "DISTRICT", "TALUKA", "BLOCK", "GRAM_PANCHAYAT"];

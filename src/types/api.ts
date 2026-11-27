@@ -114,7 +114,7 @@ export interface DashboardPendingItemDto {
   status: ContentStatus;
   submittedAt: string | null;
   /** Null for shared (taluka / district) announcements and schemes. */
-  tenant: { id: string; slug: string; nameEn: string } | null;
+  tenant: { id: string; slug: string; nameEn: string; nameMr: string } | null;
   submittedBy: { id: string; name: string | null };
 }
 

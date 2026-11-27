@@ -7,6 +7,7 @@ import { WorkflowBar } from "@/components/admin/announcements/WorkflowBar";
 import { Card, CardHeader, PageHeader } from "@/components/ui/Card";
 import { StatusPill } from "@/components/ui/StatusPill";
 import type { UiLocale } from "@/i18n/config";
+import { localName } from "@/i18n/text";
 import { EDITABLE_STATUSES, announcements } from "@/lib/api/admin";
 import { isApiError } from "@/lib/api/client";
 import { cookieHeader } from "@/lib/api/server";
@@ -86,7 +87,7 @@ export default async function AnnouncementDetailPage({ params }: { params: Promi
             {!a.tenantId && (
               <>
                 <dt className="text-muted">{t("announcements.targets")}</dt>
-                <dd className="text-ink">{a.targets.map((x) => `${x.nameEn} (${t(`level.${x.level}`)})`).join(", ") || "—"}</dd>
+                <dd className="text-ink">{a.targets.map((x) => `${localName(x.nameEn, x.nameMr, ui)} (${t(`level.${x.level}`)})`).join(", ") || "—"}</dd>
               </>
             )}
             <dt className="text-muted">{t("announcements.pages")}</dt>

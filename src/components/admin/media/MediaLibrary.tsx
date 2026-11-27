@@ -9,6 +9,7 @@ import { TenantSelect } from "@/components/admin/TenantSelect";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import type { UiLocale } from "@/i18n/config";
+import { localName } from "@/i18n/text";
 import { adminMediaUrl, media } from "@/lib/api/admin";
 import { isApiError } from "@/lib/api/client";
 import { formatDate } from "@/lib/format";
@@ -80,7 +81,7 @@ export function MediaLibrary({ items, canManage, initialTenantId }: { items: Med
               <Upload className="size-4" aria-hidden /> {t("mediaUi.upload")}
             </Button>
           </div>
-          <p className="text-xs text-muted sm:col-span-2">{t("mediaUi.hint", { name: tenant?.nameEn ?? "—" })}</p>
+          <p className="text-xs text-muted sm:col-span-2">{t("mediaUi.hint", { name: tenant ? localName(tenant.nameEn, tenant.nameMr, locale) : "—" })}</p>
         </div>
       )}
       {error && (

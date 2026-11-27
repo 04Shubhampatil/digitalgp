@@ -100,7 +100,7 @@ export async function listPendingUpdates(ctx: AuthContext, unitId?: string): Pro
   const status = { in: [...PENDING] };
   const take = PENDING_FEED_SIZE;
   const order = [{ submittedAt: "desc" as const }, { id: "desc" as const }];
-  const tenantSel = { select: { id: true, slug: true, nameEn: true } };
+  const tenantSel = { select: { id: true, slug: true, nameEn: true, nameMr: true } };
 
   const [revisions, announcements, schemes, projects, stories] = await Promise.all([
     db.sectionRevision.findMany({
@@ -146,7 +146,7 @@ export async function listPendingUpdates(ctx: AuthContext, unitId?: string): Pro
       sectionKey: r.section.sectionKey,
       status: r.status,
       submittedAt: r.submittedAt?.toISOString() ?? null,
-      tenant: { id: r.tenant.id, slug: r.tenant.slug, nameEn: r.tenant.nameEn },
+      tenant: { id: r.tenant.id, slug: r.tenant.slug, nameEn: r.tenant.nameEn, nameMr: r.tenant.nameMr },
       createdById: r.createdById,
     })),
     ...announcements.map((a) => ({ type: "ANNOUNCEMENT" as const, id: a.id, titleEn: a.titleEn, titleMr: a.titleMr, pageKey: null, sectionKey: null, status: a.status, submittedAt: a.submittedAt?.toISOString() ?? null, tenant: a.tenant, createdById: a.createdById })),

@@ -11,7 +11,7 @@ import { hierarchy } from "@/lib/api/admin";
 import { isApiError } from "@/lib/api/client";
 
 /** Rename / re-code a unit → PATCH /hierarchy/units/:id (`hierarchy:manage`). */
-export function EditUnitDialog({ unit }: { unit: AdminUnitDto }) {
+export function EditUnitDialog({ unit, compact = false }: { unit: AdminUnitDto; compact?: boolean }) {
   const t = useTranslations("admin");
   const tc = useTranslations("common");
   const router = useRouter();
@@ -46,7 +46,7 @@ export function EditUnitDialog({ unit }: { unit: AdminUnitDto }) {
 
   return (
     <>
-      <Button variant="secondary" onClick={() => setOpen(true)}>
+      <Button variant="secondary" size={compact ? "sm" : "md"} onClick={() => setOpen(true)}>
         {tc("edit")}
       </Button>
       <Dialog

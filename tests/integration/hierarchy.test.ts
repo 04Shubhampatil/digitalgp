@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createUnit } from "@/features/hierarchy/service";
+import { createUnit, deleteUnit } from "@/features/hierarchy/service";
 import { AppError } from "@/lib/errors";
 import { actor, buildWorld, client } from "../helpers/factories";
 
@@ -40,5 +40,29 @@ describe("adding Gram Panchayats", () => {
     const taluka = await createUnit(ctx, { level: "TALUKA", parentId: w.district.id, slug: "new-taluka", nameEn: "t", nameMr: "t", code: null }, client);
     const created = await createUnit(ctx, gp(taluka.id, "gp-in-new-taluka"), client);
     expect(created.parentId).toBe(taluka.id);
+  });
+});
+
+describe("deleting units", () => {
+  it("a super admin deletes an empty Gram Panchayat but not one with a website, users or children", async () => {
+    const w = await buildWorld();
+    const { ctx } = await actor("SUPER_ADMIN", w.state.id);
+    const empty = await createUnit(ctx, gp(w.taluka1.id, "empty-gp"), client);
+    await deleteUnit(ctx, empty.id, client);
+    await expectCode(deleteUnit(ctx, empty.id, client), "NOT_FOUND");
+    // A taluka that still has Gram Panchayats cannot be deleted.
+    await expectCode(deleteUnit(ctx, w.taluka1.id, client), "CONFLICT");
+    // A Gram Panchayat with users assigned cannot be deleted.
+    await actor("GP_ADMIN", w.gpA.id);
+    await expectCode(deleteUnit(ctx, w.gpA.id, client), "CONFLICT");
+  });
+
+  it("states and districts are never deleted, and a taluka admin cannot delete", async () => {
+    const w = await buildWorld();
+    const sup = await actor("SUPER_ADMIN", w.state.id);
+    await expectCode(deleteUnit(sup.ctx, w.district.id, client), "BAD_REQUEST");
+    const taluka = await actor("TALUKA_ADMIN", w.taluka1.id);
+    const fresh = await createUnit(taluka.ctx, gp(w.taluka1.id, "gp-to-keep"), client);
+    await expectCode(deleteUnit(taluka.ctx, fresh.id, client), "FORBIDDEN");
   });
 });

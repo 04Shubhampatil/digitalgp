@@ -52,3 +52,8 @@ export function localizeDate(text: string | undefined, locale: UiLocale): string
   if (!text) return "";
   return locale === "mr" ? (marathiDate(text) ?? text) : text;
 }
+
+/** A name stored as `nameEn` / `nameMr` in the language of the UI (falls back to the other language, then `fallback`). */
+export function localName(en: string | null | undefined, mr: string | null | undefined, locale: UiLocale, fallback = ""): string {
+  return pickText({ en: en ?? undefined, mr: mr ?? undefined }, locale, fallback);
+}

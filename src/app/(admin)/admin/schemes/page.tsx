@@ -10,7 +10,7 @@ import { FilterBar, FilterSelect } from "@/components/admin/FilterBar";
 import { Card, CardHeader, PageHeader } from "@/components/ui/Card";
 import { StatusPill } from "@/components/ui/StatusPill";
 import type { UiLocale } from "@/i18n/config";
-import { pair, pickText } from "@/i18n/text";
+import { localName, pair, pickText } from "@/i18n/text";
 import { schemes } from "@/lib/api/admin";
 import { cookieHeader } from "@/lib/api/server";
 import { formatDate } from "@/lib/format";
@@ -40,7 +40,7 @@ export default async function SchemesPage({ searchParams }: { searchParams: Sear
           <Link href={`/admin/schemes/${s.id}`} className="font-semibold text-ink hover:text-primary hover:underline">
             {pickText(pair(s.nameEn, s.nameMr), ui, "—")}
           </Link>
-          <p className="text-xs text-muted">{s.tenantId ? t("schemesUi.gpOwned") : `${t("announcements.isShared")} · ${s.targets.map((x) => x.nameEn).join(", ")}`}</p>
+          <p className="text-xs text-muted">{s.tenantId ? t("schemesUi.gpOwned") : `${t("announcements.isShared")} · ${s.targets.map((x) => localName(x.nameEn, x.nameMr, ui)).join(", ")}`}</p>
         </div>
       ),
     },

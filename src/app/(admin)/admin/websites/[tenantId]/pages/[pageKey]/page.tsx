@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
+import type { UiLocale } from "@/i18n/config";
+import { localName } from "@/i18n/text";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isPageKey } from "@/config/pages";
@@ -147,11 +149,11 @@ export default async function PageEditor({ params, searchParams }: { params: Pro
   return (
     <div className="mx-auto max-w-5xl">
       <Link href={`/admin/websites/${tenantId}`} className="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
-        <ArrowLeft className="size-4" aria-hidden /> {tenant.nameEn}
+        <ArrowLeft className="size-4" aria-hidden /> {localName(tenant.nameEn, tenant.nameMr, locale as UiLocale)}
       </Link>
       <PageEditorHeader
         title={ta(`pageNames.${pageKey}`)}
-        description={t("subtitleLong", { name: tenant.nameEn })}
+        description={t("subtitleLong", { name: localName(tenant.nameEn, tenant.nameMr, locale as UiLocale) })}
         published={anyPublished}
         lastEdited={`${t("lastEdited")} ${lastEdited}`}
         actions={
