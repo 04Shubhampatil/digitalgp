@@ -137,7 +137,7 @@
       "talukaOverview": "Taluka overview",
       "viewGps": "View Gram Panchayats",
       "deleteUnit": "Delete",
-      "deleteConfirm": "Delete {name}? This only works when nothing is inside it: no Gram Panchayats, website, users or content. It cannot be undone.",
+      "deleteConfirm": "Delete {name}? This only works when nothing is inside it: no Gram Panchayats, website, users with access or content. It cannot be undone.",
       "editRow": "Edit"
     },
     "websites": {
