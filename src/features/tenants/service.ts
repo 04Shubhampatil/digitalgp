@@ -296,6 +296,21 @@ export async function setTenantStatus(ctx: AuthContext, tenantId: string, status
 /** Public, published-only tenant profile. */
 export async function getPublicTenant(slug: string): Promise<PublicTenantDto> {
   const resolved = await getPublicTenantBySlug(slug);
-  const row = await db.tenant.findUniqueOrThrow({ where: { id: resolved.id }, select: { id: true, slug: true, nameEn: true, nameMr: true, defaultLocale: true, settings: true } });
-  return { ...row, settings: (row.settings ?? {}) as TenantSettingsDto };
+  const row = await db.tenant.findUniqueOrThrow({ where: { id: resolved.id }, select: { id: true, slug: true, nameEn: true, nameMr: true, defaultLocale: true, settings: true, unit: { select: { path: true } } } });
+  // Taluka and district names (public, no ids) so placeholder text can name the right ones.
+  const ancestors = await db.adminUnit.findMany({
+    where: { id: { in: row.unit.path.split("/").filter(Boolean) }, level: { in: ["TALUKA", "DISTRICT"] } },
+    select: { level: true, nameEn: true, nameMr: true },
+  });
+  const taluka = ancestors.find((a) => a.level === "TALUKA");
+  const district = ancestors.find((a) => a.level === "DISTRICT");
+  const { unit: _unit, ...rest } = row;
+  return {
+    ...rest,
+    settings: (row.settings ?? {}) as TenantSettingsDto,
+    area: {
+      ...(taluka ? { taluka: { nameEn: taluka.nameEn, nameMr: taluka.nameMr } } : {}),
+      ...(district ? { district: { nameEn: district.nameEn, nameMr: district.nameMr } } : {}),
+    },
+  };
 }

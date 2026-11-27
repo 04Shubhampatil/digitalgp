@@ -711,6 +711,8 @@ export interface PublicTenantDto {
   nameMr: string;
   defaultLocale: Locale;
   settings: TenantSettingsDto;
+  /** Where the Gram Panchayat is (names only): used to name placeholder text after the right taluka and district. */
+  area?: { taluka?: { nameEn: string; nameMr: string }; district?: { nameEn: string; nameMr: string } };
 }
 
 // ---------------------------------------------------------------------------
