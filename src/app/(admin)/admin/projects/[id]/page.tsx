@@ -7,6 +7,7 @@ import { ContentWorkflowBar } from "@/components/admin/ContentWorkflowBar";
 import { Card, CardHeader, PageHeader } from "@/components/ui/Card";
 import { StatusPill } from "@/components/ui/StatusPill";
 import type { UiLocale } from "@/i18n/config";
+import { localName } from "@/i18n/text";
 import { EDITABLE_STATUSES, adminMediaUrl, projects } from "@/lib/api/admin";
 import { isApiError } from "@/lib/api/client";
 import { cookieHeader } from "@/lib/api/server";
@@ -33,7 +34,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   return (
     <div className="mx-auto max-w-5xl">
       <PageHeader
-        title={p.nameEn || p.nameMr || "—"}
+        title={localName(p.nameEn, p.nameMr, ui, "—")}
         description={[tp(`projectStage.${p.stage}`), p.year, p.wardNo ? `${tp("ward")} ${p.wardNo}` : null].filter(Boolean).join(" · ")}
         actions={
           <div className="flex items-center gap-3">

@@ -10,7 +10,7 @@ import { FilterBar, FilterSelect } from "@/components/admin/FilterBar";
 import { Card, CardHeader, MetricCard, PageHeader } from "@/components/ui/Card";
 import { StatusPill } from "@/components/ui/StatusPill";
 import type { UiLocale } from "@/i18n/config";
-import { pair, pickText } from "@/i18n/text";
+import { localName, pair, pickText } from "@/i18n/text";
 import { announcements } from "@/lib/api/admin";
 import { cookieHeader } from "@/lib/api/server";
 import { formatDate } from "@/lib/format";
@@ -70,7 +70,7 @@ export default async function AnnouncementsPage({ searchParams }: { searchParams
           <span className="text-muted">{t("announcements.gpOwned")}</span>
         ) : (
           <span className="text-muted">
-            {t("announcements.isShared")} · {a.targets.map((x) => x.nameEn).join(", ") || "—"}
+            {t("announcements.isShared")} · {a.targets.map((x) => localName(x.nameEn, x.nameMr, ui)).join(", ") || "—"}
           </span>
         ),
     },

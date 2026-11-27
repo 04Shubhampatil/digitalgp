@@ -8,7 +8,7 @@ import { DataTable, type Column } from "@/components/admin/DataTable";
 import { Card, CardHeader, MetricCard, PageHeader } from "@/components/ui/Card";
 import { StatusPill } from "@/components/ui/StatusPill";
 import type { UiLocale } from "@/i18n/config";
-import { pair, pickText } from "@/i18n/text";
+import { localName, pair, pickText } from "@/i18n/text";
 import { audit, dashboard, grievances, tenants, users } from "@/lib/api/admin";
 import { cookieHeader } from "@/lib/api/server";
 import { formatDate, formatDateTime } from "@/lib/format";
@@ -301,7 +301,7 @@ export default async function DashboardPage() {
                       )}
                       <p className="text-[11px] text-muted">
                         {t(`dashboardUi.pendingType.${p.type}`)}
-                        {p.tenant ? ` · ${p.tenant.nameEn}` : ""}
+                        {p.tenant ? ` · ${localName(p.tenant.nameEn, p.tenant.nameMr, ui)}` : ""}
                         {p.submittedBy.name ? ` · ${p.submittedBy.name}` : ""}
                         {p.submittedAt ? ` · ${formatDate(p.submittedAt, ui)}` : ""}
                       </p>

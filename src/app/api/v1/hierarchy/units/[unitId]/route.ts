@@ -1,6 +1,6 @@
-import { getUnitWithAncestors, updateUnit } from "@/features/hierarchy/service";
+import { deleteUnit, getUnitWithAncestors, updateUnit } from "@/features/hierarchy/service";
 import { updateUnitSchema } from "@/features/hierarchy/validators";
-import { authedRoute, getClientInfo, ok } from "@/lib/http";
+import { authedRoute, getClientInfo, noContent, ok } from "@/lib/http";
 import { parseBody } from "@/lib/validation";
 
 type Params = { unitId: string };
@@ -12,4 +12,9 @@ export const GET = authedRoute<Params>(async (_req, { auth, params }) => {
 export const PATCH = authedRoute<Params>(async (req, { auth, params }) => {
   const input = await parseBody(req, updateUnitSchema);
   return ok(await updateUnit(auth, params.unitId, input, getClientInfo(req)));
+});
+
+export const DELETE = authedRoute<Params>(async (req, { auth, params }) => {
+  await deleteUnit(auth, params.unitId, getClientInfo(req));
+  return noContent();
 });

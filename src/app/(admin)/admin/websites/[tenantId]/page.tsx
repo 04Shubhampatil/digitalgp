@@ -162,7 +162,7 @@ export default async function WebsitePage({ params }: { params: Promise<{ tenant
           <CardHeader title={t("websites.websiteDetails")} />
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-3 px-5 pb-5 text-sm">
             <dt className="text-muted">{t("websites.gp")}</dt>
-            <dd className="font-semibold text-ink">{tenant.nameEn}</dd>
+            <dd className="font-semibold text-ink">{pickText(pair(tenant.nameEn, tenant.nameMr), ui, tenant.slug)}</dd>
             {districtTaluka && (
               <>
                 <dt className="text-muted">{t("websites.districtTaluka")}</dt>

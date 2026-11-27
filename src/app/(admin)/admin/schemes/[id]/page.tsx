@@ -7,6 +7,7 @@ import { ContentWorkflowBar } from "@/components/admin/ContentWorkflowBar";
 import { Card, CardHeader, PageHeader } from "@/components/ui/Card";
 import { StatusPill } from "@/components/ui/StatusPill";
 import type { UiLocale } from "@/i18n/config";
+import { localName } from "@/i18n/text";
 import { SchemeCoverageEditor } from "@/components/admin/schemes/SchemeCoverageEditor";
 import { EDITABLE_STATUSES, adminMediaUrl, schemes } from "@/lib/api/admin";
 import { isApiError } from "@/lib/api/client";
@@ -46,7 +47,7 @@ export default async function SchemeDetailPage({ params }: { params: Promise<{ i
   return (
     <div className="mx-auto max-w-5xl">
       <PageHeader
-        title={s.nameEn || s.nameMr || "—"}
+        title={localName(s.nameEn, s.nameMr, ui, "—")}
         description={`${tp(`schemeLevel.${s.level}`)}${s.tenantId ? "" : ` · ${t("announcements.isShared")}`}`}
         actions={
           <div className="flex items-center gap-3">
@@ -120,7 +121,7 @@ export default async function SchemeDetailPage({ params }: { params: Promise<{ i
             {!s.tenantId && (
               <>
                 <dt className="text-muted">{t("announcements.targets")}</dt>
-                <dd className="text-ink">{s.targets.map((x) => `${x.nameEn} (${t(`level.${x.level}`)})`).join(", ") || "—"}</dd>
+                <dd className="text-ink">{s.targets.map((x) => `${localName(x.nameEn, x.nameMr, ui)} (${t(`level.${x.level}`)})`).join(", ") || "—"}</dd>
               </>
             )}
             <dt className="text-muted">{tc("updated")}</dt>

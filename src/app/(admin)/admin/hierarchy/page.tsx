@@ -8,6 +8,7 @@ import { CursorPager } from "@/components/admin/CursorPager";
 import { DataTable, type Column } from "@/components/admin/DataTable";
 import { FilterBar } from "@/components/admin/FilterBar";
 import { AddUnitDialog } from "@/components/admin/hierarchy/AddUnitDialog";
+import { DeleteUnitButton } from "@/components/admin/hierarchy/DeleteUnitButton";
 import { EditUnitDialog } from "@/components/admin/hierarchy/EditUnitDialog";
 import { Card, CardHeader, MetricCard, PageHeader } from "@/components/ui/Card";
 import { StatusPill } from "@/components/ui/StatusPill";
@@ -19,7 +20,7 @@ import { primaryRole } from "@/lib/session";
 import { cookieHeader } from "@/lib/api/server";
 import { getCurrentUser, hasCapability } from "@/lib/session";
 
-export const metadata: Metadata = { title: "Districts & Talukas" };
+export const metadata: Metadata = { title: "Talukas & Gram Panchayats" };
 
 type Search = Promise<{ parentId?: string; q?: string; cursor?: string; district?: string; taluka?: string }>;
 
@@ -30,7 +31,7 @@ type Search = Promise<{ parentId?: string; q?: string; cursor?: string; district
 export default async function HierarchyPage({ searchParams }: { searchParams: Search }) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
-  const [{ parentId, q, cursor, district, taluka }, t, tc, locale, cookie] = await Promise.all([
+  const [{ parentId, q, cursor, taluka }, t, tc, locale, cookie] = await Promise.all([
     searchParams,
     getTranslations("admin"),
     getTranslations("common"),
@@ -41,7 +42,7 @@ export default async function HierarchyPage({ searchParams }: { searchParams: Se
   const canManage = hasCapability(user, "hierarchy:manage");
   const canAddGp = hasCapability(user, "hierarchy:create-gp");
 
-  // Super admin landing view from the design: totals and one row per district.
+  // Super admin landing view: the talukas of Pune district (no district list: the platform is for one district).
   if (!parentId && primaryRole(user) === "SUPER_ADMIN") {
     const safe = <T,>(x: Promise<T>) => x.catch(() => null);
     const [d, tk, g, u] = await Promise.all([
@@ -50,7 +51,7 @@ export default async function HierarchyPage({ searchParams }: { searchParams: Se
       hierarchy.list({ level: "GRAM_PANCHAYAT", limit: 100 }, { cookie }),
       hasCapability(user, "user:read") ? safe(usersApi.list({ limit: 100 }, { cookie })) : Promise.resolve(null),
     ]);
-    return <HierarchyOverview locale={ui} districts={d.data} talukas={tk.data} gps={g.data} users={u?.data ?? []} district={district} taluka={taluka} q={q} />;
+    return <HierarchyOverview locale={ui} districts={d.data} talukas={tk.data} gps={g.data} users={u?.data ?? []} taluka={taluka} q={q} />;
   }
 
   // Current node + breadcrumb, or the scope roots when no parent is chosen.
@@ -108,15 +109,25 @@ export default async function HierarchyPage({ searchParams }: { searchParams: Se
       key: "actions",
       header: tc("actions"),
       align: "right",
-      cell: (u) =>
-        u.level === "GRAM_PANCHAYAT" ? null : (
-          <Link
-            href={`/admin/hierarchy?parentId=${u.id}`}
-            className="inline-flex items-center gap-1 rounded-button border border-line px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-soft"
-          >
-            {t("hierarchy.open")} <ChevronRight className="size-3.5" aria-hidden />
-          </Link>
-        ),
+      cell: (u) => (
+        <div className="flex items-center justify-end gap-2">
+          {u.level !== "GRAM_PANCHAYAT" && (
+            <Link
+              href={`/admin/hierarchy?parentId=${u.id}`}
+              className="inline-flex items-center gap-1 rounded-button border border-line px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-soft"
+            >
+              {t("hierarchy.open")} <ChevronRight className="size-3.5" aria-hidden />
+            </Link>
+          )}
+          {/* Super Admin only: rename / re-code, and delete when empty. */}
+          {canManage && u.level !== "DISTRICT" && u.level !== "STATE" && (
+            <>
+              <EditUnitDialog unit={u} compact />
+              <DeleteUnitButton unit={u} />
+            </>
+          )}
+        </div>
+      ),
     },
   ];
 
@@ -129,11 +140,11 @@ export default async function HierarchyPage({ searchParams }: { searchParams: Se
           canManage && parent ? (
             <div className="flex items-center gap-2">
               <EditUnitDialog unit={parent} />
-              {childLevel ? <AddUnitDialog parent={parent} /> : null}
+              {childLevel ? <AddUnitDialog parent={parent} only={parent.level === "TALUKA" ? "GRAM_PANCHAYAT" : parent.level === "DISTRICT" ? "TALUKA" : undefined} /> : null}
             </div>
           ) : canAddGp && parent?.level === "TALUKA" ? (
             // Taluka Admin: add Gram Panchayats inside their own taluka.
-            <AddUnitDialog parent={parent} onlyGramPanchayat />
+            <AddUnitDialog parent={parent} only="GRAM_PANCHAYAT" />
           ) : null
         }
       />

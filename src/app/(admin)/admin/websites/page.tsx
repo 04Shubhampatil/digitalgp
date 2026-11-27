@@ -8,7 +8,7 @@ import { CreateWebsiteDialog } from "@/components/admin/websites/CreateWebsiteDi
 import { Card, MetricCard, PageHeader } from "@/components/ui/Card";
 import { StatusPill, type PillStatus } from "@/components/ui/StatusPill";
 import type { UiLocale } from "@/i18n/config";
-import { pair, pickText } from "@/i18n/text";
+import { localName, pair, pickText } from "@/i18n/text";
 import { hierarchy, tenants } from "@/lib/api/admin";
 import { cookieHeader } from "@/lib/api/server";
 import { formatDate } from "@/lib/format";
@@ -177,7 +177,7 @@ export default async function WebsitesPage({ searchParams }: { searchParams: Sea
                   <td className="px-5 py-3.5 text-muted">{String((pageNo - 1) * PAGE_SIZE + i + 1).padStart(2, "0")}</td>
                   <td className="px-3 py-3.5">
                     <div className="flex items-center gap-3">
-                      <span className="flex size-8 items-center justify-center rounded-[6px] bg-success-soft text-xs font-bold text-primary">{r.unit.nameEn.charAt(0).toUpperCase()}</span>
+                      <span className="flex size-8 items-center justify-center rounded-[6px] bg-success-soft text-xs font-bold text-primary">{localName(r.unit.nameEn, r.unit.nameMr, ui).charAt(0).toUpperCase()}</span>
                       <span className="font-semibold text-ink">{name(r.unit)}</span>
                     </div>
                   </td>

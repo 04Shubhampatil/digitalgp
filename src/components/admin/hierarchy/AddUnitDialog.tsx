@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -11,6 +11,8 @@ import type { AdminUnitDto, AdminUnitLevel } from "@/types/api";
 import { createUnitSchema } from "@/features/hierarchy/validators";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
+import type { UiLocale } from "@/i18n/config";
+import { localName } from "@/i18n/text";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { childLevels, hierarchy } from "@/lib/api/admin";
@@ -19,15 +21,16 @@ import { isApiError } from "@/lib/api/client";
 type FormValues = z.input<typeof createUnitSchema>;
 
 /** Figma "Add New Taluka" modal, generalised to any child level of the current unit. */
-export function AddUnitDialog({ parent, onlyGramPanchayat = false }: { parent: AdminUnitDto | null; onlyGramPanchayat?: boolean }) {
+export function AddUnitDialog({ parent, only }: { parent: AdminUnitDto | null; only?: AdminUnitLevel }) {
   const t = useTranslations("admin");
+  const locale = useLocale() as UiLocale;
   const tc = useTranslations("common");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // A Taluka Admin may only add Gram Panchayats under their taluka; Super Admin can add any lower level.
-  const levels: AdminUnitLevel[] = onlyGramPanchayat ? ["GRAM_PANCHAYAT"] : parent ? childLevels(parent.level) : ["STATE"];
+  // `only` fixes the level (a taluka under the district, a Gram Panchayat under a taluka); otherwise any lower level can be added.
+  const levels: AdminUnitLevel[] = only ? [only] : parent ? childLevels(parent.level) : ["STATE"];
 
   const {
     register,
@@ -75,7 +78,7 @@ export function AddUnitDialog({ parent, onlyGramPanchayat = false }: { parent: A
         title={t("hierarchy.addLevel", { level: t(`level.${levels[0]}`) })}
         size="figma"
         icon={<Plus className="size-5" aria-hidden />}
-        description={parent ? `${t("hierarchy.parent")}: ${parent.nameEn}` : undefined}
+        description={parent ? `${t("hierarchy.parent")}: ${localName(parent.nameEn, parent.nameMr, locale)}` : undefined}
         closeLabel={tc("close")}
         footer={
           <>

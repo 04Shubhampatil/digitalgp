@@ -7,6 +7,7 @@ import { ContentWorkflowBar } from "@/components/admin/ContentWorkflowBar";
 import { Card, CardHeader, PageHeader } from "@/components/ui/Card";
 import { StatusPill } from "@/components/ui/StatusPill";
 import type { UiLocale } from "@/i18n/config";
+import { localName } from "@/i18n/text";
 import { EDITABLE_STATUSES, adminMediaUrl, projects, schemes, successStories } from "@/lib/api/admin";
 import { isApiError } from "@/lib/api/client";
 import { cookieHeader } from "@/lib/api/server";
@@ -103,9 +104,9 @@ export default async function SuccessStoryDetailPage({ params }: { params: Promi
             <dt className="text-muted">{t("storiesUi.consentShort")}</dt>
             <dd className={s.consentConfirmed ? "font-semibold text-success" : consentMissing ? "font-semibold text-warning" : "text-ink"}>{s.consentConfirmed ? tc("yes") : consentMissing ? t("storiesUi.consentMissing") : tc("no")}</dd>
             <dt className="text-muted">{t("storiesUi.project")}</dt>
-            <dd>{project ? <Link href={`/admin/projects/${project.id}`} className="text-primary hover:underline">{project.nameEn || project.nameMr}</Link> : "—"}</dd>
+            <dd>{project ? <Link href={`/admin/projects/${project.id}`} className="text-primary hover:underline">{localName(project.nameEn, project.nameMr, ui)}</Link> : "—"}</dd>
             <dt className="text-muted">{t("storiesUi.scheme")}</dt>
-            <dd>{scheme ? <Link href={`/admin/schemes/${scheme.id}`} className="text-primary hover:underline">{scheme.nameEn || scheme.nameMr}</Link> : "—"}</dd>
+            <dd>{scheme ? <Link href={`/admin/schemes/${scheme.id}`} className="text-primary hover:underline">{localName(scheme.nameEn, scheme.nameMr, ui)}</Link> : "—"}</dd>
             <dt className="text-muted">{t("storiesUi.sortOrder")}</dt>
             <dd className="text-ink">{s.sortOrder}</dd>
             <dt className="text-muted">{tc("updated")}</dt>

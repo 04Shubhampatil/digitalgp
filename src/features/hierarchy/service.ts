@@ -140,3 +140,37 @@ export async function updateUnit(ctx: AuthContext, unitId: string, input: Update
   });
   return toUnitDto(updated);
 }
+
+/**
+ * Delete a taluka, block or Gram Panchayat that is empty: no units inside it, no website, no user roles (current or
+ * past, they are kept for the audit trail) and no content owned by it. States and districts are never deleted.
+ * Needs `hierarchy:manage`, so Super Admin only; the reason is returned so the admin knows what to clear first.
+ */
+export async function deleteUnit(ctx: AuthContext, unitId: string, client: ClientInfo): Promise<void> {
+  const unit = await getUnitForActor(ctx, unitId);
+  assertCan(ctx, "hierarchy:manage", { unitPath: unit.path });
+  if (unit.level === "STATE" || unit.level === "DISTRICT") throw Errors.badRequest("A state or district cannot be deleted");
+
+  const [children, tenant, assignments, announcements, schemes, media] = await Promise.all([
+    db.adminUnit.count({ where: { parentId: unit.id } }),
+    db.tenant.count({ where: { unitId: unit.id } }),
+    db.roleAssignment.count({ where: { unitId: unit.id } }),
+    db.announcement.count({ where: { ownerUnitId: unit.id } }),
+    db.scheme.count({ where: { ownerUnitId: unit.id } }),
+    db.media.count({ where: { ownerUnitId: unit.id } }),
+  ]);
+  if (children > 0) throw Errors.conflict("Delete the units inside it first");
+  if (tenant > 0) throw Errors.conflict("It has a website. Delete or move the website first");
+  if (assignments > 0) throw Errors.conflict("Users are assigned to it (or were). Remove their access first");
+  if (announcements + schemes + media > 0) throw Errors.conflict("It owns announcements, schemes or media, so it cannot be deleted");
+
+  const before = await db.adminUnit.findUniqueOrThrow({ where: { id: unit.id }, select: unitSelect });
+  await db.$transaction(async (tx) => {
+    await tx.adminUnit.delete({ where: { id: unit.id } });
+    await writeAudit(
+      actorFromContext(ctx, client),
+      { action: "hierarchy.unit_delete", entityType: "AdminUnit", entityId: unit.id, before: toUnitDto(before) },
+      tx,
+    );
+  });
+}
