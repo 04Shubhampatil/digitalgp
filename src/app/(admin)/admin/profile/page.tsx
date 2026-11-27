@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { PasswordForm } from "@/components/forms/PasswordForm";
 import { Card, CardHeader, PageHeader } from "@/components/ui/Card";
 import type { UiLocale } from "@/i18n/config";
+import { localName } from "@/i18n/text";
 import { formatDateTime } from "@/lib/format";
 import { getCurrentUser } from "@/lib/session";
 
@@ -36,7 +37,7 @@ export default async function ProfilePage() {
             <dd className="text-ink">
               {user.assignments
                 .filter((a) => !a.revokedAt)
-                .map((a) => `${ta(`role.${a.role}`)} · ${a.unitNameEn}`)
+                .map((a) => `${ta(`role.${a.role}`)} · ${localName(a.unitNameEn, a.unitNameMr, ui)}`)
                 .join(", ") || "—"}
             </dd>
           </dl>

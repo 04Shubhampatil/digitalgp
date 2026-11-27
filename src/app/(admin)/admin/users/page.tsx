@@ -31,6 +31,8 @@ const labelCls = "mb-1.5 block text-[11px] font-semibold tracking-wide text-mute
 export default async function UsersPage({ searchParams }: { searchParams: Search }) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+  // Only admins who manage users (Super Admin, Taluka Admin) see the users list; a Gram Panchayat Admin does not.
+  if (!hasCapability(user, "user:manage")) redirect("/admin/dashboard");
   const [sp, t, tc, locale, cookie] = await Promise.all([searchParams, getTranslations("admin"), getTranslations("common"), getLocale(), cookieHeader()]);
   const ui = locale as UiLocale;
   const roleFilter: Role | "ALL" = sp.role === "all" ? "ALL" : ROLES.includes(sp.role as Role) ? (sp.role as Role) : "ALL";

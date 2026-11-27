@@ -28,6 +28,8 @@ const labelCls = "mb-1.5 block text-[11px] font-semibold tracking-wide text-mute
 export default async function AuditLogsPage({ searchParams }: { searchParams: Search }) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+  // Audit logs are for the Super Admin and Taluka Admins.
+  if (!user.assignments.some((a) => !a.revokedAt && (a.role === "SUPER_ADMIN" || a.role === "TALUKA_ADMIN" || a.role === "BLOCK_ADMIN"))) redirect("/admin/dashboard");
   const [{ actorId, action, result: resultParam, from, to, cursor }, t, tc, locale, cookie] = await Promise.all([searchParams, getTranslations("admin"), getTranslations("common"), getLocale(), cookieHeader()]);
   const ui = locale as UiLocale;
   const canUsers = hasCapability(user, "user:read");
