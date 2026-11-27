@@ -214,7 +214,13 @@
       "afterCreation": "After creation, the website will remain in Draft until its content is completed and published.",
       "export": "Export",
       "blockAdmin": "Taluka Admin",
-      "unassigned": "Unassigned"
+      "unassigned": "Unassigned",
+      "deleteTitle": "Delete website",
+      "deleteHint": "Removes this website and all its content for good. Only for a website that is not published.",
+      "deleteWebsite": "Delete website",
+      "deleteConfirm": "Delete {name}? Its pages, announcements, schemes, projects, stories, pictures, files, complaints and form entries are removed. The Gram Panchayat stays in the list, and its users keep their accounts. This cannot be undone.",
+      "deleteUnpublishFirst": "This website is published. Unpublish it first (set it back to Draft), then delete it.",
+      "deleteTypeSlug": "Type the website address ({slug}) to confirm"
     },
     "users": {
       "title": "Users & Roles",

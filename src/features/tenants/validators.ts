@@ -97,3 +97,6 @@ export const listTenantsQuerySchema = paginationQuerySchema.extend({
   q: z.string().trim().min(1).max(100).optional(),
 });
 export type ListTenantsQuery = z.infer<typeof listTenantsQuerySchema>;
+
+/** DELETE /tenants/:id: the website's address, typed by the admin to confirm. */
+export const deleteTenantSchema = z.object({ confirmSlug: z.string().trim().min(1).max(100) });

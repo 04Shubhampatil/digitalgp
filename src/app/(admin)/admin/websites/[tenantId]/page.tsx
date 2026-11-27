@@ -5,6 +5,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import type { PageDto, Role, TenantUserDto } from "@/types/api";
 import { DataTable, type Column } from "@/components/admin/DataTable";
+import { DeleteWebsite } from "@/components/admin/websites/DeleteWebsite";
 import { TenantSettingsForm } from "@/components/admin/websites/TenantSettingsForm";
 import { TenantStatusActions } from "@/components/admin/websites/TenantStatusActions";
 import { WebsiteUsers } from "@/components/admin/websites/WebsiteUsers";
@@ -201,6 +202,13 @@ export default async function WebsitePage({ params }: { params: Promise<{ tenant
       <div className="mb-5">
         <WebsiteUsers unitId={tenant.unitId} members={members} currentUserId={user.user.id} addableRoles={addableRoles} />
       </div>
+
+      {/* Super Admin only: delete an unpublished website and its content. */}
+      {hasCapability(user, "hierarchy:manage") && (
+        <div className="mb-5">
+          <DeleteWebsite tenant={tenant} name={name} />
+        </div>
+      )}
 
       <Card>
         <CardHeader title={t("websites.cmsOverview")} />

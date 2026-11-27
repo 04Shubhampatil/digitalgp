@@ -63,6 +63,8 @@ export const tenants = {
   /** Same-origin CSV download URL (GET /tenants/export?status&unitId&q); use as a plain link. */
   exportUrl: (query: { status?: string; unitId?: string; q?: string }) => withQuery(`${API_BASE}/tenants/export`, query),
   get: (tenantId: string, o: Opts = {}) => apiFetch<TenantDto>(`/tenants/${tenantId}`, o),
+  /** Delete an unpublished website and its content (Super Admin); `confirmSlug` is the address typed to confirm. */
+  remove: (tenantId: string, confirmSlug: string, o: Opts = {}) => apiFetch<void>(`/tenants/${tenantId}`, { method: "DELETE", body: { confirmSlug }, ...o }),
   create: (body: CreateTenantInput, o: Opts = {}) => apiFetch<TenantDto>("/tenants", { method: "POST", body, ...o }),
   /** One step: website + GP Admin + optional operators in one transaction; temporary passwords come back once. */
   createWithUsers: (body: CreateTenantWithUsersInput, o: Opts = {}) =>

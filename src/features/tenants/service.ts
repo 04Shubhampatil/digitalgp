@@ -7,6 +7,8 @@ import { Errors, isAppError } from "@/lib/errors";
 import type { ClientInfo } from "@/lib/http";
 import { assertCan, unitPathScopeFilter } from "@/lib/permissions";
 import { getPublicTenantBySlug, getTenantForActor, getUnitForActor } from "@/lib/tenant";
+import { revalidatePublicTags, tenantTag } from "@/lib/revalidate";
+import { getStorage } from "@/lib/storage";
 import { paginate, parseValue } from "@/lib/validation";
 import type { CreateTenantWithUsersResultDto, ModuleKey, PublicTenantDto, TenantAdminRefDto, TenantDto, TenantSettingsDto, TenantUserDto, UserDto } from "@/types/api";
 import { insertPreparedUser, prepareUser, type PreparedUser } from "@/features/users/service";
@@ -313,4 +315,39 @@ export async function getPublicTenant(slug: string): Promise<PublicTenantDto> {
       ...(district ? { district: { nameEn: district.nameEn, nameMr: district.nameMr } } : {}),
     },
   };
+}
+
+/**
+ * Delete a website and everything that belongs to it (pages, sections and their history, announcements, schemes,
+ * projects, success stories, media and uploaded files, grievances, form submissions). The Gram Panchayat unit stays,
+ * so it can be reused or deleted; users assigned to it keep their accounts.
+ *
+ * Super Admin only (`hierarchy:manage`), and only after the website has been unpublished: a live site is never deleted
+ * in one step. The caller must type the website's address (`confirmSlug`) to confirm. Audit entries about the website
+ * stay (they only lose the link to it) and a `tenant.delete` entry is added.
+ */
+export async function deleteTenant(ctx: AuthContext, tenantId: string, confirmSlug: string, client: ClientInfo): Promise<void> {
+  const resolved = await getTenantForActor(ctx, tenantId);
+  assertCan(ctx, "hierarchy:manage", { unitPath: resolved.unitPath });
+  const tenant = await db.tenant.findUniqueOrThrow({ where: { id: resolved.id } });
+  if (confirmSlug !== tenant.slug) throw Errors.badRequest("The address you typed does not match this website");
+  if (tenant.status === "PUBLISHED") throw Errors.conflict("Unpublish the website before deleting it");
+
+  // Uploaded files (not the pictures shipped with the site) are removed from storage after the rows are gone.
+  const files = await db.media.findMany({ where: { tenantId: tenant.id, source: { not: "SITE_ASSET" } }, select: { storageKey: true } });
+
+  await db.$transaction(async (tx) => {
+    // Complaint attachments point at media with RESTRICT, so they go first; everything else follows the tenant.
+    await tx.grievanceAttachment.deleteMany({ where: { grievance: { tenantId: tenant.id } } });
+    await tx.tenant.delete({ where: { id: tenant.id } });
+    await writeAudit(
+      actorFromContext(ctx, client),
+      { action: "tenant.delete", entityType: "Tenant", entityId: tenant.id, unitId: tenant.unitId, before: { slug: tenant.slug, nameEn: tenant.nameEn, nameMr: tenant.nameMr, status: tenant.status } },
+      tx,
+    );
+  });
+
+  const storage = getStorage();
+  await Promise.all(files.map((f) => storage.delete(f.storageKey).catch(() => undefined)));
+  revalidatePublicTags([tenantTag(tenant.slug)]);
 }
