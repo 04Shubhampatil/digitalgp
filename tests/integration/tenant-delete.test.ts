@@ -14,7 +14,8 @@ describe("deleting a website", () => {
     const { ctx } = await actor("SUPER_ADMIN", w.state.id);
     const unit = await createUnit("GRAM_PANCHAYAT", w.taluka1.id, "to-delete");
     const site = await createTenant(unit.id, "to-delete", "DRAFT");
-    await db.page.create({ data: { tenantId: site.id, pageKey: "home" } });
+    // createTenant already adds the default pages; they must go with the website.
+    expect(await db.page.count({ where: { tenantId: site.id } })).toBeGreaterThan(0);
     await expectCode(deleteTenant(ctx, site.id, "wrong-address", client), "BAD_REQUEST");
     await deleteTenant(ctx, site.id, "to-delete", client);
     expect(await db.tenant.count({ where: { id: site.id } })).toBe(0);
