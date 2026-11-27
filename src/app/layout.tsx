@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Manrope, Noto_Sans_Devanagari, Sora } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
+import { TitleLocalizer } from "@/components/TitleLocalizer";
 import "@/styles/globals.css";
 
 const notoDevanagari = Noto_Sans_Devanagari({
@@ -24,7 +25,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={locale} className={`${notoDevanagari.variable} ${inter.variable} ${sora.variable} ${manrope.variable}`}>
       <body className="font-sans text-ink bg-canvas">
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider>
+          <TitleLocalizer />
+          {children}
+        </NextIntlClientProvider>
       </body>
     </html>
   );

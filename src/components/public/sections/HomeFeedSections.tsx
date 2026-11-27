@@ -1,4 +1,5 @@
 import { marathiFor } from "@/i18n/mr-fallback";
+import { announcementCategory } from "@/lib/category-label";
 import { Megaphone } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
@@ -42,6 +43,7 @@ type NewsItem = { title?: B; date?: B | string; status?: string; imageUrl?: stri
  */
 export async function WhatsNewSection({ slug, locale, data }: SectionProps) {
   const t = await getTranslations("public");
+  const ta = await getTranslations("admin");
   const d = data as { heading?: B; source?: "announcements"; viewAll?: { label?: B; href?: string }; items?: NewsItem[] };
   // Rows of a published section (the design's sample rows come with `source: "announcements"`).
   const typed = d.source !== "announcements";
@@ -63,7 +65,7 @@ export async function WhatsNewSection({ slug, locale, data }: SectionProps) {
         return {
           title,
           date: a.publishedAt ? fmtDate(new Date(a.publishedAt)) : "",
-          status: status in CHIP ? status : a.category,
+          status: status in CHIP ? status : announcementCategory(ta, a.category),
           imageUrl: a.attachment?.kind === "IMAGE" ? publicMediaUrl(slug, a.attachment.id) : pictures.get(pickText(title, "en").toLowerCase()),
           href: detailHref(slug, "announcements", a.id),
         };

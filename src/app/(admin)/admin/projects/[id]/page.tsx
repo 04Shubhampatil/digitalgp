@@ -64,7 +64,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           <CardHeader title={t("projects")} />
           <div className="grid gap-5 px-5 pb-5 md:grid-cols-2">
             <div>
-              <p className="text-[11px] font-semibold tracking-wide text-muted uppercase">English</p>
+              <p className="text-[11px] font-semibold tracking-wide text-muted uppercase">{tc("english")}</p>
               <p className="mt-2 text-sm whitespace-pre-line text-ink">{p.descriptionEn ?? "—"}</p>
               {p.outcomeEn && <p className="mt-3 rounded-input bg-success-soft px-3 py-2 text-xs text-success">{p.outcomeEn}</p>}
             </div>
