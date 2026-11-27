@@ -20,7 +20,7 @@ type Search = Promise<{ district?: string; taluka?: string; status?: string; q?:
 type RowStatus = TenantStatus | "NOT_CREATED";
 const PAGE_SIZE = 8;
 
-const selectCls = "h-11 w-full rounded-card border border-line-strong bg-surface px-3 text-sm text-ink outline-none focus:border-primary";
+const selectCls = "h-11 w-full rounded-card border border-line-strong bg-surface px-3 text-sm text-ink outline-none focus:border-primary select-native";
 const labelCls = "mb-1.5 block text-[11px] font-semibold tracking-wide text-muted uppercase";
 
 /**

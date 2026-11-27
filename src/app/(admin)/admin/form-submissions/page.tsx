@@ -120,7 +120,7 @@ export default async function FormSubmissionsPage({ searchParams }: { searchPara
       <form method="get" action="/admin/form-submissions" className="mb-5 flex flex-wrap items-end gap-3 rounded-card border border-line bg-surface px-5 py-4">
         <label className="flex min-w-60 flex-col gap-1.5">
           <span className="text-[11px] font-semibold tracking-wide text-muted uppercase">{t("formSubmissions.website")}</span>
-          <select name="tenantId" defaultValue={tenant?.id} className="h-11 rounded-card border border-line-strong bg-surface-select px-3 text-sm text-ink outline-none focus:border-primary">
+          <select name="tenantId" defaultValue={tenant?.id} className="h-11 rounded-card border border-line-strong bg-surface-select px-3 text-sm text-ink outline-none focus:border-primary select-native">
             {sites.map((s) => (
               <option key={s.id} value={s.id}>
                 {ui === "mr" ? s.nameMr || s.nameEn : s.nameEn}

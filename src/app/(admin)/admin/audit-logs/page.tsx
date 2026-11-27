@@ -19,7 +19,7 @@ type AuditResult = (typeof RESULTS)[number];
 const RESULT_TONE: Record<AuditResult, string> = { SUCCESS: "bg-success-soft text-success", FAILURE: "bg-danger-soft text-danger", DENIED: "bg-warning-soft text-warning" };
 
 const toIso = (d?: string, endOfDay = false) => (d ? new Date(`${d}T${endOfDay ? "23:59:59" : "00:00:00"}`).toISOString() : undefined);
-const selectCls = "h-11 w-full rounded-card border border-line-strong bg-surface px-3 text-sm text-ink outline-none focus:border-primary";
+const selectCls = "h-11 w-full rounded-card border border-line-strong bg-surface px-3 text-sm text-ink outline-none focus:border-primary select-native";
 const labelCls = "mb-1.5 block text-[11px] font-semibold tracking-wide text-muted uppercase";
 /**
  * Figma "Audit Logs": filter card (user, action type, date range) and an overview table of who did what, to which
