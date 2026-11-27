@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { idSchema, localeSchema, paginationQuerySchema, shortText, slugSchema } from "@/lib/validation";
+import { modulesSchema } from "@/features/users/validators";
+import { emailSchema, idSchema, localeSchema, paginationQuerySchema, passwordSchema, phoneSchema, shortText, slugSchema } from "@/lib/validation";
 
 const bilingual = z.object({ en: z.string().trim().max(300).optional(), mr: z.string().trim().max(300).optional() }).strict();
 const url = z.string().trim().url().max(500);
@@ -53,6 +54,34 @@ export const createTenantSchema = z.object({
   settings: tenantSettingsSchema.optional(),
 });
 export type CreateTenantInput = z.infer<typeof createTenantSchema>;
+
+/** Login account created together with a website (same rules as POST /users; omit `password` to generate one). */
+export const websiteAccountSchema = z.object({
+  name: shortText,
+  email: emailSchema,
+  phone: phoneSchema.optional().nullable(),
+  locale: localeSchema.optional(),
+  /** Omit to have a temporary password generated and returned once. */
+  password: passwordSchema.optional(),
+});
+export const websiteOperatorSchema = websiteAccountSchema.extend({ modules: modulesSchema });
+
+export const MAX_WEBSITE_OPERATORS = 5;
+
+/** POST /tenants/with-users: the website, its GP Admin and optional Data Entry Operators in one request. */
+export const createTenantWithUsersSchema = createTenantSchema
+  .extend({
+    gpAdmin: websiteAccountSchema,
+    operators: z.array(websiteOperatorSchema).max(MAX_WEBSITE_OPERATORS).default([]),
+  })
+  .superRefine((v, ctx) => {
+    const seen = new Map<string, string>([[v.gpAdmin.email, "gpAdmin"]]);
+    v.operators.forEach((o, i) => {
+      if (seen.has(o.email)) ctx.addIssue({ code: "custom", path: ["operators", i, "email"], message: "This email is used more than once" });
+      seen.set(o.email, `operators.${i}`);
+    });
+  });
+export type CreateTenantWithUsersInput = z.infer<typeof createTenantWithUsersSchema>;
 
 export const updateTenantSchema = createTenantSchema
   .omit({ unitId: true })

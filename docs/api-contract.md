@@ -89,6 +89,8 @@ Levels: `STATE > DISTRICT > TALUKA > BLOCK (optional) > GRAM_PANCHAYAT`.
 |--------|------------------------------|-------------------|--------------|----------|
 | GET    | `/tenants`                   | any assignment    | `?status&unitId&q&limit&cursor` (scope-filtered) | paginated `TenantDto` |
 | POST   | `/tenants`                   | `tenant:create`   | `{ unitId (GRAM_PANCHAYAT), slug, nameEn, nameMr, customDomain?, defaultLocale?, settings? }` — creates the 15 default pages | `201 TenantDto`; `409` if the GP already has a website |
+| POST   | `/tenants/with-users`        | `tenant:create`   | one-step create, see below | `201 { tenant, gpAdmin, operators }` |
+| GET    | `/tenants/:tenantId/users`   | `user:read` on the site | – | `TenantUserDto[]` (GP Admin + operators with status) |
 | GET    | `/tenants/:tenantId`         | in scope          | –            | `TenantDto` |
 | PATCH  | `/tenants/:tenantId`         | `tenant:update`   | any of the create fields except `unitId`; `settings` is merged shallowly | `TenantDto` |
 | POST   | `/tenants/:tenantId/status`  | `tenant:publish`  | `{ status: "DRAFT" \| "PUBLISHED" \| "SUSPENDED" }` | `TenantDto` |
@@ -573,7 +575,29 @@ Operators need the `pages` module. A story that names or pictures a person canno
 - About `overview`: `eyebrow`, `actions[]` (≤3). New sections: Environment `key-initiatives`, Schemes `link-cards`, About `vision-mission`.
 
 ### Admin panel
-- `GET /tenants` rows add `blockAdmins: [{ id, name, email }]` (active Block Admins whose unit contains the website). `GET /tenants/export?status&unitId&q` → CSV.
+- `GET /tenants` rows add `gpAdmins: [{ id, name, email }]` and `operatorCount` (active GP Admins and operators of the website) and `blockAdmins: [{ id, name, email }]` (active Block Admins whose unit contains the website). `GET /tenants/export?status&unitId&q` → CSV.
 - `GET /dashboard/websites?unitId&limit&cursor` → paginated `DashboardWebsiteDto` (pending items, last update and who, setup progress). `GET /dashboard/pending-updates?unitId` → latest 20 `DashboardPendingItemDto`.
 - `AuditLogDto` adds `actorName`, `actorEmail`, `tenantSlug`, `tenantName`, `result` (SUCCESS / FAILURE / DENIED), `ipAddress`, `userAgent`; `?result=` filter. Failed sign-ins are FAILURE, suspended-account sign-ins DENIED. `GET /audit-logs/export` → CSV (≤ 5000 rows, no before/after payloads).
 - CSV exports are UTF-8 with BOM; cells that start with `= + - @` are prefixed with `'` (no formula injection).
+
+### One-step website creation (`POST /tenants/with-users`)
+
+Creates the website **and** its login accounts in ONE database transaction. Old `POST /tenants` and `POST /users` still work unchanged.
+
+Request: all `POST /tenants` fields plus
+
+```json
+{
+  "gpAdmin": { "name": "…", "email": "…", "phone": "+919876543210 (optional)", "locale": "MR (optional)", "password": "optional" },
+  "operators": [ { "name": "…", "email": "…", "phone": null, "password": "optional", "modules": [{ "moduleKey": "announcements", "canWrite": true }] } ]
+}
+```
+
+- `gpAdmin` is required and always gets role `GP_ADMIN` on the website's Gram Panchayat; each `operators[]` entry (max 5, `modules` required, at least one) gets `DATA_ENTRY_OPERATOR` on the same unit. The role is fixed by the server; the client cannot choose it.
+- Password rules are those of `POST /users`: omit `password` to get a generated temporary password (`mustResetPassword = true`); a typed one needs 10+ characters with letters and numbers.
+- Authorization, per account: the unit must be in the caller's scope (else `404`), the caller needs `tenant:create` on it and `canGrantRole` for the role (Super Admin anywhere; Taluka Admin inside their own taluka; GP Admin / operator → `403`). Same checks as `createUser` (they share `prepareUser`).
+- Response `201`: `{ tenant: TenantDto, gpAdmin: { user: UserDto, temporaryPassword: string | null }, operators: [{ user, temporaryPassword }] }`. Temporary passwords are returned **once**, only hashes are stored, and they are never logged or audited.
+- Failure creates nothing (no website, no users, no audit rows). Field errors use `VALIDATION_ERROR` with `details: [{ path, message }]`, where `path` is `gpAdmin.email`, `operators.1.email` (email already used, or repeated within the request), `slug` (taken) or any other request field. `409 CONFLICT` when the Gram Panchayat already has a website; `400` when the unit is not a Gram Panchayat.
+- Audit: `tenant.create`, and per account `user.create` + `user.assignment_grant`.
+
+`GET /tenants/:tenantId/users` → `TenantUserDto[]`: `{ id, name, email, phone, role (GP_ADMIN | DATA_ENTRY_OPERATOR), status, mustResetPassword, lastLoginAt, modules }` for the active GP Admins and operators of the site. Needs `user:read` on the website's unit (so operators get `403`); sites outside the caller's scope are `404`. "Add user" and "Reset password" on the website page use the existing `POST /users` and `POST /users/:id/reset-password`.

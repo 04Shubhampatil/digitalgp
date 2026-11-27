@@ -20,13 +20,15 @@ import type {
   SchemeWardCoverageDto,
   SuccessStoryDto,
   TenantDto,
+  TenantUserDto,
+  CreateTenantWithUsersResultDto,
   TenantListItemDto,
   TenantStatus,
   UserDto,
 } from "@/types/api";
 import type { CreateAnnouncementInput, UpdateAnnouncementInput } from "@/features/announcements/validators";
 import type { CreateUnitInput, UpdateUnitInput } from "@/features/hierarchy/validators";
-import type { CreateTenantInput, UpdateTenantInput } from "@/features/tenants/validators";
+import type { CreateTenantInput, CreateTenantWithUsersInput, UpdateTenantInput } from "@/features/tenants/validators";
 import type { AssignmentInput, CreateUserInput, UpdateUserInput } from "@/features/users/validators";
 import { API_BASE, apiFetch, apiFetchPage, type ApiRequest, type QueryValue } from "./client";
 
@@ -62,6 +64,11 @@ export const tenants = {
   exportUrl: (query: { status?: string; unitId?: string; q?: string }) => withQuery(`${API_BASE}/tenants/export`, query),
   get: (tenantId: string, o: Opts = {}) => apiFetch<TenantDto>(`/tenants/${tenantId}`, o),
   create: (body: CreateTenantInput, o: Opts = {}) => apiFetch<TenantDto>("/tenants", { method: "POST", body, ...o }),
+  /** One step: website + GP Admin + optional operators in one transaction; temporary passwords come back once. */
+  createWithUsers: (body: CreateTenantWithUsersInput, o: Opts = {}) =>
+    apiFetch<CreateTenantWithUsersResultDto>("/tenants/with-users", { method: "POST", body, ...o }),
+  /** GP Admins and operators of the website. */
+  users: (tenantId: string, o: Opts = {}) => apiFetch<TenantUserDto[]>(`/tenants/${tenantId}/users`, o),
   update: (tenantId: string, body: UpdateTenantInput, o: Opts = {}) =>
     apiFetch<TenantDto>(`/tenants/${tenantId}`, { method: "PATCH", body, ...o }),
   setStatus: (tenantId: string, status: TenantStatus, o: Opts = {}) =>

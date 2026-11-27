@@ -108,7 +108,7 @@ export default async function DashboardPage() {
         { href: "/admin/announcements/new", label: t("nav.publishAnnouncement"), hint: "", show: true },
       ]
     : [
-    { href: "/admin/websites", label: t("websites.create"), hint: t("dashboardUi.quickCreate"), show: hasCapability(user, "tenant:create") },
+    { href: "/admin/websites?create=1", label: t("websites.create"), hint: t("dashboardUi.quickCreate"), show: hasCapability(user, "tenant:create") },
     { href: "/admin/users/new", label: t("users.create"), hint: t("dashboardUi.quickUser"), show: hasCapability(user, "user:manage") },
     { href: "/admin/hierarchy", label: t("hierarchy.title"), hint: t("dashboardUi.quickHierarchy"), show: hasCapability(user, "hierarchy:read") },
     { href: "/admin/announcements/new", label: t("announcements.create"), hint: t("dashboardUi.quickAnnounce"), show: hasCapability(user, "content:share") || hasCapability(user, "content:edit") },

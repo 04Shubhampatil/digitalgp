@@ -128,6 +128,29 @@ export interface TenantAdminRefDto {
 /** Row of GET /tenants: the tenant plus the Block Admins whose block contains it. */
 export interface TenantListItemDto extends TenantDto {
   blockAdmins: TenantAdminRefDto[];
+  /** Active GP Admins of the website and how many active Data Entry Operators it has. */
+  gpAdmins: TenantAdminRefDto[];
+  operatorCount: number;
+}
+
+/** Users of a website (GET /tenants/:id/users): its GP Admin(s) and Data Entry Operators. */
+export interface TenantUserDto {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  role: Role;
+  status: "ACTIVE" | "SUSPENDED";
+  mustResetPassword: boolean;
+  lastLoginAt: string | null;
+  modules: { moduleKey: ModuleKey; canWrite: boolean }[];
+}
+
+/** POST /tenants/with-users: temporary passwords are returned once and never stored in plain text. */
+export interface CreateTenantWithUsersResultDto {
+  tenant: TenantDto;
+  gpAdmin: { user: UserDto; temporaryPassword: string | null };
+  operators: { user: UserDto; temporaryPassword: string | null }[];
 }
 
 export interface TenantSettingsDto {
