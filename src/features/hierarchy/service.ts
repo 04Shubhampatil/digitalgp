@@ -4,7 +4,7 @@ import type { AuthContext } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Errors } from "@/lib/errors";
 import type { ClientInfo } from "@/lib/http";
-import { assertCan, isSuperAdmin, unitPathScopeFilter } from "@/lib/permissions";
+import { ROLE_CAPABILITIES, assertCan, isSuperAdmin, unitPathScopeFilter } from "@/lib/permissions";
 import { getUnitForActor } from "@/lib/tenant";
 import { paginate } from "@/lib/validation";
 import type { AdminUnitDto } from "@/types/api";
@@ -86,6 +86,10 @@ export async function getUnitWithAncestors(ctx: AuthContext, unitId: string) {
 }
 
 export async function createUnit(ctx: AuthContext, input: CreateUnitInput, client: ClientInfo): Promise<AdminUnitDto> {
+  // Roles that can never add units (GP Admin, Data Entry Operator) are refused up front with 403, before the parent
+  // lookup below would answer 404 for a parent outside their scope.
+  const mayAddUnits = ctx.assignments.some((a) => ROLE_CAPABILITIES[a.role].has("hierarchy:manage") || ROLE_CAPABILITIES[a.role].has("hierarchy:create-gp"));
+  if (!mayAddUnits) throw Errors.forbidden("Your role cannot add units");
   let parentPath = "/";
   if (input.parentId) {
     const parent = await getUnitForActor(ctx, input.parentId);
