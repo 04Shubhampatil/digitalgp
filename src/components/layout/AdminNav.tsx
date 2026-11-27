@@ -62,7 +62,9 @@ export function AdminNav({ groups }: { groups: NavGroup[] }) {
                     </li>
                   );
                 }
-                const active = pathname === item.href || (!item.exact && pathname.startsWith(`${item.href}/`));
+                // A sub-page belongs to its own sidebar entry when there is one (Create User is under Users).
+                const ownEntry = groups.some((g) => g.items.some((o) => o.href !== item.href && o.href.startsWith(`${item.href}/`) && (pathname === o.href || pathname.startsWith(`${o.href}/`))));
+                const active = pathname === item.href || (!item.exact && !ownEntry && pathname.startsWith(`${item.href}/`));
                 return (
                   <li key={item.href}>
                     <Link

@@ -14,12 +14,12 @@ import { getCurrentUser, hasCapability } from "@/lib/session";
 /** The list shows block admins by default; with another role tab (or "All") the title says so. */
 export async function generateMetadata({ searchParams }: { searchParams: Search }): Promise<Metadata> {
   const { role } = await searchParams;
-  return { title: !role || role === "TALUKA_ADMIN" ? "Taluka Admins" : "Users" };
+  return { title: role === "TALUKA_ADMIN" ? "Taluka Admins" : "Users" };
 }
 
 // Block Admin was merged into Taluka Admin, so there is no separate tab for it.
 const ROLES: Role[] = ["SUPER_ADMIN", "TALUKA_ADMIN", "GP_ADMIN", "DATA_ENTRY_OPERATOR"];
-type Search = Promise<{ role?: string; district?: string; taluka?: string; q?: string }>;
+type Search = Promise<{ role?: string; district?: string; taluka?: string; q?: string; status?: string }>;
 
 const selectCls = "h-11 w-full rounded-card border border-line-strong bg-surface px-3 text-sm text-ink outline-none focus:border-primary";
 const labelCls = "mb-1.5 block text-[11px] font-semibold tracking-wide text-muted uppercase";
@@ -33,7 +33,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Search
   if (!user) redirect("/login");
   const [sp, t, tc, locale, cookie] = await Promise.all([searchParams, getTranslations("admin"), getTranslations("common"), getLocale(), cookieHeader()]);
   const ui = locale as UiLocale;
-  const roleFilter: Role | "ALL" = sp.role === "all" ? "ALL" : ROLES.includes(sp.role as Role) ? (sp.role as Role) : "TALUKA_ADMIN";
+  const roleFilter: Role | "ALL" = sp.role === "all" ? "ALL" : ROLES.includes(sp.role as Role) ? (sp.role as Role) : "ALL";
 
   const [list, legacyBlock, districts, talukas, gps] = await Promise.all([
     users.list({ role: roleFilter === "ALL" ? undefined : roleFilter, limit: 100 }, { cookie }),
@@ -66,13 +66,21 @@ export default async function UsersPage({ searchParams }: { searchParams: Search
   // A role tab keeps the district / taluka / search filters that are set.
   const roleTab = (r: Role | "ALL") => {
     const p = new URLSearchParams({ role: r === "ALL" ? "all" : r });
-    for (const k of ["district", "taluka", "q"] as const) if (sp[k]) p.set(k, sp[k]!);
+    for (const k of ["district", "taluka", "q", "status"] as const) if (sp[k]) p.set(k, sp[k]!);
     return p.toString();
   };
+  // The status chips keep the role tab and the other filters.
+  const statusTab = (s: string) => {
+    const p = new URLSearchParams({ role: roleFilter === "ALL" ? "all" : roleFilter });
+    for (const k of ["district", "taluka", "q"] as const) if (sp[k]) p.set(k, sp[k]!);
+    if (s) p.set("status", s);
+    return p.toString();
+  };
+  const statusFilter = ["ACTIVE", "PENDING", "SUSPENDED"].includes(sp.status ?? "") ? sp.status : "";
   const blockView = roleFilter === "TALUKA_ADMIN";
 
   const needle = (sp.q ?? "").trim().toLowerCase();
-  const shown = rows.filter((r) => (!sp.district || r.district?.id === sp.district) && (!sp.taluka || r.taluka?.id === sp.taluka) && (!needle || r.u.name.toLowerCase().includes(needle) || r.u.email.toLowerCase().includes(needle)));
+  const shown = rows.filter((r) => (!statusFilter || r.state === statusFilter) && (!sp.district || r.district?.id === sp.district) && (!sp.taluka || r.taluka?.id === sp.taluka) && (!needle || r.u.name.toLowerCase().includes(needle) || r.u.email.toLowerCase().includes(needle)));
   const count = (s: string) => rows.filter((r) => r.state === s).length;
 
   const fmtLogin = (iso: string | null) => {
@@ -92,23 +100,13 @@ export default async function UsersPage({ searchParams }: { searchParams: Search
         title={blockView ? t("users.pageTitle") : t("usersUi.listTitle")}
         description={t("users.pageSubtitle")}
         actions={
-          canManage && canCreateRole(callerRoles, "TALUKA_ADMIN") ? (
+          createTypes.length > 0 ? (
             <Link href="/admin/users/new" className="inline-flex h-10 items-center gap-2 rounded-button bg-primary px-5 text-sm font-semibold text-white hover:bg-primary-hover">
-              + {t("users.createBlockAdmin")}
+              + {t("usersUi.createUser")}
             </Link>
           ) : null
         }
       />
-
-      {createTypes.length > 0 && (
-        <div className="mb-5 flex flex-wrap gap-2">
-          {createTypes.map(([slug, r]) => (
-            <Link key={slug} href={`/admin/users/new/${slug}`} className="inline-flex h-10 items-center gap-2 rounded-button border border-line-strong bg-surface px-4 text-sm font-semibold text-primary hover:bg-surface-soft">
-              + {t(`role.${r}`)}
-            </Link>
-          ))}
-        </div>
-      )}
 
       <div className="mb-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard label={t("users.totalAdmins")} value={rows.length.toLocaleString()} tone="info" />
@@ -120,6 +118,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Search
       <form method="get" action="/admin/users" className="mb-5 rounded-card border border-line bg-surface p-5">
         <h2 className="mb-3 text-[17px] font-bold text-ink">{t("users.searchFilter")}</h2>
         {sp.role && <input type="hidden" name="role" value={sp.role} />}
+        {statusFilter && <input type="hidden" name="status" value={statusFilter} />}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-[1fr_1fr_1.4fr_auto]">
           <label>
             <span className={labelCls}>{t("topbar.district")}</span>
@@ -174,15 +173,36 @@ export default async function UsersPage({ searchParams }: { searchParams: Search
         ))}
       </nav>
 
+      <nav aria-label={t("usersUi.statusFilter")} className="mb-4 flex flex-wrap gap-2">
+        {(
+          [
+            ["", tc("all")],
+            ["ACTIVE", t("users.userStatus.ACTIVE")],
+            ["PENDING", t("users.pendingInvite")],
+            ["SUSPENDED", t("users.userStatus.SUSPENDED")],
+          ] as const
+        ).map(([s, label]) => (
+          <Link
+            key={s || "all"}
+            href={`/admin/users?${statusTab(s)}`}
+            aria-current={statusFilter === s ? "page" : undefined}
+            className={
+              statusFilter === s
+                ? "inline-flex h-9 items-center rounded-pill bg-primary px-4 text-xs font-semibold text-white"
+                : "inline-flex h-9 items-center rounded-pill border border-line-strong bg-surface px-4 text-xs font-semibold text-ink hover:bg-surface-soft"
+            }
+          >
+            {label}
+            {s ? ` (${count(s)})` : ` (${rows.length})`}
+          </Link>
+        ))}
+      </nav>
+
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-2 px-5 pt-5 pb-3">
           <h2 className="text-[19px] font-bold text-ink">{blockView ? t("users.overviewTitle") : roleFilter === "ALL" ? t("usersUi.listOverview") : t(`role.${roleFilter}`)}</h2>
           <p className="text-xs text-muted">
-            {roleFilter === "ALL" ? (
-              <Link href="/admin/users" className="font-semibold text-primary hover:underline">
-                {t("users.showBlockAdmins")}
-              </Link>
-            ) : (
+            {roleFilter === "ALL" ? null : (
               <Link href="/admin/users?role=all" className="font-semibold text-primary hover:underline">
                 {t("users.showAllRoles")}
               </Link>
