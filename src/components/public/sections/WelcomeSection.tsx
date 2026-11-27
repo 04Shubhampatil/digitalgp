@@ -1,3 +1,4 @@
+import { localizeDesign } from "@/content/design-names";
 import { FIGMA_HOME_SECTIONS } from "@/content/figma-home";
 import { pickText, type Bilingual } from "@/i18n/text";
 import { AboutCardsSection } from "./AboutCardsSection";
@@ -29,11 +30,13 @@ export function WelcomeSection(props: SectionProps) {
   const name = props.tenantName ?? "";
   const isAbout = /^about\b/i.test(heading) || /विषयी|बद्दल|माहिती/.test(heading);
   const designHeading = locale === "mr" ? `${name} विषयी`.trim() : `About ${name}`.trim();
+  // The block's design cards and address are written about the design's village: name this website's own instead.
+  const design = localizeDesign(ABOUT_DESIGN, props.designNames ?? null);
   const aboutData = {
-    ...ABOUT_DESIGN,
+    ...design,
     heading: { [locale]: isAbout ? heading : designHeading },
-    subheading: body ? { [locale]: body } : ABOUT_DESIGN.subheading,
-    cards: d.cards?.length ? d.cards : ABOUT_DESIGN.cards,
+    subheading: body ? { [locale]: body } : design.subheading,
+    cards: d.cards?.length ? d.cards : design.cards,
     // The section's photo is the large picture of the collage.
     ...(d.imageId ? { mainImageId: d.imageId } : {}),
   };
