@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/ui/Card";
 import type { UiLocale } from "@/i18n/config";
 import { audit, users } from "@/lib/api/admin";
 import { cookieHeader } from "@/lib/api/server";
+import { auditActionLabel, auditEntityLabel } from "@/lib/audit-label";
 import { getCurrentUser, hasCapability } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Audit logs" };
@@ -20,12 +21,6 @@ const RESULT_TONE: Record<AuditResult, string> = { SUCCESS: "bg-success-soft tex
 const toIso = (d?: string, endOfDay = false) => (d ? new Date(`${d}T${endOfDay ? "23:59:59" : "00:00:00"}`).toISOString() : undefined);
 const selectCls = "h-11 w-full rounded-card border border-line-strong bg-surface px-3 text-sm text-ink outline-none focus:border-primary";
 const labelCls = "mb-1.5 block text-[11px] font-semibold tracking-wide text-muted uppercase";
-/** "announcement.publish" → "Announcement publish" */
-const humanise = (a: string) => {
-  const s = a.replace(/[._-]+/g, " ").trim();
-  return s.charAt(0).toUpperCase() + s.slice(1);
-};
-
 /**
  * Figma "Audit Logs": filter card (user, action type, date range) and an overview table of who did what, to which
  * record and when. Scope-filtered by the backend; operators see only their own actions.
@@ -81,7 +76,7 @@ export default async function AuditLogsPage({ searchParams }: { searchParams: Se
             <input name="action" list="audit-actions" defaultValue={action ?? ""} placeholder={t("auditUi.allActions")} className={selectCls} />
             <datalist id="audit-actions">
               {[...new Set(page.data.map((l) => l.action))].map((a) => (
-                <option key={a} value={a} />
+                <option key={a} value={a} label={auditActionLabel(t, a)} />
               ))}
             </datalist>
           </label>
@@ -147,10 +142,10 @@ export default async function AuditLogsPage({ searchParams }: { searchParams: Se
                   </td>
                   <td className="px-3 py-3.5 text-muted">{l.actorRole ? t(`role.${l.actorRole}`) : "—"}</td>
                   <td className="px-3 py-3.5 text-muted" title={l.action}>
-                    {humanise(l.action)}
+                    {auditActionLabel(t, l.action)}
                   </td>
                   <td className="px-3 py-3.5 text-muted">
-                    {l.entityType}
+                    {auditEntityLabel(t, l.entityType)}
                     {l.entityId ? ` · ${l.entityId.slice(0, 8)}…` : ""}
                     {(l.tenantName || l.tenantSlug) && <p className="text-[11px]">{l.tenantName ?? `/${l.tenantSlug}`}</p>}
                   </td>

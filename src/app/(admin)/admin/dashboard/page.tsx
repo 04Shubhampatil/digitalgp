@@ -11,6 +11,7 @@ import type { UiLocale } from "@/i18n/config";
 import { localName, pair, pickText } from "@/i18n/text";
 import { audit, dashboard, grievances, tenants, users } from "@/lib/api/admin";
 import { cookieHeader } from "@/lib/api/server";
+import { auditActionLabel } from "@/lib/audit-label";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { getCurrentUser, hasCapability, primaryRole } from "@/lib/session";
 
@@ -319,7 +320,7 @@ export default async function DashboardPage() {
           <ul className="grid gap-3 px-5 pb-5 text-sm">
             {(recentAudit?.data ?? []).map((l) => (
               <li key={l.id}>
-                <p className="font-mono text-xs font-semibold text-ink">{l.action}</p>
+                <p className="text-xs font-semibold text-ink" title={l.action}>{auditActionLabel(t, l.action)}</p>
                 <p className="text-[11px] text-muted">
                   {l.actorRole ? `${t(`role.${l.actorRole}`)} · ` : ""}
                   {formatDateTime(l.createdAt, ui)}

@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { announcementCategory } from "@/lib/category-label";
 import { detailHref } from "@/lib/href";
 import Link from "next/link";
 import type { PageKey } from "@/config/pages";
@@ -25,7 +26,7 @@ export async function PublicAnnouncements({ slug, locale, page, limit = 20, comp
             <StatusPill status={a.priority} label={ta(`announcements.priorityLabel.${a.priority}`)} />
             {a.isShared && <span className="rounded-pill bg-info-soft px-3 py-1 text-[11px] font-semibold text-info">{ta("announcements.isShared")}</span>}
             <span className="text-xs text-muted">
-              {pickText({ en: a.category }, locale)} · {formatDate(a.publishedAt, locale)}
+              {announcementCategory(ta, a.category)} · {formatDate(a.publishedAt, locale)}
             </span>
           </div>
           <h3 className="mt-2 text-lg font-bold text-ink">

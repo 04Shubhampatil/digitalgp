@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Plus } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
+import { announcementCategory } from "@/lib/category-label";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { AnnouncementDto, AnnouncementPriority, ContentStatus } from "@/types/api";
@@ -56,7 +57,7 @@ export default async function AnnouncementsPage({ searchParams }: { searchParams
           <Link href={`/admin/announcements/${a.id}`} className="font-semibold text-ink hover:text-primary hover:underline">
             {pickText(pair(a.titleEn, a.titleMr), ui, "—")}
           </Link>
-          <p className="text-xs text-muted">{pickText({ en: a.category }, ui)}</p>
+          <p className="text-xs text-muted">{announcementCategory(t, a.category)}</p>
         </div>
       ),
     },

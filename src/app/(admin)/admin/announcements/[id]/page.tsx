@@ -68,7 +68,7 @@ export default async function AnnouncementDetailPage({ params }: { params: Promi
           <CardHeader title={t("announcements.title")} />
           <div className="grid gap-5 px-5 pb-5 md:grid-cols-2">
             <div>
-              <p className="text-[11px] font-semibold tracking-wide text-muted uppercase">English</p>
+              <p className="text-[11px] font-semibold tracking-wide text-muted uppercase">{tc("english")}</p>
               <p className="mt-1 font-semibold text-ink">{a.titleEn ?? "—"}</p>
               <p className="mt-2 text-sm whitespace-pre-line text-ink">{a.bodyEn ?? "—"}</p>
             </div>
